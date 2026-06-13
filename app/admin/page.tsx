@@ -885,25 +885,21 @@ export default function AdminPage() {
               <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
               <CardHeader title="CSV-Import" subtitle="Spalten: Name, Vorname, E-Mail" />
               <div className="p-5 space-y-3">
-                <div className="flex gap-2">
-                  <label className="flex-1 cursor-pointer">
-                    <input ref={csvInputRef} type="file" accept=".csv,text/csv"
-                      onChange={e => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
-                      className="hidden" />
-                    <div className="w-full px-4 py-3 rounded-xl text-sm text-center transition flex items-center justify-center gap-2 cursor-pointer"
-                      style={{ border: "1.5px dashed var(--ig-navy)", color: "var(--ig-navy)", background: "var(--ig-light)" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}>
-                      <IconUpload className="w-4 h-4 flex-shrink-0" />
-                      <span className="truncate">{csvFile ? csvFile.name : "CSV-Datei wählen…"}</span>
-                    </div>
-                  </label>
-                  <button onClick={handleCSVImport} disabled={!csvFile || csvImporting}
-                    className="px-4 py-3 rounded-xl text-sm font-semibold text-white transition disabled:opacity-40"
-                    style={{ background: "var(--ig-navy)", whiteSpace: "nowrap" }}>
-                    {csvImporting ? "…" : "Import"}
-                  </button>
-                </div>
+                <label className="block cursor-pointer mb-3">
+                  <input ref={csvInputRef} type="file" accept=".csv,text/csv"
+                    onChange={e => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
+                    className="hidden" />
+                  <div className="w-full px-4 py-3 rounded-xl text-sm text-center transition flex items-center justify-center gap-2 cursor-pointer border"
+                    style={{ borderColor: "var(--ig-navy)", color: "var(--ig-navy)", background: "var(--ig-light)" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}>
+                    <IconUpload className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{csvFile ? csvFile.name : "CSV-Datei wählen…"}</span>
+                  </div>
+                </label>
+                <BtnPrimary onClick={handleCSVImport} disabled={!csvFile || csvImporting} className="w-full">
+                  {csvImporting ? "Importiert…" : "Importieren"}
+                </BtnPrimary>
                 {csvResult && (
                   <div className="space-y-2">
                     <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ background: "var(--ig-light)", border: "1px solid var(--ig-gray2)" }}>
@@ -916,12 +912,10 @@ export default function AdminPage() {
                       )}
                     </div>
                     {csvResult.imported > 0 && (
-                      <button onClick={handleSendQRToImported} disabled={csvSending}
-                        className="w-full py-3 rounded-xl text-sm font-semibold tracking-wide transition disabled:opacity-40 flex items-center justify-center gap-2"
-                        style={{ border: "1.5px solid var(--ig-navy)", color: "var(--ig-navy)", background: "white" }}>
+                      <BtnPrimary onClick={handleSendQRToImported} disabled={csvSending} className="w-full">
                         <IconMail className="w-4 h-4" />
                         {csvSending ? "QR-Codes werden gesendet…" : `QR-Codes an ${csvResult.imported} Gäste senden`}
-                      </button>
+                      </BtnPrimary>
                     )}
                     {csvSendResult && (
                       <p className={`text-xs ${csvSendResult.ok ? "text-green-600" : "text-red-500"}`}>{csvSendResult.msg}</p>
@@ -950,7 +944,7 @@ export default function AdminPage() {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
                   >
                     <div className="flex items-center gap-2">
-                      <IconDownload className="w-4 h-4 flex-shrink-0" style={{ color: "var(--ig-gold)" } } />
+                      <IconDownload className="w-4 h-4 flex-shrink-0" style={{ color: "var(--ig-navy)" }} />
                       <span className="text-sm font-medium">{label}</span>
                     </div>
                     <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>{count} Personen</span>
