@@ -43,58 +43,112 @@ export default function TicketPage() {
         className="min-h-screen flex flex-col items-center justify-center px-4 py-12 no-print-bg"
         style={{ background: "var(--ig-light)" }}
       >
-        <div className="w-full max-w-xs">
+        {/* ── Mobile: max-w-xs portrait / Desktop: max-w-2xl landscape ── */}
+        <div className="w-full max-w-xs sm:max-w-2xl">
 
           {/* Ticket card */}
           <div
             className="ticket-card rounded-3xl overflow-hidden shadow-xl border"
             style={{ background: "white", borderColor: "var(--ig-gray2)" }}
           >
-            {/* Header */}
-            <div className="px-6 pt-6 pb-5 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
-              <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain mb-4" />
-              {info ? (
-                <>
-                  <h2 className="text-base font-bold leading-tight" style={{ color: "var(--ig-navy)" }}>{info.event.name}</h2>
-                  {eventDate && <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{eventDate}</p>}
-                  <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{info.event.location}</p>
-                </>
-              ) : (
-                <div className="space-y-1.5">
-                  <div className="h-5 w-48 rounded animate-pulse" style={{ background: "var(--ig-gray2)" }} />
-                  <div className="h-3 w-32 rounded animate-pulse" style={{ background: "var(--ig-gray2)" }} />
+            {/* ── DESKTOP: side by side ── */}
+            <div className="hidden sm:flex">
+
+              {/* Left: info */}
+              <div className="flex-1 flex flex-col px-8 pt-8 pb-8 border-r" style={{ borderColor: "var(--ig-gray2)" }}>
+                <img src="/logo.png" alt="Impact Gstaad" className="h-8 object-contain object-left mb-6" />
+
+                {info ? (
+                  <>
+                    <h2 className="text-xl font-bold leading-tight mb-2" style={{ color: "var(--ig-navy)" }}>{info.event.name}</h2>
+                    {eventDate && <p className="text-sm mb-1" style={{ color: "var(--ig-gray3)" }}>{eventDate}</p>}
+                    <p className="text-sm" style={{ color: "var(--ig-gray3)" }}>{info.event.location}</p>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="h-6 w-56 rounded animate-pulse" style={{ background: "var(--ig-gray2)" }} />
+                    <div className="h-4 w-40 rounded animate-pulse" style={{ background: "var(--ig-gray2)" }} />
+                  </div>
+                )}
+
+                {/* Gold divider */}
+                <div className="my-6 h-px" style={{ background: "var(--ig-gold)" }} />
+
+                {info && (
+                  <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>
+                    Ticket for
+                  </p>
+                )}
+                {info && (
+                  <p className="text-2xl font-bold" style={{ color: "var(--ig-navy)" }}>{info.name}</p>
+                )}
+
+                <div className="mt-auto pt-6">
+                  <p className="text-xs" style={{ color: "var(--ig-navy)" }}>Show this QR code at the entrance</p>
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Gold divider line */}
-            <div className="h-0.5 w-full" style={{ background: "var(--ig-gold)" }} />
-
-            {/* QR section */}
-            <div className="px-6 py-6">
-              {info && (
-                <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>
-                  Ticket for
+              {/* Right: QR */}
+              <div className="flex flex-col items-center justify-center px-8 py-8" style={{ minWidth: 240 }}>
+                {qrUrl ? (
+                  <img src={qrUrl} alt="QR Code" className="w-48 h-48 rounded-xl" />
+                ) : (
+                  <div className="w-48 h-48 rounded-xl animate-pulse" style={{ background: "var(--ig-light)" }} />
+                )}
+                <p className="text-xs mt-3 font-mono text-center" style={{ color: "var(--ig-gray3)" }}>
+                  {token?.substring(0, 8)}…
                 </p>
-              )}
-              {info && (
-                <p className="text-base font-semibold mb-4" style={{ color: "var(--ig-navy)" }}>{info.name}</p>
-              )}
-              {qrUrl ? (
-                <img src={qrUrl} alt="QR Code" className="w-full rounded-xl" />
-              ) : (
-                <div className="w-full aspect-square rounded-xl animate-pulse" style={{ background: "var(--ig-light)" }} />
-              )}
-              <p className="text-xs mt-3 font-mono text-center break-all" style={{ color: "var(--ig-gray3)" }}>
-                {token?.substring(0, 8)}…
-              </p>
+              </div>
             </div>
 
-            {/* Footer */}
-            <div className="px-6 pb-5 pt-1 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
-              <p className="text-xs text-center" style={{ color: "var(--ig-gray3)" }}>
-                Show this QR code at the entrance
-              </p>
+            {/* ── MOBILE: portrait stacked ── */}
+            <div className="sm:hidden">
+              {/* Header */}
+              <div className="px-6 pt-6 pb-5 border-b" style={{ borderColor: "var(--ig-gray2)" }}>
+                <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain mb-4" />
+                {info ? (
+                  <>
+                    <h2 className="text-base font-bold leading-tight" style={{ color: "var(--ig-navy)" }}>{info.event.name}</h2>
+                    {eventDate && <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{eventDate}</p>}
+                    <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{info.event.location}</p>
+                  </>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="h-5 w-48 rounded animate-pulse" style={{ background: "var(--ig-gray2)" }} />
+                    <div className="h-3 w-32 rounded animate-pulse" style={{ background: "var(--ig-gray2)" }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Gold divider */}
+              <div className="h-0.5 w-full" style={{ background: "var(--ig-gold)" }} />
+
+              {/* QR section */}
+              <div className="px-6 py-6">
+                {info && (
+                  <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>
+                    Ticket for
+                  </p>
+                )}
+                {info && (
+                  <p className="text-base font-semibold mb-4" style={{ color: "var(--ig-navy)" }}>{info.name}</p>
+                )}
+                {qrUrl ? (
+                  <img src={qrUrl} alt="QR Code" className="w-full rounded-xl" />
+                ) : (
+                  <div className="w-full aspect-square rounded-xl animate-pulse" style={{ background: "var(--ig-light)" }} />
+                )}
+                <p className="text-xs mt-3 font-mono text-center break-all" style={{ color: "var(--ig-gray3)" }}>
+                  {token?.substring(0, 8)}…
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 pb-5 pt-1 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
+                <p className="text-xs text-center" style={{ color: "var(--ig-navy)" }}>
+                  Show this QR code at the entrance
+                </p>
+              </div>
             </div>
           </div>
 
