@@ -531,7 +531,7 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className={`max-w-4xl mx-auto w-full py-6 flex-1 ${activeTab === "scanner" ? "px-0 sm:px-6" : "px-4 sm:px-6"}`}>
+      <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-3 gap-3 mb-6">
