@@ -135,7 +135,7 @@ export async function GET(
           'icon@2x.png': icon2x,
           'logo.png': logo,
           'logo@2x.png': logo2x,
-        },
+        } as unknown as Record<string, Buffer>,
         certificates: {
           wwdr,
           signerCert,
