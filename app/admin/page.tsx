@@ -728,7 +728,7 @@ export default function AdminPage() {
                   {guestSearch ? "Keine Treffer." : "Noch keine Anmeldungen."}
                 </div>
               ) : (
-                <div className="divide-y" style={{ borderColor: "var(--ig-gray2)" }}>
+                <div className="divide-y divide-[#D0DDEA]">
                   {filteredGuests.map(r => (
                     <div key={r.id}>
                       <button
