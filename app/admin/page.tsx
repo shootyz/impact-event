@@ -512,7 +512,6 @@ export default function AdminPage() {
           </div>
 
           <Card>
-            <div className="h-0.5" style={{ background: `linear-gradient(90deg, var(--ig-navy), var(--ig-gold))` }} />
             <div className="p-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="relative">
