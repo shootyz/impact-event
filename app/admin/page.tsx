@@ -784,7 +784,7 @@ export default function AdminPage() {
                       >
                         <div
                           className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ background: r.checked_in ? "var(--ig-gold)" : "var(--ig-gray2)" }}
+                          style={{ background: r.checked_in ? "#16a34a" : "var(--ig-gray2)" }}
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate" style={{ color: "var(--ig-black)" }}>{r.name}</p>
