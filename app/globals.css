@@ -14,6 +14,13 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Prevent iOS Safari auto-zoom on input focus (triggered when font-size < 16px) */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 body {
   background: var(--ig-light);
   color: var(--ig-black);
