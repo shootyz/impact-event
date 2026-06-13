@@ -196,7 +196,7 @@ export default function RegistrationPage() {
                       {label} <span style={{ color: "var(--ig-gold)" }}>*</span>
                     </label>
                     <input
-                      type="email"
+                      type="text"
                       value={value}
                       onChange={(e) => set(e.target.value)}
                       placeholder={placeholder}
