@@ -95,9 +95,6 @@ export default function TicketPage() {
                 ) : (
                   <div className="w-48 h-48 rounded-xl animate-pulse" style={{ background: "var(--ig-light)" }} />
                 )}
-                <p className="text-xs mt-3 font-mono text-center" style={{ color: "var(--ig-gray3)" }}>
-                  {token?.substring(0, 8)}…
-                </p>
               </div>
             </div>
 
