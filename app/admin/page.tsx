@@ -600,7 +600,7 @@ export default function AdminPage() {
 
         {/* ── Stats / Filter ── */}
         {activeTab === "list" && (
-          <div className="flex gap-2 mb-5 flex-wrap">
+          <div className="flex gap-2 mb-5 flex-wrap justify-center">
             {([
               { label: "Alle", value: registrations.length, filter: "all" as const },
               { label: "Eingecheckt", value: checkedInCount, filter: "checkedin" as const },
