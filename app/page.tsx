@@ -156,7 +156,7 @@ export default function RegistrationPage() {
               {event.description && (
                 <div className="px-6 pb-5 pt-0">
                   <div className="h-px mb-4" style={{ background: "var(--ig-gray2)" }} />
-                  <p className="text-sm" style={{ color: "var(--ig-gray3)" }}>{event.description}</p>
+                  <p className="text-sm" style={{ color: "var(--ig-navy)" }}>{event.description}</p>
                 </div>
               )}
             </div>
