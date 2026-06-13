@@ -78,7 +78,7 @@ export default function RegistrationPage() {
     : null;
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16" style={{ background: "var(--ig-light)" }}>
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 sm:px-6 py-16" style={{ background: "var(--ig-light)" }}>
       <div className="w-full sm:max-w-md">
 
         {/* Logo */}
