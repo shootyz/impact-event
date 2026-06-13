@@ -9,6 +9,11 @@
   --ig-gray3: #A7C4DE;
 }
 
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   background: var(--ig-light);
   color: var(--ig-black);
