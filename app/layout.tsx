@@ -20,7 +20,9 @@ export default function RootLayout({
   return (
     <html lang="de" className={`h-full ${inter.variable}`}>
       <body className="min-h-full flex flex-col" style={{ fontFamily: "var(--font-inter), -apple-system, sans-serif" }}>
-        {children}
+        <div style={{ width: "100%", maxWidth: "100vw", overflowX: "hidden", position: "relative" }}>
+          {children}
+        </div>
       </body>
     </html>
   );
