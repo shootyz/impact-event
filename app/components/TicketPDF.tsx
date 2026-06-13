@@ -59,7 +59,7 @@ const s = StyleSheet.create({
   sectionHeading: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: C.navy,
+    color: C.gold,
     letterSpacing: 1.5,
     textTransform: "uppercase",
     marginTop: 14,
@@ -70,6 +70,16 @@ const s = StyleSheet.create({
     color: C.black,
     lineHeight: 1.6,
     fontFamily: "Helvetica",
+  },
+  keyLabel: {
+    fontSize: 9.5,
+    fontFamily: "Helvetica-Bold",
+    color: C.black,
+  },
+  keyValue: {
+    fontSize: 9.5,
+    fontFamily: "Helvetica",
+    color: C.black,
   },
   timeLine: {
     fontSize: 9.5,
@@ -107,6 +117,7 @@ const s = StyleSheet.create({
 type ParsedLine =
   | { type: "heading"; text: string }
   | { type: "time"; time: string; label: string }
+  | { type: "keyvalue"; key: string; value: string }
   | { type: "body"; text: string }
   | { type: "empty" };
 
@@ -115,9 +126,10 @@ function parseDescription(raw: string): ParsedLine[] {
     const trimmed = line.trim();
     if (!trimmed) return { type: "empty" };
     if (trimmed.startsWith("## ")) return { type: "heading", text: trimmed.slice(3) };
-    // Match time patterns like "13:30 - 14:00  Some text" or "18:00  Some text"
-    const timeMatch = trimmed.match(/^(\d{1,2}:\d{2}(?:\s*[-–]\s*\d{1,2}:\d{2})?)\s{1,}(.+)$/);
+    const timeMatch = trimmed.match(/^(\d{1,2}:\d{2}(?:\s*[-–]\s*\d{1,2}:\d{2})?)\s{2,}(.+)$/);
     if (timeMatch) return { type: "time", time: timeMatch[1].trim(), label: timeMatch[2].trim() };
+    const kvMatch = trimmed.match(/^([A-Za-z][^:]{1,30}):\s+(.+)$/);
+    if (kvMatch) return { type: "keyvalue", key: kvMatch[1], value: kvMatch[2] };
     return { type: "body", text: trimmed };
   });
 }
@@ -129,6 +141,12 @@ function ProgramContent({ description }: { description: string }) {
       {lines.map((line, i) => {
         if (line.type === "empty") return <View key={i} style={s.emptyLine} />;
         if (line.type === "heading") return <Text key={i} style={s.sectionHeading}>{line.text}</Text>;
+        if (line.type === "keyvalue") return (
+          <Text key={i} style={s.bodyLine}>
+            <Text style={s.keyLabel}>{line.key}: </Text>
+            <Text style={s.keyValue}>{line.value}</Text>
+          </Text>
+        );
         if (line.type === "time") return (
           <View key={i} style={{ flexDirection: "row", marginBottom: 2 }}>
             <Text style={[s.timeCode, { width: 90, flexShrink: 0 }]}>{line.time}</Text>
