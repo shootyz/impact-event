@@ -142,7 +142,7 @@ export default function AdminPage() {
     e.preventDefault();
     setAuthError("");
     const res = await fetch("/api/registrations?password=" + encodeURIComponent(password));
-    if (res.status === 401) { setAuthError("Wrong password."); return; }
+    if (res.status === 401) { setAuthError("Falsches Passwort."); return; }
     savedPassword.current = password;
     sessionStorage.setItem("adminPw", password);
     setAuthenticated(true);
@@ -245,7 +245,7 @@ export default function AdminPage() {
       setScanning(true);
       rafRef.current = requestAnimationFrame(tick);
     } catch {
-      setScanResult({ status: "error", message: "Camera could not be started." });
+      setScanResult({ status: "error", message: "Kamera konnte nicht gestartet werden." });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick]);
@@ -255,7 +255,7 @@ export default function AdminPage() {
   const guestAction = async (id: string, action: "delete" | "checkin" | "uncheckin") => {
     const pw = savedPassword.current;
     if (action === "delete") {
-      if (!confirm("Delete this guest?")) return;
+      if (!confirm("Gast wirklich löschen?")) return;
       await fetch(`/api/guest/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -285,7 +285,7 @@ export default function AdminPage() {
     setSendQRStatus({
       id: reg.id,
       ok: res.ok,
-      msg: res.ok ? `QR sent to ${reg.email}` : data.error || "Error",
+      msg: res.ok ? `QR-Code gesendet an ${reg.email}` : data.error || "Fehler",
     });
     setTimeout(() => setSendQRStatus(null), 3000);
   };
@@ -304,7 +304,7 @@ export default function AdminPage() {
     if (!res.ok) {
       setManualStatus({ ok: false, msg: data.error });
     } else {
-      setManualStatus({ ok: true, msg: `${manualName} registered.` });
+      setManualStatus({ ok: true, msg: `${manualName} wurde registriert.` });
       setManualName("");
       setManualEmail("");
       loadRegistrations(savedPassword.current);
@@ -389,7 +389,7 @@ export default function AdminPage() {
     if (!res.ok) {
       setResendStatus({ ok: false, msg: data.error });
     } else {
-      setResendStatus({ ok: true, msg: `Code resent to ${data.name}.` });
+      setResendStatus({ ok: true, msg: `Code erneut gesendet an ${data.name}.` });
       setResendEmail("");
     }
   };
@@ -408,12 +408,12 @@ export default function AdminPage() {
     });
     setPwLoading(false);
     if (!res.ok) {
-      setPwStatus({ ok: false, msg: "Error saving." });
+      setPwStatus({ ok: false, msg: "Fehler beim Speichern." });
     } else {
       setCurrentEventPassword(eventPassword || null);
       setPwStatus({
         ok: true,
-        msg: eventPassword ? `Password set: "${eventPassword}"` : "Password protection removed.",
+        msg: eventPassword ? `Passwort gesetzt: "${eventPassword}"` : "Passwortschutz entfernt.",
       });
       setEventPassword("");
     }
@@ -436,7 +436,7 @@ export default function AdminPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Admin password"
+                  placeholder="Admin-Passwort"
                   required
                   className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
                 />
@@ -454,7 +454,7 @@ export default function AdminPage() {
               </div>
               {authError && <p className="text-sm text-red-600">{authError}</p>}
               <button type="submit" className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
-                Sign in
+                Anmelden
               </button>
             </form>
           </div>
@@ -468,13 +468,13 @@ export default function AdminPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">Admin</p>
-          <h1 className="text-xl font-bold text-gray-900">{event?.name || "No active event"}</h1>
+          <h1 className="text-xl font-bold text-gray-900">{event?.name || "Kein aktiver Event"}</h1>
         </div>
         <button
           onClick={() => loadRegistrations(savedPassword.current)}
           className="text-sm text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition"
         >
-          Refresh
+          Aktualisieren
         </button>
       </div>
 
@@ -482,15 +482,15 @@ export default function AdminPage() {
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
           <p className="text-2xl font-bold text-gray-900">{registrations.length}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Registered</p>
+          <p className="text-xs text-gray-400 mt-0.5">Angemeldet</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
           <p className="text-2xl font-bold text-green-600">{checkedInCount}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Checked in</p>
+          <p className="text-xs text-gray-400 mt-0.5">Eingecheckt</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
           <p className="text-2xl font-bold text-gray-400">{registrations.length - checkedInCount}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Pending</p>
+          <p className="text-xs text-gray-400 mt-0.5">Ausstehend</p>
         </div>
       </div>
 
@@ -504,7 +504,7 @@ export default function AdminPage() {
               activeTab === tab ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
             }`}
           >
-            {tab === "scanner" ? "Scanner" : tab === "list" ? "Guests" : tab === "tools" ? "Tools" : "Archive"}
+            {tab === "scanner" ? "Scanner" : tab === "list" ? "Gäste" : tab === "tools" ? "Tools" : "Archiv"}
           </button>
         ))}
       </div>
@@ -529,16 +529,16 @@ export default function AdminPage() {
                 <p className="text-white font-bold text-xl leading-tight">
                   {scanResult.status === "success" && scanResult.name}
                   {scanResult.status === "already_checked_in" && scanResult.name}
-                  {scanResult.status === "error" && (scanResult.message || "Invalid QR code")}
+                  {scanResult.status === "error" && (scanResult.message || "Ungültiger QR-Code")}
                 </p>
                 {scanResult.status === "already_checked_in" && (
-                  <p className="text-red-100 text-sm font-medium mt-1">Already checked in</p>
+                  <p className="text-red-100 text-sm font-medium mt-1">Bereits eingecheckt</p>
                 )}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full py-5">
                 <p className="text-gray-400 text-sm">
-                  {scanning ? "Hold QR code in front of camera…" : "Start camera to scan"}
+                  {scanning ? "QR-Code vor die Kamera halten…" : "Kamera starten um zu scannen"}
                 </p>
               </div>
             )}
@@ -553,16 +553,16 @@ export default function AdminPage() {
                 className={`w-full h-full object-cover rounded-xl ${scanning ? "block" : "hidden"}`}
               />
               <canvas ref={canvasRef} className="hidden" />
-              {!scanning && <p className="text-gray-400 text-sm">Camera inactive</p>}
+              {!scanning && <p className="text-gray-400 text-sm">Kamera nicht aktiv</p>}
             </div>
             <div className="mt-3">
               {!scanning ? (
                 <button onClick={startScanner} className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
-                  Start camera
+                  Kamera starten
                 </button>
               ) : (
                 <button onClick={stopScanner} className="w-full border border-gray-200 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 transition">
-                  Stop
+                  Stoppen
                 </button>
               )}
             </div>
@@ -579,7 +579,7 @@ export default function AdminPage() {
               onClick={() => { setManualForm((v) => !v); setManualStatus(null); }}
               className="w-full px-4 py-3 flex items-center justify-between text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
             >
-              <span>+ Add guest manually</span>
+              <span>+ Gast manuell erfassen</span>
               <span className="text-gray-400">{manualForm ? "↑" : "↓"}</span>
             </button>
             {manualForm && (
@@ -589,7 +589,7 @@ export default function AdminPage() {
                     type="text"
                     value={manualName}
                     onChange={(e) => setManualName(e.target.value)}
-                    placeholder="Full name"
+                    placeholder="Vollständiger Name"
                     required
                     className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                   />
@@ -597,7 +597,7 @@ export default function AdminPage() {
                     type="email"
                     value={manualEmail}
                     onChange={(e) => setManualEmail(e.target.value)}
-                    placeholder="Email address"
+                    placeholder="E-Mail-Adresse"
                     required
                     className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                   />
@@ -609,7 +609,7 @@ export default function AdminPage() {
                     disabled={manualLoading}
                     className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
                   >
-                    {manualLoading ? "Saving…" : "Save"}
+                    {manualLoading ? "Wird gespeichert…" : "Speichern"}
                   </button>
                 </form>
               </div>
@@ -619,9 +619,9 @@ export default function AdminPage() {
           {/* Guest list */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {loading ? (
-              <div className="p-8 text-center text-gray-400 text-sm">Loading…</div>
+              <div className="p-8 text-center text-gray-400 text-sm">Lädt…</div>
             ) : registrations.length === 0 ? (
-              <div className="p-8 text-center text-gray-400 text-sm">No registrations yet.</div>
+              <div className="p-8 text-center text-gray-400 text-sm">Noch keine Anmeldungen.</div>
             ) : (
               <div className="divide-y divide-gray-50">
                 {registrations.map((r) => (
@@ -647,14 +647,14 @@ export default function AdminPage() {
                               onClick={() => guestAction(r.id, "uncheckin")}
                               className="flex-1 py-2 rounded-lg border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-50 transition"
                             >
-                              ↩ Check out
+                              ↩ Auschecken
                             </button>
                           ) : (
                             <button
                               onClick={() => guestAction(r.id, "checkin")}
                               className="flex-1 py-2 rounded-lg border border-green-200 text-green-700 text-xs font-medium hover:bg-green-50 transition"
                             >
-                              ✓ Check in
+                              ✓ Einchecken
                             </button>
                           )}
                           <button
@@ -662,13 +662,13 @@ export default function AdminPage() {
                             disabled={sendingQR === r.id}
                             className="flex-1 py-2 rounded-lg border border-blue-200 text-blue-600 text-xs font-medium hover:bg-blue-50 transition disabled:opacity-40"
                           >
-                            {sendingQR === r.id ? "Sending…" : "📧 Send QR"}
+                            {sendingQR === r.id ? "Wird gesendet…" : "📧 QR senden"}
                           </button>
                           <button
                             onClick={() => guestAction(r.id, "delete")}
                             className="flex-1 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition"
                           >
-                            ✕ Delete
+                            ✕ Löschen
                           </button>
                         </div>
                         {sendQRStatus?.id === r.id && (
@@ -689,17 +689,17 @@ export default function AdminPage() {
       {/* Tools Tab */}
       {activeTab === "tools" && (
         <div className="space-y-4">
-          {/* Lock registration page */}
+          {/* Anmeldeseite sperren */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">Lock registration page</h2>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Anmeldeseite sperren</h2>
             <p className="text-xs text-gray-400 mb-3">
-              Members need this code to register. Leave empty = open.
+              Mitglieder brauchen diesen Code um sich anzumelden. Leer lassen = offen.
             </p>
             {currentEventPassword !== (undefined as unknown as null) && (
               <div className={`rounded-xl px-4 py-3 mb-4 ${currentEventPassword ? "bg-amber-50 border border-amber-100" : "bg-gray-50 border border-gray-100"}`}>
-                <p className="text-xs text-gray-400 mb-0.5">Current code</p>
+                <p className="text-xs text-gray-400 mb-0.5">Aktueller Code</p>
                 <p className={`text-sm font-semibold ${currentEventPassword ? "text-amber-800 font-mono tracking-wider" : "text-gray-400 italic"}`}>
-                  {currentEventPassword ?? "No protection active"}
+                  {currentEventPassword ?? "Kein Schutz aktiv"}
                 </p>
               </div>
             )}
@@ -708,7 +708,7 @@ export default function AdminPage() {
                 type="text"
                 value={eventPassword}
                 onChange={(e) => setEventPassword(e.target.value)}
-                placeholder="New invite code (empty = no protection)"
+                placeholder="Neuer Einladungscode (leer = kein Schutz)"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
               />
               {pwStatus && (
@@ -721,21 +721,21 @@ export default function AdminPage() {
                 disabled={pwLoading}
                 className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
               >
-                {pwLoading ? "Saving…" : "Save"}
+                {pwLoading ? "Speichert…" : "Speichern"}
               </button>
             </form>
           </div>
 
           {/* Resend QR by email */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">Resend QR code</h2>
-            <p className="text-xs text-gray-400 mb-4">For guests who lost their code.</p>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">QR-Code erneut senden</h2>
+            <p className="text-xs text-gray-400 mb-4">Für Gäste, die ihren Code verloren haben.</p>
             <form onSubmit={handleResend} className="space-y-3">
               <input
                 type="email"
                 value={resendEmail}
                 onChange={(e) => setResendEmail(e.target.value)}
-                placeholder="Guest's email address"
+                placeholder="E-Mail-Adresse des Gastes"
                 required
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
               />
@@ -749,14 +749,14 @@ export default function AdminPage() {
                 disabled={resendLoading}
                 className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
               >
-                {resendLoading ? "Sending…" : "Resend code"}
+                {resendLoading ? "Wird gesendet…" : "Code erneut senden"}
               </button>
             </form>
           </div>
 
           {/* CSV Import */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV Import</h2>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV-Import</h2>
             <p className="text-xs text-gray-400 mb-4">Columns: Name, Vorname, E-Mail</p>
             <div className="space-y-3">
               <div className="flex gap-2">
@@ -769,7 +769,7 @@ export default function AdminPage() {
                     className="hidden"
                   />
                   <div className="w-full px-4 py-3 rounded-xl border border-dashed border-gray-300 text-sm text-gray-500 text-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition">
-                    {csvFile ? csvFile.name : "Choose CSV file…"}
+                    {csvFile ? csvFile.name : "CSV-Datei auswählen…"}
                   </div>
                 </label>
                 <button
@@ -783,10 +783,10 @@ export default function AdminPage() {
               {csvResult && (
                 <div className="space-y-2">
                   <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 text-xs space-y-1">
-                    <p className="text-green-700 font-medium">✓ {csvResult.imported} guests imported</p>
+                    <p className="text-green-700 font-medium">✓ {csvResult.imported} Gäste importiert</p>
                     {csvResult.duplicates.length > 0 && (
                       <div>
-                        <p className="text-amber-600 font-medium">{csvResult.duplicates.length} duplicate(s) skipped:</p>
+                        <p className="text-amber-600 font-medium">{csvResult.duplicates.length} Duplikat(e) übersprungen:</p>
                         {csvResult.duplicates.map((d, i) => (
                           <p key={i} className="text-gray-400 pl-2">• {d}</p>
                         ))}
@@ -794,7 +794,7 @@ export default function AdminPage() {
                     )}
                     {csvResult.errors.length > 0 && (
                       <div>
-                        <p className="text-red-600 font-medium">{csvResult.errors.length} error(s):</p>
+                        <p className="text-red-600 font-medium">{csvResult.errors.length} Fehler:</p>
                         {csvResult.errors.map((e, i) => (
                           <p key={i} className="text-gray-400 pl-2">• {e}</p>
                         ))}
@@ -807,7 +807,7 @@ export default function AdminPage() {
                       disabled={csvSending}
                       className="w-full py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-40"
                     >
-                      {csvSending ? "Sending QR codes…" : `📧 Send QR codes to ${csvResult.imported} imported guests`}
+                      {csvSending ? "QR-Codes werden gesendet…" : `📧 QR-Codes senden an ${csvResult.imported} importierte Gäste`}
                     </button>
                   )}
                   {csvSendResult && (
@@ -822,13 +822,13 @@ export default function AdminPage() {
 
           {/* CSV Export */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV Export</h2>
-            <p className="text-xs text-gray-400 mb-4">Current event.</p>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV-Export</h2>
+            <p className="text-xs text-gray-400 mb-4">Aktueller Event.</p>
             <div className="space-y-2">
               {[
-                { type: "all", label: "All registered", count: registrations.length },
-                { type: "checkedin", label: "Checked in", count: checkedInCount },
-                { type: "noshows", label: "No-shows", count: registrations.length - checkedInCount },
+                { type: "all", label: "Alle Registrierten", count: registrations.length },
+                { type: "checkedin", label: "Eingecheckt", count: checkedInCount },
+                { type: "noshows", label: "No-Shows", count: registrations.length - checkedInCount },
               ].map(({ type, label, count }) => (
                 <a
                   key={type}
@@ -838,7 +838,7 @@ export default function AdminPage() {
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
                 >
                   <span>{label}</span>
-                  <span className="text-gray-400 text-xs">{count} people</span>
+                  <span className="text-gray-400 text-xs">{count} Personen</span>
                 </a>
               ))}
             </div>
@@ -850,10 +850,10 @@ export default function AdminPage() {
       {activeTab === "archiv" && (
         <div className="space-y-3">
           {archiveLoading ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">Loading…</div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">Lädt…</div>
           ) : archivedEvents.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">
-              No archived events yet.
+              Noch keine archivierten Events.
             </div>
           ) : (
             archivedEvents.map((ev) => (
@@ -862,7 +862,7 @@ export default function AdminPage() {
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{ev.name}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {new Date(ev.date).toLocaleDateString("en-GB", {
+                      {new Date(ev.date).toLocaleDateString("de-CH", {
                         day: "numeric", month: "long", year: "numeric",
                       })} · {ev.location}
                     </p>
@@ -874,9 +874,9 @@ export default function AdminPage() {
                 </div>
                 <div className="flex gap-2">
                   {[
-                    { type: "all", label: "All" },
-                    { type: "checkedin", label: "Checked in" },
-                    { type: "noshows", label: "No-shows" },
+                    { type: "all", label: "Alle" },
+                    { type: "checkedin", label: "Eingecheckt" },
+                    { type: "noshows", label: "No-Shows" },
                   ].map(({ type, label }) => (
                     <a
                       key={type}
