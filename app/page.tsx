@@ -85,11 +85,7 @@ export default function RegistrationPage() {
         <div className="text-center mb-10">
           <img src="/logo.png" alt="Impact Gstaad" className="h-12 mx-auto mb-8 object-contain" />
           {/* Gold divider */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="flex-1 h-px" style={{ background: "var(--ig-gray2)" }} />
-            <div className="w-8 h-0.5" style={{ background: "var(--ig-gold)" }} />
-            <div className="flex-1 h-px" style={{ background: "var(--ig-gray2)" }} />
-          </div>
+          <div className="h-px mb-8" style={{ background: "var(--ig-gray2)" }} />
           <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--ig-gold)" }}>
             Event Registration
           </p>
