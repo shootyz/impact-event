@@ -253,6 +253,14 @@ export default function AdminPage() {
     if (audioCtxRef.current) return;
     const ctx = new AudioContext();
     audioCtxRef.current = ctx;
+    // iOS requires resume() inside a user-gesture handler
+    if (ctx.state === "suspended") await ctx.resume();
+    // Play a silent buffer to fully unlock audio on iOS
+    const silent = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = silent;
+    src.connect(ctx.destination);
+    src.start();
     await Promise.all((["correct", "wrong"] as const).map(async (name) => {
       const res = await fetch(`/sounds/${name}.wav`);
       const buf = await res.arrayBuffer();
@@ -736,8 +744,9 @@ export default function AdminPage() {
                           <p className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>{r.email}</p>
                         </div>
                         {r.checked_in && (
-                          <span className="text-xs font-semibold tracking-wide px-2 py-0.5 rounded-full" style={{ background: "var(--ig-light)", color: "var(--ig-gold)" }}>
-                            In
+                          <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#dcfce7", color: "#16a34a" }}>
+                            <IconCheck className="w-3 h-3" />
+                            Eingecheckt
                           </span>
                         )}
                         <IconChevron down={expandedGuest !== r.id} className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--ig-gray3)" } } />

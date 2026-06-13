@@ -49,19 +49,19 @@ export default function TicketPage() {
             className="ticket-card rounded-3xl overflow-hidden shadow-xl border"
             style={{ background: "white", borderColor: "var(--ig-gray2)" }}
           >
-            {/* Navy header strip */}
-            <div className="px-6 pt-6 pb-5" style={{ background: "var(--ig-navy)" }}>
+            {/* Header */}
+            <div className="px-6 pt-6 pb-5 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
               <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain mb-4" />
               {info ? (
                 <>
-                  <h2 className="text-lg font-bold text-white leading-tight">{info.event.name}</h2>
+                  <h2 className="text-base font-bold leading-tight" style={{ color: "var(--ig-navy)" }}>{info.event.name}</h2>
                   {eventDate && <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{eventDate}</p>}
                   <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{info.event.location}</p>
                 </>
               ) : (
                 <div className="space-y-1.5">
-                  <div className="h-5 w-48 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.15)" }} />
-                  <div className="h-3 w-32 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.1)" }} />
+                  <div className="h-5 w-48 rounded animate-pulse" style={{ background: "var(--ig-gray2)" }} />
+                  <div className="h-3 w-32 rounded animate-pulse" style={{ background: "var(--ig-gray2)" }} />
                 </div>
               )}
             </div>
