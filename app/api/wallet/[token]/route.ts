@@ -147,7 +147,7 @@ export async function GET(
 
     const buf = pass.getAsBuffer()
 
-    return new NextResponse(buf, {
+    return new NextResponse(new Uint8Array(buf), {
       headers: {
         'Content-Type': 'application/vnd.apple.pkpass',
         'Content-Disposition': `attachment; filename="ticket-${token.substring(0, 8)}.pkpass"`,
