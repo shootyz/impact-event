@@ -222,6 +222,7 @@ export default function AdminPage() {
   const [archiveLoaded, setArchiveLoaded] = useState(false);
 
   const [guestSearch, setGuestSearch] = useState("");
+  const [guestFilter, setGuestFilter] = useState<"all" | "checkedin" | "pending">("all");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -487,11 +488,13 @@ export default function AdminPage() {
   };
 
   const checkedInCount = registrations.filter(r => r.checked_in).length;
-  const filteredGuests = registrations.filter(r =>
-    guestSearch === "" ||
-    r.name.toLowerCase().includes(guestSearch.toLowerCase()) ||
-    r.email.toLowerCase().includes(guestSearch.toLowerCase())
-  );
+  const filteredGuests = registrations.filter(r => {
+    if (guestFilter === "checkedin" && !r.checked_in) return false;
+    if (guestFilter === "pending" && r.checked_in) return false;
+    return guestSearch === "" ||
+      r.name.toLowerCase().includes(guestSearch.toLowerCase()) ||
+      r.email.toLowerCase().includes(guestSearch.toLowerCase());
+  });
 
   // ─── LOGIN ───────────────────────────────────────────────────────────────────
   if (!authenticated) {
@@ -598,18 +601,30 @@ export default function AdminPage() {
         {/* ── Stats ── */}
         {activeTab !== "scanner" && (
           <div className="grid grid-cols-3 gap-3 mb-6">
-            {[
-              { label: "Angemeldet", value: registrations.length, color: "var(--ig-navy)" },
-              { label: "Eingecheckt", value: checkedInCount, color: "var(--ig-gold)" },
-              { label: "Ausstehend", value: registrations.length - checkedInCount, color: "var(--ig-gray3)" },
-            ].map(({ label, value, color }) => (
-              <Card key={label}>
-                <div className="px-4 py-4 sm:py-5 text-center">
-                  <p className="text-2xl sm:text-3xl font-bold" style={{ color }}>{value}</p>
-                  <p className="text-xs font-medium tracking-wide mt-1" style={{ color: "var(--ig-gray3)" }}>{label}</p>
-                </div>
-              </Card>
-            ))}
+            {([
+              { label: "Angemeldet", value: registrations.length, color: "var(--ig-navy)", filter: "all" as const },
+              { label: "Eingecheckt", value: checkedInCount, color: "#16a34a", filter: "checkedin" as const },
+              { label: "Ausstehend", value: registrations.length - checkedInCount, color: "var(--ig-gray3)", filter: "pending" as const },
+            ]).map(({ label, value, color, filter }) => {
+              const active = guestFilter === filter;
+              return (
+                <button
+                  key={label}
+                  onClick={() => { setGuestFilter(active ? "all" : filter); if (activeTab !== "list") setActiveTab("list"); }}
+                  className="text-left w-full rounded-2xl border transition"
+                  style={{
+                    background: active ? "var(--ig-navy)" : "white",
+                    borderColor: active ? "var(--ig-navy)" : "var(--ig-gray2)",
+                    boxShadow: active ? "0 2px 8px rgba(30,50,99,0.15)" : "0 1px 3px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  <div className="px-4 py-4 sm:py-5 text-center">
+                    <p className="text-2xl sm:text-3xl font-bold" style={{ color: active ? "white" : color }}>{value}</p>
+                    <p className="text-xs font-medium tracking-wide mt-1" style={{ color: active ? "rgba(255,255,255,0.7)" : "var(--ig-gray3)" }}>{label}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
 
