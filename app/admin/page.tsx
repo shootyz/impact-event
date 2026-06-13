@@ -560,62 +560,109 @@ export default function AdminPage() {
 
         {/* ═══════════ SCANNER TAB ═══════════ */}
         {activeTab === "scanner" && (
-          <div className="space-y-4 max-w-sm mx-auto sm:max-w-none">
-            {/* Result banner */}
-            <div
-              className="rounded-2xl overflow-hidden transition-all duration-300"
-              style={{
-                background: scanResult
-                  ? scanResult.status === "success" ? "#16a34a"
-                  : "#dc2626"
-                  : "var(--ig-navy)",
-                minHeight: 96,
-              }}
-            >
-              {scanResult ? (
-                <div className="flex flex-col items-center justify-center py-7 px-4 text-center">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(255,255,255,0.2)" }}>
-                    {scanResult.status === "success"
-                      ? <IconCheck className="w-5 h-5 text-white" />
-                      : <IconX className="w-5 h-5 text-white" />}
-                  </div>
-                  <p className="text-white font-bold text-xl">{
-                    scanResult.status === "success" ? scanResult.name
-                    : scanResult.status === "already_checked_in" ? scanResult.name
-                    : (scanResult.message || "Ungültiger QR-Code")
-                  }</p>
-                  {scanResult.status === "already_checked_in" && (
-                    <p className="text-red-200 text-sm mt-1">Bereits eingecheckt</p>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-7 gap-2">
-                  <IconCamera className="w-6 h-6" style={{ color: "rgba(255,255,255,0.4)" } } />
-                  <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    {scanning ? "QR-Code vor die Kamera halten…" : "Kamera starten um zu scannen"}
-                  </p>
-                </div>
-              )}
-            </div>
+          <div className="max-w-sm mx-auto">
 
-            {/* Camera */}
-            <Card>
-              <div ref={scannerRef} className="bg-black overflow-hidden aspect-square">
+            {/* Camera card with viewfinder overlay */}
+            <div className="rounded-3xl overflow-hidden shadow-lg relative" style={{ background: "var(--ig-navy)" }}>
+
+              {/* Gold top accent */}
+              <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, var(--ig-navy), var(--ig-gold), var(--ig-navy))` }} />
+
+              {/* Camera area */}
+              <div ref={scannerRef} className="relative aspect-square overflow-hidden">
                 <video ref={videoRef} playsInline muted className={`w-full h-full object-cover ${scanning ? "block" : "hidden"}`} />
                 <canvas ref={canvasRef} className="hidden" />
+
+                {/* Idle state */}
                 {!scanning && (
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: "var(--ig-light)" }}>
-                    <p className="text-sm" style={{ color: "var(--ig-gray3)" }}>Kamera nicht aktiv</p>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3"
+                    style={{ background: "linear-gradient(160deg, #1a2a50 0%, var(--ig-navy) 100%)" }}>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                      style={{ background: "rgba(210,141,40,0.12)", border: "1px solid rgba(210,141,40,0.25)" }}>
+                      <IconCamera className="w-7 h-7" style={{ color: "var(--ig-gold)" }} />
+                    </div>
+                    <p className="text-xs tracking-[0.15em] uppercase font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
+                      Kamera nicht aktiv
+                    </p>
+                  </div>
+                )}
+
+                {/* Viewfinder corners — visible while scanning */}
+                {scanning && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute inset-8">
+                      {/* TL */}
+                      <div className="absolute top-0 left-0 w-7 h-7 border-t-2 border-l-2 rounded-tl-lg" style={{ borderColor: "var(--ig-gold)" }} />
+                      {/* TR */}
+                      <div className="absolute top-0 right-0 w-7 h-7 border-t-2 border-r-2 rounded-tr-lg" style={{ borderColor: "var(--ig-gold)" }} />
+                      {/* BL */}
+                      <div className="absolute bottom-0 left-0 w-7 h-7 border-b-2 border-l-2 rounded-bl-lg" style={{ borderColor: "var(--ig-gold)" }} />
+                      {/* BR */}
+                      <div className="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 rounded-br-lg" style={{ borderColor: "var(--ig-gold)" }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Scan result overlay */}
+                {scanResult && (
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center transition-all"
+                    style={{ background: scanResult.status === "success" ? "rgba(22,163,74,0.95)" : "rgba(220,38,38,0.95)" }}
+                  >
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                      style={{ background: "rgba(255,255,255,0.2)" }}>
+                      {scanResult.status === "success"
+                        ? <IconCheck className="w-7 h-7 text-white" />
+                        : <IconX className="w-7 h-7 text-white" />}
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-2xl leading-tight">
+                        {scanResult.status === "success" || scanResult.status === "already_checked_in"
+                          ? scanResult.name
+                          : (scanResult.message || "Ungültiger QR-Code")}
+                      </p>
+                      {scanResult.status === "already_checked_in" && (
+                        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>Bereits eingecheckt</p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
-              <div className="p-4">
-                {!scanning
-                  ? <BtnPrimary onClick={startScanner} className="w-full"><span className="flex items-center justify-center gap-2"><IconCamera className="w-4 h-4" />Kamera starten</span></BtnPrimary>
-                  : <BtnOutline onClick={stopScanner} className="w-full">Stoppen</BtnOutline>
-                }
+
+              {/* Bottom controls */}
+              <div className="px-5 py-4">
+                {!scanning ? (
+                  <button
+                    onClick={startScanner}
+                    className="w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
+                    style={{ background: "var(--ig-gold)", color: "white" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.85"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}
+                  >
+                    <IconCamera className="w-4 h-4" />
+                    Kamera starten
+                  </button>
+                ) : (
+                  <button
+                    onClick={stopScanner}
+                    className="w-full py-3 rounded-xl text-sm font-medium tracking-wide transition"
+                    style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.12)" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.15)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                  >
+                    Stoppen
+                  </button>
+                )}
               </div>
-            </Card>
+
+              {/* Gold bottom accent */}
+              <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, var(--ig-navy), var(--ig-gold), var(--ig-navy))` }} />
+            </div>
+
+            {/* Status line below card */}
+            <p className="text-center text-xs mt-4 tracking-wide" style={{ color: "var(--ig-gray3)" }}>
+              {scanning ? "QR-Code vor die Kamera halten" : "Tippe auf «Kamera starten» um zu scannen"}
+            </p>
           </div>
         )}
 
