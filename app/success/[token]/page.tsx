@@ -56,9 +56,9 @@ export default function SuccessPage() {
               <img src="/logo.png" alt="Impact Gstaad" className="h-8 object-contain object-left mb-6" />
               {info ? (
                 <>
-                  <h2 className="text-xl font-bold leading-tight mb-2" style={{ color: "var(--ig-navy)" }}>{info.event.name}</h2>
-                  {eventDate && <p className="text-sm mb-1" style={{ color: "var(--ig-gray3)" }}>{eventDate}</p>}
-                  <p className="text-sm" style={{ color: "var(--ig-gray3)" }}>{info.event.location}</p>
+                  <h2 className="text-2xl font-bold leading-tight mb-2" style={{ color: "var(--ig-navy)" }}>{info.event.name}</h2>
+                  {eventDate && <p className="text-sm mb-1" style={{ color: "var(--ig-navy)" }}>{eventDate}</p>}
+                  <p className="text-sm" style={{ color: "var(--ig-navy)" }}>{info.event.location}</p>
                 </>
               ) : (
                 <div className="space-y-2">
@@ -68,7 +68,7 @@ export default function SuccessPage() {
               )}
               <div className="my-6 h-px" style={{ background: "var(--ig-gold)" }} />
               {info && <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>Ticket for</p>}
-              {info && <p className="text-2xl font-bold" style={{ color: "var(--ig-navy)" }}>{info.name}</p>}
+              {info && <p className="text-lg font-bold tracking-widest uppercase" style={{ color: "var(--ig-gold)" }}>{info.name}</p>}
               <div className="mt-auto pt-6">
                 <p className="text-xs" style={{ color: "var(--ig-navy)" }}>Show this QR code at the entrance</p>
               </div>
@@ -89,9 +89,9 @@ export default function SuccessPage() {
               <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain mb-4" />
               {info ? (
                 <>
-                  <h2 className="text-base font-bold leading-tight" style={{ color: "var(--ig-navy)" }}>{info.event.name}</h2>
-                  {eventDate && <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{eventDate}</p>}
-                  <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{info.event.location}</p>
+                  <h2 className="text-lg font-bold leading-tight" style={{ color: "var(--ig-navy)" }}>{info.event.name}</h2>
+                  {eventDate && <p className="text-xs mt-1" style={{ color: "var(--ig-navy)" }}>{eventDate}</p>}
+                  <p className="text-xs" style={{ color: "var(--ig-navy)" }}>{info.event.location}</p>
                 </>
               ) : (
                 <div className="space-y-1.5">
@@ -103,7 +103,7 @@ export default function SuccessPage() {
             <div className="h-0.5 w-full" style={{ background: "var(--ig-gold)" }} />
             <div className="px-6 py-6">
               {info && <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>Ticket for</p>}
-              {info && <p className="text-base font-semibold mb-4" style={{ color: "var(--ig-navy)" }}>{info.name}</p>}
+              {info && <p className="text-base font-bold tracking-widest uppercase mb-4" style={{ color: "var(--ig-gold)" }}>{info.name}</p>}
               {qrUrl ? (
                 <img src={qrUrl} alt="QR Code" className="w-full rounded-xl" />
               ) : (
