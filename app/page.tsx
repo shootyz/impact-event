@@ -230,7 +230,7 @@ export default function RegistrationPage() {
             </div>
 
             <p className="text-center text-xs tracking-wide" style={{ color: "var(--ig-navy)" }}>
-              You will receive your QR code by email.
+              You will receive your ticket by email.
             </p>
           </div>
         )}
