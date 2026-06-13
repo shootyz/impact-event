@@ -297,8 +297,9 @@ export default function AdminPage() {
     src.buffer = silent;
     src.connect(ctx.destination);
     src.start();
+    const soundFiles: Record<string, string> = { correct: "/sounds/correct.mp3", wrong: "/sounds/wrong.wav" };
     await Promise.all((["correct", "wrong"] as const).map(async (name) => {
-      const res = await fetch(`/sounds/${name}.wav`);
+      const res = await fetch(soundFiles[name]);
       const buf = await res.arrayBuffer();
       soundBuffers.current[name] = await ctx.decodeAudioData(buf);
     }));
