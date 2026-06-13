@@ -154,9 +154,9 @@ export default function TicketPage() {
             href={`/api/ticket/${token}/pdf`}
             download
             className="no-print mt-5 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
-            style={{ background: "var(--ig-navy)", color: "white", border: "1px solid var(--ig-navy)", textDecoration: "none" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
+            style={{ background: "var(--ig-gold)", color: "white", border: "1px solid var(--ig-gold)", textDecoration: "none" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#B8791F"; (e.currentTarget as HTMLElement).style.borderColor = "#B8791F"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />

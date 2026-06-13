@@ -126,9 +126,9 @@ export default function RegistrationPage() {
                 type="submit"
                 disabled={gateLoading}
                 className="w-full py-3.5 rounded-xl font-semibold text-sm text-white tracking-wide transition disabled:opacity-40"
-                style={{ background: "var(--ig-navy)" }}
-                onMouseEnter={e => !gateLoading && (e.currentTarget.style.background = "var(--ig-gold)")}
-                onMouseLeave={e => e.currentTarget.style.background = "var(--ig-navy)"}
+                style={{ background: "var(--ig-gold)" }}
+                onMouseEnter={e => !gateLoading && (e.currentTarget.style.background = "#B8791F")}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--ig-gold)"}
               >
                 {gateLoading ? "Checking…" : "Continue"}
               </button>
@@ -220,9 +220,9 @@ export default function RegistrationPage() {
                   type="submit"
                   disabled={loading}
                   className="w-full py-4 rounded-xl font-semibold text-sm text-white tracking-widest uppercase transition disabled:opacity-40"
-                  style={{ background: "var(--ig-navy)", marginTop: "8px" }}
-                  onMouseEnter={e => !loading && (e.currentTarget.style.background = "var(--ig-gold)")}
-                  onMouseLeave={e => e.currentTarget.style.background = "var(--ig-navy)"}
+                  style={{ background: "var(--ig-gold)", marginTop: "8px" }}
+                  onMouseEnter={e => !loading && (e.currentTarget.style.background = "#B8791F")}
+                  onMouseLeave={e => e.currentTarget.style.background = "var(--ig-gold)"}
                 >
                   {loading ? "Registering…" : "Register Now"}
                 </button>

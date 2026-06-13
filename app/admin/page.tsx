@@ -88,7 +88,7 @@ function BtnPrimary({ children, onClick, disabled, type = "button", className = 
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       className={`py-3 rounded-xl font-semibold text-sm text-white tracking-widest uppercase transition disabled:opacity-40 ${className}`}
-      style={{ background: hover && !disabled ? "var(--ig-gold)" : "var(--ig-navy)" }}
+      style={{ background: hover && !disabled ? "#B8791F" : "var(--ig-gold)" }}
     >
       {children}
     </button>
@@ -698,9 +698,9 @@ export default function AdminPage() {
                   <button
                     onClick={startScanner}
                     className="w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition text-white"
-                    style={{ background: "var(--ig-navy)" }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"}
+                    style={{ background: "var(--ig-gold)" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#B8791F"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"}
                   >
                     <IconCamera className="w-4 h-4" />
                     Kamera starten
