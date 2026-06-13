@@ -42,7 +42,7 @@ export default function SuccessPage() {
             Registration confirmed
           </p>
           <p className="text-sm" style={{ color: "var(--ig-navy)" }}>
-            Your QR code has been sent by email.
+            Your ticket has been sent by email.
           </p>
         </div>
 
