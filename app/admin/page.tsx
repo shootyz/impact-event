@@ -598,30 +598,34 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* ── Stats ── */}
+        {/* ── Stats / Filter ── */}
         {activeTab === "list" && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="flex gap-2 mb-5 flex-wrap">
             {([
-              { label: "Angemeldet", value: registrations.length, color: "var(--ig-navy)", filter: "all" as const },
-              { label: "Eingecheckt", value: checkedInCount, color: "#16a34a", filter: "checkedin" as const },
-              { label: "Ausstehend", value: registrations.length - checkedInCount, color: "var(--ig-gray3)", filter: "pending" as const },
-            ]).map(({ label, value, color, filter }) => {
+              { label: "Alle", value: registrations.length, filter: "all" as const },
+              { label: "Eingecheckt", value: checkedInCount, filter: "checkedin" as const },
+              { label: "Ausstehend", value: registrations.length - checkedInCount, filter: "pending" as const },
+            ]).map(({ label, value, filter }) => {
               const active = guestFilter === filter;
               return (
                 <button
                   key={label}
-                  onClick={() => { setGuestFilter(active ? "all" : filter); if (activeTab !== "list") setActiveTab("list"); }}
-                  className="text-left w-full rounded-2xl border transition"
+                  onClick={() => { setGuestFilter(active && filter !== "all" ? "all" : filter); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition border"
                   style={{
                     background: active ? "var(--ig-navy)" : "white",
+                    color: active ? "white" : "var(--ig-navy)",
                     borderColor: active ? "var(--ig-navy)" : "var(--ig-gray2)",
-                    boxShadow: active ? "0 2px 8px rgba(30,50,99,0.15)" : "0 1px 3px rgba(0,0,0,0.04)",
                   }}
                 >
-                  <div className="px-4 py-4 sm:py-5 text-center">
-                    <p className="text-2xl sm:text-3xl font-bold" style={{ color: active ? "white" : color }}>{value}</p>
-                    <p className="text-xs font-medium tracking-wide mt-1" style={{ color: active ? "rgba(255,255,255,0.7)" : "var(--ig-gray3)" }}>{label}</p>
-                  </div>
+                  {label}
+                  <span
+                    className="rounded-full px-1.5 py-0.5 text-xs font-bold"
+                    style={{
+                      background: active ? "rgba(255,255,255,0.2)" : "var(--ig-light)",
+                      color: active ? "white" : "var(--ig-navy)",
+                    }}
+                  >{value}</span>
                 </button>
               );
             })}
@@ -797,10 +801,6 @@ export default function AdminPage() {
                         onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"}
                         onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}
                       >
-                        <div
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ background: r.checked_in ? "#16a34a" : "var(--ig-gray2)" }}
-                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate" style={{ color: "var(--ig-black)" }}>{r.name}</p>
                           <p className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>{r.email}</p>
