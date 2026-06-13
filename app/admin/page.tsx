@@ -190,7 +190,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv">("scanner");
+  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv">("list");
 
   const [dialog, setDialog] = useState<{ title: string; message: string; danger?: boolean; onConfirm: () => void } | null>(null);
   const showConfirm = (title: string, message: string, danger: boolean, onConfirm: () => void) =>
