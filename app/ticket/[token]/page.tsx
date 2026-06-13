@@ -7,11 +7,15 @@ import QRCode from "qrcode";
 export default function TicketPage() {
   const { token } = useParams<{ token: string }>();
   const [qrUrl, setQrUrl] = useState("");
+  const [walletEnabled, setWalletEnabled] = useState(false);
 
   useEffect(() => {
     if (token) {
       const ticketUrl = `${window.location.origin}/ticket/${token}`;
       QRCode.toDataURL(ticketUrl, { width: 280, margin: 2 }).then(setQrUrl);
+      fetch(`/api/wallet/${token}`, { method: "HEAD" }).then((r) => {
+        setWalletEnabled(r.status !== 503);
+      }).catch(() => {});
     }
   }, [token]);
 
@@ -26,7 +30,7 @@ export default function TicketPage() {
           {qrUrl ? (
             <img
               src={qrUrl}
-              alt="QR-Code"
+              alt="QR Code"
               className="w-full rounded-xl"
             />
           ) : (
@@ -37,9 +41,21 @@ export default function TicketPage() {
           </div>
         </div>
 
-        <p className="text-xs text-gray-500 mt-6">
-          Zeige diesen QR-Code am Eingang vor.
+        <p className="text-xs text-gray-500 mt-6 mb-4">
+          Show this QR code at the entrance.
         </p>
+
+        {walletEnabled && (
+          <a
+            href={`/api/wallet/${token}`}
+            className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-white text-gray-900 text-sm font-semibold hover:bg-gray-100 transition"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>
+            </svg>
+            Add to Apple Wallet
+          </a>
+        )}
       </div>
     </main>
   );

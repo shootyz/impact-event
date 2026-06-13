@@ -34,6 +34,12 @@ type ScanResult = {
   message?: string;
 };
 
+type ImportResult = {
+  imported: number;
+  duplicates: string[];
+  errors: string[];
+} | null;
+
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -53,6 +59,17 @@ export default function AdminPage() {
   const [manualEmail, setManualEmail] = useState("");
   const [manualStatus, setManualStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [manualLoading, setManualLoading] = useState(false);
+  const [sendingQR, setSendingQR] = useState<string | null>(null);
+  const [sendQRStatus, setSendQRStatus] = useState<{ id: string; ok: boolean; msg: string } | null>(null);
+
+  // CSV import
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvImporting, setCsvImporting] = useState(false);
+  const [csvResult, setCsvResult] = useState<ImportResult>(null);
+  const [csvSending, setCsvSending] = useState(false);
+  const [csvSendResult, setCsvSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [lastImportedEmails, setLastImportedEmails] = useState<string[]>([]);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   // Tools state
   const [resendEmail, setResendEmail] = useState("");
@@ -102,7 +119,6 @@ export default function AdminPage() {
     if (activeTab === "archiv") loadArchive();
   }, [activeTab, loadArchive]);
 
-  // Auto-login from sessionStorage on page reload
   useEffect(() => {
     const stored = sessionStorage.getItem("adminPw");
     if (!stored) return;
@@ -120,7 +136,7 @@ export default function AdminPage() {
     e.preventDefault();
     setAuthError("");
     const res = await fetch("/api/registrations?password=" + encodeURIComponent(password));
-    if (res.status === 401) { setAuthError("Falsches Passwort."); return; }
+    if (res.status === 401) { setAuthError("Wrong password."); return; }
     savedPassword.current = password;
     sessionStorage.setItem("adminPw", password);
     setAuthenticated(true);
@@ -223,7 +239,7 @@ export default function AdminPage() {
       setScanning(true);
       rafRef.current = requestAnimationFrame(tick);
     } catch {
-      setScanResult({ status: "error", message: "Kamera konnte nicht gestartet werden." });
+      setScanResult({ status: "error", message: "Camera could not be started." });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick]);
@@ -233,7 +249,7 @@ export default function AdminPage() {
   const guestAction = async (id: string, action: "delete" | "checkin" | "uncheckin") => {
     const pw = savedPassword.current;
     if (action === "delete") {
-      if (!confirm("Gast wirklich löschen?")) return;
+      if (!confirm("Delete this guest?")) return;
       await fetch(`/api/guest/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -250,6 +266,24 @@ export default function AdminPage() {
     loadRegistrations(pw);
   };
 
+  const sendQRToGuest = async (reg: Registration) => {
+    setSendingQR(reg.id);
+    setSendQRStatus(null);
+    const res = await fetch("/api/resend-ticket", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: reg.email, adminPassword: savedPassword.current }),
+    });
+    const data = await res.json();
+    setSendingQR(null);
+    setSendQRStatus({
+      id: reg.id,
+      ok: res.ok,
+      msg: res.ok ? `QR sent to ${reg.email}` : data.error || "Error",
+    });
+    setTimeout(() => setSendQRStatus(null), 3000);
+  };
+
   const handleManualRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setManualStatus(null);
@@ -264,11 +298,75 @@ export default function AdminPage() {
     if (!res.ok) {
       setManualStatus({ ok: false, msg: data.error });
     } else {
-      setManualStatus({ ok: true, msg: `${manualName} wurde registriert.` });
+      setManualStatus({ ok: true, msg: `${manualName} registered.` });
       setManualName("");
       setManualEmail("");
       loadRegistrations(savedPassword.current);
     }
+  };
+
+  const handleCSVImport = async () => {
+    if (!csvFile) return;
+    setCsvImporting(true);
+    setCsvResult(null);
+    setCsvSendResult(null);
+    setLastImportedEmails([]);
+
+    const fd = new FormData();
+    fd.append("adminPassword", savedPassword.current);
+    fd.append("file", csvFile);
+
+    const res = await fetch("/api/admin/import", { method: "POST", body: fd });
+    const data = await res.json();
+    setCsvImporting(false);
+
+    if (!res.ok) {
+      setCsvResult({ imported: 0, duplicates: [], errors: [data.error] });
+    } else {
+      setCsvResult(data);
+      if (data.imported > 0) {
+        loadRegistrations(savedPassword.current);
+        // Store the imported emails for "Send QR" button
+        // We'll re-fetch them from the registrations list
+        setLastImportedEmails([]);
+      }
+    }
+    if (csvInputRef.current) csvInputRef.current.value = "";
+    setCsvFile(null);
+  };
+
+  const handleSendQRToImported = async () => {
+    if (!csvResult || csvResult.imported === 0) return;
+    setCsvSending(true);
+    setCsvSendResult(null);
+
+    // Get the most recently registered guests (by created_at desc, limit imported count)
+    const res = await fetch(`/api/registrations?password=${encodeURIComponent(savedPassword.current)}`);
+    const data = await res.json();
+    const allRegs: Registration[] = data.registrations || [];
+
+    // Sort by created_at desc and take the last N imported
+    const sorted = [...allRegs].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    const toSend = sorted.slice(0, csvResult.imported);
+
+    let sent = 0;
+    let failed = 0;
+    for (const r of toSend) {
+      const resp = await fetch("/api/resend-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: r.email, adminPassword: savedPassword.current }),
+      });
+      if (resp.ok) sent++; else failed++;
+    }
+
+    setCsvSending(false);
+    setCsvSendResult({
+      ok: failed === 0,
+      msg: `${sent} QR codes sent${failed > 0 ? `, ${failed} failed` : ""}.`,
+    });
   };
 
   const handleResend = async (e: React.FormEvent) => {
@@ -285,7 +383,7 @@ export default function AdminPage() {
     if (!res.ok) {
       setResendStatus({ ok: false, msg: data.error });
     } else {
-      setResendStatus({ ok: true, msg: `Code erneut gesendet an ${data.name}.` });
+      setResendStatus({ ok: true, msg: `Code resent to ${data.name}.` });
       setResendEmail("");
     }
   };
@@ -304,18 +402,15 @@ export default function AdminPage() {
     });
     setPwLoading(false);
     if (!res.ok) {
-      setPwStatus({ ok: false, msg: "Fehler beim Speichern." });
+      setPwStatus({ ok: false, msg: "Error saving." });
     } else {
       setPwStatus({
         ok: true,
-        msg: eventPassword ? `Passwort gesetzt: „${eventPassword}"` : "Passwortschutz entfernt.",
+        msg: eventPassword ? `Password set: "${eventPassword}"` : "Password protection removed.",
       });
       setEventPassword("");
     }
   };
-
-  const exportUrl = (eventId: string, type: string) =>
-    `/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}&eventId=${eventId}`;
 
   const checkedInCount = registrations.filter((r) => r.checked_in).length;
 
@@ -334,7 +429,7 @@ export default function AdminPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Admin-Passwort"
+                  placeholder="Admin password"
                   required
                   className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
                 />
@@ -352,7 +447,7 @@ export default function AdminPage() {
               </div>
               {authError && <p className="text-sm text-red-600">{authError}</p>}
               <button type="submit" className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
-                Anmelden
+                Sign in
               </button>
             </form>
           </div>
@@ -366,13 +461,13 @@ export default function AdminPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">Admin</p>
-          <h1 className="text-xl font-bold text-gray-900">{event?.name || "Kein aktiver Event"}</h1>
+          <h1 className="text-xl font-bold text-gray-900">{event?.name || "No active event"}</h1>
         </div>
         <button
           onClick={() => loadRegistrations(savedPassword.current)}
           className="text-sm text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition"
         >
-          Aktualisieren
+          Refresh
         </button>
       </div>
 
@@ -380,15 +475,15 @@ export default function AdminPage() {
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
           <p className="text-2xl font-bold text-gray-900">{registrations.length}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Angemeldet</p>
+          <p className="text-xs text-gray-400 mt-0.5">Registered</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
           <p className="text-2xl font-bold text-green-600">{checkedInCount}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Eingecheckt</p>
+          <p className="text-xs text-gray-400 mt-0.5">Checked in</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
           <p className="text-2xl font-bold text-gray-400">{registrations.length - checkedInCount}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Ausstehend</p>
+          <p className="text-xs text-gray-400 mt-0.5">Pending</p>
         </div>
       </div>
 
@@ -402,7 +497,7 @@ export default function AdminPage() {
               activeTab === tab ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
             }`}
           >
-            {tab === "scanner" ? "Scanner" : tab === "list" ? "Gäste" : tab === "tools" ? "Tools" : "Archiv"}
+            {tab === "scanner" ? "Scanner" : tab === "list" ? "Guests" : tab === "tools" ? "Tools" : "Archive"}
           </button>
         ))}
       </div>
@@ -410,13 +505,10 @@ export default function AdminPage() {
       {/* Scanner Tab */}
       {activeTab === "scanner" && (
         <div className="space-y-3">
-          {/* Ergebnis-Banner — dominant, sofort sichtbar */}
           <div className={`rounded-2xl transition-all duration-200 overflow-hidden ${
             scanResult
               ? scanResult.status === "success"
                 ? "bg-green-500"
-                : scanResult.status === "already_checked_in"
-                ? "bg-red-500"
                 : "bg-red-500"
               : "bg-gray-100"
           }`}
@@ -430,22 +522,21 @@ export default function AdminPage() {
                 <p className="text-white font-bold text-xl leading-tight">
                   {scanResult.status === "success" && scanResult.name}
                   {scanResult.status === "already_checked_in" && scanResult.name}
-                  {scanResult.status === "error" && (scanResult.message || "Ungültiger QR-Code")}
+                  {scanResult.status === "error" && (scanResult.message || "Invalid QR code")}
                 </p>
                 {scanResult.status === "already_checked_in" && (
-                  <p className="text-red-100 text-sm font-medium mt-1">Bereits eingecheckt</p>
+                  <p className="text-red-100 text-sm font-medium mt-1">Already checked in</p>
                 )}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full py-5">
                 <p className="text-gray-400 text-sm">
-                  {scanning ? "QR-Code vor die Kamera halten…" : "Kamera starten um zu scannen"}
+                  {scanning ? "Hold QR code in front of camera…" : "Start camera to scan"}
                 </p>
               </div>
             )}
           </div>
 
-          {/* Kleines Kamerabild */}
           <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm">
             <div ref={scannerRef} className="rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center aspect-square">
               <video
@@ -455,16 +546,16 @@ export default function AdminPage() {
                 className={`w-full h-full object-cover rounded-xl ${scanning ? "block" : "hidden"}`}
               />
               <canvas ref={canvasRef} className="hidden" />
-              {!scanning && <p className="text-gray-400 text-sm">Kamera noch nicht aktiv</p>}
+              {!scanning && <p className="text-gray-400 text-sm">Camera inactive</p>}
             </div>
             <div className="mt-3">
               {!scanning ? (
                 <button onClick={startScanner} className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
-                  Kamera starten
+                  Start camera
                 </button>
               ) : (
                 <button onClick={stopScanner} className="w-full border border-gray-200 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 transition">
-                  Stoppen
+                  Stop
                 </button>
               )}
             </div>
@@ -472,16 +563,16 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* List Tab */}
+      {/* Guests Tab */}
       {activeTab === "list" && (
         <div className="space-y-3">
-          {/* Manuell hinzufügen */}
+          {/* Manual add */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <button
               onClick={() => { setManualForm((v) => !v); setManualStatus(null); }}
               className="w-full px-4 py-3 flex items-center justify-between text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
             >
-              <span>+ Gast manuell erfassen</span>
+              <span>+ Add guest manually</span>
               <span className="text-gray-400">{manualForm ? "↑" : "↓"}</span>
             </button>
             {manualForm && (
@@ -491,7 +582,7 @@ export default function AdminPage() {
                     type="text"
                     value={manualName}
                     onChange={(e) => setManualName(e.target.value)}
-                    placeholder="Name"
+                    placeholder="Full name"
                     required
                     className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                   />
@@ -499,7 +590,7 @@ export default function AdminPage() {
                     type="email"
                     value={manualEmail}
                     onChange={(e) => setManualEmail(e.target.value)}
-                    placeholder="E-Mail"
+                    placeholder="Email address"
                     required
                     className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                   />
@@ -511,19 +602,88 @@ export default function AdminPage() {
                     disabled={manualLoading}
                     className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
                   >
-                    {manualLoading ? "Wird gespeichert…" : "Speichern"}
+                    {manualLoading ? "Saving…" : "Save"}
                   </button>
                 </form>
               </div>
             )}
           </div>
 
-          {/* Gästeliste */}
+          {/* CSV Import */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-50">
+              <p className="text-sm font-medium text-gray-700">CSV import</p>
+              <p className="text-xs text-gray-400 mt-0.5">Columns: Name, Vorname, E-Mail</p>
+            </div>
+            <div className="px-4 py-3 space-y-3">
+              <div className="flex gap-2">
+                <label className="flex-1">
+                  <input
+                    ref={csvInputRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={(e) => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
+                    className="hidden"
+                  />
+                  <div className="w-full px-3 py-2.5 rounded-xl border border-dashed border-gray-300 text-xs text-gray-500 text-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition">
+                    {csvFile ? csvFile.name : "Choose CSV file…"}
+                  </div>
+                </label>
+                <button
+                  onClick={handleCSVImport}
+                  disabled={!csvFile || csvImporting}
+                  className="px-4 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-semibold hover:bg-gray-700 transition disabled:opacity-40"
+                >
+                  {csvImporting ? "Importing…" : "Import"}
+                </button>
+              </div>
+
+              {csvResult && (
+                <div className="space-y-2">
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 px-3 py-2.5 text-xs space-y-1">
+                    <p className="text-green-700 font-medium">✓ {csvResult.imported} guests imported</p>
+                    {csvResult.duplicates.length > 0 && (
+                      <div>
+                        <p className="text-amber-600 font-medium">{csvResult.duplicates.length} duplicate(s) skipped:</p>
+                        {csvResult.duplicates.map((d, i) => (
+                          <p key={i} className="text-gray-400 pl-2">• {d}</p>
+                        ))}
+                      </div>
+                    )}
+                    {csvResult.errors.length > 0 && (
+                      <div>
+                        <p className="text-red-600 font-medium">{csvResult.errors.length} error(s):</p>
+                        {csvResult.errors.map((e, i) => (
+                          <p key={i} className="text-gray-400 pl-2">• {e}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {csvResult.imported > 0 && (
+                    <button
+                      onClick={handleSendQRToImported}
+                      disabled={csvSending}
+                      className="w-full py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-40"
+                    >
+                      {csvSending ? "Sending QR codes…" : `📧 Send QR codes to ${csvResult.imported} imported guests`}
+                    </button>
+                  )}
+                  {csvSendResult && (
+                    <p className={`text-xs ${csvSendResult.ok ? "text-green-600" : "text-amber-600"}`}>
+                      {csvSendResult.msg}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Guest list */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {loading ? (
-              <div className="p-8 text-center text-gray-400 text-sm">Lädt…</div>
+              <div className="p-8 text-center text-gray-400 text-sm">Loading…</div>
             ) : registrations.length === 0 ? (
-              <div className="p-8 text-center text-gray-400 text-sm">Noch keine Anmeldungen.</div>
+              <div className="p-8 text-center text-gray-400 text-sm">No registrations yet.</div>
             ) : (
               <div className="divide-y divide-gray-50">
                 {registrations.map((r) => (
@@ -542,28 +702,42 @@ export default function AdminPage() {
                       </span>
                     </button>
                     {expandedGuest === r.id && (
-                      <div className="px-4 pb-3 flex gap-2 flex-wrap border-t border-gray-50 pt-2">
-                        {r.checked_in ? (
+                      <div className="px-4 pb-3 space-y-2 border-t border-gray-50 pt-2">
+                        <div className="flex gap-2 flex-wrap">
+                          {r.checked_in ? (
+                            <button
+                              onClick={() => guestAction(r.id, "uncheckin")}
+                              className="flex-1 py-2 rounded-lg border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-50 transition"
+                            >
+                              ↩ Uncheck
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => guestAction(r.id, "checkin")}
+                              className="flex-1 py-2 rounded-lg border border-green-200 text-green-700 text-xs font-medium hover:bg-green-50 transition"
+                            >
+                              ✓ Check in
+                            </button>
+                          )}
                           <button
-                            onClick={() => guestAction(r.id, "uncheckin")}
-                            className="flex-1 py-2 rounded-lg border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-50 transition"
+                            onClick={() => sendQRToGuest(r)}
+                            disabled={sendingQR === r.id}
+                            className="flex-1 py-2 rounded-lg border border-blue-200 text-blue-600 text-xs font-medium hover:bg-blue-50 transition disabled:opacity-40"
                           >
-                            ↩ Entchecken
+                            {sendingQR === r.id ? "Sending…" : "📧 Send QR"}
                           </button>
-                        ) : (
                           <button
-                            onClick={() => guestAction(r.id, "checkin")}
-                            className="flex-1 py-2 rounded-lg border border-green-200 text-green-700 text-xs font-medium hover:bg-green-50 transition"
+                            onClick={() => guestAction(r.id, "delete")}
+                            className="flex-1 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition"
                           >
-                            ✓ Einchecken
+                            ✕ Delete
                           </button>
+                        </div>
+                        {sendQRStatus?.id === r.id && (
+                          <p className={`text-xs ${sendQRStatus.ok ? "text-green-600" : "text-red-600"}`}>
+                            {sendQRStatus.msg}
+                          </p>
                         )}
-                        <button
-                          onClick={() => guestAction(r.id, "delete")}
-                          className="flex-1 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition"
-                        >
-                          ✕ Löschen
-                        </button>
                       </div>
                     )}
                   </div>
@@ -577,18 +751,18 @@ export default function AdminPage() {
       {/* Tools Tab */}
       {activeTab === "tools" && (
         <div className="space-y-4">
-          {/* Event-Passwort setzen */}
+          {/* Lock registration page */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">Anmeldeseite sperren</h2>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Lock registration page</h2>
             <p className="text-xs text-gray-400 mb-4">
-              Mitglieder brauchen diesen Code um sich anzumelden. Leer lassen = offen.
+              Members need this code to register. Leave empty = open.
             </p>
             <form onSubmit={handleSetPassword} className="space-y-3">
               <input
                 type="text"
                 value={eventPassword}
                 onChange={(e) => setEventPassword(e.target.value)}
-                placeholder="Neuer Einladungscode (leer = kein Schutz)"
+                placeholder="New invite code (empty = no protection)"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
               />
               {pwStatus && (
@@ -601,21 +775,21 @@ export default function AdminPage() {
                 disabled={pwLoading}
                 className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
               >
-                {pwLoading ? "Speichert…" : "Speichern"}
+                {pwLoading ? "Saving…" : "Save"}
               </button>
             </form>
           </div>
 
-          {/* QR-Code erneut senden */}
+          {/* Resend QR by email */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">QR-Code erneut senden</h2>
-            <p className="text-xs text-gray-400 mb-4">Für Gäste, die ihren Code verloren haben.</p>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Resend QR code</h2>
+            <p className="text-xs text-gray-400 mb-4">For guests who lost their code.</p>
             <form onSubmit={handleResend} className="space-y-3">
               <input
                 type="email"
                 value={resendEmail}
                 onChange={(e) => setResendEmail(e.target.value)}
-                placeholder="E-Mail-Adresse des Gastes"
+                placeholder="Guest's email address"
                 required
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
               />
@@ -629,20 +803,20 @@ export default function AdminPage() {
                 disabled={resendLoading}
                 className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
               >
-                {resendLoading ? "Wird gesendet…" : "Code erneut senden"}
+                {resendLoading ? "Sending…" : "Resend code"}
               </button>
             </form>
           </div>
 
           {/* CSV Export */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV-Export</h2>
-            <p className="text-xs text-gray-400 mb-4">Aktueller Event.</p>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV Export</h2>
+            <p className="text-xs text-gray-400 mb-4">Current event.</p>
             <div className="space-y-2">
               {[
-                { type: "all", label: "Alle Registrierten", count: registrations.length },
-                { type: "checkedin", label: "Eingecheckte", count: checkedInCount },
-                { type: "noshows", label: "No-Shows", count: registrations.length - checkedInCount },
+                { type: "all", label: "All registered", count: registrations.length },
+                { type: "checkedin", label: "Checked in", count: checkedInCount },
+                { type: "noshows", label: "No-shows", count: registrations.length - checkedInCount },
               ].map(({ type, label, count }) => (
                 <a
                   key={type}
@@ -652,7 +826,7 @@ export default function AdminPage() {
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
                 >
                   <span>{label}</span>
-                  <span className="text-gray-400 text-xs">{count} Personen</span>
+                  <span className="text-gray-400 text-xs">{count} people</span>
                 </a>
               ))}
             </div>
@@ -660,14 +834,14 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Archiv Tab */}
+      {/* Archive Tab */}
       {activeTab === "archiv" && (
         <div className="space-y-3">
           {archiveLoading ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">Lädt…</div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">Loading…</div>
           ) : archivedEvents.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">
-              Noch keine archivierten Events.
+              No archived events yet.
             </div>
           ) : (
             archivedEvents.map((ev) => (
@@ -676,7 +850,7 @@ export default function AdminPage() {
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{ev.name}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {new Date(ev.date).toLocaleDateString("de-CH", {
+                      {new Date(ev.date).toLocaleDateString("en-GB", {
                         day: "numeric", month: "long", year: "numeric",
                       })} · {ev.location}
                     </p>
@@ -688,9 +862,9 @@ export default function AdminPage() {
                 </div>
                 <div className="flex gap-2">
                   {[
-                    { type: "all", label: "Alle" },
-                    { type: "checkedin", label: "Eingecheckt" },
-                    { type: "noshows", label: "No-Shows" },
+                    { type: "all", label: "All" },
+                    { type: "checkedin", label: "Checked in" },
+                    { type: "noshows", label: "No-shows" },
                   ].map(({ type, label }) => (
                     <a
                       key={type}

@@ -50,7 +50,7 @@ export default function RegistrationPage() {
     const data = await res.json();
     setGateLoading(false);
     if (!res.ok) {
-      setGateError(data.error || "Falsches Passwort.");
+      setGateError(data.error || "Wrong code.");
       return;
     }
     setUnlocked(true);
@@ -68,14 +68,14 @@ export default function RegistrationPage() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) {
-      setError(data.error || "Etwas ist schiefgelaufen.");
+      setError(data.error || "Something went wrong.");
       return;
     }
     router.push(`/success/${data.token}`);
   };
 
   const eventDate = event
-    ? new Date(event.date).toLocaleDateString("de-CH", {
+    ? new Date(event.date).toLocaleDateString("en-GB", {
         weekday: "long",
         year: "numeric",
         month: "long",
@@ -93,14 +93,14 @@ export default function RegistrationPage() {
             Impact Gstaad
           </p>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Event Anmeldung
+            Event Registration
           </h1>
           {eventLoading ? (
             <div className="h-5 bg-gray-200 rounded animate-pulse w-48 mx-auto mt-2" />
           ) : event ? (
             <p className="text-gray-500 text-sm">{event.name}</p>
           ) : (
-            <p className="text-red-500 text-sm">Kein aktiver Event.</p>
+            <p className="text-red-500 text-sm">No active event.</p>
           )}
         </div>
 
@@ -108,14 +108,14 @@ export default function RegistrationPage() {
         {event && !unlocked && (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
             <p className="text-sm text-gray-500 mb-4 text-center">
-              Dieser Event ist nur für eingeladene Mitglieder zugänglich.
+              This event is for invited members only.
             </p>
             <form onSubmit={handleUnlock} className="space-y-4">
               <input
                 type="password"
                 value={gatePassword}
                 onChange={(e) => setGatePassword(e.target.value)}
-                placeholder="Einladungscode"
+                placeholder="Invite code"
                 required
                 autoFocus
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
@@ -128,24 +128,24 @@ export default function RegistrationPage() {
                 disabled={gateLoading}
                 className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-gray-700 active:scale-[0.98] transition-all disabled:opacity-40"
               >
-                {gateLoading ? "Prüfe…" : "Weiter"}
+                {gateLoading ? "Checking…" : "Continue"}
               </button>
             </form>
           </div>
         )}
 
-        {/* Registration form (shown after unlock) */}
+        {/* Registration form */}
         {event && unlocked && (
           <>
             <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 shadow-sm">
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Datum</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Date</p>
                   <p className="text-sm font-medium text-gray-900">{eventDate}</p>
                 </div>
                 <div className="w-px bg-gray-100" />
                 <div className="flex-1">
-                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Ort</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Location</p>
                   <p className="text-sm font-medium text-gray-900">{event.location}</p>
                 </div>
               </div>
@@ -159,23 +159,23 @@ export default function RegistrationPage() {
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Full name</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Vorname Nachname"
+                    placeholder="First Last"
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">E-Mail</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@beispiel.ch"
+                    placeholder="name@example.com"
                     required
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
                   />
@@ -190,13 +190,13 @@ export default function RegistrationPage() {
                   disabled={loading}
                   className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-gray-700 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed mt-2"
                 >
-                  {loading ? "Wird angemeldet…" : "Jetzt anmelden"}
+                  {loading ? "Registering…" : "Register now"}
                 </button>
               </form>
             </div>
 
             <p className="text-center text-xs text-gray-400 mt-6">
-              Du erhältst deinen QR-Code per E-Mail.
+              You will receive your QR code by email.
             </p>
           </>
         )}
