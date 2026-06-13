@@ -499,23 +499,23 @@ export default function AdminPage() {
     <div className="min-h-screen flex flex-col" style={{ background: "var(--ig-light)" }}>
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-20 border-b" style={{ background: "var(--ig-navy)", borderColor: "rgba(255,255,255,0.1)" }}>
+      <header className="sticky top-0 z-20 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" style={{ filter: "brightness(0) invert(1)" }} />
+            <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
             {event && (
               <>
-                <div className="w-px h-5 opacity-30" style={{ background: "white" }} />
-                <span className="text-sm font-medium text-white opacity-80 hidden sm:block truncate max-w-xs">{event.name}</span>
+                <div className="w-px h-5" style={{ background: "var(--ig-gray2)" }} />
+                <span className="text-sm font-medium hidden sm:block truncate max-w-xs" style={{ color: "var(--ig-gray3)" }}>{event.name}</span>
               </>
             )}
           </div>
           <button
             onClick={() => loadRegistrations(savedPassword.current)}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition"
-            style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.15)" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "white"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)"; }}
+            style={{ color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
           >
             <IconRefresh className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Aktualisieren</span>
@@ -560,10 +560,10 @@ export default function AdminPage() {
 
         {/* ═══════════ SCANNER TAB ═══════════ */}
         {activeTab === "scanner" && (
-          <div className="max-w-sm mx-auto">
+          <div className="sm:max-w-sm sm:mx-auto -mx-4 sm:mx-auto">
 
             {/* Camera card */}
-            <div className="rounded-3xl overflow-hidden border shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+            <div className="sm:rounded-3xl overflow-hidden border-y sm:border shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
 
               {/* Gold top accent */}
               <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, transparent, var(--ig-gold), transparent)` }} />
@@ -651,7 +651,7 @@ export default function AdminPage() {
             </div>
 
             {/* Status line below card */}
-            <p className="text-center text-xs mt-4 tracking-wide" style={{ color: "var(--ig-gray3)" }}>
+            <p className="text-center text-xs mt-4 tracking-wide px-4" style={{ color: "var(--ig-gray3)" }}>
               {scanning ? "QR-Code vor die Kamera halten" : "Tippe auf «Kamera starten» um zu scannen"}
             </p>
           </div>
