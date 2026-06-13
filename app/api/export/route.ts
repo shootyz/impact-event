@@ -36,14 +36,17 @@ export async function GET(req: NextRequest) {
 
   const { data: rows } = await query
 
-  const header = 'Name,E-Mail,Eingecheckt,Check-in Zeit,Angemeldet am'
+  const header = 'Vorname,Name,E-Mail,Eingecheckt,Check-in Zeit,Angemeldet am'
   const lines = (rows || []).map((r) => {
+    const parts = (r.name || '').trim().split(' ')
+    const vorname = parts[0] || ''
+    const nachname = parts.slice(1).join(' ')
     const checkedIn = r.checked_in ? 'Ja' : 'Nein'
     const checkedInAt = r.checked_in_at
       ? new Date(r.checked_in_at).toLocaleString('de-CH')
       : ''
     const createdAt = new Date(r.created_at).toLocaleString('de-CH')
-    return [r.name, r.email, checkedIn, checkedInAt, createdAt]
+    return [vorname, nachname, r.email, checkedIn, checkedInAt, createdAt]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(',')
   })
