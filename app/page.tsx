@@ -229,7 +229,7 @@ export default function RegistrationPage() {
               </form>
             </div>
 
-            <p className="text-center text-xs tracking-wide" style={{ color: "var(--ig-gray3)" }}>
+            <p className="text-center text-xs tracking-wide" style={{ color: "var(--ig-navy)" }}>
               You will receive your QR code by email.
             </p>
           </div>
