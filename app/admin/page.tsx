@@ -855,6 +855,30 @@ export default function AdminPage() {
               ))}
             </div>
           </div>
+
+          {/* Alle Gäste löschen */}
+          <div className="bg-white rounded-2xl border border-red-100 p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-red-700 mb-1">Alle Gäste löschen</h2>
+            <p className="text-xs text-gray-400 mb-4">Löscht sämtliche Registrierungen des aktuellen Events. Nicht rückgängig zu machen.</p>
+            <button
+              onClick={async () => {
+                if (!confirm(`Wirklich ALLE ${registrations.length} Gäste löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+                const res = await fetch("/api/admin/clear", {
+                  method: "DELETE",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ adminPassword: savedPassword.current }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                  loadRegistrations(savedPassword.current);
+                  alert(`${data.deleted} Gäste wurden gelöscht.`);
+                }
+              }}
+              className="w-full py-3 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition"
+            >
+              🗑 Alle {registrations.length} Gäste löschen
+            </button>
+          </div>
         </div>
       )}
 
