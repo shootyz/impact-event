@@ -78,6 +78,7 @@ export default function AdminPage() {
   const [eventPassword, setEventPassword] = useState("");
   const [pwStatus, setPwStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [pwLoading, setPwLoading] = useState(false);
+  const [currentEventPassword, setCurrentEventPassword] = useState<string | null>(undefined as unknown as null);
 
   // Archive state
   const [archivedEvents, setArchivedEvents] = useState<ArchivedEvent[]>([]);
@@ -117,6 +118,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (activeTab === "archiv") loadArchive();
+    if (activeTab === "tools") {
+      fetch(`/api/admin/event?password=${encodeURIComponent(savedPassword.current)}`)
+        .then((r) => r.json())
+        .then((d) => setCurrentEventPassword(d.registration_password ?? null));
+    }
   }, [activeTab, loadArchive]);
 
   useEffect(() => {
@@ -404,6 +410,7 @@ export default function AdminPage() {
     if (!res.ok) {
       setPwStatus({ ok: false, msg: "Error saving." });
     } else {
+      setCurrentEventPassword(eventPassword || null);
       setPwStatus({
         ok: true,
         msg: eventPassword ? `Password set: "${eventPassword}"` : "Password protection removed.",
@@ -754,9 +761,17 @@ export default function AdminPage() {
           {/* Lock registration page */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-gray-900 mb-1">Lock registration page</h2>
-            <p className="text-xs text-gray-400 mb-4">
+            <p className="text-xs text-gray-400 mb-3">
               Members need this code to register. Leave empty = open.
             </p>
+            {currentEventPassword !== (undefined as unknown as null) && (
+              <div className={`rounded-xl px-4 py-3 mb-4 ${currentEventPassword ? "bg-amber-50 border border-amber-100" : "bg-gray-50 border border-gray-100"}`}>
+                <p className="text-xs text-gray-400 mb-0.5">Current code</p>
+                <p className={`text-sm font-semibold ${currentEventPassword ? "text-amber-800 font-mono tracking-wider" : "text-gray-400 italic"}`}>
+                  {currentEventPassword ?? "No protection active"}
+                </p>
+              </div>
+            )}
             <form onSubmit={handleSetPassword} className="space-y-3">
               <input
                 type="text"

@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export async function GET(req: NextRequest) {
+  const adminPassword = req.nextUrl.searchParams.get('password')
+  if (adminPassword !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
+  }
+  const { data: event } = await supabaseAdmin()
+    .from('events')
+    .select('registration_password')
+    .eq('active', true)
+    .single()
+  return NextResponse.json({ registration_password: event?.registration_password || null })
+}
+
 export async function PATCH(req: NextRequest) {
   const { adminPassword, registration_password } = await req.json()
 
