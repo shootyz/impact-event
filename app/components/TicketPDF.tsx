@@ -25,7 +25,7 @@ const s = StyleSheet.create({
 
   // Navy header band
   header: {
-    backgroundColor: C.navy,
+    backgroundColor: C.light,
     paddingHorizontal: 36,
     paddingTop: 28,
     paddingBottom: 22,
@@ -46,7 +46,7 @@ const s = StyleSheet.create({
   eventName: {
     fontSize: 16,
     fontFamily: "Helvetica-Bold",
-    color: C.white,
+    color: C.navy,
     textAlign: "right",
   },
 
