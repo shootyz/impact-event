@@ -260,11 +260,11 @@ export default function AdminPage() {
     }));
   };
 
-  const playSound = (type: "correct" | "wrong") => {
+  const playSound = async (type: "correct" | "wrong") => {
     const ctx = audioCtxRef.current;
     const buf = soundBuffers.current[type];
     if (!ctx || !buf) return;
-    if (ctx.state === "suspended") ctx.resume();
+    if (ctx.state === "suspended") await ctx.resume();
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.connect(ctx.destination);
