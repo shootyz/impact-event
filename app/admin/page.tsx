@@ -333,7 +333,7 @@ export default function AdminPage() {
       else playSound("wrong");
       setScanResult({ status: data.status, name: data.name });
     }
-    setTimeout(() => setScanResult(null), 800);
+    setTimeout(() => setScanResult(null), 1000);
   };
 
   const stopScanner = useCallback(() => {
