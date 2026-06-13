@@ -59,8 +59,11 @@ export default function AdminPage() {
   const [archiveLoaded, setArchiveLoaded] = useState(false);
 
   const scannerRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const html5QrRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number>(0);
+  const lastScanRef = useRef<string>("");
   const savedPassword = useRef("");
 
   const loadRegistrations = useCallback(async (pw: string) => {
@@ -117,30 +120,56 @@ export default function AdminPage() {
     setTimeout(() => setScanResult(null), 4000);
   };
 
-  const startScanner = useCallback(async () => {
-    if (!scannerRef.current) return;
-    const { Html5Qrcode } = await import("html5-qrcode");
-    const scanner = new Html5Qrcode("qr-scanner");
-    html5QrRef.current = scanner;
-    setScanning(true);
-    try {
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText: string) => { handleScan(decodedText); },
-        undefined
-      );
-    } catch { setScanning(false); }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const stopScanner = useCallback(async () => {
-    if (html5QrRef.current) {
-      await html5QrRef.current.stop().catch(() => {});
-      html5QrRef.current = null;
+  const stopScanner = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     }
     setScanning(false);
   }, []);
+
+  const tick = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+      rafRef.current = requestAnimationFrame(tick);
+      return;
+    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    import("jsqr").then(({ default: jsQR }) => {
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code && code.data && code.data !== lastScanRef.current) {
+        lastScanRef.current = code.data;
+        handleScan(code.data);
+        setTimeout(() => { lastScanRef.current = ""; }, 3000);
+      }
+    });
+    rafRef.current = requestAnimationFrame(tick);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const startScanner = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setScanning(true);
+      rafRef.current = requestAnimationFrame(tick);
+    } catch {
+      setScanResult({ status: "error", message: "Kamera konnte nicht gestartet werden." });
+    }
+  }, [tick]);
 
   useEffect(() => { return () => { stopScanner(); }; }, [stopScanner]);
 
@@ -287,8 +316,15 @@ export default function AdminPage() {
               </p>
             </div>
           )}
-          <div id="qr-scanner" ref={scannerRef} className="rounded-xl overflow-hidden bg-gray-50 min-h-[200px] flex items-center justify-center">
-            {!scanning && <p className="text-gray-400 text-sm">Kamera wird gestartet…</p>}
+          <div ref={scannerRef} className="rounded-xl overflow-hidden bg-gray-50 min-h-[200px] flex items-center justify-center relative">
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              className={`w-full rounded-xl ${scanning ? "block" : "hidden"}`}
+            />
+            <canvas ref={canvasRef} className="hidden" />
+            {!scanning && <p className="text-gray-400 text-sm">Kamera noch nicht gestartet</p>}
           </div>
           <div className="mt-4">
             {!scanning ? (
