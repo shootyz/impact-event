@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
   const password = req.nextUrl.searchParams.get('password')
-  const type = req.nextUrl.searchParams.get('type') // 'all' | 'checkedin'
+  const type = req.nextUrl.searchParams.get('type') // 'all' | 'checkedin' | 'noshows'
 
   if (password !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
@@ -29,6 +29,8 @@ export async function GET(req: NextRequest) {
 
   if (type === 'checkedin') {
     query = query.eq('checked_in', true)
+  } else if (type === 'noshows') {
+    query = query.eq('checked_in', false)
   }
 
   const { data: rows } = await query
@@ -49,6 +51,8 @@ export async function GET(req: NextRequest) {
   const filename =
     type === 'checkedin'
       ? `eingecheckt_${event.name.replace(/\s+/g, '_')}.csv`
+      : type === 'noshows'
+      ? `noshows_${event.name.replace(/\s+/g, '_')}.csv`
       : `gaesteliste_${event.name.replace(/\s+/g, '_')}.csv`
 
   return new NextResponse(csv, {

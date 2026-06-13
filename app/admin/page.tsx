@@ -401,6 +401,13 @@ export default function AdminPage() {
                 <span>Nur Eingecheckte</span>
                 <span className="text-gray-400 text-xs">{checkedInCount} Personen</span>
               </button>
+              <button
+                onClick={() => handleExport("noshows")}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              >
+                <span>No-Shows</span>
+                <span className="text-gray-400 text-xs">{registrations.length - checkedInCount} Personen</span>
+              </button>
             </div>
           </div>
         </div>
