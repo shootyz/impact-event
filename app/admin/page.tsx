@@ -895,9 +895,9 @@ export default function AdminPage() {
                       onChange={e => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
                       className="hidden" />
                     <div className="w-full px-4 py-3 rounded-xl text-sm text-center transition flex items-center justify-center gap-2 cursor-pointer"
-                      style={{ border: "1.5px dashed var(--ig-gray2)", color: "var(--ig-gray3)", background: "var(--ig-light)" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
+                      style={{ border: "1.5px dashed var(--ig-navy)", color: "var(--ig-navy)", background: "var(--ig-light)" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}>
                       <IconUpload className="w-4 h-4 flex-shrink-0" />
                       <span className="truncate">{csvFile ? csvFile.name : "CSV-Datei wählen…"}</span>
                     </div>
