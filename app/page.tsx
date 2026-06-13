@@ -145,12 +145,12 @@ export default function RegistrationPage() {
               <div className="px-6 py-5 flex gap-6">
                 <div className="flex-1">
                   <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1.5" style={{ color: "var(--ig-gray3)" }}>Date</p>
-                  <p className="text-sm font-medium" style={{ color: "var(--ig-black)" }}>{eventDate}</p>
+                  <p className="text-sm font-medium" style={{ color: "var(--ig-navy)" }}>{eventDate}</p>
                 </div>
                 <div className="w-px" style={{ background: "var(--ig-gray2)" }} />
                 <div className="flex-1">
                   <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1.5" style={{ color: "var(--ig-gray3)" }}>Location</p>
-                  <p className="text-sm font-medium" style={{ color: "var(--ig-black)" }}>{event.location}</p>
+                  <p className="text-sm font-medium" style={{ color: "var(--ig-navy)" }}>{event.location}</p>
                 </div>
               </div>
               {event.description && (
