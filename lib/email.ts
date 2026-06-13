@@ -2,7 +2,7 @@ import { Resend } from 'resend'
 import { generateQRCodeDataURL } from './qr'
 import type { Registration, Event } from './supabase'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const getResend = () => new Resend(process.env.RESEND_API_KEY)
 
 export async function sendConfirmationEmail(
   registration: Registration,
@@ -21,7 +21,7 @@ export async function sendConfirmationEmail(
     minute: '2-digit',
   })
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: registration.email,
     subject: `Deine Anmeldung: ${event.name}`,
