@@ -7,17 +7,12 @@ import QRCode from "qrcode";
 export default function SuccessPage() {
   const { token } = useParams<{ token: string }>();
   const [qrUrl, setQrUrl] = useState("");
-  const [walletEnabled, setWalletEnabled] = useState(false);
 
   useEffect(() => {
     if (token) {
       const ticketUrl = `${window.location.origin}/ticket/${token}`;
       QRCode.toDataURL(ticketUrl, { width: 280, margin: 2 }).then(setQrUrl);
     }
-    // Check if wallet is available by pinging the endpoint
-    fetch(`/api/wallet/${token || "check"}`, { method: "HEAD" }).then((r) => {
-      setWalletEnabled(r.status !== 503);
-    }).catch(() => {});
   }, [token]);
 
   return (
@@ -43,11 +38,7 @@ export default function SuccessPage() {
             Your ticket
           </p>
           {qrUrl ? (
-            <img
-              src={qrUrl}
-              alt="QR Code"
-              className="w-56 h-56 mx-auto rounded-xl"
-            />
+            <img src={qrUrl} alt="QR Code" className="w-56 h-56 mx-auto rounded-xl" />
           ) : (
             <div className="w-56 h-56 mx-auto bg-gray-100 rounded-xl animate-pulse" />
           )}
@@ -61,27 +52,22 @@ export default function SuccessPage() {
         <div className="flex flex-col gap-2">
           <a
             href={`/ticket/${token}`}
-            className="inline-block w-full py-3 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 transition text-center"
+            className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 transition"
           >
             View full-screen ticket
           </a>
-          {walletEnabled && (
-            <a
-              href={`/api/wallet/${token}`}
-              className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>
-              </svg>
-              Add to Apple Wallet
-            </a>
-          )}
+          <a
+            href={`/ticket/${token}`}
+            className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            </svg>
+            Save as PDF
+          </a>
         </div>
 
-        <a
-          href="/"
-          className="inline-block mt-6 text-sm text-gray-500 underline underline-offset-2"
-        >
+        <a href="/" className="inline-block mt-6 text-sm text-gray-500 underline underline-offset-2">
           ← Back to home
         </a>
       </div>
