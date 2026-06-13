@@ -46,6 +46,14 @@ export default function AdminPage() {
   const [scanning, setScanning] = useState(false);
   const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv">("scanner");
 
+  // Guest list actions
+  const [expandedGuest, setExpandedGuest] = useState<string | null>(null);
+  const [manualForm, setManualForm] = useState(false);
+  const [manualName, setManualName] = useState("");
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualStatus, setManualStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [manualLoading, setManualLoading] = useState(false);
+
   // Tools state
   const [resendEmail, setResendEmail] = useState("");
   const [resendStatus, setResendStatus] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -221,6 +229,47 @@ export default function AdminPage() {
   }, [tick]);
 
   useEffect(() => { return () => { stopScanner(); }; }, [stopScanner]);
+
+  const guestAction = async (id: string, action: "delete" | "checkin" | "uncheckin") => {
+    const pw = savedPassword.current;
+    if (action === "delete") {
+      if (!confirm("Gast wirklich löschen?")) return;
+      await fetch(`/api/guest/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminPassword: pw }),
+      });
+    } else {
+      await fetch(`/api/guest/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminPassword: pw, checked_in: action === "checkin" }),
+      });
+    }
+    setExpandedGuest(null);
+    loadRegistrations(pw);
+  };
+
+  const handleManualRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setManualStatus(null);
+    setManualLoading(true);
+    const res = await fetch("/api/admin/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminPassword: savedPassword.current, name: manualName, email: manualEmail }),
+    });
+    const data = await res.json();
+    setManualLoading(false);
+    if (!res.ok) {
+      setManualStatus({ ok: false, msg: data.error });
+    } else {
+      setManualStatus({ ok: true, msg: `${manualName} wurde registriert.` });
+      setManualName("");
+      setManualEmail("");
+      loadRegistrations(savedPassword.current);
+    }
+  };
 
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -425,25 +474,103 @@ export default function AdminPage() {
 
       {/* List Tab */}
       {activeTab === "list" && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          {loading ? (
-            <div className="p-8 text-center text-gray-400 text-sm">Lädt…</div>
-          ) : registrations.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-sm">Noch keine Anmeldungen.</div>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {registrations.map((r) => (
-                <div key={r.id} className="px-4 py-3 flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${r.checked_in ? "bg-green-400" : "bg-gray-200"}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
-                    <p className="text-xs text-gray-400 truncate">{r.email}</p>
+        <div className="space-y-3">
+          {/* Manuell hinzufügen */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <button
+              onClick={() => { setManualForm((v) => !v); setManualStatus(null); }}
+              className="w-full px-4 py-3 flex items-center justify-between text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+            >
+              <span>+ Gast manuell erfassen</span>
+              <span className="text-gray-400">{manualForm ? "↑" : "↓"}</span>
+            </button>
+            {manualForm && (
+              <div className="px-4 pb-4 border-t border-gray-50">
+                <form onSubmit={handleManualRegister} className="space-y-2 pt-3">
+                  <input
+                    type="text"
+                    value={manualName}
+                    onChange={(e) => setManualName(e.target.value)}
+                    placeholder="Name"
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                  />
+                  <input
+                    type="email"
+                    value={manualEmail}
+                    onChange={(e) => setManualEmail(e.target.value)}
+                    placeholder="E-Mail"
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                  />
+                  {manualStatus && (
+                    <p className={`text-xs ${manualStatus.ok ? "text-green-600" : "text-red-600"}`}>{manualStatus.msg}</p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={manualLoading}
+                    className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
+                  >
+                    {manualLoading ? "Wird gespeichert…" : "Speichern"}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+
+          {/* Gästeliste */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {loading ? (
+              <div className="p-8 text-center text-gray-400 text-sm">Lädt…</div>
+            ) : registrations.length === 0 ? (
+              <div className="p-8 text-center text-gray-400 text-sm">Noch keine Anmeldungen.</div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {registrations.map((r) => (
+                  <div key={r.id}>
+                    <button
+                      onClick={() => setExpandedGuest(expandedGuest === r.id ? null : r.id)}
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left"
+                    >
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${r.checked_in ? "bg-green-400" : "bg-gray-200"}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{r.email}</p>
+                      </div>
+                      <span className="text-gray-300 text-xs">
+                        {expandedGuest === r.id ? "▲" : "▼"}
+                      </span>
+                    </button>
+                    {expandedGuest === r.id && (
+                      <div className="px-4 pb-3 flex gap-2 flex-wrap border-t border-gray-50 pt-2">
+                        {r.checked_in ? (
+                          <button
+                            onClick={() => guestAction(r.id, "uncheckin")}
+                            className="flex-1 py-2 rounded-lg border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-50 transition"
+                          >
+                            ↩ Entchecken
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => guestAction(r.id, "checkin")}
+                            className="flex-1 py-2 rounded-lg border border-green-200 text-green-700 text-xs font-medium hover:bg-green-50 transition"
+                          >
+                            ✓ Einchecken
+                          </button>
+                        )}
+                        <button
+                          onClick={() => guestAction(r.id, "delete")}
+                          className="flex-1 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition"
+                        >
+                          ✕ Löschen
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  {r.checked_in && <span className="text-xs text-green-600 font-medium flex-shrink-0">✓</span>}
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
