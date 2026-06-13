@@ -86,7 +86,6 @@ const s = StyleSheet.create({
     color: C.black,
     lineHeight: 1.6,
     fontFamily: "Helvetica",
-    marginBottom: 1,
   },
   timeCode: {
     fontSize: 9.5,
@@ -148,7 +147,7 @@ function ProgramContent({ description }: { description: string }) {
           </Text>
         );
         if (line.type === "time") return (
-          <View key={i} style={{ flexDirection: "row", marginBottom: 2 }}>
+          <View key={i} style={{ flexDirection: "row" }}>
             <Text style={[s.timeCode, { width: 90, flexShrink: 0 }]}>{line.time}</Text>
             <Text style={s.timeLine}>{line.label}</Text>
           </View>
