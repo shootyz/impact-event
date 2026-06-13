@@ -562,11 +562,11 @@ export default function AdminPage() {
         {activeTab === "scanner" && (
           <div className="max-w-sm mx-auto">
 
-            {/* Camera card with viewfinder overlay */}
-            <div className="rounded-3xl overflow-hidden shadow-lg relative" style={{ background: "var(--ig-navy)" }}>
+            {/* Camera card */}
+            <div className="rounded-3xl overflow-hidden border shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
 
               {/* Gold top accent */}
-              <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, var(--ig-navy), var(--ig-gold), var(--ig-navy))` }} />
+              <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, transparent, var(--ig-gold), transparent)` }} />
 
               {/* Camera area */}
               <div ref={scannerRef} className="relative aspect-square overflow-hidden">
@@ -575,29 +575,24 @@ export default function AdminPage() {
 
                 {/* Idle state */}
                 {!scanning && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3"
-                    style={{ background: "linear-gradient(160deg, #1a2a50 0%, var(--ig-navy) 100%)" }}>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ background: "var(--ig-light)" }}>
                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                      style={{ background: "rgba(210,141,40,0.12)", border: "1px solid rgba(210,141,40,0.25)" }}>
-                      <IconCamera className="w-7 h-7" style={{ color: "var(--ig-gold)" }} />
+                      style={{ background: "white", border: "1.5px solid var(--ig-gray2)", boxShadow: "0 2px 8px rgba(30,50,99,0.07)" }}>
+                      <IconCamera className="w-7 h-7" style={{ color: "var(--ig-navy)" }} />
                     </div>
-                    <p className="text-xs tracking-[0.15em] uppercase font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
+                    <p className="text-xs tracking-[0.15em] uppercase font-medium" style={{ color: "var(--ig-gray3)" }}>
                       Kamera nicht aktiv
                     </p>
                   </div>
                 )}
 
-                {/* Viewfinder corners — visible while scanning */}
+                {/* Viewfinder corners */}
                 {scanning && (
                   <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute inset-8">
-                      {/* TL */}
                       <div className="absolute top-0 left-0 w-7 h-7 border-t-2 border-l-2 rounded-tl-lg" style={{ borderColor: "var(--ig-gold)" }} />
-                      {/* TR */}
                       <div className="absolute top-0 right-0 w-7 h-7 border-t-2 border-r-2 rounded-tr-lg" style={{ borderColor: "var(--ig-gold)" }} />
-                      {/* BL */}
                       <div className="absolute bottom-0 left-0 w-7 h-7 border-b-2 border-l-2 rounded-bl-lg" style={{ borderColor: "var(--ig-gold)" }} />
-                      {/* BR */}
                       <div className="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 rounded-br-lg" style={{ borderColor: "var(--ig-gold)" }} />
                     </div>
                   </div>
@@ -606,11 +601,10 @@ export default function AdminPage() {
                 {/* Scan result overlay */}
                 {scanResult && (
                   <div
-                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center transition-all"
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center"
                     style={{ background: scanResult.status === "success" ? "rgba(22,163,74,0.95)" : "rgba(220,38,38,0.95)" }}
                   >
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                      style={{ background: "rgba(255,255,255,0.2)" }}>
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.2)" }}>
                       {scanResult.status === "success"
                         ? <IconCheck className="w-7 h-7 text-white" />
                         : <IconX className="w-7 h-7 text-white" />}
@@ -630,14 +624,14 @@ export default function AdminPage() {
               </div>
 
               {/* Bottom controls */}
-              <div className="px-5 py-4">
+              <div className="px-5 py-4 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
                 {!scanning ? (
                   <button
                     onClick={startScanner}
-                    className="w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
-                    style={{ background: "var(--ig-gold)", color: "white" }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.85"}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}
+                    className="w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition text-white"
+                    style={{ background: "var(--ig-navy)" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"}
                   >
                     <IconCamera className="w-4 h-4" />
                     Kamera starten
@@ -646,17 +640,14 @@ export default function AdminPage() {
                   <button
                     onClick={stopScanner}
                     className="w-full py-3 rounded-xl text-sm font-medium tracking-wide transition"
-                    style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.12)" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.15)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                    style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "white" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
                   >
                     Stoppen
                   </button>
                 )}
               </div>
-
-              {/* Gold bottom accent */}
-              <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, var(--ig-navy), var(--ig-gold), var(--ig-navy))` }} />
             </div>
 
             {/* Status line below card */}
