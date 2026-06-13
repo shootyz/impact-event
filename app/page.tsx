@@ -1,65 +1,162 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+type Event = {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  description: string | null;
+};
+
+export default function RegistrationPage() {
+  const router = useRouter();
+  const [event, setEvent] = useState<Event | null>(null);
+  const [eventLoading, setEventLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/event")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.error) setEvent(data);
+        setEventLoading(false);
+      });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email }),
+    });
+
+    const data = await res.json();
+    setLoading(false);
+
+    if (!res.ok) {
+      setError(data.error || "Etwas ist schiefgelaufen.");
+      return;
+    }
+
+    router.push(`/success/${data.token}`);
+  };
+
+  const eventDate = event
+    ? new Date(event.date).toLocaleDateString("de-CH", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-16">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-10">
+          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">
+            Impact Gstaad
           </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Event Anmeldung
+          </h1>
+          {eventLoading ? (
+            <div className="h-5 bg-gray-200 rounded animate-pulse w-48 mx-auto mt-2" />
+          ) : event ? (
+            <p className="text-gray-500 text-sm">{event.name}</p>
+          ) : (
+            <p className="text-red-500 text-sm">Kein aktiver Event.</p>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {event && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 shadow-sm">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                  Datum
+                </p>
+                <p className="text-sm font-medium text-gray-900">{eventDate}</p>
+              </div>
+              <div className="w-px bg-gray-100" />
+              <div className="flex-1">
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                  Ort
+                </p>
+                <p className="text-sm font-medium text-gray-900">
+                  {event.location}
+                </p>
+              </div>
+            </div>
+            {event.description && (
+              <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-100">
+                {event.description}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Vorname Nachname"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                E-Mail
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@beispiel.ch"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
+              />
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !event}
+              className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-gray-700 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed mt-2"
+            >
+              {loading ? "Wird angemeldet…" : "Jetzt anmelden"}
+            </button>
+          </form>
         </div>
-      </main>
-    </div>
+
+        <p className="text-center text-xs text-gray-400 mt-6">
+          Du erhältst deinen QR-Code per E-Mail.
+        </p>
+      </div>
+    </main>
   );
 }
