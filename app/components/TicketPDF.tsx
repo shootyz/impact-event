@@ -74,7 +74,7 @@ const s = StyleSheet.create({
   keyLabel: {
     fontSize: 9.5,
     fontFamily: "Helvetica-Bold",
-    color: C.black,
+    color: C.navy,
   },
   keyValue: {
     fontSize: 9.5,
