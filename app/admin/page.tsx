@@ -359,7 +359,7 @@ export default function AdminPage() {
       if (code && code.data && code.data !== lastScanRef.current) {
         lastScanRef.current = code.data;
         handleScan(code.data);
-        setTimeout(() => { lastScanRef.current = ""; }, 10000);
+        setTimeout(() => { lastScanRef.current = ""; }, 4000);
       }
     });
     rafRef.current = requestAnimationFrame(tick);
