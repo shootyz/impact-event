@@ -738,34 +738,6 @@ export default function AdminPage() {
             </form>
           </div>
 
-          {/* Resend QR by email */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">QR-Code erneut senden</h2>
-            <p className="text-xs text-gray-400 mb-4">Für Gäste, die ihren Code verloren haben.</p>
-            <form onSubmit={handleResend} className="space-y-3">
-              <input
-                type="email"
-                value={resendEmail}
-                onChange={(e) => setResendEmail(e.target.value)}
-                placeholder="E-Mail-Adresse des Gastes"
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
-              />
-              {resendStatus && (
-                <div className={`rounded-xl px-4 py-3 ${resendStatus.ok ? "bg-green-50 border border-green-100" : "bg-red-50 border border-red-100"}`}>
-                  <p className={`text-sm ${resendStatus.ok ? "text-green-700" : "text-red-600"}`}>{resendStatus.msg}</p>
-                </div>
-              )}
-              <button
-                type="submit"
-                disabled={resendLoading}
-                className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
-              >
-                {resendLoading ? "Wird gesendet…" : "Code erneut senden"}
-              </button>
-            </form>
-          </div>
-
           {/* CSV Import */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV-Import</h2>
