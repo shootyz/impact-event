@@ -35,7 +35,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [activeTab, setActiveTab] = useState<"scanner" | "list">("scanner");
+  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools">("scanner");
+  const [resendEmail, setResendEmail] = useState("");
+  const [resendStatus, setResendStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
   const scannerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const html5QrRef = useRef<any>(null);
@@ -118,6 +121,30 @@ export default function AdminPage() {
   useEffect(() => {
     return () => { stopScanner(); };
   }, [stopScanner]);
+
+  const handleResend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResendStatus(null);
+    setResendLoading(true);
+    const res = await fetch("/api/resend-ticket", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: resendEmail, adminPassword: savedPassword.current }),
+    });
+    const data = await res.json();
+    setResendLoading(false);
+    if (!res.ok) {
+      setResendStatus({ ok: false, msg: data.error });
+    } else {
+      setResendStatus({ ok: true, msg: `QR-Code wurde erneut an ${data.name} gesendet.` });
+      setResendEmail("");
+    }
+  };
+
+  const handleExport = (type: "all" | "checkedin") => {
+    const url = `/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}`;
+    window.open(url, "_blank");
+  };
 
   const checkedInCount = registrations.filter((r) => r.checked_in).length;
 
@@ -202,22 +229,26 @@ export default function AdminPage() {
         <button
           onClick={() => setActiveTab("scanner")}
           className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-            activeTab === "scanner"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500"
+            activeTab === "scanner" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
           }`}
         >
-          QR-Scanner
+          Scanner
         </button>
         <button
           onClick={() => setActiveTab("list")}
           className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-            activeTab === "list"
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500"
+            activeTab === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
           }`}
         >
           Gästeliste
+        </button>
+        <button
+          onClick={() => setActiveTab("tools")}
+          className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
+            activeTab === "tools" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+          }`}
+        >
+          Tools
         </button>
       </div>
 
@@ -244,14 +275,11 @@ export default function AdminPage() {
                 }`}
               >
                 {scanResult.status === "success" && `✓ Willkommen, ${scanResult.name}!`}
-                {scanResult.status === "already_checked_in" &&
-                  `Bereits eingecheckt: ${scanResult.name}`}
-                {scanResult.status === "error" &&
-                  (scanResult.message || "Ungültiger QR-Code")}
+                {scanResult.status === "already_checked_in" && `Bereits eingecheckt: ${scanResult.name}`}
+                {scanResult.status === "error" && (scanResult.message || "Ungültiger QR-Code")}
               </p>
             </div>
           )}
-
           <div
             id="qr-scanner"
             ref={scannerRef}
@@ -261,7 +289,6 @@ export default function AdminPage() {
               <p className="text-gray-400 text-sm">Kamera wird gestartet…</p>
             )}
           </div>
-
           <div className="mt-4 flex gap-2">
             {!scanning ? (
               <button
@@ -303,14 +330,79 @@ export default function AdminPage() {
                     <p className="text-xs text-gray-400 truncate">{r.email}</p>
                   </div>
                   {r.checked_in && (
-                    <span className="text-xs text-green-600 font-medium flex-shrink-0">
-                      ✓ Check-in
-                    </span>
+                    <span className="text-xs text-green-600 font-medium flex-shrink-0">✓</span>
                   )}
                 </div>
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tools Tab */}
+      {activeTab === "tools" && (
+        <div className="space-y-4">
+          {/* Resend QR */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">QR-Code erneut senden</h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Für Gäste, die ihren Code verloren haben.
+            </p>
+            <form onSubmit={handleResend} className="space-y-3">
+              <input
+                type="email"
+                value={resendEmail}
+                onChange={(e) => setResendEmail(e.target.value)}
+                placeholder="E-Mail-Adresse des Gastes"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
+              />
+              {resendStatus && (
+                <div
+                  className={`rounded-xl px-4 py-3 ${
+                    resendStatus.ok
+                      ? "bg-green-50 border border-green-100"
+                      : "bg-red-50 border border-red-100"
+                  }`}
+                >
+                  <p className={`text-sm ${resendStatus.ok ? "text-green-700" : "text-red-600"}`}>
+                    {resendStatus.msg}
+                  </p>
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={resendLoading}
+                className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
+              >
+                {resendLoading ? "Wird gesendet…" : "Code erneut senden"}
+              </button>
+            </form>
+          </div>
+
+          {/* CSV Export */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV-Export</h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Gästelisten als Excel-kompatibles CSV herunterladen.
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={() => handleExport("all")}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              >
+                <span>Alle Registrierten</span>
+                <span className="text-gray-400 text-xs">{registrations.length} Personen</span>
+              </button>
+              <button
+                onClick={() => handleExport("checkedin")}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              >
+                <span>Nur Eingecheckte</span>
+                <span className="text-gray-400 text-xs">{checkedInCount} Personen</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>
