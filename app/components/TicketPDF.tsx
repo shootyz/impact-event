@@ -263,7 +263,6 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
         {/* ── PROGRAM SECTION ── */}
         <View style={s.program}>
           <View style={s.programHeader}>
-            <View style={s.programGoldLine} />
             <Text style={s.programTitle}>Programme</Text>
           </View>
 
