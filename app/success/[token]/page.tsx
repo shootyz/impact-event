@@ -16,8 +16,8 @@ export default function SuccessPage() {
   }, [token]);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-16" style={{ background: "var(--ig-light)" }}>
-      <div className="w-full max-w-sm text-center">
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16" style={{ background: "var(--ig-light)" }}>
+      <div className="w-full sm:max-w-sm text-center">
 
         {/* Logo */}
         <img src="/logo.png" alt="Impact Gstaad" className="h-10 mx-auto mb-8 object-contain" />
