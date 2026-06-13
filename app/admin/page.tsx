@@ -534,7 +534,7 @@ export default function AdminPage() {
       <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
 
         {/* ── Stats ── */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className={`grid grid-cols-3 gap-3 mb-6 ${activeTab === "scanner" ? "hidden" : ""}`}>
           {[
             { label: "Angemeldet", value: registrations.length, color: "var(--ig-navy)" },
             { label: "Eingecheckt", value: checkedInCount, color: "var(--ig-gold)" },
