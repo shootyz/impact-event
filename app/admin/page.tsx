@@ -616,75 +616,6 @@ export default function AdminPage() {
             )}
           </div>
 
-          {/* CSV Import */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-50">
-              <p className="text-sm font-medium text-gray-700">CSV import</p>
-              <p className="text-xs text-gray-400 mt-0.5">Columns: Name, Vorname, E-Mail</p>
-            </div>
-            <div className="px-4 py-3 space-y-3">
-              <div className="flex gap-2">
-                <label className="flex-1">
-                  <input
-                    ref={csvInputRef}
-                    type="file"
-                    accept=".csv,text/csv"
-                    onChange={(e) => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
-                    className="hidden"
-                  />
-                  <div className="w-full px-3 py-2.5 rounded-xl border border-dashed border-gray-300 text-xs text-gray-500 text-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition">
-                    {csvFile ? csvFile.name : "Choose CSV file…"}
-                  </div>
-                </label>
-                <button
-                  onClick={handleCSVImport}
-                  disabled={!csvFile || csvImporting}
-                  className="px-4 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-semibold hover:bg-gray-700 transition disabled:opacity-40"
-                >
-                  {csvImporting ? "Importing…" : "Import"}
-                </button>
-              </div>
-
-              {csvResult && (
-                <div className="space-y-2">
-                  <div className="rounded-xl bg-gray-50 border border-gray-100 px-3 py-2.5 text-xs space-y-1">
-                    <p className="text-green-700 font-medium">✓ {csvResult.imported} guests imported</p>
-                    {csvResult.duplicates.length > 0 && (
-                      <div>
-                        <p className="text-amber-600 font-medium">{csvResult.duplicates.length} duplicate(s) skipped:</p>
-                        {csvResult.duplicates.map((d, i) => (
-                          <p key={i} className="text-gray-400 pl-2">• {d}</p>
-                        ))}
-                      </div>
-                    )}
-                    {csvResult.errors.length > 0 && (
-                      <div>
-                        <p className="text-red-600 font-medium">{csvResult.errors.length} error(s):</p>
-                        {csvResult.errors.map((e, i) => (
-                          <p key={i} className="text-gray-400 pl-2">• {e}</p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {csvResult.imported > 0 && (
-                    <button
-                      onClick={handleSendQRToImported}
-                      disabled={csvSending}
-                      className="w-full py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-40"
-                    >
-                      {csvSending ? "Sending QR codes…" : `📧 Send QR codes to ${csvResult.imported} imported guests`}
-                    </button>
-                  )}
-                  {csvSendResult && (
-                    <p className={`text-xs ${csvSendResult.ok ? "text-green-600" : "text-amber-600"}`}>
-                      {csvSendResult.msg}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Guest list */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {loading ? (
@@ -821,6 +752,72 @@ export default function AdminPage() {
                 {resendLoading ? "Sending…" : "Resend code"}
               </button>
             </form>
+          </div>
+
+          {/* CSV Import */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV Import</h2>
+            <p className="text-xs text-gray-400 mb-4">Columns: Name, Vorname, E-Mail</p>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <label className="flex-1">
+                  <input
+                    ref={csvInputRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={(e) => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
+                    className="hidden"
+                  />
+                  <div className="w-full px-4 py-3 rounded-xl border border-dashed border-gray-300 text-sm text-gray-500 text-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition">
+                    {csvFile ? csvFile.name : "Choose CSV file…"}
+                  </div>
+                </label>
+                <button
+                  onClick={handleCSVImport}
+                  disabled={!csvFile || csvImporting}
+                  className="px-4 py-3 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-700 transition disabled:opacity-40"
+                >
+                  {csvImporting ? "…" : "Import"}
+                </button>
+              </div>
+              {csvResult && (
+                <div className="space-y-2">
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 text-xs space-y-1">
+                    <p className="text-green-700 font-medium">✓ {csvResult.imported} guests imported</p>
+                    {csvResult.duplicates.length > 0 && (
+                      <div>
+                        <p className="text-amber-600 font-medium">{csvResult.duplicates.length} duplicate(s) skipped:</p>
+                        {csvResult.duplicates.map((d, i) => (
+                          <p key={i} className="text-gray-400 pl-2">• {d}</p>
+                        ))}
+                      </div>
+                    )}
+                    {csvResult.errors.length > 0 && (
+                      <div>
+                        <p className="text-red-600 font-medium">{csvResult.errors.length} error(s):</p>
+                        {csvResult.errors.map((e, i) => (
+                          <p key={i} className="text-gray-400 pl-2">• {e}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {csvResult.imported > 0 && (
+                    <button
+                      onClick={handleSendQRToImported}
+                      disabled={csvSending}
+                      className="w-full py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-40"
+                    >
+                      {csvSending ? "Sending QR codes…" : `📧 Send QR codes to ${csvResult.imported} imported guests`}
+                    </button>
+                  )}
+                  {csvSendResult && (
+                    <p className={`text-xs ${csvSendResult.ok ? "text-green-600" : "text-amber-600"}`}>
+                      {csvSendResult.msg}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* CSV Export */}
