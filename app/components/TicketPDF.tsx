@@ -18,12 +18,8 @@ const s = StyleSheet.create({
   },
 
   // ── TICKET STUB ─────────────────────────────────────────────────────────────
+  stub: { backgroundColor: C.white },
 
-  stub: {
-    backgroundColor: C.white,
-  },
-
-  // Navy header band
   header: {
     backgroundColor: C.light,
     paddingHorizontal: 36,
@@ -33,143 +29,62 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  logo: {
-    height: 32,
-    objectFit: "contain",
-    objectPositionX: 0,
-  },
-  eventNameBlock: {
-    flex: 1,
-    paddingHorizontal: 24,
-    alignItems: "flex-end",
-  },
-  eventName: {
-    fontSize: 16,
-    fontFamily: "Helvetica-Bold",
-    color: C.navy,
-    textAlign: "right",
-  },
+  logo: { height: 32, objectFit: "contain", objectPositionX: 0 },
+  eventNameBlock: { flex: 1, paddingHorizontal: 24, alignItems: "flex-end" },
+  eventName: { fontSize: 16, fontFamily: "Helvetica-Bold", color: C.navy, textAlign: "right" },
 
-  // Gold bar
-  goldBar: {
-    height: 3,
-    backgroundColor: C.gold,
-  },
+  goldBar: { height: 3, backgroundColor: C.gold },
 
-  // Info row: date / location / guest / QR
-  infoRow: {
-    flexDirection: "row",
-    paddingHorizontal: 36,
-    paddingTop: 20,
-    paddingBottom: 20,
-    gap: 0,
-  },
-  infoCell: {
-    flex: 1,
-    paddingRight: 16,
-    borderRight: `1pt solid ${C.gray2}`,
-    marginRight: 16,
-  },
-  infoCellLast: {
-    flex: 1,
-    paddingRight: 0,
-  },
-  infoLabel: {
-    fontSize: 7,
-    fontFamily: "Helvetica-Bold",
-    color: C.gray3,
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 10,
-    fontFamily: "Helvetica-Bold",
-    color: C.navy,
-    lineHeight: 1.35,
-  },
-  infoValueLarge: {
-    fontSize: 13,
-    fontFamily: "Helvetica-Bold",
-    color: C.navy,
-  },
+  infoRow: { flexDirection: "row", paddingHorizontal: 36, paddingTop: 20, paddingBottom: 20 },
+  infoCell: { flex: 1, paddingRight: 16, borderRight: `1pt solid ${C.gray2}`, marginRight: 16 },
+  infoCellLast: { flex: 1, paddingRight: 0 },
+  infoLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.gray3, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 },
+  infoValue: { fontSize: 10, fontFamily: "Helvetica-Bold", color: C.navy, lineHeight: 1.35 },
+  infoValueLarge: { fontSize: 13, fontFamily: "Helvetica-Bold", color: C.navy },
 
-  // QR block in info row
-  qrBlock: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  qrCode: {
-    width: 90,
-    height: 90,
-  },
-  tokenText: {
-    fontSize: 7,
-    color: C.gray3,
-    fontFamily: "Courier",
-    marginTop: 4,
-    textAlign: "center",
-  },
+  qrBlock: { alignItems: "center", justifyContent: "center" },
+  qrCode: { width: 90, height: 90 },
+  tokenText: { fontSize: 7, color: C.gray3, fontFamily: "Courier", marginTop: 4, textAlign: "center" },
 
-  // Scan hint
-  scanHint: {
-    backgroundColor: C.light,
-    paddingHorizontal: 36,
-    paddingVertical: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  scanHintText: {
-    fontSize: 8,
-    color: C.gray3,
-    fontFamily: "Helvetica",
-  },
+  scanHint: { backgroundColor: C.light, paddingHorizontal: 36, paddingVertical: 8 },
+  scanHintText: { fontSize: 8, color: C.gray3 },
 
   // ── PERFORATION ─────────────────────────────────────────────────────────────
-  perforation: {
-    marginHorizontal: 0,
-    borderTop: `1.5pt dashed ${C.gray2}`,
-    marginVertical: 0,
-  },
+  perforation: { borderTop: `1.5pt dashed ${C.gray2}` },
 
   // ── PROGRAM SECTION ─────────────────────────────────────────────────────────
-  program: {
-    flex: 1,
-    paddingHorizontal: 36,
-    paddingTop: 28,
-    paddingBottom: 36,
-  },
-  programHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    gap: 10,
-  },
-  programGoldLine: {
-    width: 28,
-    height: 2,
-    backgroundColor: C.gold,
-  },
-  programTitle: {
+  program: { flex: 1, paddingHorizontal: 36, paddingTop: 24, paddingBottom: 48 },
+
+  // Parsed content styles
+  sectionHeading: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: C.gold,
-    letterSpacing: 2,
-    textTransform: "uppercase",
-  },
-  programContent: {
-    fontSize: 10,
     color: C.navy,
-    lineHeight: 1.7,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    marginTop: 14,
+    marginBottom: 5,
+  },
+  bodyLine: {
+    fontSize: 9.5,
+    color: C.black,
+    lineHeight: 1.6,
     fontFamily: "Helvetica",
   },
-  programPlaceholder: {
-    fontSize: 10,
-    color: C.gray3,
-    lineHeight: 1.7,
-    fontStyle: "italic",
+  timeLine: {
+    fontSize: 9.5,
+    color: C.black,
+    lineHeight: 1.6,
+    fontFamily: "Helvetica",
+    marginBottom: 1,
   },
+  timeCode: {
+    fontSize: 9.5,
+    fontFamily: "Helvetica-Bold",
+    color: C.navy,
+  },
+  emptyLine: { marginBottom: 5 },
+  placeholder: { fontSize: 10, color: C.gray3, lineHeight: 1.7, fontStyle: "italic" },
 
   // Footer
   pageFooter: {
@@ -179,15 +94,54 @@ const s = StyleSheet.create({
     right: 36,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
   },
-  footerText: {
-    fontSize: 8,
-    color: C.gray2,
-    fontFamily: "Helvetica",
-  },
+  footerText: { fontSize: 8, color: C.gray2 },
 });
 
+// ── Simple text parser ────────────────────────────────────────────────────────
+// ## Heading       → navy bold uppercase
+// 13:30 - 14:00 …  → time entries (bold time, normal text)
+// blank line        → small spacer
+// everything else  → body text
+
+type ParsedLine =
+  | { type: "heading"; text: string }
+  | { type: "time"; time: string; label: string }
+  | { type: "body"; text: string }
+  | { type: "empty" };
+
+function parseDescription(raw: string): ParsedLine[] {
+  return raw.split("\n").map((line): ParsedLine => {
+    const trimmed = line.trim();
+    if (!trimmed) return { type: "empty" };
+    if (trimmed.startsWith("## ")) return { type: "heading", text: trimmed.slice(3) };
+    // Match time patterns like "13:30 - 14:00  Some text" or "18:00  Some text"
+    const timeMatch = trimmed.match(/^(\d{1,2}:\d{2}(?:\s*[-–]\s*\d{1,2}:\d{2})?)\s{1,}(.+)$/);
+    if (timeMatch) return { type: "time", time: timeMatch[1].trim(), label: timeMatch[2].trim() };
+    return { type: "body", text: trimmed };
+  });
+}
+
+function ProgramContent({ description }: { description: string }) {
+  const lines = parseDescription(description);
+  return (
+    <>
+      {lines.map((line, i) => {
+        if (line.type === "empty") return <View key={i} style={s.emptyLine} />;
+        if (line.type === "heading") return <Text key={i} style={s.sectionHeading}>{line.text}</Text>;
+        if (line.type === "time") return (
+          <View key={i} style={{ flexDirection: "row", marginBottom: 2 }}>
+            <Text style={[s.timeCode, { width: 90, flexShrink: 0 }]}>{line.time}</Text>
+            <Text style={s.timeLine}>{line.label}</Text>
+          </View>
+        );
+        return <Text key={i} style={s.bodyLine}>{line.text}</Text>;
+      })}
+    </>
+  );
+}
+
+// ── Props ─────────────────────────────────────────────────────────────────────
 type Props = {
   guestName: string;
   token: string;
@@ -201,6 +155,7 @@ type Props = {
   };
 };
 
+// ── PDF Document ──────────────────────────────────────────────────────────────
 export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props) {
   const eventDate = new Date(event.date).toLocaleDateString("de-CH", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -212,8 +167,6 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
 
         {/* ── TICKET STUB ── */}
         <View style={s.stub}>
-
-          {/* Navy header: logo + event name */}
           <View style={s.header}>
             <Image src={logoUrl} style={s.logo} />
             <View style={s.eventNameBlock}>
@@ -221,61 +174,45 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
             </View>
           </View>
 
-          {/* Gold accent bar */}
           <View style={s.goldBar} />
 
-          {/* Info row */}
           <View style={s.infoRow}>
-            {/* Date */}
             <View style={s.infoCell}>
               <Text style={s.infoLabel}>Date</Text>
               <Text style={s.infoValue}>{eventDate}</Text>
             </View>
-
-            {/* Location */}
             <View style={s.infoCell}>
               <Text style={s.infoLabel}>Location</Text>
               <Text style={s.infoValue}>{event.location}</Text>
             </View>
-
-            {/* Guest */}
             <View style={s.infoCellLast}>
               <Text style={s.infoLabel}>Guest</Text>
               <Text style={s.infoValueLarge}>{guestName}</Text>
             </View>
-
-            {/* QR */}
             <View style={s.qrBlock}>
               <Image src={qrDataUrl} style={s.qrCode} />
               <Text style={s.tokenText}>{token.substring(0, 8)}…</Text>
             </View>
           </View>
 
-          {/* Scan hint */}
           <View style={s.scanHint}>
             <Text style={s.scanHintText}>Please show this QR code at the entrance · impactgstaad.ch</Text>
           </View>
         </View>
 
-        {/* ── PERFORATION LINE ── */}
+        {/* ── PERFORATION ── */}
         <View style={s.perforation} />
 
-        {/* ── PROGRAM SECTION ── */}
+        {/* ── PROGRAM ── */}
         <View style={s.program}>
-          <View style={s.programHeader}>
-            <Text style={s.programTitle}>Programme</Text>
-          </View>
-
           {event.description ? (
-            <Text style={s.programContent}>{event.description}</Text>
+            <ProgramContent description={event.description} />
           ) : (
-            <Text style={s.programPlaceholder}>
-              The programme for this event will be announced shortly.
-            </Text>
+            <Text style={s.placeholder}>The programme for this event will be announced shortly.</Text>
           )}
         </View>
 
-        {/* ── PAGE FOOTER ── */}
+        {/* ── FOOTER ── */}
         <View style={s.pageFooter} fixed>
           <Text style={s.footerText}>impactgstaad.ch</Text>
           <Text style={s.footerText}>{event.name} · {guestName}</Text>
