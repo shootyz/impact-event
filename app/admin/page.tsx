@@ -168,6 +168,7 @@ export default function AdminPage() {
     const ctx = audioCtxRef.current;
     const buf = soundBuffers.current[type];
     if (!ctx || !buf) return;
+    if (ctx.state === "suspended") ctx.resume();
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.connect(ctx.destination);
@@ -251,6 +252,17 @@ export default function AdminPage() {
   }, [tick]);
 
   useEffect(() => { return () => { stopScanner(); }; }, [stopScanner]);
+
+  // Re-attach stream when returning to scanner tab (video element was unmounted/remounted)
+  useEffect(() => {
+    if (activeTab === "scanner" && scanning && streamRef.current && videoRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {});
+      rafRef.current = requestAnimationFrame(tick);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const guestAction = async (id: string, action: "delete" | "checkin" | "uncheckin") => {
     const pw = savedPassword.current;
