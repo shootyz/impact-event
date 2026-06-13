@@ -599,7 +599,7 @@ export default function AdminPage() {
         </div>
 
         {/* ── Stats ── */}
-        {activeTab !== "scanner" && (
+        {activeTab === "list" && (
           <div className="grid grid-cols-3 gap-3 mb-6">
             {([
               { label: "Angemeldet", value: registrations.length, color: "var(--ig-navy)", filter: "all" as const },
