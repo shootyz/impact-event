@@ -94,12 +94,27 @@ export default function AdminPage() {
     if (activeTab === "archiv") loadArchive();
   }, [activeTab, loadArchive]);
 
+  // Auto-login from sessionStorage on page reload
+  useEffect(() => {
+    const stored = sessionStorage.getItem("adminPw");
+    if (!stored) return;
+    fetch("/api/registrations?password=" + encodeURIComponent(stored)).then(async (res) => {
+      if (res.status === 401) { sessionStorage.removeItem("adminPw"); return; }
+      const data = await res.json();
+      savedPassword.current = stored;
+      setAuthenticated(true);
+      setRegistrations(data.registrations || []);
+      setEvent(data.event || null);
+    });
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     const res = await fetch("/api/registrations?password=" + encodeURIComponent(password));
     if (res.status === 401) { setAuthError("Falsches Passwort."); return; }
     savedPassword.current = password;
+    sessionStorage.setItem("adminPw", password);
     setAuthenticated(true);
     const data = await res.json();
     setRegistrations(data.registrations || []);
