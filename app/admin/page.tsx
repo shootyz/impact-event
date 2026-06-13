@@ -576,8 +576,8 @@ export default function AdminPage() {
               {/* Gold top accent */}
               <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, transparent, var(--ig-gold), transparent)` }} />
 
-              {/* Camera area */}
-              <div ref={scannerRef} className="relative aspect-square overflow-hidden">
+              {/* Camera area — capped so button stays visible without scrolling */}
+              <div ref={scannerRef} className="relative overflow-hidden" style={{ aspectRatio: "1", maxHeight: "calc(100svh - 260px)" }}>
                 <video ref={videoRef} playsInline muted className={`w-full h-full object-cover ${scanning ? "block" : "hidden"}`} />
                 <canvas ref={canvasRef} className="hidden" />
 
