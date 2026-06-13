@@ -174,7 +174,7 @@ type Props = {
 
 // ── PDF Document ──────────────────────────────────────────────────────────────
 export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props) {
-  const eventDate = new Date(event.date).toLocaleDateString("de-CH", {
+  const eventDate = new Date(event.date).toLocaleDateString("en-GB", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 
