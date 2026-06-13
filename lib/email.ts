@@ -67,8 +67,14 @@ export async function sendConfirmationEmail(
             </div>
             <div style="text-align:center;margin:24px 0 0;">
               <a href="${appUrl}/ticket/${registration.qr_token}"
-                 style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
+                 style="display:inline-block;background:#1E3263;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">
                 Ticket online anzeigen →
+              </a>
+            </div>
+            <div style="text-align:center;margin:12px 0 0;">
+              <a href="${appUrl}/api/ticket/${registration.qr_token}/pdf"
+                 style="display:inline-block;background:#ffffff;color:#1E3263;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;border:1.5px solid #1E3263;">
+                Als PDF speichern ↓
               </a>
             </div>
           </td>
