@@ -66,6 +66,8 @@ export default function AdminPage() {
   const rafRef = useRef<number>(0);
   const lastScanRef = useRef<string>("");
   const savedPassword = useRef("");
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const soundBuffers = useRef<Record<string, AudioBuffer>>({});
 
   const loadRegistrations = useCallback(async (pw: string) => {
     setLoading(true);
@@ -104,9 +106,27 @@ export default function AdminPage() {
     setEvent(data.event || null);
   };
 
+  const unlockAndLoadAudio = async () => {
+    if (audioCtxRef.current) return;
+    const ctx = new AudioContext();
+    audioCtxRef.current = ctx;
+    await Promise.all(
+      (["correct", "wrong"] as const).map(async (name) => {
+        const res = await fetch(`/sounds/${name}.wav`);
+        const buf = await res.arrayBuffer();
+        soundBuffers.current[name] = await ctx.decodeAudioData(buf);
+      })
+    );
+  };
+
   const playSound = (type: "correct" | "wrong") => {
-    const audio = new Audio(`/sounds/${type}.wav`);
-    audio.play().catch(() => {});
+    const ctx = audioCtxRef.current;
+    const buf = soundBuffers.current[type];
+    if (!ctx || !buf) return;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start();
   };
 
   const handleScan = async (token: string) => {
@@ -167,6 +187,7 @@ export default function AdminPage() {
   }, []);
 
   const startScanner = useCallback(async () => {
+    await unlockAndLoadAudio();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
@@ -181,6 +202,7 @@ export default function AdminPage() {
     } catch {
       setScanResult({ status: "error", message: "Kamera konnte nicht gestartet werden." });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tick]);
 
   useEffect(() => { return () => { stopScanner(); }; }, [stopScanner]);
@@ -330,7 +352,7 @@ export default function AdminPage() {
               ? scanResult.status === "success"
                 ? "bg-green-500"
                 : scanResult.status === "already_checked_in"
-                ? "bg-amber-400"
+                ? "bg-red-500"
                 : "bg-red-500"
               : "bg-gray-100"
           }`}
@@ -347,7 +369,7 @@ export default function AdminPage() {
                   {scanResult.status === "error" && (scanResult.message || "Ungültiger QR-Code")}
                 </p>
                 {scanResult.status === "already_checked_in" && (
-                  <p className="text-amber-900 text-sm font-medium mt-1">Bereits eingecheckt</p>
+                  <p className="text-red-100 text-sm font-medium mt-1">Bereits eingecheckt</p>
                 )}
               </div>
             ) : (
@@ -361,7 +383,7 @@ export default function AdminPage() {
 
           {/* Kleines Kamerabild */}
           <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm">
-            <div ref={scannerRef} className="rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center" style={{ height: 180 }}>
+            <div ref={scannerRef} className="rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center aspect-square">
               <video
                 ref={videoRef}
                 playsInline
