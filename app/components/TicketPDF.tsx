@@ -23,8 +23,8 @@ const s = StyleSheet.create({
   header: {
     backgroundColor: C.light,
     paddingHorizontal: 36,
-    paddingTop: 28,
-    paddingBottom: 22,
+    paddingTop: 36,
+    paddingBottom: 30,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -35,7 +35,7 @@ const s = StyleSheet.create({
 
   goldBar: { height: 3, backgroundColor: C.gold },
 
-  infoRow: { flexDirection: "row", paddingHorizontal: 36, paddingTop: 20, paddingBottom: 20 },
+  infoRow: { flexDirection: "row", paddingHorizontal: 36, paddingTop: 28, paddingBottom: 28 },
   infoCell: { flex: 1, paddingRight: 16, borderRight: `1pt solid ${C.gray2}`, marginRight: 16 },
   infoCellLast: { flex: 1, paddingRight: 0 },
   infoLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.gray3, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 },
