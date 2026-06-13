@@ -40,23 +40,18 @@ export default function TicketPage() {
 
       <main
         className="min-h-screen flex flex-col items-center justify-center px-4 py-12 no-print-bg"
-        style={{ background: "var(--ig-navy)" }}
+        style={{ background: "var(--ig-light)" }}
       >
         <div className="w-full max-w-xs">
 
-          {/* Logo — screen only */}
-          <div className="text-center mb-8 no-print">
-            <img src="/logo.png" alt="Impact Gstaad" className="h-8 mx-auto object-contain" style={{ filter: "brightness(0) invert(1) opacity(0.6)" }} />
-          </div>
-
           {/* Ticket card */}
           <div
-            className="ticket-card rounded-3xl overflow-hidden shadow-2xl"
-            style={{ background: "white" }}
+            className="ticket-card rounded-3xl overflow-hidden shadow-xl border"
+            style={{ background: "white", borderColor: "var(--ig-gray2)" }}
           >
             {/* Navy header strip */}
             <div className="px-6 pt-6 pb-5" style={{ background: "var(--ig-navy)" }}>
-              <img src="/logo.png" alt="Impact Gstaad" className="h-6 object-contain mb-4" style={{ filter: "brightness(0) invert(1)" }} />
+              <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain mb-4" />
               {info ? (
                 <>
                   <h2 className="text-lg font-bold text-white leading-tight">{info.event.name}</h2>
@@ -106,9 +101,9 @@ export default function TicketPage() {
           <button
             onClick={() => window.print()}
             className="no-print mt-5 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
-            style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "white"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)"; }}
+            style={{ background: "var(--ig-navy)", color: "white", border: "1px solid var(--ig-navy)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
