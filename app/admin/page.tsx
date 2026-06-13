@@ -513,6 +513,7 @@ export default function AdminPage() {
             <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
             {event && (
               <>
+                <div className="w-px h-5 hidden sm:block" style={{ background: "var(--ig-gray2)" }} />
                 <span className="text-sm font-medium hidden sm:block truncate max-w-xs" style={{ color: "var(--ig-gray3)" }}>{event.name}</span>
               </>
             )}
