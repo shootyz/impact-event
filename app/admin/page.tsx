@@ -103,6 +103,11 @@ export default function AdminPage() {
     setEvent(data.event || null);
   };
 
+  const playSound = (type: "correct" | "wrong") => {
+    const audio = new Audio(`/sounds/${type}.wav`);
+    audio.play().catch(() => {});
+  };
+
   const handleScan = async (token: string) => {
     const clean = token.includes("/ticket/") ? token.split("/ticket/")[1] : token;
     const res = await fetch("/api/scan", {
@@ -112,10 +117,16 @@ export default function AdminPage() {
     });
     const data = await res.json();
     if (!res.ok) {
+      playSound("wrong");
       setScanResult({ status: "error", message: data.error });
     } else {
+      if (data.status === "success") {
+        playSound("correct");
+        loadRegistrations(savedPassword.current);
+      } else {
+        playSound("wrong");
+      }
       setScanResult({ status: data.status, name: data.name });
-      if (data.status === "success") loadRegistrations(savedPassword.current);
     }
     setTimeout(() => setScanResult(null), 4000);
   };
@@ -298,44 +309,65 @@ export default function AdminPage() {
 
       {/* Scanner Tab */}
       {activeTab === "scanner" && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-          {scanResult && (
-            <div className={`rounded-xl px-4 py-3 mb-4 ${
-              scanResult.status === "success" ? "bg-green-50 border border-green-100"
-              : scanResult.status === "already_checked_in" ? "bg-amber-50 border border-amber-100"
-              : "bg-red-50 border border-red-100"
-            }`}>
-              <p className={`font-semibold text-sm ${
-                scanResult.status === "success" ? "text-green-700"
-                : scanResult.status === "already_checked_in" ? "text-amber-700"
-                : "text-red-700"
-              }`}>
-                {scanResult.status === "success" && `✓ Willkommen, ${scanResult.name}!`}
-                {scanResult.status === "already_checked_in" && `Bereits eingecheckt: ${scanResult.name}`}
-                {scanResult.status === "error" && (scanResult.message || "Ungültiger QR-Code")}
-              </p>
-            </div>
-          )}
-          <div ref={scannerRef} className="rounded-xl overflow-hidden bg-gray-50 min-h-[200px] flex items-center justify-center relative">
-            <video
-              ref={videoRef}
-              playsInline
-              muted
-              className={`w-full rounded-xl ${scanning ? "block" : "hidden"}`}
-            />
-            <canvas ref={canvasRef} className="hidden" />
-            {!scanning && <p className="text-gray-400 text-sm">Kamera noch nicht gestartet</p>}
-          </div>
-          <div className="mt-4">
-            {!scanning ? (
-              <button onClick={startScanner} className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
-                Kamera starten
-              </button>
+        <div className="space-y-3">
+          {/* Ergebnis-Banner — dominant, sofort sichtbar */}
+          <div className={`rounded-2xl transition-all duration-200 overflow-hidden ${
+            scanResult
+              ? scanResult.status === "success"
+                ? "bg-green-500"
+                : scanResult.status === "already_checked_in"
+                ? "bg-amber-400"
+                : "bg-red-500"
+              : "bg-gray-100"
+          }`}
+            style={{ minHeight: scanResult ? 120 : 72 }}
+          >
+            {scanResult ? (
+              <div className="flex flex-col items-center justify-center py-7 px-4 text-center">
+                <p className="text-4xl mb-1">
+                  {scanResult.status === "success" ? "✓" : "✗"}
+                </p>
+                <p className="text-white font-bold text-xl leading-tight">
+                  {scanResult.status === "success" && scanResult.name}
+                  {scanResult.status === "already_checked_in" && scanResult.name}
+                  {scanResult.status === "error" && (scanResult.message || "Ungültiger QR-Code")}
+                </p>
+                {scanResult.status === "already_checked_in" && (
+                  <p className="text-amber-900 text-sm font-medium mt-1">Bereits eingecheckt</p>
+                )}
+              </div>
             ) : (
-              <button onClick={stopScanner} className="w-full border border-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">
-                Kamera stoppen
-              </button>
+              <div className="flex items-center justify-center h-full py-5">
+                <p className="text-gray-400 text-sm">
+                  {scanning ? "QR-Code vor die Kamera halten…" : "Kamera starten um zu scannen"}
+                </p>
+              </div>
             )}
+          </div>
+
+          {/* Kleines Kamerabild */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm">
+            <div ref={scannerRef} className="rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center" style={{ height: 180 }}>
+              <video
+                ref={videoRef}
+                playsInline
+                muted
+                className={`w-full h-full object-cover rounded-xl ${scanning ? "block" : "hidden"}`}
+              />
+              <canvas ref={canvasRef} className="hidden" />
+              {!scanning && <p className="text-gray-400 text-sm">Kamera noch nicht aktiv</p>}
+            </div>
+            <div className="mt-3">
+              {!scanning ? (
+                <button onClick={startScanner} className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
+                  Kamera starten
+                </button>
+              ) : (
+                <button onClick={stopScanner} className="w-full border border-gray-200 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 transition">
+                  Stoppen
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
