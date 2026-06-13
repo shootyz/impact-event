@@ -3,69 +3,70 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
-const IconCheck = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+type IconProps = { className?: string; style?: React.CSSProperties };
+const IconCheck = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
   </svg>
 );
-const IconX = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+const IconX = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
-const IconMail = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+const IconMail = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
   </svg>
 );
-const IconTrash = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+const IconTrash = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
-const IconRefresh = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+const IconRefresh = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
   </svg>
 );
-const IconDownload = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+const IconDownload = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
   </svg>
 );
-const IconUpload = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+const IconUpload = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
   </svg>
 );
-const IconCamera = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+const IconCamera = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
-const IconPlus = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+const IconPlus = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
   </svg>
 );
-const IconChevron = ({ down = true, className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+const IconChevron = ({ down = true, className = "w-4 h-4", style }: IconProps & { down?: boolean }) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d={down ? "M19 9l-7 7-7-7" : "M5 15l7-7 7 7"} />
   </svg>
 );
-const IconEye = ({ open = true, className = "w-5 h-5" }) => open ? (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+const IconEye = ({ open = true, className = "w-5 h-5", style }: IconProps & { open?: boolean }) => open ? (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 ) : (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
   </svg>
 );
-const IconLock = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+const IconLock = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
   </svg>
 );
@@ -589,7 +590,7 @@ export default function AdminPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-7 gap-2">
-                  <IconCamera className="w-6 h-6" style={{ color: "rgba(255,255,255,0.4)" } as React.CSSProperties} />
+                  <IconCamera className="w-6 h-6" style={{ color: "rgba(255,255,255,0.4)" } } />
                   <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
                     {scanning ? "QR-Code vor die Kamera halten…" : "Kamera starten um zu scannen"}
                   </p>
@@ -631,10 +632,10 @@ export default function AdminPage() {
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}
               >
                 <span className="flex items-center gap-2 text-sm font-semibold tracking-wide">
-                  <IconPlus className="w-4 h-4" style={{ color: "var(--ig-gold)" } as React.CSSProperties} />
+                  <IconPlus className="w-4 h-4" style={{ color: "var(--ig-gold)" } } />
                   Gast manuell erfassen
                 </span>
-                <IconChevron down={!manualForm} className="w-4 h-4" style={{ color: "var(--ig-gray3)" } as React.CSSProperties} />
+                <IconChevron down={!manualForm} className="w-4 h-4" style={{ color: "var(--ig-gray3)" } } />
               </button>
               {manualForm && (
                 <div className="px-5 pb-5 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
@@ -701,7 +702,7 @@ export default function AdminPage() {
                             In
                           </span>
                         )}
-                        <IconChevron down={expandedGuest !== r.id} className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--ig-gray3)" } as React.CSSProperties} />
+                        <IconChevron down={expandedGuest !== r.id} className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--ig-gray3)" } } />
                       </button>
 
                       {expandedGuest === r.id && (
@@ -713,7 +714,7 @@ export default function AdminPage() {
                               </BtnOutline>
                             ) : (
                               <BtnOutline onClick={() => guestAction(r.id, "checkin")} className="flex-1">
-                                <IconCheck className="w-3.5 h-3.5" style={{ color: "var(--ig-gold)" } as React.CSSProperties} />Einchecken
+                                <IconCheck className="w-3.5 h-3.5" style={{ color: "var(--ig-gold)" } } />Einchecken
                               </BtnOutline>
                             )}
                             <BtnOutline onClick={() => sendQRToGuest(r)} disabled={sendingQR === r.id} className="flex-1">
@@ -721,7 +722,7 @@ export default function AdminPage() {
                               {sendingQR === r.id ? "…" : "QR senden"}
                             </BtnOutline>
                             <BtnOutline onClick={() => guestAction(r.id, "delete")} className="flex-1">
-                              <IconTrash className="w-3.5 h-3.5" style={{ color: "#dc2626" } as React.CSSProperties} />
+                              <IconTrash className="w-3.5 h-3.5" style={{ color: "#dc2626" } } />
                               <span style={{ color: "#dc2626" }}>Löschen</span>
                             </BtnOutline>
                           </div>
@@ -750,7 +751,7 @@ export default function AdminPage() {
                 {currentEventPassword !== (undefined as unknown as null) && (
                   <div className="mb-4 px-4 py-3 rounded-xl flex items-center gap-3"
                     style={{ background: currentEventPassword ? "rgba(210,141,40,0.08)" : "var(--ig-light)", border: `1px solid ${currentEventPassword ? "rgba(210,141,40,0.2)" : "var(--ig-gray2)"}` }}>
-                    <IconLock className="w-4 h-4 flex-shrink-0" style={{ color: currentEventPassword ? "var(--ig-gold)" : "var(--ig-gray3)" } as React.CSSProperties} />
+                    <IconLock className="w-4 h-4 flex-shrink-0" style={{ color: currentEventPassword ? "var(--ig-gold)" : "var(--ig-gray3)" } } />
                     <div>
                       <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Aktueller Code</p>
                       <p className="text-sm font-semibold font-mono" style={{ color: currentEventPassword ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
@@ -843,7 +844,7 @@ export default function AdminPage() {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
                   >
                     <div className="flex items-center gap-2">
-                      <IconDownload className="w-4 h-4 flex-shrink-0" style={{ color: "var(--ig-gold)" } as React.CSSProperties} />
+                      <IconDownload className="w-4 h-4 flex-shrink-0" style={{ color: "var(--ig-gold)" } } />
                       <span className="text-sm font-medium">{label}</span>
                     </div>
                     <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>{count} Personen</span>
