@@ -709,7 +709,7 @@ export default function AdminPage() {
                               onClick={() => guestAction(r.id, "uncheckin")}
                               className="flex-1 py-2 rounded-lg border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-50 transition"
                             >
-                              ↩ Uncheck
+                              ↩ Check out
                             </button>
                           ) : (
                             <button

@@ -15,13 +15,15 @@ export default function RegistrationPage() {
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [eventLoading, setEventLoading] = useState(true);
-  const [hasPassword, setHasPassword] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [gatePassword, setGatePassword] = useState("");
   const [gateError, setGateError] = useState("");
   const [gateLoading, setGateLoading] = useState(false);
-  const [name, setName] = useState("");
+
+  const [vorname, setVorname] = useState("");
+  const [nachname, setNachname] = useState("");
   const [email, setEmail] = useState("");
+  const [emailConfirm, setEmailConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,7 +33,6 @@ export default function RegistrationPage() {
       .then((data) => {
         if (!data.error) {
           setEvent(data);
-          setHasPassword(!!data.registration_password);
           if (!data.registration_password) setUnlocked(true);
         }
         setEventLoading(false);
@@ -49,39 +50,40 @@ export default function RegistrationPage() {
     });
     const data = await res.json();
     setGateLoading(false);
-    if (!res.ok) {
-      setGateError(data.error || "Wrong code.");
-      return;
-    }
+    if (!res.ok) { setGateError(data.error || "Wrong code."); return; }
     setUnlocked(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (email.toLowerCase() !== emailConfirm.toLowerCase()) {
+      setError("Email addresses do not match.");
+      return;
+    }
+
     setLoading(true);
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email }),
+      body: JSON.stringify({ name: `${vorname.trim()} ${nachname.trim()}`, email }),
     });
     const data = await res.json();
     setLoading(false);
-    if (!res.ok) {
-      setError(data.error || "Something went wrong.");
-      return;
-    }
+    if (!res.ok) { setError(data.error || "Something went wrong."); return; }
     router.push(`/success/${data.token}`);
   };
 
   const eventDate = event
     ? new Date(event.date).toLocaleDateString("en-GB", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+        weekday: "long", year: "numeric", month: "long", day: "numeric",
+        hour: "2-digit", minute: "2-digit",
       })
     : null;
 
@@ -89,12 +91,8 @@ export default function RegistrationPage() {
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
-          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">
-            Impact Gstaad
-          </p>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Event Registration
-          </h1>
+          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">Impact Gstaad</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Event Registration</h1>
           {eventLoading ? (
             <div className="h-5 bg-gray-200 rounded animate-pulse w-48 mx-auto mt-2" />
           ) : event ? (
@@ -107,9 +105,7 @@ export default function RegistrationPage() {
         {/* Password gate */}
         {event && !unlocked && (
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <p className="text-sm text-gray-500 mb-4 text-center">
-              This event is for invited members only.
-            </p>
+            <p className="text-sm text-gray-500 mb-4 text-center">This event is for invited members only.</p>
             <form onSubmit={handleUnlock} className="space-y-4">
               <input
                 type="password"
@@ -120,9 +116,7 @@ export default function RegistrationPage() {
                 autoFocus
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
               />
-              {gateError && (
-                <p className="text-sm text-red-600">{gateError}</p>
-              )}
+              {gateError && <p className="text-sm text-red-600">{gateError}</p>}
               <button
                 type="submit"
                 disabled={gateLoading}
@@ -150,33 +144,64 @@ export default function RegistrationPage() {
                 </div>
               </div>
               {event.description && (
-                <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-100">
-                  {event.description}
-                </p>
+                <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-100">{event.description}</p>
               )}
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Full name</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="First Last"
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      First name <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={vorname}
+                      onChange={(e) => setVorname(e.target.value)}
+                      placeholder="Maria"
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Last name <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={nachname}
+                      onChange={(e) => setNachname(e.target.value)}
+                      placeholder="Muster"
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Email <span className="text-red-400">*</span>
+                  </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
                     required
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Confirm email <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={emailConfirm}
+                    onChange={(e) => setEmailConfirm(e.target.value)}
+                    placeholder="name@example.com"
+                    required
+                    onPaste={(e) => e.preventDefault()}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
                   />
                 </div>
