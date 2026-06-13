@@ -333,7 +333,7 @@ export default function AdminPage() {
       else playSound("wrong");
       setScanResult({ status: data.status, name: data.name });
     }
-    setTimeout(() => setScanResult(null), 4000);
+    setTimeout(() => setScanResult(null), 1500);
   };
 
   const stopScanner = useCallback(() => {
@@ -359,7 +359,7 @@ export default function AdminPage() {
       if (code && code.data && code.data !== lastScanRef.current) {
         lastScanRef.current = code.data;
         handleScan(code.data);
-        setTimeout(() => { lastScanRef.current = ""; }, 3000);
+        setTimeout(() => { lastScanRef.current = ""; }, 1500);
       }
     });
     rafRef.current = requestAnimationFrame(tick);

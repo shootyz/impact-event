@@ -12,12 +12,17 @@ export async function GET() {
     return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
   }
 
-  return NextResponse.json({
-    id: event.id,
-    name: event.name,
-    date: event.date,
-    location: event.location,
-    description: event.description,
-    registration_password: !!event.registration_password,
-  })
+  return NextResponse.json(
+    {
+      id: event.id,
+      name: event.name,
+      date: event.date,
+      location: event.location,
+      description: event.description,
+      registration_password: !!event.registration_password,
+    },
+    {
+      headers: { 'Cache-Control': 's-maxage=30, stale-while-revalidate=60' },
+    }
+  )
 }

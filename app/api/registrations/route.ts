@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const { data: event } = await db
     .from('events')
-    .select('*')
+    .select('id, name, date, location, description, registration_password, active')
     .eq('active', true)
     .single()
 
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   const { data: registrations } = await db
     .from('registrations')
-    .select('*')
+    .select('id, name, email, checked_in, checked_in_at, created_at')
     .eq('event_id', event.id)
     .order('created_at', { ascending: false })
 
