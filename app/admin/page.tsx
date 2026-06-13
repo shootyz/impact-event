@@ -297,7 +297,7 @@ export default function AdminPage() {
     src.buffer = silent;
     src.connect(ctx.destination);
     src.start();
-    const soundFiles: Record<string, string> = { correct: "/sounds/correct.mp3", wrong: "/sounds/wrong.wav" };
+    const soundFiles: Record<string, string> = { correct: "/sounds/correct.mp3", wrong: "/sounds/wrong.mp3" };
     await Promise.all((["correct", "wrong"] as const).map(async (name) => {
       const res = await fetch(soundFiles[name]);
       const buf = await res.arrayBuffer();
