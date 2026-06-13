@@ -68,7 +68,7 @@ export default function SuccessPage() {
               )}
               <div className="my-6 h-px" style={{ background: "var(--ig-gold)" }} />
               {info && <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>Ticket for</p>}
-              {info && <p className="text-lg font-bold tracking-widest uppercase" style={{ color: "var(--ig-gold)" }}>{info.name}</p>}
+              {info && <p className="text-lg font-bold" style={{ color: "var(--ig-navy)" }}>{info.name}</p>}
               <div className="mt-auto pt-6">
                 <p className="text-xs" style={{ color: "var(--ig-navy)" }}>Show this QR code at the entrance</p>
               </div>
@@ -103,7 +103,7 @@ export default function SuccessPage() {
             <div className="h-0.5 w-full" style={{ background: "var(--ig-gold)" }} />
             <div className="px-6 py-6">
               {info && <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>Ticket for</p>}
-              {info && <p className="text-base font-bold tracking-widest uppercase mb-4" style={{ color: "var(--ig-gold)" }}>{info.name}</p>}
+              {info && <p className="text-base font-bold mb-4" style={{ color: "var(--ig-navy)" }}>{info.name}</p>}
               {qrUrl ? (
                 <img src={qrUrl} alt="QR Code" className="w-full rounded-xl" />
               ) : (

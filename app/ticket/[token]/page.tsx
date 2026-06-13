@@ -80,7 +80,7 @@ export default function TicketPage() {
                   </p>
                 )}
                 {info && (
-                  <p className="text-lg font-bold tracking-widest uppercase" style={{ color: "var(--ig-gold)" }}>{info.name}</p>
+                  <p className="text-lg font-bold" style={{ color: "var(--ig-navy)" }}>{info.name}</p>
                 )}
 
                 <div className="mt-auto pt-6">
@@ -128,7 +128,7 @@ export default function TicketPage() {
                   </p>
                 )}
                 {info && (
-                  <p className="text-base font-bold tracking-widest uppercase mb-4" style={{ color: "var(--ig-gold)" }}>{info.name}</p>
+                  <p className="text-base font-bold mb-4" style={{ color: "var(--ig-navy)" }}>{info.name}</p>
                 )}
                 {qrUrl ? (
                   <img src={qrUrl} alt="QR Code" className="w-full rounded-xl" />
