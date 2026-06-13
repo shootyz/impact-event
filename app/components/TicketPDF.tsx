@@ -151,7 +151,7 @@ type Props = {
     name: string;
     date: string;
     location: string;
-    description?: string | null;
+    program?: string | null;
   };
 };
 
@@ -205,8 +205,8 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
 
         {/* ── PROGRAM ── */}
         <View style={s.program}>
-          {event.description ? (
-            <ProgramContent description={event.description} />
+          {event.program ? (
+            <ProgramContent description={event.program} />
           ) : (
             <Text style={s.placeholder}>The programme for this event will be announced shortly.</Text>
           )}
