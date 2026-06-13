@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 export async function GET(req: NextRequest) {
   const password = req.nextUrl.searchParams.get('password')
   const type = req.nextUrl.searchParams.get('type') // 'all' | 'checkedin' | 'noshows'
+  const eventId = req.nextUrl.searchParams.get('eventId')
 
   if (password !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
@@ -11,14 +12,14 @@ export async function GET(req: NextRequest) {
 
   const db = supabaseAdmin()
 
-  const { data: event } = await db
-    .from('events')
-    .select('*')
-    .eq('active', true)
-    .single()
+  const eventQuery = eventId
+    ? db.from('events').select('*').eq('id', eventId).single()
+    : db.from('events').select('*').eq('active', true).single()
+
+  const { data: event } = await eventQuery
 
   if (!event) {
-    return new NextResponse('Kein aktiver Event.', { status: 404 })
+    return new NextResponse('Event nicht gefunden.', { status: 404 })
   }
 
   let query = db

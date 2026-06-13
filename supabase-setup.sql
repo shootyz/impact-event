@@ -9,8 +9,12 @@ create table if not exists events (
   location text not null,
   description text,
   active boolean default false,
+  registration_password text,
   created_at timestamptz default now()
 );
+
+-- Migration für bestehende Installationen:
+-- alter table events add column if not exists registration_password text;
 
 -- Registrierungen Tabelle
 create table if not exists registrations (

@@ -19,10 +19,18 @@ type Event = {
   location: string;
 };
 
+type ArchivedEvent = {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  total: number;
+  checked_in: number;
+};
+
 type ScanResult = {
   status: "success" | "already_checked_in" | "error";
   name?: string;
-  checked_in_at?: string;
   message?: string;
 };
 
@@ -35,10 +43,21 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools">("scanner");
+  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv">("scanner");
+
+  // Tools state
   const [resendEmail, setResendEmail] = useState("");
   const [resendStatus, setResendStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
+  const [eventPassword, setEventPassword] = useState("");
+  const [pwStatus, setPwStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [pwLoading, setPwLoading] = useState(false);
+
+  // Archive state
+  const [archivedEvents, setArchivedEvents] = useState<ArchivedEvent[]>([]);
+  const [archiveLoading, setArchiveLoading] = useState(false);
+  const [archiveLoaded, setArchiveLoaded] = useState(false);
+
   const scannerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const html5QrRef = useRef<any>(null);
@@ -55,14 +74,25 @@ export default function AdminPage() {
     setLoading(false);
   }, []);
 
+  const loadArchive = useCallback(async () => {
+    if (archiveLoaded) return;
+    setArchiveLoading(true);
+    const res = await fetch(`/api/archive?password=${encodeURIComponent(savedPassword.current)}`);
+    const data = await res.json();
+    if (data.events) setArchivedEvents(data.events);
+    setArchiveLoading(false);
+    setArchiveLoaded(true);
+  }, [archiveLoaded]);
+
+  useEffect(() => {
+    if (activeTab === "archiv") loadArchive();
+  }, [activeTab, loadArchive]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     const res = await fetch("/api/registrations?password=" + encodeURIComponent(password));
-    if (res.status === 401) {
-      setAuthError("Falsches Passwort.");
-      return;
-    }
+    if (res.status === 401) { setAuthError("Falsches Passwort."); return; }
     savedPassword.current = password;
     setAuthenticated(true);
     const data = await res.json();
@@ -81,10 +111,8 @@ export default function AdminPage() {
     if (!res.ok) {
       setScanResult({ status: "error", message: data.error });
     } else {
-      setScanResult({ status: data.status, name: data.name, checked_in_at: data.checked_in_at });
-      if (data.status === "success") {
-        loadRegistrations(savedPassword.current);
-      }
+      setScanResult({ status: data.status, name: data.name });
+      if (data.status === "success") loadRegistrations(savedPassword.current);
     }
     setTimeout(() => setScanResult(null), 4000);
   };
@@ -99,14 +127,10 @@ export default function AdminPage() {
       await scanner.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText: string) => {
-          handleScan(decodedText);
-        },
+        (decodedText: string) => { handleScan(decodedText); },
         undefined
       );
-    } catch {
-      setScanning(false);
-    }
+    } catch { setScanning(false); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -118,9 +142,7 @@ export default function AdminPage() {
     setScanning(false);
   }, []);
 
-  useEffect(() => {
-    return () => { stopScanner(); };
-  }, [stopScanner]);
+  useEffect(() => { return () => { stopScanner(); }; }, [stopScanner]);
 
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,15 +158,37 @@ export default function AdminPage() {
     if (!res.ok) {
       setResendStatus({ ok: false, msg: data.error });
     } else {
-      setResendStatus({ ok: true, msg: `QR-Code wurde erneut an ${data.name} gesendet.` });
+      setResendStatus({ ok: true, msg: `Code erneut gesendet an ${data.name}.` });
       setResendEmail("");
     }
   };
 
-  const handleExport = (type: "all" | "checkedin") => {
-    const url = `/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}`;
-    window.open(url, "_blank");
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwStatus(null);
+    setPwLoading(true);
+    const res = await fetch("/api/admin/event", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        adminPassword: savedPassword.current,
+        registration_password: eventPassword || null,
+      }),
+    });
+    setPwLoading(false);
+    if (!res.ok) {
+      setPwStatus({ ok: false, msg: "Fehler beim Speichern." });
+    } else {
+      setPwStatus({
+        ok: true,
+        msg: eventPassword ? `Passwort gesetzt: „${eventPassword}"` : "Passwortschutz entfernt.",
+      });
+      setEventPassword("");
+    }
   };
+
+  const exportUrl = (eventId: string, type: string) =>
+    `/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}&eventId=${eventId}`;
 
   const checkedInCount = registrations.filter((r) => r.checked_in).length;
 
@@ -153,33 +197,21 @@ export default function AdminPage() {
       <main className="min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2">
-              Impact Gstaad
-            </p>
+            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2">Impact Gstaad</p>
             <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
             <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Passwort
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Admin-Passwort"
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
-                />
-              </div>
-              {authError && (
-                <p className="text-sm text-red-600">{authError}</p>
-              )}
-              <button
-                type="submit"
-                className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition"
-              >
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Admin-Passwort"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
+              />
+              {authError && <p className="text-sm text-red-600">{authError}</p>}
+              <button type="submit" className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
                 Anmelden
               </button>
             </form>
@@ -193,12 +225,8 @@ export default function AdminPage() {
     <main className="min-h-screen px-4 py-8 max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">
-            Admin
-          </p>
-          <h1 className="text-xl font-bold text-gray-900">
-            {event?.name || "Kein aktiver Event"}
-          </h1>
+          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">Admin</p>
+          <h1 className="text-xl font-bold text-gray-900">{event?.name || "Kein aktiver Event"}</h1>
         </div>
         <button
           onClick={() => loadRegistrations(savedPassword.current)}
@@ -225,83 +253,50 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
-        <button
-          onClick={() => setActiveTab("scanner")}
-          className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-            activeTab === "scanner" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
-          }`}
-        >
-          Scanner
-        </button>
-        <button
-          onClick={() => setActiveTab("list")}
-          className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-            activeTab === "list" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
-          }`}
-        >
-          Gästeliste
-        </button>
-        <button
-          onClick={() => setActiveTab("tools")}
-          className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
-            activeTab === "tools" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
-          }`}
-        >
-          Tools
-        </button>
+      <div className="flex bg-gray-100 rounded-xl p-1 mb-4 gap-1">
+        {(["scanner", "list", "tools", "archiv"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 py-2 text-xs font-medium rounded-lg transition capitalize ${
+              activeTab === tab ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+            }`}
+          >
+            {tab === "scanner" ? "Scanner" : tab === "list" ? "Gäste" : tab === "tools" ? "Tools" : "Archiv"}
+          </button>
+        ))}
       </div>
 
       {/* Scanner Tab */}
       {activeTab === "scanner" && (
         <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
           {scanResult && (
-            <div
-              className={`rounded-xl px-4 py-3 mb-4 ${
-                scanResult.status === "success"
-                  ? "bg-green-50 border border-green-100"
-                  : scanResult.status === "already_checked_in"
-                  ? "bg-amber-50 border border-amber-100"
-                  : "bg-red-50 border border-red-100"
-              }`}
-            >
-              <p
-                className={`font-semibold text-sm ${
-                  scanResult.status === "success"
-                    ? "text-green-700"
-                    : scanResult.status === "already_checked_in"
-                    ? "text-amber-700"
-                    : "text-red-700"
-                }`}
-              >
+            <div className={`rounded-xl px-4 py-3 mb-4 ${
+              scanResult.status === "success" ? "bg-green-50 border border-green-100"
+              : scanResult.status === "already_checked_in" ? "bg-amber-50 border border-amber-100"
+              : "bg-red-50 border border-red-100"
+            }`}>
+              <p className={`font-semibold text-sm ${
+                scanResult.status === "success" ? "text-green-700"
+                : scanResult.status === "already_checked_in" ? "text-amber-700"
+                : "text-red-700"
+              }`}>
                 {scanResult.status === "success" && `✓ Willkommen, ${scanResult.name}!`}
                 {scanResult.status === "already_checked_in" && `Bereits eingecheckt: ${scanResult.name}`}
                 {scanResult.status === "error" && (scanResult.message || "Ungültiger QR-Code")}
               </p>
             </div>
           )}
-          <div
-            id="qr-scanner"
-            ref={scannerRef}
-            className="rounded-xl overflow-hidden bg-gray-50 min-h-[200px] flex items-center justify-center"
-          >
-            {!scanning && (
-              <p className="text-gray-400 text-sm">Kamera wird gestartet…</p>
-            )}
+          <div id="qr-scanner" ref={scannerRef} className="rounded-xl overflow-hidden bg-gray-50 min-h-[200px] flex items-center justify-center">
+            {!scanning && <p className="text-gray-400 text-sm">Kamera wird gestartet…</p>}
           </div>
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4">
             {!scanning ? (
-              <button
-                onClick={startScanner}
-                className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition"
-              >
+              <button onClick={startScanner} className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
                 Kamera starten
               </button>
             ) : (
-              <button
-                onClick={stopScanner}
-                className="flex-1 border border-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition"
-              >
+              <button onClick={stopScanner} className="w-full border border-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">
                 Kamera stoppen
               </button>
             )}
@@ -320,18 +315,12 @@ export default function AdminPage() {
             <div className="divide-y divide-gray-50">
               {registrations.map((r) => (
                 <div key={r.id} className="px-4 py-3 flex items-center gap-3">
-                  <div
-                    className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      r.checked_in ? "bg-green-400" : "bg-gray-200"
-                    }`}
-                  />
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${r.checked_in ? "bg-green-400" : "bg-gray-200"}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
                     <p className="text-xs text-gray-400 truncate">{r.email}</p>
                   </div>
-                  {r.checked_in && (
-                    <span className="text-xs text-green-600 font-medium flex-shrink-0">✓</span>
-                  )}
+                  {r.checked_in && <span className="text-xs text-green-600 font-medium flex-shrink-0">✓</span>}
                 </div>
               ))}
             </div>
@@ -342,12 +331,39 @@ export default function AdminPage() {
       {/* Tools Tab */}
       {activeTab === "tools" && (
         <div className="space-y-4">
-          {/* Resend QR */}
+          {/* Event-Passwort setzen */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Anmeldeseite sperren</h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Mitglieder brauchen diesen Code um sich anzumelden. Leer lassen = offen.
+            </p>
+            <form onSubmit={handleSetPassword} className="space-y-3">
+              <input
+                type="text"
+                value={eventPassword}
+                onChange={(e) => setEventPassword(e.target.value)}
+                placeholder="Neuer Einladungscode (leer = kein Schutz)"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
+              />
+              {pwStatus && (
+                <div className={`rounded-xl px-4 py-3 ${pwStatus.ok ? "bg-green-50 border border-green-100" : "bg-red-50 border border-red-100"}`}>
+                  <p className={`text-sm ${pwStatus.ok ? "text-green-700" : "text-red-600"}`}>{pwStatus.msg}</p>
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={pwLoading}
+                className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
+              >
+                {pwLoading ? "Speichert…" : "Speichern"}
+              </button>
+            </form>
+          </div>
+
+          {/* QR-Code erneut senden */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-gray-900 mb-1">QR-Code erneut senden</h2>
-            <p className="text-xs text-gray-400 mb-4">
-              Für Gäste, die ihren Code verloren haben.
-            </p>
+            <p className="text-xs text-gray-400 mb-4">Für Gäste, die ihren Code verloren haben.</p>
             <form onSubmit={handleResend} className="space-y-3">
               <input
                 type="email"
@@ -358,16 +374,8 @@ export default function AdminPage() {
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
               />
               {resendStatus && (
-                <div
-                  className={`rounded-xl px-4 py-3 ${
-                    resendStatus.ok
-                      ? "bg-green-50 border border-green-100"
-                      : "bg-red-50 border border-red-100"
-                  }`}
-                >
-                  <p className={`text-sm ${resendStatus.ok ? "text-green-700" : "text-red-600"}`}>
-                    {resendStatus.msg}
-                  </p>
+                <div className={`rounded-xl px-4 py-3 ${resendStatus.ok ? "bg-green-50 border border-green-100" : "bg-red-50 border border-red-100"}`}>
+                  <p className={`text-sm ${resendStatus.ok ? "text-green-700" : "text-red-600"}`}>{resendStatus.msg}</p>
                 </div>
               )}
               <button
@@ -383,33 +391,75 @@ export default function AdminPage() {
           {/* CSV Export */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV-Export</h2>
-            <p className="text-xs text-gray-400 mb-4">
-              Gästelisten als Excel-kompatibles CSV herunterladen.
-            </p>
+            <p className="text-xs text-gray-400 mb-4">Aktueller Event.</p>
             <div className="space-y-2">
-              <button
-                onClick={() => handleExport("all")}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-              >
-                <span>Alle Registrierten</span>
-                <span className="text-gray-400 text-xs">{registrations.length} Personen</span>
-              </button>
-              <button
-                onClick={() => handleExport("checkedin")}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-              >
-                <span>Nur Eingecheckte</span>
-                <span className="text-gray-400 text-xs">{checkedInCount} Personen</span>
-              </button>
-              <button
-                onClick={() => handleExport("noshows")}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-              >
-                <span>No-Shows</span>
-                <span className="text-gray-400 text-xs">{registrations.length - checkedInCount} Personen</span>
-              </button>
+              {[
+                { type: "all", label: "Alle Registrierten", count: registrations.length },
+                { type: "checkedin", label: "Eingecheckte", count: checkedInCount },
+                { type: "noshows", label: "No-Shows", count: registrations.length - checkedInCount },
+              ].map(({ type, label, count }) => (
+                <a
+                  key={type}
+                  href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                >
+                  <span>{label}</span>
+                  <span className="text-gray-400 text-xs">{count} Personen</span>
+                </a>
+              ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Archiv Tab */}
+      {activeTab === "archiv" && (
+        <div className="space-y-3">
+          {archiveLoading ? (
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">Lädt…</div>
+          ) : archivedEvents.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">
+              Noch keine archivierten Events.
+            </div>
+          ) : (
+            archivedEvents.map((ev) => (
+              <div key={ev.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{ev.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {new Date(ev.date).toLocaleDateString("de-CH", {
+                        day: "numeric", month: "long", year: "numeric",
+                      })} · {ev.location}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-semibold text-gray-900">{ev.checked_in} / {ev.total}</p>
+                    <p className="text-xs text-gray-400">Check-ins</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {[
+                    { type: "all", label: "Alle" },
+                    { type: "checkedin", label: "Eingecheckt" },
+                    { type: "noshows", label: "No-Shows" },
+                  ].map(({ type, label }) => (
+                    <a
+                      key={type}
+                      href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}&eventId=${ev.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 text-center py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition"
+                    >
+                      {label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </main>
