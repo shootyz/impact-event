@@ -556,7 +556,7 @@ export default function AdminPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
-              style={{ color: "var(--ig-navy)", opacity: activeTab === tab.id ? 1 : 0.4, fontWeight: activeTab === tab.id ? 700 : 400 }}
+              style={{ color: "var(--ig-navy)", fontWeight: activeTab === tab.id ? 700 : 400 }}
             >
               {tab.label}
               {activeTab === tab.id && (
