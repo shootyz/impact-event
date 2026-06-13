@@ -117,6 +117,38 @@ function BtnOutline({ children, onClick, disabled, className = "" }: {
   );
 }
 
+// ─── Confirm Dialog ────────────────────────────────────────────────────────────
+function ConfirmDialog({ title, message, danger, onConfirm, onCancel }: {
+  title: string; message: string; danger?: boolean;
+  onConfirm: () => void; onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
+      <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+        <div className="h-0.5" style={{ background: danger ? "#dc2626" : "var(--ig-gold)" }} />
+        <div className="px-6 pt-6 pb-5">
+          <p className="font-bold text-base mb-2" style={{ color: "var(--ig-navy)" }}>{title}</p>
+          <p className="text-sm" style={{ color: "var(--ig-gray3)" }}>{message}</p>
+        </div>
+        <div className="px-6 pb-5 flex gap-3">
+          <button onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition"
+            style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "white" }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"}
+          >Abbrechen</button>
+          <button onClick={onConfirm}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition"
+            style={{ background: danger ? "#dc2626" : "var(--ig-navy)" }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = "0.85"}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = "1"}
+          >{danger ? "Löschen" : "Bestätigen"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type Registration = {
   id: string; name: string; email: string; qr_token: string;
@@ -159,6 +191,10 @@ export default function AdminPage() {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
   const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv">("scanner");
+
+  const [dialog, setDialog] = useState<{ title: string; message: string; danger?: boolean; onConfirm: () => void } | null>(null);
+  const showConfirm = (title: string, message: string, danger: boolean, onConfirm: () => void) =>
+    setDialog({ title, message, danger, onConfirm });
 
   const [expandedGuest, setExpandedGuest] = useState<string | null>(null);
   const [manualForm, setManualForm] = useState(false);
@@ -354,14 +390,22 @@ export default function AdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  const deleteGuest = async (id: string) => {
+    const pw = savedPassword.current;
+    await fetch(`/api/guest/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: pw }) });
+    setExpandedGuest(null);
+    setDialog(null);
+    loadRegistrations(pw);
+  };
+
   const guestAction = async (id: string, action: "delete" | "checkin" | "uncheckin") => {
     const pw = savedPassword.current;
     if (action === "delete") {
-      if (!confirm("Gast wirklich löschen?")) return;
-      await fetch(`/api/guest/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: pw }) });
-    } else {
-      await fetch(`/api/guest/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: pw, checked_in: action === "checkin" }) });
+      const name = registrations.find(r => r.id === id)?.name ?? "diesen Gast";
+      showConfirm("Gast löschen", `${name} wirklich löschen?`, true, () => deleteGuest(id));
+      return;
     }
+    await fetch(`/api/guest/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: pw, checked_in: action === "checkin" }) });
     setExpandedGuest(null);
     loadRegistrations(pw);
   };
@@ -911,15 +955,20 @@ export default function AdminPage() {
                   Löscht sämtliche Registrierungen des aktuellen Events. Nicht rückgängig zu machen.
                 </p>
                 <button
-                  onClick={async () => {
-                    if (!confirm(`Wirklich ALLE ${registrations.length} Gäste löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
-                    const res = await fetch("/api/admin/clear", {
-                      method: "DELETE", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ adminPassword: savedPassword.current }),
-                    });
-                    const data = await res.json();
-                    if (res.ok) { loadRegistrations(savedPassword.current); alert(`${data.deleted} Gäste wurden gelöscht.`); }
-                  }}
+                  onClick={() => showConfirm(
+                    "Alle Gäste löschen",
+                    `Wirklich alle ${registrations.length} Gäste löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+                    true,
+                    async () => {
+                      const res = await fetch("/api/admin/clear", {
+                        method: "DELETE", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ adminPassword: savedPassword.current }),
+                      });
+                      const data = await res.json();
+                      setDialog(null);
+                      if (res.ok) loadRegistrations(savedPassword.current);
+                    }
+                  )}
                   className="w-full py-3 rounded-xl text-sm font-semibold tracking-wide flex items-center justify-center gap-2 transition"
                   style={{ border: "1.5px solid #fecaca", color: "#dc2626", background: "#fff5f5" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fee2e2"; (e.currentTarget as HTMLElement).style.borderColor = "#dc2626"; }}
@@ -985,6 +1034,16 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {dialog && (
+        <ConfirmDialog
+          title={dialog.title}
+          message={dialog.message}
+          danger={dialog.danger}
+          onConfirm={dialog.onConfirm}
+          onCancel={() => setDialog(null)}
+        />
+      )}
     </div>
   );
 }
