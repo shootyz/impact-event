@@ -550,20 +550,18 @@ export default function AdminPage() {
         </div>
 
         {/* ── Tabs ── */}
-        <div className="flex gap-1.5 p-1 rounded-xl mb-6" style={{ background: "var(--ig-gray2)" }}>
+        <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition"
-              style={{
-                background: activeTab === tab.id ? "white" : "transparent",
-                color: activeTab === tab.id ? "var(--ig-navy)" : "var(--ig-black)",
-                boxShadow: activeTab === tab.id ? "0 1px 4px rgba(30,50,99,0.12)" : "none",
-                opacity: activeTab === tab.id ? 1 : 0.5,
-              }}
+              className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
+              style={{ color: activeTab === tab.id ? "var(--ig-navy)" : "var(--ig-gray3)" }}
             >
               {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />
+              )}
             </button>
           ))}
         </div>
