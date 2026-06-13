@@ -533,22 +533,6 @@ export default function AdminPage() {
 
       <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
 
-        {/* ── Stats ── */}
-        <div className={`grid grid-cols-3 gap-3 mb-6 ${activeTab === "scanner" ? "hidden" : ""}`}>
-          {[
-            { label: "Angemeldet", value: registrations.length, color: "var(--ig-navy)" },
-            { label: "Eingecheckt", value: checkedInCount, color: "var(--ig-gold)" },
-            { label: "Ausstehend", value: registrations.length - checkedInCount, color: "var(--ig-gray3)" },
-          ].map(({ label, value, color }) => (
-            <Card key={label}>
-              <div className="px-4 py-4 sm:py-5 text-center">
-                <p className="text-2xl sm:text-3xl font-bold" style={{ color }}>{value}</p>
-                <p className="text-xs font-medium tracking-wide mt-1" style={{ color: "var(--ig-gray3)" }}>{label}</p>
-              </div>
-            </Card>
-          ))}
-        </div>
-
         {/* ── Tabs ── */}
         <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
           {tabs.map(tab => (
@@ -565,6 +549,24 @@ export default function AdminPage() {
             </button>
           ))}
         </div>
+
+        {/* ── Stats ── */}
+        {activeTab !== "scanner" && (
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {[
+              { label: "Angemeldet", value: registrations.length, color: "var(--ig-navy)" },
+              { label: "Eingecheckt", value: checkedInCount, color: "var(--ig-gold)" },
+              { label: "Ausstehend", value: registrations.length - checkedInCount, color: "var(--ig-gray3)" },
+            ].map(({ label, value, color }) => (
+              <Card key={label}>
+                <div className="px-4 py-4 sm:py-5 text-center">
+                  <p className="text-2xl sm:text-3xl font-bold" style={{ color }}>{value}</p>
+                  <p className="text-xs font-medium tracking-wide mt-1" style={{ color: "var(--ig-gray3)" }}>{label}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* ═══════════ SCANNER TAB ═══════════ */}
         {activeTab === "scanner" && (
