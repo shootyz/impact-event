@@ -32,9 +32,10 @@ export default function TicketPage() {
       <style>{`
         @media print {
           @page { margin: 0; size: A5 portrait; }
-          body { background: white !important; }
+          body { background: white !important; -webkit-print-color-adjust: exact; }
           .no-print { display: none !important; }
           .ticket-card { box-shadow: none !important; border: 1px solid #D0DDEA !important; }
+          header, footer, nav { display: none !important; }
         }
       `}</style>
 
@@ -73,7 +74,7 @@ export default function TicketPage() {
             <div className="px-6 py-6">
               {info && (
                 <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>
-                  Ticket für
+                  Ticket for
                 </p>
               )}
               {info && (
