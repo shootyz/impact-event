@@ -17,10 +17,8 @@ export default function TicketPage() {
   useEffect(() => {
     if (!token) return;
     const ticketUrl = `${window.location.origin}/ticket/${token}`;
-    QRCode.toDataURL(ticketUrl, { width: 320, margin: 2 }).then(setQrUrl);
-    fetch(`/api/ticket/${token}`)
-      .then((r) => r.json())
-      .then((d) => { if (!d.error) setInfo(d); });
+    QRCode.toDataURL(ticketUrl, { width: 340, margin: 2, color: { dark: "#1E3263", light: "#FFFFFF" } }).then(setQrUrl);
+    fetch(`/api/ticket/${token}`).then((r) => r.json()).then((d) => { if (!d.error) setInfo(d); });
   }, [token]);
 
   const eventDate = info?.event?.date
@@ -32,69 +30,85 @@ export default function TicketPage() {
   return (
     <>
       <style>{`
-        @page { margin: 0; size: A4; }
         @media print {
-          body { background: white !important; -webkit-print-color-adjust: exact; }
+          @page { margin: 0; size: A5 portrait; }
+          body { background: white !important; }
           .no-print { display: none !important; }
-          .print-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-          }
+          .ticket-card { box-shadow: none !important; border: 1px solid #D0DDEA !important; }
         }
       `}</style>
 
-      <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-gray-900 print:bg-white">
-        <div className="print-wrapper w-full flex flex-col items-center">
-          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-8 no-print">
-            Impact Gstaad · Ticket
-          </p>
+      <main
+        className="min-h-screen flex flex-col items-center justify-center px-4 py-12 no-print-bg"
+        style={{ background: "var(--ig-navy)" }}
+      >
+        <div className="w-full max-w-xs">
+
+          {/* Logo — screen only */}
+          <div className="text-center mb-8 no-print">
+            <img src="/logo.png" alt="Impact Gstaad" className="h-8 mx-auto object-contain" style={{ filter: "brightness(0) invert(1) opacity(0.6)" }} />
+          </div>
 
           {/* Ticket card */}
-          <div className="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-xs print:shadow-none print:rounded-xl print:border print:border-gray-200">
-            {/* Event info — shown in print */}
-            <div className="hidden print:block mb-5 pb-4 border-b border-gray-100 text-center">
-              <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2">
-                Impact Gstaad · Ticket
-              </p>
-              {info && (
+          <div
+            className="ticket-card rounded-3xl overflow-hidden shadow-2xl"
+            style={{ background: "white" }}
+          >
+            {/* Navy header strip */}
+            <div className="px-6 pt-6 pb-5" style={{ background: "var(--ig-navy)" }}>
+              <img src="/logo.png" alt="Impact Gstaad" className="h-6 object-contain mb-4" style={{ filter: "brightness(0) invert(1)" }} />
+              {info ? (
                 <>
-                  <p className="text-base font-bold text-gray-900">{info.event.name}</p>
-                  {eventDate && <p className="text-xs text-gray-500 mt-1">{eventDate}</p>}
-                  <p className="text-xs text-gray-500">{info.event.location}</p>
-                  <p className="text-sm font-medium text-gray-700 mt-2">{info.name}</p>
+                  <h2 className="text-lg font-bold text-white leading-tight">{info.event.name}</h2>
+                  {eventDate && <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{eventDate}</p>}
+                  <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{info.event.location}</p>
                 </>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="h-5 w-48 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.15)" }} />
+                  <div className="h-3 w-32 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.1)" }} />
+                </div>
               )}
             </div>
 
-            {/* Event info — shown on screen */}
-            {info && (
-              <div className="print:hidden mb-4 pb-4 border-b border-gray-100 text-center">
-                <p className="text-sm font-bold text-gray-900">{info.event.name}</p>
-                {eventDate && <p className="text-xs text-gray-400 mt-0.5">{eventDate}</p>}
-                <p className="text-xs text-gray-400">{info.event.location}</p>
-                <p className="text-xs text-gray-600 mt-1 font-medium">{info.name}</p>
-              </div>
-            )}
+            {/* Gold divider line */}
+            <div className="h-0.5 w-full" style={{ background: "var(--ig-gold)" }} />
 
-            {qrUrl ? (
-              <img src={qrUrl} alt="QR Code" className="w-full rounded-xl" />
-            ) : (
-              <div className="w-full aspect-square bg-gray-100 rounded-xl animate-pulse" />
-            )}
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-300 font-mono break-all text-center">{token}</p>
+            {/* QR section */}
+            <div className="px-6 py-6">
+              {info && (
+                <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>
+                  Ticket für
+                </p>
+              )}
+              {info && (
+                <p className="text-base font-semibold mb-4" style={{ color: "var(--ig-navy)" }}>{info.name}</p>
+              )}
+              {qrUrl ? (
+                <img src={qrUrl} alt="QR Code" className="w-full rounded-xl" />
+              ) : (
+                <div className="w-full aspect-square rounded-xl animate-pulse" style={{ background: "var(--ig-light)" }} />
+              )}
+              <p className="text-xs mt-3 font-mono text-center break-all" style={{ color: "var(--ig-gray3)" }}>
+                {token?.substring(0, 8)}…
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-5 pt-1 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
+              <p className="text-xs text-center" style={{ color: "var(--ig-gray3)" }}>
+                Show this QR code at the entrance
+              </p>
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 mt-6 mb-5 no-print">
-            Show this QR code at the entrance.
-          </p>
-
+          {/* Save as PDF button */}
           <button
             onClick={() => window.print()}
-            className="no-print inline-flex items-center justify-center gap-2 w-full max-w-xs py-3 rounded-xl bg-white text-gray-900 text-sm font-semibold hover:bg-gray-100 transition"
+            className="no-print mt-5 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
+            style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "white"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)"; }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />

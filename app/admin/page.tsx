@@ -2,44 +2,151 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
+// ─── SVG Icons ────────────────────────────────────────────────────────────────
+const IconCheck = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+  </svg>
+);
+const IconX = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+const IconMail = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+);
+const IconTrash = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
+const IconRefresh = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+const IconDownload = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+  </svg>
+);
+const IconUpload = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+  </svg>
+);
+const IconCamera = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+const IconPlus = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+  </svg>
+);
+const IconChevron = ({ down = true, className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d={down ? "M19 9l-7 7-7-7" : "M5 15l7-7 7 7"} />
+  </svg>
+);
+const IconEye = ({ open = true, className = "w-5 h-5" }) => open ? (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+) : (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+  </svg>
+);
+const IconLock = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+  </svg>
+);
+
+// ─── Shared input style helper ─────────────────────────────────────────────────
+const inputClass = "w-full px-4 py-3 rounded-xl text-sm outline-none bg-[#F8F9FF]";
+const inputStyle = { border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)" };
+
+// ─── Btn helpers ───────────────────────────────────────────────────────────────
+function BtnPrimary({ children, onClick, disabled, type = "button", className = "" }: {
+  children: React.ReactNode; onClick?: () => void; disabled?: boolean; type?: "button" | "submit"; className?: string;
+}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className={`py-3 rounded-xl font-semibold text-sm text-white tracking-widest uppercase transition disabled:opacity-40 ${className}`}
+      style={{ background: hover && !disabled ? "var(--ig-gold)" : "var(--ig-navy)" }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function BtnOutline({ children, onClick, disabled, className = "" }: {
+  children: React.ReactNode; onClick?: () => void; disabled?: boolean; className?: string;
+}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className={`py-2 rounded-lg font-medium text-xs tracking-wide transition disabled:opacity-40 flex items-center justify-center gap-1.5 ${className}`}
+      style={{
+        border: `1.5px solid ${hover ? "var(--ig-navy)" : "var(--ig-gray2)"}`,
+        color: hover ? "var(--ig-navy)" : "var(--ig-black)",
+        background: hover ? "var(--ig-light)" : "white",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
 type Registration = {
-  id: string;
-  name: string;
-  email: string;
-  qr_token: string;
-  checked_in: boolean;
-  checked_in_at: string | null;
-  created_at: string;
+  id: string; name: string; email: string; qr_token: string;
+  checked_in: boolean; checked_in_at: string | null; created_at: string;
 };
+type Event = { id: string; name: string; date: string; location: string; };
+type ArchivedEvent = { id: string; name: string; date: string; location: string; total: number; checked_in: number; };
+type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: string; message?: string; };
+type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
-type Event = {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-};
+// ─── Section card ──────────────────────────────────────────────────────────────
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={`rounded-2xl border overflow-hidden ${className}`}
+      style={{ background: "white", borderColor: "var(--ig-gray2)" }}
+    >
+      {children}
+    </div>
+  );
+}
+function CardHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="px-5 py-4 border-b" style={{ borderColor: "var(--ig-gray2)" }}>
+      <p className="text-xs font-semibold tracking-[0.15em] uppercase" style={{ color: "var(--ig-navy)" }}>{title}</p>
+      {subtitle && <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>{subtitle}</p>}
+    </div>
+  );
+}
 
-type ArchivedEvent = {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  total: number;
-  checked_in: number;
-};
-
-type ScanResult = {
-  status: "success" | "already_checked_in" | "error";
-  name?: string;
-  message?: string;
-};
-
-type ImportResult = {
-  imported: number;
-  duplicates: string[];
-  errors: string[];
-} | null;
-
+// ─── Main Component ────────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -52,7 +159,6 @@ export default function AdminPage() {
   const [scanning, setScanning] = useState(false);
   const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv">("scanner");
 
-  // Guest list actions
   const [expandedGuest, setExpandedGuest] = useState<string | null>(null);
   const [manualForm, setManualForm] = useState(false);
   const [manualName, setManualName] = useState("");
@@ -62,32 +168,27 @@ export default function AdminPage() {
   const [sendingQR, setSendingQR] = useState<string | null>(null);
   const [sendQRStatus, setSendQRStatus] = useState<{ id: string; ok: boolean; msg: string } | null>(null);
 
-  // CSV import
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvResult, setCsvResult] = useState<ImportResult>(null);
   const [csvSending, setCsvSending] = useState(false);
   const [csvSendResult, setCsvSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [lastImportedEmails, setLastImportedEmails] = useState<string[]>([]);
   const csvInputRef = useRef<HTMLInputElement>(null);
 
-  // Tools state
-  const [resendEmail, setResendEmail] = useState("");
-  const [resendStatus, setResendStatus] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [resendLoading, setResendLoading] = useState(false);
   const [eventPassword, setEventPassword] = useState("");
   const [pwStatus, setPwStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [pwLoading, setPwLoading] = useState(false);
   const [currentEventPassword, setCurrentEventPassword] = useState<string | null>(undefined as unknown as null);
 
-  // Archive state
   const [archivedEvents, setArchivedEvents] = useState<ArchivedEvent[]>([]);
   const [archiveLoading, setArchiveLoading] = useState(false);
   const [archiveLoaded, setArchiveLoaded] = useState(false);
 
-  const scannerRef = useRef<HTMLDivElement>(null);
+  const [guestSearch, setGuestSearch] = useState("");
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scannerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
   const lastScanRef = useRef<string>("");
@@ -99,10 +200,7 @@ export default function AdminPage() {
     setLoading(true);
     const res = await fetch(`/api/registrations?password=${encodeURIComponent(pw)}`);
     const data = await res.json();
-    if (data.registrations) {
-      setRegistrations(data.registrations);
-      setEvent(data.event);
-    }
+    if (data.registrations) { setRegistrations(data.registrations); setEvent(data.event); }
     setLoading(false);
   }, []);
 
@@ -120,8 +218,7 @@ export default function AdminPage() {
     if (activeTab === "archiv") loadArchive();
     if (activeTab === "tools") {
       fetch(`/api/admin/event?password=${encodeURIComponent(savedPassword.current)}`)
-        .then((r) => r.json())
-        .then((d) => setCurrentEventPassword(d.registration_password ?? null));
+        .then(r => r.json()).then(d => setCurrentEventPassword(d.registration_password ?? null));
     }
   }, [activeTab, loadArchive]);
 
@@ -155,13 +252,11 @@ export default function AdminPage() {
     if (audioCtxRef.current) return;
     const ctx = new AudioContext();
     audioCtxRef.current = ctx;
-    await Promise.all(
-      (["correct", "wrong"] as const).map(async (name) => {
-        const res = await fetch(`/sounds/${name}.wav`);
-        const buf = await res.arrayBuffer();
-        soundBuffers.current[name] = await ctx.decodeAudioData(buf);
-      })
-    );
+    await Promise.all((["correct", "wrong"] as const).map(async (name) => {
+      const res = await fetch(`/sounds/${name}.wav`);
+      const buf = await res.arrayBuffer();
+      soundBuffers.current[name] = await ctx.decodeAudioData(buf);
+    }));
   };
 
   const playSound = (type: "correct" | "wrong") => {
@@ -187,12 +282,8 @@ export default function AdminPage() {
       playSound("wrong");
       setScanResult({ status: "error", message: data.error });
     } else {
-      if (data.status === "success") {
-        playSound("correct");
-        loadRegistrations(savedPassword.current);
-      } else {
-        playSound("wrong");
-      }
+      if (data.status === "success") { playSound("correct"); loadRegistrations(savedPassword.current); }
+      else playSound("wrong");
       setScanResult({ status: data.status, name: data.name });
     }
     setTimeout(() => setScanResult(null), 4000);
@@ -200,10 +291,7 @@ export default function AdminPage() {
 
   const stopScanner = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
     setScanning(false);
   }, []);
 
@@ -211,8 +299,7 @@ export default function AdminPage() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      rafRef.current = requestAnimationFrame(tick);
-      return;
+      rafRef.current = requestAnimationFrame(tick); return;
     }
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -235,14 +322,9 @@ export default function AdminPage() {
   const startScanner = useCallback(async () => {
     await unlockAndLoadAudio();
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+      if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
       setScanning(true);
       rafRef.current = requestAnimationFrame(tick);
     } catch {
@@ -253,7 +335,6 @@ export default function AdminPage() {
 
   useEffect(() => { return () => { stopScanner(); }; }, [stopScanner]);
 
-  // Re-attach stream when returning to scanner tab (video element was unmounted/remounted)
   useEffect(() => {
     if (activeTab === "scanner" && scanning && streamRef.current && videoRef.current) {
       cancelAnimationFrame(rafRef.current);
@@ -268,17 +349,9 @@ export default function AdminPage() {
     const pw = savedPassword.current;
     if (action === "delete") {
       if (!confirm("Gast wirklich löschen?")) return;
-      await fetch(`/api/guest/${id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminPassword: pw }),
-      });
+      await fetch(`/api/guest/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: pw }) });
     } else {
-      await fetch(`/api/guest/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminPassword: pw, checked_in: action === "checkin" }),
-      });
+      await fetch(`/api/guest/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: pw, checked_in: action === "checkin" }) });
     }
     setExpandedGuest(null);
     loadRegistrations(pw);
@@ -288,17 +361,12 @@ export default function AdminPage() {
     setSendingQR(reg.id);
     setSendQRStatus(null);
     const res = await fetch("/api/resend-ticket", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: reg.email, adminPassword: savedPassword.current }),
     });
     const data = await res.json();
     setSendingQR(null);
-    setSendQRStatus({
-      id: reg.id,
-      ok: res.ok,
-      msg: res.ok ? `QR-Code gesendet an ${reg.email}` : data.error || "Fehler",
-    });
+    setSendQRStatus({ id: reg.id, ok: res.ok, msg: res.ok ? `QR-Code gesendet an ${reg.email}` : data.error || "Fehler" });
     setTimeout(() => setSendQRStatus(null), 3000);
   };
 
@@ -307,601 +375,566 @@ export default function AdminPage() {
     setManualStatus(null);
     setManualLoading(true);
     const res = await fetch("/api/admin/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ adminPassword: savedPassword.current, name: manualName, email: manualEmail }),
     });
     const data = await res.json();
     setManualLoading(false);
-    if (!res.ok) {
-      setManualStatus({ ok: false, msg: data.error });
-    } else {
-      setManualStatus({ ok: true, msg: `${manualName} wurde registriert.` });
-      setManualName("");
-      setManualEmail("");
-      loadRegistrations(savedPassword.current);
-    }
+    if (!res.ok) { setManualStatus({ ok: false, msg: data.error }); }
+    else { setManualStatus({ ok: true, msg: `${manualName} wurde registriert.` }); setManualName(""); setManualEmail(""); loadRegistrations(savedPassword.current); }
   };
 
   const handleCSVImport = async () => {
     if (!csvFile) return;
-    setCsvImporting(true);
-    setCsvResult(null);
-    setCsvSendResult(null);
-    setLastImportedEmails([]);
-
+    setCsvImporting(true); setCsvResult(null); setCsvSendResult(null);
     const fd = new FormData();
     fd.append("adminPassword", savedPassword.current);
     fd.append("file", csvFile);
-
     const res = await fetch("/api/admin/import", { method: "POST", body: fd });
     const data = await res.json();
     setCsvImporting(false);
-
-    if (!res.ok) {
-      setCsvResult({ imported: 0, duplicates: [], errors: [data.error] });
-    } else {
-      setCsvResult(data);
-      if (data.imported > 0) {
-        loadRegistrations(savedPassword.current);
-        // Store the imported emails for "Send QR" button
-        // We'll re-fetch them from the registrations list
-        setLastImportedEmails([]);
-      }
-    }
+    if (!res.ok) { setCsvResult({ imported: 0, duplicates: [], errors: [data.error] }); }
+    else { setCsvResult(data); if (data.imported > 0) loadRegistrations(savedPassword.current); }
     if (csvInputRef.current) csvInputRef.current.value = "";
     setCsvFile(null);
   };
 
   const handleSendQRToImported = async () => {
     if (!csvResult || csvResult.imported === 0) return;
-    setCsvSending(true);
-    setCsvSendResult(null);
-
-    // Get the most recently registered guests (by created_at desc, limit imported count)
+    setCsvSending(true); setCsvSendResult(null);
     const res = await fetch(`/api/registrations?password=${encodeURIComponent(savedPassword.current)}`);
     const data = await res.json();
     const allRegs: Registration[] = data.registrations || [];
-
-    // Sort by created_at desc and take the last N imported
-    const sorted = [...allRegs].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+    const sorted = [...allRegs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     const toSend = sorted.slice(0, csvResult.imported);
-
-    let sent = 0;
-    let failed = 0;
+    let sent = 0, failed = 0;
     for (const r of toSend) {
-      const resp = await fetch("/api/resend-ticket", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: r.email, adminPassword: savedPassword.current }),
-      });
+      const resp = await fetch("/api/resend-ticket", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: r.email, adminPassword: savedPassword.current }) });
       if (resp.ok) sent++; else failed++;
     }
-
     setCsvSending(false);
-    setCsvSendResult({
-      ok: failed === 0,
-      msg: `${sent} QR codes sent${failed > 0 ? `, ${failed} failed` : ""}.`,
-    });
-  };
-
-  const handleResend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setResendStatus(null);
-    setResendLoading(true);
-    const res = await fetch("/api/resend-ticket", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: resendEmail, adminPassword: savedPassword.current }),
-    });
-    const data = await res.json();
-    setResendLoading(false);
-    if (!res.ok) {
-      setResendStatus({ ok: false, msg: data.error });
-    } else {
-      setResendStatus({ ok: true, msg: `Code erneut gesendet an ${data.name}.` });
-      setResendEmail("");
-    }
+    setCsvSendResult({ ok: failed === 0, msg: `${sent} QR-Codes gesendet${failed > 0 ? `, ${failed} fehlgeschlagen` : ""}.` });
   };
 
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPwStatus(null);
-    setPwLoading(true);
+    setPwStatus(null); setPwLoading(true);
     const res = await fetch("/api/admin/event", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        adminPassword: savedPassword.current,
-        registration_password: eventPassword || null,
-      }),
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminPassword: savedPassword.current, registration_password: eventPassword || null }),
     });
     setPwLoading(false);
-    if (!res.ok) {
-      setPwStatus({ ok: false, msg: "Fehler beim Speichern." });
-    } else {
+    if (!res.ok) { setPwStatus({ ok: false, msg: "Fehler beim Speichern." }); }
+    else {
       setCurrentEventPassword(eventPassword || null);
-      setPwStatus({
-        ok: true,
-        msg: eventPassword ? `Passwort gesetzt: "${eventPassword}"` : "Passwortschutz entfernt.",
-      });
+      setPwStatus({ ok: true, msg: eventPassword ? `Passwort gesetzt: „${eventPassword}"` : "Passwortschutz entfernt." });
       setEventPassword("");
     }
   };
 
-  const checkedInCount = registrations.filter((r) => r.checked_in).length;
+  const checkedInCount = registrations.filter(r => r.checked_in).length;
+  const filteredGuests = registrations.filter(r =>
+    guestSearch === "" ||
+    r.name.toLowerCase().includes(guestSearch.toLowerCase()) ||
+    r.email.toLowerCase().includes(guestSearch.toLowerCase())
+  );
 
+  // ─── LOGIN ───────────────────────────────────────────────────────────────────
   if (!authenticated) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-4">
+      <main className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: "var(--ig-light)" }}>
         <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-2">Impact Gstaad</p>
-            <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
+          <div className="text-center mb-10">
+            <img src="/logo.png" alt="Impact Gstaad" className="h-10 mx-auto mb-8 object-contain" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-px" style={{ background: "var(--ig-gray2)" }} />
+              <div className="w-6 h-0.5" style={{ background: "var(--ig-gold)" }} />
+              <div className="flex-1 h-px" style={{ background: "var(--ig-gray2)" }} />
+            </div>
+            <p className="text-xs font-semibold tracking-[0.2em] uppercase" style={{ color: "var(--ig-navy)" }}>Admin</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Admin-Passwort"
-                  required
-                  className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition p-1"
-                >
-                  {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  )}
-                </button>
-              </div>
-              {authError && <p className="text-sm text-red-600">{authError}</p>}
-              <button type="submit" className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
-                Anmelden
-              </button>
-            </form>
-          </div>
+
+          <Card>
+            <div className="h-0.5" style={{ background: `linear-gradient(90deg, var(--ig-navy), var(--ig-gold))` }} />
+            <div className="p-6">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="Admin-Passwort"
+                    required
+                    className={`${inputClass} pr-12`}
+                    style={inputStyle}
+                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                  />
+                  <button type="button" onClick={() => setShowPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition"
+                    style={{ color: "var(--ig-gray3)" }}>
+                    <IconEye open={showPassword} />
+                  </button>
+                </div>
+                {authError && <p className="text-sm text-red-500">{authError}</p>}
+                <BtnPrimary type="submit" className="w-full">Anmelden</BtnPrimary>
+              </form>
+            </div>
+          </Card>
         </div>
       </main>
     );
   }
 
+  // ─── MAIN ADMIN ──────────────────────────────────────────────────────────────
+  const tabs = [
+    { id: "scanner", label: "Scanner" },
+    { id: "list", label: "Gäste" },
+    { id: "tools", label: "Tools" },
+    { id: "archiv", label: "Archiv" },
+  ] as const;
+
   return (
-    <main className="min-h-screen px-4 py-8 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">Admin</p>
-          <h1 className="text-xl font-bold text-gray-900">{event?.name || "Kein aktiver Event"}</h1>
-        </div>
-        <button
-          onClick={() => loadRegistrations(savedPassword.current)}
-          className="text-sm text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition"
-        >
-          Aktualisieren
-        </button>
-      </div>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--ig-light)" }}>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
-          <p className="text-2xl font-bold text-gray-900">{registrations.length}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Angemeldet</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
-          <p className="text-2xl font-bold text-green-600">{checkedInCount}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Eingecheckt</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-3 text-center">
-          <p className="text-2xl font-bold text-gray-400">{registrations.length - checkedInCount}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Ausstehend</p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex bg-gray-100 rounded-xl p-1 mb-4 gap-1">
-        {(["scanner", "list", "tools", "archiv"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 text-xs font-medium rounded-lg transition capitalize ${
-              activeTab === tab ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
-            }`}
-          >
-            {tab === "scanner" ? "Scanner" : tab === "list" ? "Gäste" : tab === "tools" ? "Tools" : "Archiv"}
-          </button>
-        ))}
-      </div>
-
-      {/* Scanner Tab */}
-      {activeTab === "scanner" && (
-        <div className="space-y-3">
-          <div className={`rounded-2xl transition-all duration-200 overflow-hidden ${
-            scanResult
-              ? scanResult.status === "success"
-                ? "bg-green-500"
-                : "bg-red-500"
-              : "bg-gray-100"
-          }`}
-            style={{ minHeight: scanResult ? 120 : 72 }}
-          >
-            {scanResult ? (
-              <div className="flex flex-col items-center justify-center py-7 px-4 text-center">
-                <p className="text-4xl mb-1">
-                  {scanResult.status === "success" ? "✓" : "✗"}
-                </p>
-                <p className="text-white font-bold text-xl leading-tight">
-                  {scanResult.status === "success" && scanResult.name}
-                  {scanResult.status === "already_checked_in" && scanResult.name}
-                  {scanResult.status === "error" && (scanResult.message || "Ungültiger QR-Code")}
-                </p>
-                {scanResult.status === "already_checked_in" && (
-                  <p className="text-red-100 text-sm font-medium mt-1">Bereits eingecheckt</p>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full py-5">
-                <p className="text-gray-400 text-sm">
-                  {scanning ? "QR-Code vor die Kamera halten…" : "Kamera starten um zu scannen"}
-                </p>
-              </div>
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-20 border-b" style={{ background: "var(--ig-navy)", borderColor: "rgba(255,255,255,0.1)" }}>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" style={{ filter: "brightness(0) invert(1)" }} />
+            {event && (
+              <>
+                <div className="w-px h-5 opacity-30" style={{ background: "white" }} />
+                <span className="text-sm font-medium text-white opacity-80 hidden sm:block truncate max-w-xs">{event.name}</span>
+              </>
             )}
           </div>
+          <button
+            onClick={() => loadRegistrations(savedPassword.current)}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+            style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.15)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "white"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)"; }}
+          >
+            <IconRefresh className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Aktualisieren</span>
+          </button>
+        </div>
+      </header>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm">
-            <div ref={scannerRef} className="rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center aspect-square">
-              <video
-                ref={videoRef}
-                playsInline
-                muted
-                className={`w-full h-full object-cover rounded-xl ${scanning ? "block" : "hidden"}`}
-              />
-              <canvas ref={canvasRef} className="hidden" />
-              {!scanning && <p className="text-gray-400 text-sm">Kamera nicht aktiv</p>}
-            </div>
-            <div className="mt-3">
-              {!scanning ? (
-                <button onClick={startScanner} className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition">
-                  Kamera starten
-                </button>
+      <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {[
+            { label: "Angemeldet", value: registrations.length, color: "var(--ig-navy)" },
+            { label: "Eingecheckt", value: checkedInCount, color: "var(--ig-gold)" },
+            { label: "Ausstehend", value: registrations.length - checkedInCount, color: "var(--ig-gray3)" },
+          ].map(({ label, value, color }) => (
+            <Card key={label}>
+              <div className="px-4 py-4 sm:py-5 text-center">
+                <p className="text-2xl sm:text-3xl font-bold" style={{ color }}>{value}</p>
+                <p className="text-xs font-medium tracking-wide mt-1" style={{ color: "var(--ig-gray3)" }}>{label}</p>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* ── Tabs ── */}
+        <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="px-4 sm:px-5 py-3 text-xs sm:text-sm font-semibold tracking-wide transition relative"
+              style={{ color: activeTab === tab.id ? "var(--ig-navy)" : "var(--ig-gray3)" }}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* ═══════════ SCANNER TAB ═══════════ */}
+        {activeTab === "scanner" && (
+          <div className="space-y-4 max-w-sm mx-auto sm:max-w-none">
+            {/* Result banner */}
+            <div
+              className="rounded-2xl overflow-hidden transition-all duration-300"
+              style={{
+                background: scanResult
+                  ? scanResult.status === "success" ? "#16a34a"
+                  : "#dc2626"
+                  : "var(--ig-navy)",
+                minHeight: 96,
+              }}
+            >
+              {scanResult ? (
+                <div className="flex flex-col items-center justify-center py-7 px-4 text-center">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ background: "rgba(255,255,255,0.2)" }}>
+                    {scanResult.status === "success"
+                      ? <IconCheck className="w-5 h-5 text-white" />
+                      : <IconX className="w-5 h-5 text-white" />}
+                  </div>
+                  <p className="text-white font-bold text-xl">{
+                    scanResult.status === "success" ? scanResult.name
+                    : scanResult.status === "already_checked_in" ? scanResult.name
+                    : (scanResult.message || "Ungültiger QR-Code")
+                  }</p>
+                  {scanResult.status === "already_checked_in" && (
+                    <p className="text-red-200 text-sm mt-1">Bereits eingecheckt</p>
+                  )}
+                </div>
               ) : (
-                <button onClick={stopScanner} className="w-full border border-gray-200 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 transition">
-                  Stoppen
-                </button>
+                <div className="flex flex-col items-center justify-center py-7 gap-2">
+                  <IconCamera className="w-6 h-6" style={{ color: "rgba(255,255,255,0.4)" } as React.CSSProperties} />
+                  <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    {scanning ? "QR-Code vor die Kamera halten…" : "Kamera starten um zu scannen"}
+                  </p>
+                </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Guests Tab */}
-      {activeTab === "list" && (
-        <div className="space-y-3">
-          {/* Manual add */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <button
-              onClick={() => { setManualForm((v) => !v); setManualStatus(null); }}
-              className="w-full px-4 py-3 flex items-center justify-between text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-            >
-              <span>+ Gast manuell erfassen</span>
-              <span className="text-gray-400">{manualForm ? "↑" : "↓"}</span>
-            </button>
-            {manualForm && (
-              <div className="px-4 pb-4 border-t border-gray-50">
-                <form onSubmit={handleManualRegister} className="space-y-2 pt-3">
-                  <input
-                    type="text"
-                    value={manualName}
-                    onChange={(e) => setManualName(e.target.value)}
-                    placeholder="Vollständiger Name"
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
-                  />
-                  <input
-                    type="email"
-                    value={manualEmail}
-                    onChange={(e) => setManualEmail(e.target.value)}
-                    placeholder="E-Mail-Adresse"
-                    required
-                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
-                  />
-                  {manualStatus && (
-                    <p className={`text-xs ${manualStatus.ok ? "text-green-600" : "text-red-600"}`}>{manualStatus.msg}</p>
+            {/* Camera */}
+            <Card>
+              <div ref={scannerRef} className="bg-black overflow-hidden aspect-square">
+                <video ref={videoRef} playsInline muted className={`w-full h-full object-cover ${scanning ? "block" : "hidden"}`} />
+                <canvas ref={canvasRef} className="hidden" />
+                {!scanning && (
+                  <div className="w-full h-full flex items-center justify-center" style={{ background: "var(--ig-light)" }}>
+                    <p className="text-sm" style={{ color: "var(--ig-gray3)" }}>Kamera nicht aktiv</p>
+                  </div>
+                )}
+              </div>
+              <div className="p-4">
+                {!scanning
+                  ? <BtnPrimary onClick={startScanner} className="w-full"><span className="flex items-center justify-center gap-2"><IconCamera className="w-4 h-4" />Kamera starten</span></BtnPrimary>
+                  : <BtnOutline onClick={stopScanner} className="w-full">Stoppen</BtnOutline>
+                }
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ═══════════ GÄSTE TAB ═══════════ */}
+        {activeTab === "list" && (
+          <div className="space-y-4">
+            {/* Manual add */}
+            <Card>
+              <button
+                onClick={() => { setManualForm(v => !v); setManualStatus(null); }}
+                className="w-full px-5 py-4 flex items-center justify-between transition"
+                style={{ color: "var(--ig-navy)" }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold tracking-wide">
+                  <IconPlus className="w-4 h-4" style={{ color: "var(--ig-gold)" } as React.CSSProperties} />
+                  Gast manuell erfassen
+                </span>
+                <IconChevron down={!manualForm} className="w-4 h-4" style={{ color: "var(--ig-gray3)" } as React.CSSProperties} />
+              </button>
+              {manualForm && (
+                <div className="px-5 pb-5 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
+                  <form onSubmit={handleManualRegister} className="space-y-3 pt-4">
+                    <input type="text" value={manualName} onChange={e => setManualName(e.target.value)}
+                      placeholder="Vollständiger Name" required className={inputClass} style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                    <input type="email" value={manualEmail} onChange={e => setManualEmail(e.target.value)}
+                      placeholder="E-Mail-Adresse" required className={inputClass} style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                    {manualStatus && (
+                      <p className={`text-xs ${manualStatus.ok ? "text-green-600" : "text-red-500"}`}>{manualStatus.msg}</p>
+                    )}
+                    <BtnPrimary type="submit" disabled={manualLoading} className="w-full">
+                      {manualLoading ? "Wird gespeichert…" : "Speichern"}
+                    </BtnPrimary>
+                  </form>
+                </div>
+              )}
+            </Card>
+
+            {/* Search */}
+            <input
+              type="text"
+              value={guestSearch}
+              onChange={e => setGuestSearch(e.target.value)}
+              placeholder="Gäste suchen…"
+              className={inputClass}
+              style={{ ...inputStyle, display: "block" }}
+              onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+              onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+            />
+
+            {/* Guest list */}
+            <Card>
+              {loading ? (
+                <div className="p-10 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div>
+              ) : filteredGuests.length === 0 ? (
+                <div className="p-10 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>
+                  {guestSearch ? "Keine Treffer." : "Noch keine Anmeldungen."}
+                </div>
+              ) : (
+                <div className="divide-y" style={{ borderColor: "var(--ig-gray2)" }}>
+                  {filteredGuests.map(r => (
+                    <div key={r.id}>
+                      <button
+                        onClick={() => setExpandedGuest(expandedGuest === r.id ? null : r.id)}
+                        className="w-full px-5 py-3.5 flex items-center gap-3 text-left transition"
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ background: r.checked_in ? "var(--ig-gold)" : "var(--ig-gray2)" }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate" style={{ color: "var(--ig-black)" }}>{r.name}</p>
+                          <p className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>{r.email}</p>
+                        </div>
+                        {r.checked_in && (
+                          <span className="text-xs font-semibold tracking-wide px-2 py-0.5 rounded-full" style={{ background: "var(--ig-light)", color: "var(--ig-gold)" }}>
+                            In
+                          </span>
+                        )}
+                        <IconChevron down={expandedGuest !== r.id} className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--ig-gray3)" } as React.CSSProperties} />
+                      </button>
+
+                      {expandedGuest === r.id && (
+                        <div className="px-5 pb-4 border-t space-y-2" style={{ borderColor: "var(--ig-gray2)", background: "var(--ig-light)" }}>
+                          <div className="flex gap-2 pt-3 flex-wrap">
+                            {r.checked_in ? (
+                              <BtnOutline onClick={() => guestAction(r.id, "uncheckin")} className="flex-1">
+                                <IconX className="w-3.5 h-3.5" />Auschecken
+                              </BtnOutline>
+                            ) : (
+                              <BtnOutline onClick={() => guestAction(r.id, "checkin")} className="flex-1">
+                                <IconCheck className="w-3.5 h-3.5" style={{ color: "var(--ig-gold)" } as React.CSSProperties} />Einchecken
+                              </BtnOutline>
+                            )}
+                            <BtnOutline onClick={() => sendQRToGuest(r)} disabled={sendingQR === r.id} className="flex-1">
+                              <IconMail className="w-3.5 h-3.5" />
+                              {sendingQR === r.id ? "…" : "QR senden"}
+                            </BtnOutline>
+                            <BtnOutline onClick={() => guestAction(r.id, "delete")} className="flex-1">
+                              <IconTrash className="w-3.5 h-3.5" style={{ color: "#dc2626" } as React.CSSProperties} />
+                              <span style={{ color: "#dc2626" }}>Löschen</span>
+                            </BtnOutline>
+                          </div>
+                          {sendQRStatus?.id === r.id && (
+                            <p className={`text-xs ${sendQRStatus.ok ? "text-green-600" : "text-red-500"}`}>{sendQRStatus.msg}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {/* ═══════════ TOOLS TAB ═══════════ */}
+        {activeTab === "tools" && (
+          <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 items-start">
+
+            {/* Anmeldeseite sperren */}
+            <Card>
+              <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+              <CardHeader title="Anmeldeseite sperren" subtitle="Mitglieder brauchen diesen Code um sich anzumelden." />
+              <div className="p-5">
+                {currentEventPassword !== (undefined as unknown as null) && (
+                  <div className="mb-4 px-4 py-3 rounded-xl flex items-center gap-3"
+                    style={{ background: currentEventPassword ? "rgba(210,141,40,0.08)" : "var(--ig-light)", border: `1px solid ${currentEventPassword ? "rgba(210,141,40,0.2)" : "var(--ig-gray2)"}` }}>
+                    <IconLock className="w-4 h-4 flex-shrink-0" style={{ color: currentEventPassword ? "var(--ig-gold)" : "var(--ig-gray3)" } as React.CSSProperties} />
+                    <div>
+                      <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Aktueller Code</p>
+                      <p className="text-sm font-semibold font-mono" style={{ color: currentEventPassword ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
+                        {currentEventPassword ?? "Kein Schutz aktiv"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <form onSubmit={handleSetPassword} className="space-y-3">
+                  <input type="text" value={eventPassword} onChange={e => setEventPassword(e.target.value)}
+                    placeholder="Neuer Einladungscode (leer = kein Schutz)"
+                    className={inputClass} style={inputStyle}
+                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                  {pwStatus && (
+                    <p className={`text-xs ${pwStatus.ok ? "text-green-600" : "text-red-500"}`}>{pwStatus.msg}</p>
                   )}
-                  <button
-                    type="submit"
-                    disabled={manualLoading}
-                    className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
-                  >
-                    {manualLoading ? "Wird gespeichert…" : "Speichern"}
-                  </button>
+                  <BtnPrimary type="submit" disabled={pwLoading} className="w-full">
+                    {pwLoading ? "Speichert…" : "Speichern"}
+                  </BtnPrimary>
                 </form>
               </div>
-            )}
-          </div>
+            </Card>
 
-          {/* Guest list */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            {loading ? (
-              <div className="p-8 text-center text-gray-400 text-sm">Lädt…</div>
-            ) : registrations.length === 0 ? (
-              <div className="p-8 text-center text-gray-400 text-sm">Noch keine Anmeldungen.</div>
-            ) : (
-              <div className="divide-y divide-gray-50">
-                {registrations.map((r) => (
-                  <div key={r.id}>
-                    <button
-                      onClick={() => setExpandedGuest(expandedGuest === r.id ? null : r.id)}
-                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left"
-                    >
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${r.checked_in ? "bg-green-400" : "bg-gray-200"}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{r.email}</p>
-                      </div>
-                      <span className="text-gray-300 text-xs">
-                        {expandedGuest === r.id ? "▲" : "▼"}
-                      </span>
-                    </button>
-                    {expandedGuest === r.id && (
-                      <div className="px-4 pb-3 space-y-2 border-t border-gray-50 pt-2">
-                        <div className="flex gap-2 flex-wrap">
-                          {r.checked_in ? (
-                            <button
-                              onClick={() => guestAction(r.id, "uncheckin")}
-                              className="flex-1 py-2 rounded-lg border border-amber-200 text-amber-700 text-xs font-medium hover:bg-amber-50 transition"
-                            >
-                              ↩ Auschecken
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => guestAction(r.id, "checkin")}
-                              className="flex-1 py-2 rounded-lg border border-green-200 text-green-700 text-xs font-medium hover:bg-green-50 transition"
-                            >
-                              ✓ Einchecken
-                            </button>
-                          )}
-                          <button
-                            onClick={() => sendQRToGuest(r)}
-                            disabled={sendingQR === r.id}
-                            className="flex-1 py-2 rounded-lg border border-blue-200 text-blue-600 text-xs font-medium hover:bg-blue-50 transition disabled:opacity-40"
-                          >
-                            {sendingQR === r.id ? "Wird gesendet…" : "📧 QR senden"}
-                          </button>
-                          <button
-                            onClick={() => guestAction(r.id, "delete")}
-                            className="flex-1 py-2 rounded-lg border border-red-200 text-red-600 text-xs font-medium hover:bg-red-50 transition"
-                          >
-                            ✕ Löschen
-                          </button>
-                        </div>
-                        {sendQRStatus?.id === r.id && (
-                          <p className={`text-xs ${sendQRStatus.ok ? "text-green-600" : "text-red-600"}`}>
-                            {sendQRStatus.msg}
-                          </p>
-                        )}
-                      </div>
+            {/* CSV Import */}
+            <Card>
+              <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+              <CardHeader title="CSV-Import" subtitle="Spalten: Name, Vorname, E-Mail" />
+              <div className="p-5 space-y-3">
+                <div className="flex gap-2">
+                  <label className="flex-1 cursor-pointer">
+                    <input ref={csvInputRef} type="file" accept=".csv,text/csv"
+                      onChange={e => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
+                      className="hidden" />
+                    <div className="w-full px-4 py-3 rounded-xl text-sm text-center transition flex items-center justify-center gap-2"
+                      style={{ border: "1.5px dashed var(--ig-gray2)", color: "var(--ig-gray3)", background: "var(--ig-light)" }}>
+                      <IconUpload className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{csvFile ? csvFile.name : "CSV-Datei wählen…"}</span>
+                    </div>
+                  </label>
+                  <button onClick={handleCSVImport} disabled={!csvFile || csvImporting}
+                    className="px-4 py-3 rounded-xl text-sm font-semibold text-white transition disabled:opacity-40"
+                    style={{ background: "var(--ig-navy)", whiteSpace: "nowrap" }}>
+                    {csvImporting ? "…" : "Import"}
+                  </button>
+                </div>
+                {csvResult && (
+                  <div className="space-y-2">
+                    <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ background: "var(--ig-light)", border: "1px solid var(--ig-gray2)" }}>
+                      <p className="font-semibold" style={{ color: "var(--ig-navy)" }}>{csvResult.imported} Gäste importiert</p>
+                      {csvResult.duplicates.length > 0 && (
+                        <p style={{ color: "var(--ig-gold)" }}>{csvResult.duplicates.length} Duplikat(e) übersprungen</p>
+                      )}
+                      {csvResult.errors.length > 0 && (
+                        <p className="text-red-500">{csvResult.errors.length} Fehler</p>
+                      )}
+                    </div>
+                    {csvResult.imported > 0 && (
+                      <button onClick={handleSendQRToImported} disabled={csvSending}
+                        className="w-full py-3 rounded-xl text-sm font-semibold tracking-wide transition disabled:opacity-40 flex items-center justify-center gap-2"
+                        style={{ border: "1.5px solid var(--ig-navy)", color: "var(--ig-navy)", background: "white" }}>
+                        <IconMail className="w-4 h-4" />
+                        {csvSending ? "QR-Codes werden gesendet…" : `QR-Codes an ${csvResult.imported} Gäste senden`}
+                      </button>
+                    )}
+                    {csvSendResult && (
+                      <p className={`text-xs ${csvSendResult.ok ? "text-green-600" : "text-red-500"}`}>{csvSendResult.msg}</p>
                     )}
                   </div>
+                )}
+              </div>
+            </Card>
+
+            {/* CSV Export */}
+            <Card>
+              <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+              <CardHeader title="CSV-Export" subtitle="Aktueller Event" />
+              <div className="p-5 space-y-2">
+                {[
+                  { type: "all", label: "Alle Registrierten", count: registrations.length },
+                  { type: "checkedin", label: "Eingecheckt", count: checkedInCount },
+                  { type: "noshows", label: "No-Shows", count: registrations.length - checkedInCount },
+                ].map(({ type, label, count }) => (
+                  <a key={type}
+                    href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-between px-4 py-3 rounded-xl border transition group"
+                    style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-black)", background: "white" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <IconDownload className="w-4 h-4 flex-shrink-0" style={{ color: "var(--ig-gold)" } as React.CSSProperties} />
+                      <span className="text-sm font-medium">{label}</span>
+                    </div>
+                    <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>{count} Personen</span>
+                  </a>
+                ))}
+              </div>
+            </Card>
+
+            {/* Alle Gäste löschen */}
+            <Card>
+              <div className="h-0.5" style={{ background: "#dc2626" }} />
+              <CardHeader title="Gefahrenzone" />
+              <div className="p-5">
+                <p className="text-xs mb-4" style={{ color: "var(--ig-gray3)" }}>
+                  Löscht sämtliche Registrierungen des aktuellen Events. Nicht rückgängig zu machen.
+                </p>
+                <button
+                  onClick={async () => {
+                    if (!confirm(`Wirklich ALLE ${registrations.length} Gäste löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+                    const res = await fetch("/api/admin/clear", {
+                      method: "DELETE", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ adminPassword: savedPassword.current }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) { loadRegistrations(savedPassword.current); alert(`${data.deleted} Gäste wurden gelöscht.`); }
+                  }}
+                  className="w-full py-3 rounded-xl text-sm font-semibold tracking-wide flex items-center justify-center gap-2 transition"
+                  style={{ border: "1.5px solid #fecaca", color: "#dc2626", background: "#fff5f5" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fee2e2"; (e.currentTarget as HTMLElement).style.borderColor = "#dc2626"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#fff5f5"; (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; }}
+                >
+                  <IconTrash className="w-4 h-4" />
+                  Alle {registrations.length} Gäste löschen
+                </button>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ═══════════ ARCHIV TAB ═══════════ */}
+        {activeTab === "archiv" && (
+          <div className="space-y-4">
+            {archiveLoading ? (
+              <Card><div className="p-10 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div></Card>
+            ) : archivedEvents.length === 0 ? (
+              <Card><div className="p-10 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Noch keine archivierten Events.</div></Card>
+            ) : (
+              <div className="sm:grid sm:grid-cols-2 sm:gap-4 space-y-4 sm:space-y-0">
+                {archivedEvents.map(ev => (
+                  <Card key={ev.id}>
+                    <div className="h-0.5" style={{ background: `linear-gradient(90deg, var(--ig-navy), var(--ig-gold))` }} />
+                    <div className="p-5">
+                      <div className="flex items-start justify-between gap-2 mb-4">
+                        <div>
+                          <p className="font-semibold text-sm" style={{ color: "var(--ig-navy)" }}>{ev.name}</p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
+                            {new Date(ev.date).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
+                          </p>
+                          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{ev.location}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="font-bold text-lg" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}</p>
+                          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>von {ev.total}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {[
+                          { type: "all", label: "Alle" },
+                          { type: "checkedin", label: "Eingecheckt" },
+                          { type: "noshows", label: "No-Shows" },
+                        ].map(({ type, label }) => (
+                          <a key={type}
+                            href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}&eventId=${ev.id}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="flex-1 text-center py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1"
+                            style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "var(--ig-light)" }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
+                          >
+                            <IconDownload className="w-3 h-3" />{label}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
                 ))}
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Tools Tab */}
-      {activeTab === "tools" && (
-        <div className="space-y-4">
-          {/* Anmeldeseite sperren */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">Anmeldeseite sperren</h2>
-            <p className="text-xs text-gray-400 mb-3">
-              Mitglieder brauchen diesen Code um sich anzumelden. Leer lassen = offen.
-            </p>
-            {currentEventPassword !== (undefined as unknown as null) && (
-              <div className={`rounded-xl px-4 py-3 mb-4 ${currentEventPassword ? "bg-amber-50 border border-amber-100" : "bg-gray-50 border border-gray-100"}`}>
-                <p className="text-xs text-gray-400 mb-0.5">Aktueller Code</p>
-                <p className={`text-sm font-semibold ${currentEventPassword ? "text-amber-800 font-mono tracking-wider" : "text-gray-400 italic"}`}>
-                  {currentEventPassword ?? "Kein Schutz aktiv"}
-                </p>
-              </div>
-            )}
-            <form onSubmit={handleSetPassword} className="space-y-3">
-              <input
-                type="text"
-                value={eventPassword}
-                onChange={(e) => setEventPassword(e.target.value)}
-                placeholder="Neuer Einladungscode (leer = kein Schutz)"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition text-sm"
-              />
-              {pwStatus && (
-                <div className={`rounded-xl px-4 py-3 ${pwStatus.ok ? "bg-green-50 border border-green-100" : "bg-red-50 border border-red-100"}`}>
-                  <p className={`text-sm ${pwStatus.ok ? "text-green-700" : "text-red-600"}`}>{pwStatus.msg}</p>
-                </div>
-              )}
-              <button
-                type="submit"
-                disabled={pwLoading}
-                className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold text-sm hover:bg-gray-700 transition disabled:opacity-40"
-              >
-                {pwLoading ? "Speichert…" : "Speichern"}
-              </button>
-            </form>
-          </div>
-
-          {/* CSV Import */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV-Import</h2>
-            <p className="text-xs text-gray-400 mb-4">Columns: Name, Vorname, E-Mail</p>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <label className="flex-1">
-                  <input
-                    ref={csvInputRef}
-                    type="file"
-                    accept=".csv,text/csv"
-                    onChange={(e) => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
-                    className="hidden"
-                  />
-                  <div className="w-full px-4 py-3 rounded-xl border border-dashed border-gray-300 text-sm text-gray-500 text-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition">
-                    {csvFile ? csvFile.name : "CSV-Datei auswählen…"}
-                  </div>
-                </label>
-                <button
-                  onClick={handleCSVImport}
-                  disabled={!csvFile || csvImporting}
-                  className="px-4 py-3 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-700 transition disabled:opacity-40"
-                >
-                  {csvImporting ? "…" : "Import"}
-                </button>
-              </div>
-              {csvResult && (
-                <div className="space-y-2">
-                  <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 text-xs space-y-1">
-                    <p className="text-green-700 font-medium">✓ {csvResult.imported} Gäste importiert</p>
-                    {csvResult.duplicates.length > 0 && (
-                      <div>
-                        <p className="text-amber-600 font-medium">{csvResult.duplicates.length} Duplikat(e) übersprungen:</p>
-                        {csvResult.duplicates.map((d, i) => (
-                          <p key={i} className="text-gray-400 pl-2">• {d}</p>
-                        ))}
-                      </div>
-                    )}
-                    {csvResult.errors.length > 0 && (
-                      <div>
-                        <p className="text-red-600 font-medium">{csvResult.errors.length} Fehler:</p>
-                        {csvResult.errors.map((e, i) => (
-                          <p key={i} className="text-gray-400 pl-2">• {e}</p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {csvResult.imported > 0 && (
-                    <button
-                      onClick={handleSendQRToImported}
-                      disabled={csvSending}
-                      className="w-full py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-40"
-                    >
-                      {csvSending ? "QR-Codes werden gesendet…" : `📧 QR-Codes senden an ${csvResult.imported} importierte Gäste`}
-                    </button>
-                  )}
-                  {csvSendResult && (
-                    <p className={`text-xs ${csvSendResult.ok ? "text-green-600" : "text-amber-600"}`}>
-                      {csvSendResult.msg}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* CSV Export */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900 mb-1">CSV-Export</h2>
-            <p className="text-xs text-gray-400 mb-4">Aktueller Event.</p>
-            <div className="space-y-2">
-              {[
-                { type: "all", label: "Alle Registrierten", count: registrations.length },
-                { type: "checkedin", label: "Eingecheckt", count: checkedInCount },
-                { type: "noshows", label: "No-Shows", count: registrations.length - checkedInCount },
-              ].map(({ type, label, count }) => (
-                <a
-                  key={type}
-                  href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-                >
-                  <span>{label}</span>
-                  <span className="text-gray-400 text-xs">{count} Personen</span>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          {/* Alle Gäste löschen */}
-          <div className="bg-white rounded-2xl border border-red-100 p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-red-700 mb-1">Alle Gäste löschen</h2>
-            <p className="text-xs text-gray-400 mb-4">Löscht sämtliche Registrierungen des aktuellen Events. Nicht rückgängig zu machen.</p>
-            <button
-              onClick={async () => {
-                if (!confirm(`Wirklich ALLE ${registrations.length} Gäste löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
-                const res = await fetch("/api/admin/clear", {
-                  method: "DELETE",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ adminPassword: savedPassword.current }),
-                });
-                const data = await res.json();
-                if (res.ok) {
-                  loadRegistrations(savedPassword.current);
-                  alert(`${data.deleted} Gäste wurden gelöscht.`);
-                }
-              }}
-              className="w-full py-3 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition"
-            >
-              🗑 Alle {registrations.length} Gäste löschen
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Archive Tab */}
-      {activeTab === "archiv" && (
-        <div className="space-y-3">
-          {archiveLoading ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">Lädt…</div>
-          ) : archivedEvents.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm shadow-sm">
-              Noch keine archivierten Events.
-            </div>
-          ) : (
-            archivedEvents.map((ev) => (
-              <div key={ev.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{ev.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {new Date(ev.date).toLocaleDateString("de-CH", {
-                        day: "numeric", month: "long", year: "numeric",
-                      })} · {ev.location}
-                    </p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-semibold text-gray-900">{ev.checked_in} / {ev.total}</p>
-                    <p className="text-xs text-gray-400">Check-ins</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {[
-                    { type: "all", label: "Alle" },
-                    { type: "checkedin", label: "Eingecheckt" },
-                    { type: "noshows", label: "No-Shows" },
-                  ].map(({ type, label }) => (
-                    <a
-                      key={type}
-                      href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}&eventId=${ev.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 text-center py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition"
-                    >
-                      {label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </main>
+        )}
+      </div>
+    </div>
   );
 }

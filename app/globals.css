@@ -1,13 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f4f0;
-  --foreground: #1a1a1a;
+  --ig-navy:  #1E3263;
+  --ig-gold:  #D28D28;
+  --ig-black: #26292F;
+  --ig-light: #F8F9FF;
+  --ig-gray2: #D0DDEA;
+  --ig-gray3: #A7C4DE;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--ig-light);
+  color: var(--ig-black);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--ig-gray2); border-radius: 2px; }
+
+@media print {
+  body { background: white !important; }
+  .no-print { display: none !important; }
 }
