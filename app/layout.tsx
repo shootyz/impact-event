@@ -18,8 +18,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="de" className={`h-full ${inter.variable}`}>
-      <body className="min-h-full flex flex-col" style={{ fontFamily: "var(--font-inter), -apple-system, sans-serif" }}>
+    <html lang="de" className={`h-full ${inter.variable}`} style={{ overflowX: "hidden" }}>
+      <body className="min-h-full flex flex-col" style={{ fontFamily: "var(--font-inter), -apple-system, sans-serif", overflowX: "hidden" }}>
         {children}
       </body>
     </html>
