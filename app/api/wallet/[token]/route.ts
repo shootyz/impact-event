@@ -127,25 +127,23 @@ export async function GET(
     const signerCert = Buffer.from(certB64, 'base64')
     const wwdr = Buffer.from(wwdrB64, 'base64')
 
-    // @ts-ignore — passkit-generator v3 accepts an object model despite types saying string
-    const pass = await PKPass.from(
-      {
-        model: {
-          'pass.json': Buffer.from(JSON.stringify(passJson)),
-          'icon.png': icon,
-          'icon@2x.png': icon2x,
-          'logo.png': logo,
-          'logo@2x.png': logo2x,
-        },
-        certificates: {
-          wwdr,
-          signerCert,
-          signerKey: signerCert,
-          signerKeyPassphrase: certPass,
-        },
+    const passArgs = {
+      model: {
+        'pass.json': Buffer.from(JSON.stringify(passJson)),
+        'icon.png': icon,
+        'icon@2x.png': icon2x,
+        'logo.png': logo,
+        'logo@2x.png': logo2x,
       },
-      {}
-    )
+      certificates: {
+        wwdr,
+        signerCert,
+        signerKey: signerCert,
+        signerKeyPassphrase: certPass,
+      },
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pass = await PKPass.from(passArgs as any, {})
 
     const buf = pass.getAsBuffer()
 
