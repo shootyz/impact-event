@@ -12,6 +12,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Impact Gstaad — Event Anmeldung",
   description: "Registriere dich für Impact Gstaad Events",
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({
