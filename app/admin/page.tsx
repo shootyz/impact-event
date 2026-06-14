@@ -490,13 +490,20 @@ export default function AdminPage() {
   };
 
   const checkedInCount = registrations.filter(r => r.checked_in).length;
-  const filteredGuests = registrations.filter(r => {
-    if (guestFilter === "checkedin" && !r.checked_in) return false;
-    if (guestFilter === "pending" && r.checked_in) return false;
-    return guestSearch === "" ||
-      r.name.toLowerCase().includes(guestSearch.toLowerCase()) ||
-      r.email.toLowerCase().includes(guestSearch.toLowerCase());
-  });
+  const filteredGuests = registrations
+    .filter(r => {
+      if (guestFilter === "checkedin" && !r.checked_in) return false;
+      if (guestFilter === "pending" && r.checked_in) return false;
+      return guestSearch === "" ||
+        r.name.toLowerCase().includes(guestSearch.toLowerCase()) ||
+        r.email.toLowerCase().includes(guestSearch.toLowerCase());
+    })
+    .sort((a, b) => {
+      if (guestFilter === "checkedin") {
+        return new Date(b.checked_in_at ?? 0).getTime() - new Date(a.checked_in_at ?? 0).getTime();
+      }
+      return a.name.localeCompare(b.name);
+    });
 
   // ─── LOGIN ───────────────────────────────────────────────────────────────────
   if (!authenticated) {
@@ -809,10 +816,17 @@ export default function AdminPage() {
                           <p className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>{r.email}</p>
                         </div>
                         {r.checked_in && (
-                          <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#dcfce7", color: "#16a34a" }}>
-                            <IconCheck className="w-3 h-3" />
-                            Eingecheckt
-                          </span>
+                          <div className="flex flex-col items-end gap-0.5 shrink-0">
+                            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: "#dcfce7", color: "#16a34a" }}>
+                              <IconCheck className="w-3 h-3" />
+                              Eingecheckt
+                            </span>
+                            {r.checked_in_at && (
+                              <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>
+                                {new Date(r.checked_in_at).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            )}
+                          </div>
                         )}
                         <IconChevron down={expandedGuest !== r.id} className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--ig-gray3)" } } />
                       </button>
