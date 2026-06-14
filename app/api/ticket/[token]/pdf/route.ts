@@ -26,7 +26,7 @@ export async function GET(
 
   const { data: event } = await db
     .from("events")
-    .select("name, date, location, program")
+    .select("name, date, location, description, program")
     .eq("id", reg.event_id)
     .single();
 
@@ -51,7 +51,7 @@ export async function GET(
     token,
     qrDataUrl,
     logoUrl: logoDataUrl,
-    event: { name: event.name, date: event.date, location: event.location, program: event.program },
+    event: { name: event.name, date: event.date, location: event.location, description: event.description, program: event.program },
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdf = await renderToBuffer(element as any);

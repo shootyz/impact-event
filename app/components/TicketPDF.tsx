@@ -168,6 +168,7 @@ type Props = {
     name: string;
     date: string;
     location: string;
+    description?: string | null;
     program?: string | null;
   };
 };
@@ -188,6 +189,9 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
             <Image src={logoUrl} style={s.logo} />
             <View style={s.eventNameBlock}>
               <Text style={s.eventName}>{event.name}</Text>
+              {event.description ? (
+                <Text style={{ fontSize: 9, color: C.gray3, textAlign: "right", marginTop: 3 }}>{event.description}</Text>
+              ) : null}
             </View>
           </View>
 
