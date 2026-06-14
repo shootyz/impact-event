@@ -223,6 +223,8 @@ export default function AdminPage() {
   const [archiveLoaded, setArchiveLoaded] = useState(false);
 
   const [guestSearch, setGuestSearch] = useState("");
+  const [guestFilter, setGuestFilter] = useState<"all" | "checkedin" | "pending">("all");
+  const [guestSort, setGuestSort] = useState<"name" | "checkin">("name");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -492,11 +494,18 @@ export default function AdminPage() {
   const lastName = (name: string) => name.trim().split(" ").slice(-1)[0] ?? name;
   const filteredGuests = registrations
     .filter(r => {
+      if (guestFilter === "checkedin" && !r.checked_in) return false;
+      if (guestFilter === "pending" && r.checked_in) return false;
       return guestSearch === "" ||
         r.name.toLowerCase().includes(guestSearch.toLowerCase()) ||
         r.email.toLowerCase().includes(guestSearch.toLowerCase());
     })
-    .sort((a, b) => lastName(a.name).localeCompare(lastName(b.name)));
+    .sort((a, b) => {
+      if (guestSort === "checkin") {
+        return new Date(b.checked_in_at ?? 0).getTime() - new Date(a.checked_in_at ?? 0).getTime();
+      }
+      return lastName(a.name).localeCompare(lastName(b.name));
+    });
 
   // ─── LOGIN ───────────────────────────────────────────────────────────────────
   if (!authenticated) {
@@ -762,6 +771,24 @@ export default function AdminPage() {
               onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
               onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
             />
+            <div className="flex gap-2 justify-end">
+              {([
+                { label: "Name", value: "name" as const },
+                { label: "Eincheck-Zeit", value: "checkin" as const },
+              ]).map(({ label, value }) => (
+                <button
+                  key={value}
+                  onClick={() => setGuestSort(value)}
+                  className="text-xs px-3 py-1 rounded-full border transition font-medium"
+                  style={{
+                    background: guestSort === value ? "var(--ig-navy)" : "white",
+                    color: guestSort === value ? "white" : "var(--ig-navy)",
+                    borderColor: guestSort === value ? "var(--ig-navy)" : "var(--ig-gray2)",
+                  }}
+                >{label}</button>
+              ))}
+            </div>
+
             {/* Guest list */}
             <Card>
               {loading ? (
