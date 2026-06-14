@@ -198,7 +198,8 @@ export default function AdminPage() {
 
   const [expandedGuest, setExpandedGuest] = useState<string | null>(null);
   const [manualForm, setManualForm] = useState(false);
-  const [manualName, setManualName] = useState("");
+  const [manualVorname, setManualVorname] = useState("");
+  const [manualNachname, setManualNachname] = useState("");
   const [manualEmail, setManualEmail] = useState("");
   const [manualStatus, setManualStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [manualLoading, setManualLoading] = useState(false);
@@ -428,15 +429,16 @@ export default function AdminPage() {
   const handleManualRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setManualStatus(null);
+    if (!manualVorname.trim() || !manualNachname.trim()) { setManualStatus({ ok: false, msg: "Bitte Vor- und Nachname eingeben." }); return; }
     setManualLoading(true);
     const res = await fetch("/api/admin/register", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminPassword: savedPassword.current, name: manualName, email: manualEmail }),
+      body: JSON.stringify({ adminPassword: savedPassword.current, name: `${manualVorname.trim()} ${manualNachname.trim()}`, email: manualEmail }),
     });
     const data = await res.json();
     setManualLoading(false);
     if (!res.ok) { setManualStatus({ ok: false, msg: data.error }); }
-    else { setManualStatus({ ok: true, msg: `${manualName} wurde registriert.` }); setManualName(""); setManualEmail(""); loadRegistrations(savedPassword.current); }
+    else { setManualStatus({ ok: true, msg: `${manualVorname} ${manualNachname} wurde registriert.` }); setManualVorname(""); setManualNachname(""); setManualEmail(""); loadRegistrations(savedPassword.current); }
   };
 
   const handleCSVImport = async () => {
@@ -746,13 +748,19 @@ export default function AdminPage() {
               </button>
               {manualForm && (
                 <div className="px-5 pb-5 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
-                  <form onSubmit={handleManualRegister} className="space-y-3 pt-4">
-                    <input type="text" value={manualName} onChange={e => setManualName(e.target.value)}
-                      placeholder="Vollständiger Name" required className={inputClass} style={inputStyle}
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                    <input type="email" value={manualEmail} onChange={e => setManualEmail(e.target.value)}
-                      placeholder="E-Mail-Adresse" required className={inputClass} style={inputStyle}
+                  <form onSubmit={handleManualRegister} className="space-y-3 pt-4" noValidate>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input type="text" value={manualVorname} onChange={e => setManualVorname(e.target.value)}
+                        placeholder="Vorname" className={inputClass} style={inputStyle}
+                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                      <input type="text" value={manualNachname} onChange={e => setManualNachname(e.target.value)}
+                        placeholder="Nachname" className={inputClass} style={inputStyle}
+                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                    </div>
+                    <input type="text" value={manualEmail} onChange={e => setManualEmail(e.target.value)}
+                      placeholder="E-Mail-Adresse" className={inputClass} style={inputStyle}
                       onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                       onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
                     {manualStatus && (
