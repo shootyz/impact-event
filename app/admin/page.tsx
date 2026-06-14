@@ -224,6 +224,7 @@ export default function AdminPage() {
 
   const [guestSearch, setGuestSearch] = useState("");
   const [guestFilter, setGuestFilter] = useState<"all" | "checkedin" | "pending">("all");
+  const [guestSort, setGuestSort] = useState<"name" | "checkin">("name");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -490,6 +491,7 @@ export default function AdminPage() {
   };
 
   const checkedInCount = registrations.filter(r => r.checked_in).length;
+  const lastName = (name: string) => name.trim().split(" ").slice(-1)[0] ?? name;
   const filteredGuests = registrations
     .filter(r => {
       if (guestFilter === "checkedin" && !r.checked_in) return false;
@@ -499,10 +501,10 @@ export default function AdminPage() {
         r.email.toLowerCase().includes(guestSearch.toLowerCase());
     })
     .sort((a, b) => {
-      if (guestFilter === "checkedin") {
+      if (guestSort === "checkin") {
         return new Date(b.checked_in_at ?? 0).getTime() - new Date(a.checked_in_at ?? 0).getTime();
       }
-      return a.name.localeCompare(b.name);
+      return lastName(a.name).localeCompare(lastName(b.name));
     });
 
   // ─── LOGIN ───────────────────────────────────────────────────────────────────
@@ -614,7 +616,7 @@ export default function AdminPage() {
               return (
                 <button
                   key={label}
-                  onClick={() => { setGuestFilter(active && filter !== "all" ? "all" : filter); }}
+                  onClick={() => { const f = active && filter !== "all" ? "all" : filter; setGuestFilter(f); setGuestSort(f === "checkedin" ? "checkin" : "name"); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition border"
                   style={{
                     background: active ? "var(--ig-navy)" : "white",
@@ -781,7 +783,7 @@ export default function AdminPage() {
               )}
             </Card>
 
-            {/* Search */}
+            {/* Search + Sort */}
             <input
               type="text"
               value={guestSearch}
@@ -792,6 +794,23 @@ export default function AdminPage() {
               onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
               onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
             />
+            <div className="flex gap-2 justify-end">
+              {([
+                { label: "Name", value: "name" as const },
+                { label: "Eincheck-Zeit", value: "checkin" as const },
+              ]).map(({ label, value }) => (
+                <button
+                  key={value}
+                  onClick={() => setGuestSort(value)}
+                  className="text-xs px-3 py-1 rounded-full border transition font-medium"
+                  style={{
+                    background: guestSort === value ? "var(--ig-navy)" : "white",
+                    color: guestSort === value ? "white" : "var(--ig-navy)",
+                    borderColor: guestSort === value ? "var(--ig-navy)" : "var(--ig-gray2)",
+                  }}
+                >{label}</button>
+              ))}
+            </div>
 
             {/* Guest list */}
             <Card>
@@ -823,7 +842,7 @@ export default function AdminPage() {
                             </span>
                             {r.checked_in_at && (
                               <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>
-                                {new Date(r.checked_in_at).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}
+                                {new Date(r.checked_in_at).toLocaleString("de-CH", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                               </span>
                             )}
                           </div>
