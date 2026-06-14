@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Impact Gstaad — Event Anmeldung",
-  description: "Registriere dich für Impact Gstaad Events",
+  title: "Impact Gstaad – Event Registration",
+  description: "Register for Impact Gstaad Events",
   icons: { icon: "/favicon.png" },
 };
 
