@@ -208,7 +208,6 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
             </View>
             <View style={s.qrBlock}>
               <Image src={qrDataUrl} style={s.qrCode} />
-              <Text style={s.tokenText}>{token.substring(0, 8)}…</Text>
             </View>
           </View>
 
