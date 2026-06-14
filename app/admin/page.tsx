@@ -223,8 +223,6 @@ export default function AdminPage() {
   const [archiveLoaded, setArchiveLoaded] = useState(false);
 
   const [guestSearch, setGuestSearch] = useState("");
-  const [guestFilter, setGuestFilter] = useState<"all" | "checkedin" | "pending">("all");
-  const [guestSort, setGuestSort] = useState<"name" | "checkin">("name");
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -494,18 +492,11 @@ export default function AdminPage() {
   const lastName = (name: string) => name.trim().split(" ").slice(-1)[0] ?? name;
   const filteredGuests = registrations
     .filter(r => {
-      if (guestFilter === "checkedin" && !r.checked_in) return false;
-      if (guestFilter === "pending" && r.checked_in) return false;
       return guestSearch === "" ||
         r.name.toLowerCase().includes(guestSearch.toLowerCase()) ||
         r.email.toLowerCase().includes(guestSearch.toLowerCase());
     })
-    .sort((a, b) => {
-      if (guestSort === "checkin") {
-        return new Date(b.checked_in_at ?? 0).getTime() - new Date(a.checked_in_at ?? 0).getTime();
-      }
-      return lastName(a.name).localeCompare(lastName(b.name));
-    });
+    .sort((a, b) => lastName(a.name).localeCompare(lastName(b.name)));
 
   // ─── LOGIN ───────────────────────────────────────────────────────────────────
   if (!authenticated) {
@@ -604,37 +595,14 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* ── Stats / Filter ── */}
+        {/* ── Stats ── */}
         {activeTab === "list" && (
-          <div className="flex gap-2 mb-5 flex-wrap justify-center">
-            {([
-              { label: "Alle", value: registrations.length, filter: "all" as const },
-              { label: "Eingecheckt", value: checkedInCount, filter: "checkedin" as const },
-              { label: "Ausstehend", value: registrations.length - checkedInCount, filter: "pending" as const },
-            ]).map(({ label, value, filter }) => {
-              const active = guestFilter === filter;
-              return (
-                <button
-                  key={label}
-                  onClick={() => { const f = active && filter !== "all" ? "all" : filter; setGuestFilter(f); setGuestSort(f === "checkedin" ? "checkin" : "name"); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition border"
-                  style={{
-                    background: active ? "var(--ig-navy)" : "white",
-                    color: active ? "white" : "var(--ig-navy)",
-                    borderColor: active ? "var(--ig-navy)" : "var(--ig-gray2)",
-                  }}
-                >
-                  {label}
-                  <span
-                    className="rounded-full px-1.5 py-0.5 text-xs font-bold"
-                    style={{
-                      background: active ? "rgba(255,255,255,0.2)" : "var(--ig-light)",
-                      color: active ? "white" : "var(--ig-navy)",
-                    }}
-                  >{value}</span>
-                </button>
-              );
-            })}
+          <div className="flex gap-4 mb-5 justify-center text-xs font-medium" style={{ color: "var(--ig-gray3)" }}>
+            <span>{registrations.length} Anmeldungen</span>
+            <span>·</span>
+            <span style={{ color: "#16a34a" }}>{checkedInCount} Eingecheckt</span>
+            <span>·</span>
+            <span>{registrations.length - checkedInCount} Ausstehend</span>
           </div>
         )}
 
@@ -794,24 +762,6 @@ export default function AdminPage() {
               onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
               onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
             />
-            <div className="flex gap-2 justify-end">
-              {([
-                { label: "Name", value: "name" as const },
-                { label: "Eincheck-Zeit", value: "checkin" as const },
-              ]).map(({ label, value }) => (
-                <button
-                  key={value}
-                  onClick={() => setGuestSort(value)}
-                  className="text-xs px-3 py-1 rounded-full border transition font-medium"
-                  style={{
-                    background: guestSort === value ? "var(--ig-navy)" : "white",
-                    color: guestSort === value ? "white" : "var(--ig-navy)",
-                    borderColor: guestSort === value ? "var(--ig-navy)" : "var(--ig-gray2)",
-                  }}
-                >{label}</button>
-              ))}
-            </div>
-
             {/* Guest list */}
             <Card>
               {loading ? (
