@@ -233,6 +233,11 @@ export default function AdminPage() {
   const [memberCsvImporting, setMemberCsvImporting] = useState(false);
   const [memberCsvResult, setMemberCsvResult] = useState<{ inserted: number } | null>(null);
   const memberCsvRef = useRef<HTMLInputElement>(null);
+  const [newMemberFirst, setNewMemberFirst] = useState("");
+  const [newMemberLast, setNewMemberLast] = useState("");
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberLoading, setNewMemberLoading] = useState(false);
+  const [newMemberError, setNewMemberError] = useState("");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(false);
   const [campaignSubject, setCampaignSubject] = useState("");
@@ -1119,6 +1124,49 @@ export default function AdminPage() {
             {/* ── Members ── */}
             {mailingTab === "members" && (
               <div className="space-y-4">
+
+                {/* Add single member */}
+                <Card>
+                  <CardHeader title="Add Member" />
+                  <div className="p-5 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <input className={inputClass} style={inputStyle} placeholder="First name" value={newMemberFirst}
+                        onChange={e => setNewMemberFirst(e.target.value)}
+                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                      <input className={inputClass} style={inputStyle} placeholder="Last name" value={newMemberLast}
+                        onChange={e => setNewMemberLast(e.target.value)}
+                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                    </div>
+                    <input className={inputClass} style={inputStyle} placeholder="Email" value={newMemberEmail} type="email"
+                      onChange={e => setNewMemberEmail(e.target.value)}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                    {newMemberError && <p className="text-xs text-red-500">{newMemberError}</p>}
+                    <BtnPrimary className="w-full" disabled={newMemberLoading}
+                      onClick={async () => {
+                        if (!newMemberFirst.trim() || !newMemberLast.trim() || !newMemberEmail.trim()) {
+                          setNewMemberError("All fields required."); return;
+                        }
+                        setNewMemberError("");
+                        setNewMemberLoading(true);
+                        const res = await fetch("/api/members", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ members: [{ first_name: newMemberFirst, last_name: newMemberLast, email: newMemberEmail }] }),
+                        });
+                        const d = await res.json();
+                        setNewMemberLoading(false);
+                        if (!res.ok) { setNewMemberError(d.error || "Error"); return; }
+                        setNewMemberFirst(""); setNewMemberLast(""); setNewMemberEmail("");
+                        fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); });
+                      }}>
+                      {newMemberLoading ? "Adding…" : "Add Member"}
+                    </BtnPrimary>
+                  </div>
+                </Card>
+
                 <Card>
                   <CardHeader title="Import Members" subtitle="CSV with columns: first_name, last_name, email" />
                   <div className="p-5 space-y-3">
