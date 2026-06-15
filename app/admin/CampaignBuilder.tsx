@@ -629,18 +629,18 @@ export default function CampaignBuilder({
           ))}
 
           {/* Add block */}
-          <div className="relative">
+          <div>
             <button onClick={() => setAddMenuOpen(o => !o)}
               className="w-full py-2.5 rounded-xl border-2 border-dashed text-sm font-medium transition"
               style={{ borderColor: addMenuOpen ? "#1E3263" : "#d1d5db", color: addMenuOpen ? "#1E3263" : "#6b7280" }}>
-              + Block hinzufügen
+              {addMenuOpen ? "▴ Schliessen" : "+ Block hinzufügen"}
             </button>
             {addMenuOpen && (
-              <div className="absolute top-full mt-1 left-0 right-0 rounded-xl border shadow-lg z-50 overflow-y-auto" style={{ background: "white", borderColor: "#e5e7eb", maxHeight: 600 }}>
+              <div className="mt-2 rounded-xl border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
                 {ADDABLE_BLOCKS.map(ab => (
                   <button key={ab.type} onClick={() => addBlock(ab.type)}
-                    className="w-full text-left px-4 py-2 text-sm flex items-center gap-3 transition"
-                    style={{ color: "#111" }}
+                    className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition"
+                    style={{ color: "#111", borderBottom: "1px solid #f3f4f6" }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#f9fafb"}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}>
                     <span>{ab.icon}</span>
