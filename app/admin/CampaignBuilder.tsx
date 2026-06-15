@@ -241,11 +241,21 @@ function FocusInput({ value, onChange, placeholder, multiline, rows }: {
   value: string; onChange: (v: string) => void; placeholder?: string; multiline?: boolean; rows?: number;
 }) {
   const [focus, setFocus] = useState(false);
+  const ref = useRef<HTMLTextAreaElement>(null);
   const style = { ...inputSty, borderColor: focus ? "#1E3263" : "#d1d5db" };
+
+  const autoResize = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  };
+
   if (multiline)
-    return <textarea className={inputCls} style={{ ...style, resize: "vertical", minHeight: rows ? rows * 24 : 80 }}
-      value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} />;
+    return <textarea ref={ref} className={inputCls} style={{ ...style, resize: "none", minHeight: rows ? rows * 24 : 80, overflow: "hidden" }}
+      value={value} onChange={e => { onChange(e.target.value); autoResize(); }} placeholder={placeholder}
+      onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
+      onInput={autoResize} />;
   return <input className={inputCls} style={style}
     value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
     onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} />;
