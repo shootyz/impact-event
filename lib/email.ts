@@ -28,7 +28,7 @@ export async function sendConfirmationEmail(
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#F8F9FF;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:24px 16px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:24px 16px 48px;">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
@@ -42,7 +42,7 @@ export async function sendConfirmationEmail(
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td style="vertical-align:middle;">
-                        <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="26" style="display:block;" />
+                        <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="36" style="display:block;" />
                       </td>
                       <td style="vertical-align:middle;text-align:right;">
                         <p style="color:#D28D28;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 3px;">Your Ticket</p>
