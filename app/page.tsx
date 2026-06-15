@@ -56,6 +56,7 @@ export default function RegistrationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!vorname.trim() || !nachname.trim()) { setError("Please enter your first and last name."); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(email)) { setError("Please enter a valid email address."); return; }
     if (email.toLowerCase() !== emailConfirm.toLowerCase()) { setError("Email addresses do not match."); return; }
@@ -92,7 +93,12 @@ export default function RegistrationPage() {
           {eventLoading ? (
             <div className="h-6 rounded animate-pulse w-48 mx-auto" style={{ background: "var(--ig-gray2)" }} />
           ) : event ? (
-            <h1 className="text-2xl font-bold" style={{ color: "var(--ig-navy)" }}>{event.name}</h1>
+            <>
+              <h1 className="text-2xl font-bold" style={{ color: "var(--ig-navy)" }}>{event.name}</h1>
+              {event.description && (
+                <p className="text-sm mt-2" style={{ color: "var(--ig-gray3)" }}>{event.description}</p>
+              )}
+            </>
           ) : (
             <p className="text-red-500 text-sm">No active event.</p>
           )}
@@ -110,7 +116,6 @@ export default function RegistrationPage() {
                 value={gatePassword}
                 onChange={(e) => setGatePassword(e.target.value)}
                 placeholder="Invite code"
-                required
                 autoFocus
                 className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition"
                 style={{
@@ -153,17 +158,11 @@ export default function RegistrationPage() {
                   <p className="text-sm font-medium" style={{ color: "var(--ig-navy)" }}>{event.location}</p>
                 </div>
               </div>
-              {event.description && (
-                <div className="px-6 pb-5 pt-0">
-                  <div className="h-px mb-4" style={{ background: "var(--ig-gray2)" }} />
-                  <p className="text-sm" style={{ color: "var(--ig-navy)" }}>{event.description}</p>
-                </div>
-              )}
             </div>
 
             {/* Form card */}
             <div className="rounded-2xl border p-6 shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { label: "First name", value: vorname, set: setVorname, placeholder: "Maria" },
@@ -178,7 +177,6 @@ export default function RegistrationPage() {
                         value={value}
                         onChange={(e) => set(e.target.value)}
                         placeholder={placeholder}
-                        required
                         className="w-full px-4 py-3 rounded-xl text-sm outline-none"
                         style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "var(--ig-light)" }}
                         onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
@@ -200,7 +198,6 @@ export default function RegistrationPage() {
                       value={value}
                       onChange={(e) => set(e.target.value)}
                       placeholder={placeholder}
-                      required
                       onPaste={confirm ? (e) => e.preventDefault() : undefined}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none"
                       style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "var(--ig-light)" }}
