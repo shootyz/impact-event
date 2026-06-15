@@ -241,6 +241,8 @@ export default function AdminPage() {
   const [campaignHeaderUrl, setCampaignHeaderUrl] = useState("");
   const [campaignSending, setCampaignSending] = useState(false);
   const [campaignResult, setCampaignResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [headerUploading, setHeaderUploading] = useState(false);
+  const headerImageRef = useRef<HTMLInputElement>(null);
 
   const [guestSearch, setGuestSearch] = useState("");
   const [guestFilter, setGuestFilter] = useState<"all" | "checkedin" | "pending">("all");
@@ -1214,11 +1216,34 @@ export default function AdminPage() {
                       onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Header Image URL <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}>(optional)</span></label>
-                    <input className={inputClass} style={inputStyle} value={campaignHeaderUrl}
-                      onChange={e => setCampaignHeaderUrl(e.target.value)} placeholder="https://…"
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Header Image <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}>(optional)</span></label>
+                    <input ref={headerImageRef} type="file" accept="image/*" className="hidden" onChange={async e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setHeaderUploading(true);
+                      const fd = new FormData();
+                      fd.append("file", file);
+                      const res = await fetch("/api/upload", { method: "POST", body: fd });
+                      const d = await res.json();
+                      if (d.url) setCampaignHeaderUrl(d.url);
+                      setHeaderUploading(false);
+                    }} />
+                    <div className="flex gap-3 items-center">
+                      <BtnOutline onClick={() => headerImageRef.current?.click()} className="flex-1" disabled={headerUploading}>
+                        <IconUpload />
+                        {headerUploading ? "Uploading…" : campaignHeaderUrl ? "Replace image" : "Upload image"}
+                      </BtnOutline>
+                      {campaignHeaderUrl && (
+                        <button onClick={() => setCampaignHeaderUrl("")} className="text-xs px-3 py-2 rounded-lg transition" style={{ color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    {campaignHeaderUrl && (
+                      <img src={campaignHeaderUrl} alt="Header preview" className="mt-3 rounded-xl w-full object-cover" style={{ maxHeight: 120 }} />
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Body (HTML) *</label>
