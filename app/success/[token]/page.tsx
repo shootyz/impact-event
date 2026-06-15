@@ -14,6 +14,15 @@ function SuccessPageInner() {
   const searchParams = useSearchParams();
   const already = searchParams.get("already") === "1";
   const [info, setInfo] = useState<TicketInfo | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
+
+  const resendEmail = async () => {
+    setResending(true);
+    await fetch(`/api/resend-ticket/${token}`, { method: "POST" });
+    setResending(false);
+    setResendDone(true);
+  };
 
   useEffect(() => {
     if (!token) return;
@@ -64,10 +73,16 @@ function SuccessPageInner() {
             </p>
           </div>
 
-          <p className="text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>
-            If you didn't receive the email, please check your spam folder.
-          </p>
-          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
+          {resendDone ? (
+            <p className="text-xs font-medium" style={{ color: "#16a34a" }}>Ticket sent — check your inbox.</p>
+          ) : (
+            <button onClick={resendEmail} disabled={resending}
+              className="text-xs underline transition disabled:opacity-40"
+              style={{ color: "var(--ig-navy)", background: "none", border: "none", cursor: "pointer" }}>
+              {resending ? "Sending…" : "Resend ticket email"}
+            </button>
+          )}
+          <p className="text-xs mt-2" style={{ color: "var(--ig-gray3)" }}>
             Questions? <a href="mailto:info@impactgstaad.ch" style={{ color: "var(--ig-navy)", textDecoration: "underline" }}>info@impactgstaad.ch</a>
           </p>
         </div>
