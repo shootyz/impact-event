@@ -38,26 +38,24 @@ function buildCampaignHtml({
   const bodyBefore = ctaIdx >= 0 ? fullBody.slice(0, ctaIdx) : fullBody
   const bodyAfter  = ctaIdx >= 0 ? fullBody.slice(ctaIdx + CTA_MARKER.length) : ''
 
-  const ctaBlock = (inviteCode || eventUrl) ? `
-        ${inviteCode ? `
+  const registerUrl = inviteCode
+    ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}`
+    : eventUrl
+
+  const ctaBlock = registerUrl ? `
         <tr><td style="padding:24px 40px 0;">
           <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td style="background:#f8f8f8;border-radius:8px;border:1px solid #e0e0e0;padding:14px 20px;">
-              <p style="color:#888888;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">Your Invite Code</p>
-              <p style="color:#555555;font-size:16px;font-weight:600;letter-spacing:3px;margin:0;font-family:Arial,sans-serif;">${inviteCode}</p>
-            </td></tr>
-          </table>
-        </td></tr>` : ''}
-        ${eventUrl ? `
-        <tr><td style="padding:16px 40px 0;">
-          <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td>
-              <a href="${eventUrl}${inviteCode ? `?code=${encodeURIComponent(inviteCode)}` : ''}"
+              <a href="${registerUrl}"
                 style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:17px 32px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
                 Register Now
               </a>
             </td></tr>
           </table>
+        </td></tr>
+        ${inviteCode ? `
+        <tr><td style="padding:10px 40px 0;text-align:center;">
+          <p style="color:#bbbbbb;font-size:11px;margin:0;font-family:Arial,sans-serif;">Personal code: <span style="letter-spacing:1px;">${inviteCode}</span> &nbsp;·&nbsp; One-time use</p>
         </td></tr>` : ''}` : ''
 
   return `<!DOCTYPE html>
