@@ -62,7 +62,7 @@ export async function sendConfirmationEmail(
                     <tr>
                       <td align="center">
                         <img src="cid:qrcode" width="240" height="240" alt="QR Code" style="display:block;margin:0 auto;border-radius:8px;"/>
-                        <p style="color:#A7C4DE;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 0;">Show this code at the entrance</p>
+                        <p style="color:#1E3263;font-size:13px;margin:12px 0 0;">Show this code at the entrance</p>
                       </td>
                     </tr>
                   </table>
@@ -72,7 +72,7 @@ export async function sendConfirmationEmail(
                     <tr>
                       <td>
                         <a href="${appUrl}/ticket/${registration.qr_token}"
-                           style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:16px 32px;border-radius:10px;font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">
+                           style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">
                           SHOW TICKET ONLINE
                         </a>
                       </td>
@@ -83,7 +83,7 @@ export async function sendConfirmationEmail(
                     <tr>
                       <td>
                         <a href="${appUrl}/api/ticket/${registration.qr_token}/pdf"
-                           style="display:block;background:transparent;color:#D28D28;text-decoration:none;padding:15px 32px;border-radius:10px;font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;border:2px solid #D28D28;">
+                           style="display:block;background:transparent;color:#D28D28;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;border:2px solid #D28D28;">
                           SAVE AS PDF
                         </a>
                       </td>
