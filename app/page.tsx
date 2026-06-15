@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Event = {
   id: string;
@@ -11,12 +11,13 @@ type Event = {
   description: string | null;
 };
 
-export default function RegistrationPage() {
+function RegistrationPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [event, setEvent] = useState<Event | null>(null);
   const [eventLoading, setEventLoading] = useState(true);
   const [unlocked, setUnlocked] = useState(false);
-  const [gateCode, setGateCode] = useState("");
+  const [gateCode, setGateCode] = useState(searchParams.get("code") ?? "");
   const [gateError, setGateError] = useState("");
   const [gateLoading, setGateLoading] = useState(false);
   const [inviteCodeId, setInviteCodeId] = useState<string | null>(null);
@@ -261,5 +262,13 @@ export default function RegistrationPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function RegistrationPage() {
+  return (
+    <Suspense>
+      <RegistrationPageInner />
+    </Suspense>
   );
 }

@@ -42,9 +42,9 @@ function buildCampaignHtml({
         ${inviteCode ? `
         <tr><td style="padding:24px 40px 0;">
           <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td style="background:#fdf8f0;border-radius:12px;border:2px solid #D28D28;padding:20px 24px;">
-              <p style="color:#D28D28;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Your Personal Invite Code</p>
-              <p style="color:#1E3263;font-size:28px;font-weight:700;letter-spacing:8px;margin:0;font-family:Arial,sans-serif;">${inviteCode}</p>
+            <tr><td style="background:#f8f8f8;border-radius:8px;border:1px solid #e0e0e0;padding:14px 20px;">
+              <p style="color:#888888;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">Your Invite Code</p>
+              <p style="color:#555555;font-size:16px;font-weight:600;letter-spacing:3px;margin:0;font-family:Arial,sans-serif;">${inviteCode}</p>
             </td></tr>
           </table>
         </td></tr>` : ''}
@@ -52,7 +52,7 @@ function buildCampaignHtml({
         <tr><td style="padding:16px 40px 0;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td>
-              <a href="${eventUrl}"
+              <a href="${eventUrl}${inviteCode ? `?code=${encodeURIComponent(inviteCode)}` : ''}"
                 style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:17px 32px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
                 Register Now
               </a>
