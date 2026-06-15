@@ -56,7 +56,7 @@ export async function GET(
     .single()
 
   if (existing) {
-    return NextResponse.redirect(`${appUrl}/success/${existing.qr_token}`)
+    return NextResponse.redirect(`${appUrl}/success/${existing.qr_token}?already=1`)
   }
 
   // If code already used by someone else, fall back to normal registration

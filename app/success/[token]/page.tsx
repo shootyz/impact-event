@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 
 type TicketInfo = {
   name: string;
@@ -9,8 +9,10 @@ type TicketInfo = {
   event: { name: string; date: string; location: string };
 };
 
-export default function SuccessPage() {
+function SuccessPageInner() {
   const { token } = useParams<{ token: string }>();
+  const searchParams = useSearchParams();
+  const already = searchParams.get("already") === "1";
   const [info, setInfo] = useState<TicketInfo | null>(null);
 
   useEffect(() => {
@@ -28,6 +30,13 @@ export default function SuccessPage() {
           <div className="h-px mb-8" style={{ background: "var(--ig-gray2)" }} />
         </div>
 
+        {/* Already registered banner */}
+        {already && (
+          <div className="rounded-xl px-4 py-3 mb-4 text-sm text-center font-medium" style={{ background: "#fdf8f0", border: "1px solid #D28D28", color: "#D28D28" }}>
+            You are already registered for this event.
+          </div>
+        )}
+
         {/* Confirmation card */}
         <div className="rounded-2xl border p-8 shadow-sm text-center" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
 
@@ -39,7 +48,7 @@ export default function SuccessPage() {
           </div>
 
           <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--ig-gold)" }}>
-            Registration Confirmed
+            {already ? "Registration on file" : "Registration Confirmed"}
           </p>
 
           <h1 className="text-xl font-bold mb-6" style={{ color: "var(--ig-navy)" }}>
@@ -80,5 +89,13 @@ export default function SuccessPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense>
+      <SuccessPageInner />
+    </Suspense>
   );
 }
