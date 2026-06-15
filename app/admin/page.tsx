@@ -736,6 +736,7 @@ export default function AdminPage() {
           <button
             onClick={() => {
               if (activeTab === "mailing") {
+                if (mailingTab === "compose") return;
                 setMembersLoaded(false);
                 setMembersLoading(true);
                 fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
@@ -745,6 +746,7 @@ export default function AdminPage() {
                 loadRegistrations(savedPassword.current);
               }
             }}
+            disabled={activeTab === "mailing" && mailingTab === "compose"}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition"
             style={{ color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
