@@ -213,13 +213,13 @@ function CampaignCard({ c, onSend, onDelete, onSchedule }: {
             {!c.sent_at && confirmSend && (
               <div className="flex gap-1.5">
                 <button onClick={async () => {
-                  setConfirmSend(false); setSending(true);
+                  setSending(true);
                   const res = await fetch(`/api/campaigns/${c.id}`, { method: "POST" });
                   const d = await res.json();
                   setSending(false);
                   if (res.ok) { setSendResult(`✓ An ${d.sent} Mitglieder gesendet`); onSend(c.id, d.sent); }
-                  else setSendResult(d.error || "Error");
-                }} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{ background: "#dc2626", color: "#fff", border: "none" }}>
+                  else { setSendResult(d.error || "Error"); setConfirmSend(false); }
+                }} disabled={sending} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{ background: "#dc2626", color: "#fff", border: "none" }}>
                   {sending ? "Wird gesendet…" : "Bestätigen"}
                 </button>
                 <button onClick={() => setConfirmSend(false)}
