@@ -82,7 +82,7 @@ export async function sendConfirmationEmail(
                 <td align="center">
                   <a href="${appUrl}/ticket/${registration.qr_token}"
                      style="display:inline-block;background:#D28D28;color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:14px;font-weight:700;letter-spacing:0.5px;">
-                    → SHOW TICKET ONLINE
+                    SHOW TICKET ONLINE
                   </a>
                 </td>
               </tr>
@@ -92,7 +92,7 @@ export async function sendConfirmationEmail(
                 <td align="center">
                   <a href="${appUrl}/api/ticket/${registration.qr_token}/pdf"
                      style="display:inline-block;background:#D28D28;color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:14px;font-weight:700;letter-spacing:0.5px;">
-                    📄 Save as PDF
+                    SAVE AS PDF
                   </a>
                 </td>
               </tr>
