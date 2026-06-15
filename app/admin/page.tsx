@@ -159,6 +159,83 @@ type ArchivedEvent = { id: string; name: string; date: string; location: string;
 type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: string; message?: string; };
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
+// ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
+type CampaignType = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; recipient_count: number | null; created_at: string; };
+function CampaignCard({ c, onSend, onDelete }: {
+  c: CampaignType;
+  onSend: (id: string, sent: number) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<string | null>(null);
+  const [confirmSend, setConfirmSend] = useState(false);
+  return (
+    <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{c.subject}</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
+              {c.sent_at
+                ? `Sent ${new Date(c.sent_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${c.recipient_count ?? "–"} recipients`
+                : "Draft – not sent yet"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => setExpanded(e => !e)}
+              className="text-xs px-3 py-1.5 rounded-lg font-medium"
+              style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+              {expanded ? "Hide" : "Preview"}
+            </button>
+            {!c.sent_at && !confirmSend && (
+              <button disabled={sending} onClick={() => setConfirmSend(true)}
+                className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                style={{ background: "var(--ig-gold)", color: "#fff", border: "none" }}>
+                Send Now
+              </button>
+            )}
+            {!c.sent_at && confirmSend && (
+              <div className="flex gap-1.5">
+                <button onClick={async () => {
+                  setConfirmSend(false); setSending(true);
+                  const res = await fetch(`/api/campaigns/${c.id}`, { method: "POST" });
+                  const d = await res.json();
+                  setSending(false);
+                  if (res.ok) { setSendResult(`✓ Sent to ${d.sent} members`); onSend(c.id, d.sent); }
+                  else setSendResult(d.error || "Error");
+                }} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{ background: "#dc2626", color: "#fff", border: "none" }}>
+                  {sending ? "Sending…" : "Confirm"}
+                </button>
+                <button onClick={() => setConfirmSend(false)}
+                  className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                  style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+                  Cancel
+                </button>
+              </div>
+            )}
+            <button onClick={() => onDelete(c.id)} className="p-1.5 rounded-lg" style={{ color: "var(--ig-gray3)" }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+              <IconTrash className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+        {sendResult && <p className="text-xs mt-1 mb-2 font-medium" style={{ color: sendResult.startsWith("✓") ? "var(--ig-navy)" : "#dc2626" }}>{sendResult}</p>}
+        {expanded && (
+          <div style={{ border: "1.5px solid var(--ig-gray2)", borderRadius: 12, overflow: "hidden", marginTop: 8 }}>
+            <iframe
+              srcDoc={`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:20px;background:#F8F9FF;font-family:Arial,sans-serif;}</style></head><body>${c.body_html}</body></html>`}
+              style={{ width: "100%", height: 520, border: "none", display: "block" }}
+              title={c.subject}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Section card ──────────────────────────────────────────────────────────────
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -223,8 +300,8 @@ export default function AdminPage() {
   const [archiveLoaded, setArchiveLoaded] = useState(false);
 
   // Mailing state
-  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; };
-  type Campaign = { id: string; subject: string; sent_at: string | null; recipient_count: number | null; created_at: string; };
+  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
+  type Campaign = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; recipient_count: number | null; created_at: string; };
   const [mailingTab, setMailingTab] = useState<"members" | "compose" | "campaigns">("members");
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
@@ -1229,13 +1306,21 @@ export default function AdminPage() {
                       <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>No members yet.</div>
                     ) : members.map(m => (
                       <div key={m.id} className="px-5 py-3 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate" style={{ color: m.unsubscribed ? "var(--ig-gray3)" : "var(--ig-navy)" }}>
                             {m.first_name} {m.last_name}
                             {m.unsubscribed && <span className="ml-2 text-xs" style={{ color: "var(--ig-gray3)" }}>(unsubscribed)</span>}
                           </p>
                           <p className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>{m.email}</p>
                         </div>
+                        {(() => {
+                          const ic = Array.isArray(m.invite_codes) ? m.invite_codes[0] : m.invite_codes;
+                          return ic?.code ? (
+                            <span className="flex-shrink-0 text-xs font-mono font-bold px-2 py-1 rounded-lg" style={{ background: ic.used ? "var(--ig-gray2)" : "#F8F9FF", color: ic.used ? "var(--ig-gray3)" : "var(--ig-gold)", border: "1px solid var(--ig-gray2)", letterSpacing: "0.1em", textDecoration: ic.used ? "line-through" : "none" }}>
+                              {ic.code}
+                            </span>
+                          ) : null;
+                        })()}
                         <button onClick={async () => {
                           await fetch("/api/members", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id }) });
                           setMembers(prev => prev.filter(x => x.id !== m.id));
@@ -1351,24 +1436,15 @@ export default function AdminPage() {
                 {campaignsLoading ? (
                   <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Loading…</div></Card>
                 ) : campaigns.length === 0 ? (
-                  <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>No campaigns sent yet.</div></Card>
+                  <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>No campaigns yet.</div></Card>
                 ) : campaigns.map(c => (
-                  <Card key={c.id}>
-                    <div className="p-5 flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{c.subject}</p>
-                        <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
-                          {c.sent_at ? new Date(c.sent_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Draft"}
-                        </p>
-                      </div>
-                      {c.sent_at && (
-                        <div className="flex-shrink-0 text-right">
-                          <p className="font-bold text-lg" style={{ color: "var(--ig-gold)" }}>{c.recipient_count ?? "–"}</p>
-                          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>sent</p>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
+                  <CampaignCard key={c.id} c={c}
+                    onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
+                    onDelete={async (id) => {
+                      await fetch(`/api/campaigns/${id}`, { method: "DELETE" });
+                      setCampaigns(prev => prev.filter(x => x.id !== id));
+                    }}
+                  />
                 ))}
               </div>
             )}

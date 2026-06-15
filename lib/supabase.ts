@@ -28,6 +28,7 @@ export type Member = {
   unsubscribe_token: string
   unsubscribed: boolean
   created_at: string
+  invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null
 }
 
 export type Campaign = {
