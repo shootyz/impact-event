@@ -47,26 +47,15 @@ function RegistrationPageInner() {
     setGateError("");
     setGateLoading(true);
 
-    const inviteRes = await fetch(`/api/invite-code?code=${encodeURIComponent(gateCode)}`);
-    if (inviteRes.ok) {
-      const invite = await inviteRes.json();
-      if (invite.valid) {
-        const [first, ...rest] = (invite.name as string).split(" ");
-        setVorname(first ?? "");
-        setNachname(rest.join(" "));
-        setEmail(invite.email ?? "");
-        setEmailConfirm(invite.email ?? "");
-        setNameLocked(true);
-        setEmailLocked(true);
-        setInviteCodeId(invite.id);
-        setGateLoading(false);
-        setUnlocked(true);
-        return;
-      }
-    }
-
+    const authRes = await fetch("/api/event-auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: gateCode }),
+    });
+    const authData = await authRes.json();
     setGateLoading(false);
-    setGateError("Invalid invite code.");
+    if (!authRes.ok) { setGateError(authData.error || "Invalid code."); return; }
+    setUnlocked(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,14 +114,14 @@ function RegistrationPageInner() {
         {event && !unlocked && (
           <div className="rounded-2xl border p-8 shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
             <p className="text-sm text-center mb-6" style={{ color: "var(--ig-gray3)" }}>
-              Please enter your personal invite code to continue.
+              Please enter the event code to continue.
             </p>
             <form onSubmit={handleUnlock} className="space-y-4">
               <input
                 type="text"
                 value={gateCode}
                 onChange={(e) => setGateCode(e.target.value)}
-                placeholder="Invite code"
+                placeholder="Event code"
                 autoFocus
                 className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition text-center tracking-widest uppercase font-semibold"
                 style={inputStyle}
