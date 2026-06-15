@@ -30,10 +30,38 @@ function buildCampaignHtml({
   inviteCode: string | null
 }) {
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${member.unsubscribe_token}`
-  const body = bodyHtml.trimStart().startsWith('<') ? bodyHtml : plainTextToHtml(bodyHtml)
+  const fullBody = bodyHtml.trimStart().startsWith('<') ? bodyHtml : plainTextToHtml(bodyHtml)
+
+  // Split body at <!-- CTA --> marker so invite code + button appear inline
+  const CTA_MARKER = '<!-- CTA -->'
+  const ctaIdx = fullBody.indexOf(CTA_MARKER)
+  const bodyBefore = ctaIdx >= 0 ? fullBody.slice(0, ctaIdx) : fullBody
+  const bodyAfter  = ctaIdx >= 0 ? fullBody.slice(ctaIdx + CTA_MARKER.length) : ''
+
+  const ctaBlock = (inviteCode || eventUrl) ? `
+        ${inviteCode ? `
+        <tr><td style="padding:24px 40px 0;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="background:#F8F9FF;border-radius:16px;border:1.5px solid #D0DDEA;padding:20px 24px;">
+              <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 10px;font-family:Arial,sans-serif;">Your Personal Invite Code</p>
+              <p style="color:#1E3263;font-size:28px;font-weight:700;letter-spacing:8px;margin:0;font-family:Arial,sans-serif;">${inviteCode}</p>
+            </td></tr>
+          </table>
+        </td></tr>` : ''}
+        ${eventUrl ? `
+        <tr><td style="padding:16px 40px 0;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td>
+              <a href="${eventUrl}"
+                style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:17px 32px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
+                Register Now
+              </a>
+            </td></tr>
+          </table>
+        </td></tr>` : ''}` : ''
 
   return `<!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,45 +78,27 @@ function buildCampaignHtml({
             style="display:block;width:100%;max-width:560px;border:0;" />
         </td></tr>` : ''}
 
-        <!-- Logo + Begrüssung -->
+        <!-- Logo + greeting -->
         <tr><td style="padding:36px 40px 0;">
           <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28"
             style="display:block;margin-bottom:28px;" />
           <div style="height:1px;background:#D0DDEA;margin-bottom:28px;"></div>
-          <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Sehr geehrte/r ${member.first_name} ${member.last_name},</p>
+          <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Dear ${member.first_name} ${member.last_name},</p>
         </td></tr>
 
-        ${inviteCode ? `
-        <tr><td style="padding:24px 40px 0;">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td style="background:#F8F9FF;border-radius:16px;border:1.5px solid #D0DDEA;padding:20px 24px;">
-              <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 10px;font-family:Arial,sans-serif;">Ihr persönlicher Einladungscode</p>
-              <p style="color:#1E3263;font-size:28px;font-weight:700;letter-spacing:8px;margin:0;font-family:Arial,sans-serif;">${inviteCode}</p>
-            </td></tr>
-          </table>
-        </td></tr>` : ''}
+        <!-- Body: intro (before CTA marker) -->
+        ${bodyBefore ? `<tr><td style="padding:24px 40px 0;">${bodyBefore}</td></tr>` : ''}
 
-        ${eventUrl ? `
-        <tr><td style="padding:16px 40px 0;">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td>
-              <a href="${eventUrl}"
-                style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:17px 32px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
-                Jetzt anmelden
-              </a>
-            </td></tr>
-          </table>
-        </td></tr>` : ''}
+        <!-- Invite code + Register button -->
+        ${ctaBlock}
 
-        <!-- Goldene Trennlinie -->
+        <!-- Gold divider -->
         <tr><td style="padding:32px 40px 0;">
           <div style="height:2px;background:#D28D28;"></div>
         </td></tr>
 
-        <!-- Inhalt -->
-        <tr><td style="padding:32px 40px 40px;">
-          ${body}
-        </td></tr>
+        <!-- Body: rest (after CTA marker) -->
+        <tr><td style="padding:32px 40px 40px;">${bodyAfter || ''}</td></tr>
 
         <!-- Footer -->
         <tr><td style="background:#F8F9FF;border-top:1px solid #D0DDEA;padding:20px 40px 24px;">
@@ -97,7 +107,7 @@ function buildCampaignHtml({
             <a href="https://impactgstaad.ch" style="color:#1E3263;text-decoration:none;">impactgstaad.ch</a>
           </p>
           <p style="margin:0;text-align:center;">
-            <a href="${unsubscribeUrl}" style="color:#A7C4DE;font-size:11px;text-decoration:underline;font-family:Arial,sans-serif;">Abmelden</a>
+            <a href="${unsubscribeUrl}" style="color:#A7C4DE;font-size:11px;text-decoration:underline;font-family:Arial,sans-serif;">Unsubscribe</a>
           </p>
         </td></tr>
 
