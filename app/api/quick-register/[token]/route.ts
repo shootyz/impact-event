@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
 import { randomUUID } from 'crypto'
@@ -97,12 +97,14 @@ export async function GET(
   // Mark code as used
   await db.from('invite_codes').update({ used: true }).eq('id', invite.id)
 
-  // Send ticket email
-  try {
-    await sendConfirmationEmail(registration, event)
-  } catch (e) {
-    console.error('Ticket email failed:', e)
-  }
+  // Send ticket email after redirect (non-blocking)
+  after(async () => {
+    try {
+      await sendConfirmationEmail(registration, event)
+    } catch (e) {
+      console.error('Ticket email failed:', e)
+    }
+  })
 
   return NextResponse.redirect(`${appUrl}/success/${qrToken}`)
 }
