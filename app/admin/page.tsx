@@ -205,13 +205,6 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit }: {
                     Bearbeiten
                   </button>
                 )}
-                {onSchedule && (
-                  <button onClick={() => { setScheduling(true); setScheduleValue(c.scheduled_at ? new Date(c.scheduled_at).toISOString().slice(0,16) : ""); }}
-                    className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                    style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
-                    {c.scheduled_at ? "Neu planen" : "Planen"}
-                  </button>
-                )}
                 <button disabled={sending} onClick={() => setConfirmSend(true)}
                   className="text-xs px-3 py-1.5 rounded-lg font-bold"
                   style={{ background: "var(--ig-gold)", color: "#fff", border: "none" }}>
