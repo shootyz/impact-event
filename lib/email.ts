@@ -40,7 +40,7 @@ export async function sendConfirmationEmail(
               <!-- Header: logo + event info -->
               <tr>
                 <td style="padding:28px 28px 24px;">
-                  <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28" style="display:block;margin-bottom:20px;" />
+                  <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="33" style="display:block;margin-bottom:20px;" />
                   <p style="color:#1E3263;font-size:18px;font-weight:700;margin:0 0 6px;line-height:1.3;">${event.name}</p>
                   <p style="color:#1E3263;font-size:13px;margin:0 0 3px;">${eventDate}</p>
                   <p style="color:#1E3263;font-size:13px;margin:0;">${event.location}</p>
@@ -53,7 +53,7 @@ export async function sendConfirmationEmail(
               <!-- Ticket for + QR -->
               <tr>
                 <td style="padding:20px 24px 0;">
-                  <p style="color:#A7C4DE;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px;">Ticket for</p>
+                  <p style="color:#1E3263;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px;opacity:0.5;">Ticket for</p>
                   <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0 0 20px;">${registration.name}</p>
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
@@ -67,7 +67,7 @@ export async function sendConfirmationEmail(
 
               <!-- Footer text -->
               <tr>
-                <td style="padding:12px 24px 20px;border-top:1px solid #D0DDEA;margin-top:16px;">
+                <td style="padding:12px 24px 20px;">
                   <p style="color:#1E3263;font-size:13px;text-align:center;margin:0;">Show this QR code at the entrance</p>
                 </td>
               </tr>
@@ -97,7 +97,7 @@ export async function sendConfirmationEmail(
         <!-- Footer -->
         <tr>
           <td align="center" style="padding-bottom:24px;">
-            <p style="color:#A7C4DE;font-size:12px;margin:0;">Impact Gstaad · impactgstaad.ch</p>
+            <p style="color:#A7C4DE;font-size:12px;margin:0;">Impact Gstaad · <a href="https://impactgstaad.ch" style="color:#1E3263;text-decoration:none;">impactgstaad.ch</a></p>
           </td>
         </tr>
 
