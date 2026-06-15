@@ -6,7 +6,7 @@ function plainTextToHtml(text: string): string {
   return text
     .trim()
     .split(/\n\s*\n/)
-    .map(p => `<p style="color:#1E3263;font-size:15px;line-height:1.75;margin:0 0 16px;">${p.trim().replace(/\n/g, '<br/>')}</p>`)
+    .map(p => `<p style="color:#1E3263;font-size:15px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">${p.trim().replace(/\n/g, '<br/>')}</p>`)
     .join('')
 }
 
@@ -33,96 +33,73 @@ function buildCampaignHtml({
   const body = bodyHtml.trimStart().startsWith('<') ? bodyHtml : plainTextToHtml(bodyHtml)
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
 </head>
-<body style="margin:0;padding:0;background:#F8F9FF;font-family:Georgia,'Times New Roman',serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:32px 16px 56px;">
+<body style="margin:0;padding:0;background:#F8F9FF;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:40px 16px 60px;">
     <tr><td align="center">
-      <table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:24px;border:1px solid #D0DDEA;overflow:hidden;">
 
         ${headerImageUrl ? `
-        <!-- Header image — full bleed, rounded top -->
-        <tr>
-          <td style="padding:0;">
-            <img src="${headerImageUrl}" alt="${subject}" width="580"
-              style="display:block;width:100%;max-width:580px;border-radius:20px 20px 0 0;border:0;" />
-          </td>
-        </tr>
-        <tr>
-          <td style="background:#ffffff;border-left:1px solid #D0DDEA;border-right:1px solid #D0DDEA;padding:32px 40px 0;">` : `
-        <tr>
-          <td style="background:#ffffff;border:1px solid #D0DDEA;border-radius:20px 20px 0 0;padding:32px 40px 0;">`}
+        <tr><td style="padding:0;line-height:0;">
+          <img src="${headerImageUrl}" alt="${subject}" width="560"
+            style="display:block;width:100%;max-width:560px;border:0;" />
+        </td></tr>` : ''}
 
-            <!-- Logo -->
-            <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="30"
-              style="display:block;margin-bottom:28px;" />
+        <!-- Logo + Begrüssung -->
+        <tr><td style="padding:36px 40px 0;">
+          <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28"
+            style="display:block;margin-bottom:28px;" />
+          <div style="height:1px;background:#D0DDEA;margin-bottom:28px;"></div>
+          <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Sehr geehrte/r ${member.first_name} ${member.last_name},</p>
+        </td></tr>
 
-            <!-- Greeting -->
-            <p style="color:#1E3263;font-size:17px;font-weight:700;margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;">Dear ${member.first_name} ${member.last_name},</p>
+        ${inviteCode ? `
+        <tr><td style="padding:24px 40px 0;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="background:#F8F9FF;border-radius:16px;border:1.5px solid #D0DDEA;padding:20px 24px;">
+              <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 10px;font-family:Arial,sans-serif;">Ihr persönlicher Einladungscode</p>
+              <p style="color:#1E3263;font-size:28px;font-weight:700;letter-spacing:8px;margin:0;font-family:Arial,sans-serif;">${inviteCode}</p>
+            </td></tr>
+          </table>
+        </td></tr>` : ''}
 
-          </td>
-        </tr>
+        ${eventUrl ? `
+        <tr><td style="padding:16px 40px 0;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td>
+              <a href="${eventUrl}"
+                style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:17px 32px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
+                Jetzt anmelden
+              </a>
+            </td></tr>
+          </table>
+        </td></tr>` : ''}
 
-        ${(inviteCode || eventUrl) ? `
-        <!-- CTA block: invite code + register button -->
-        <tr>
-          <td style="background:#ffffff;border-left:1px solid #D0DDEA;border-right:1px solid #D0DDEA;padding:0 40px;">
+        <!-- Goldene Trennlinie -->
+        <tr><td style="padding:32px 40px 0;">
+          <div style="height:2px;background:#D28D28;"></div>
+        </td></tr>
 
-            ${inviteCode ? `
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
-              <tr>
-                <td style="background:#F8F9FF;border-radius:14px;border:1.5px solid #D0DDEA;padding:16px 22px;">
-                  <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Your Personal Invite Code</p>
-                  <p style="color:#1E3263;font-size:26px;font-weight:700;letter-spacing:6px;margin:0;font-family:Arial,sans-serif;">${inviteCode}</p>
-                </td>
-              </tr>
-            </table>` : ''}
-
-            ${eventUrl ? `
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-              <tr>
-                <td align="center">
-                  <a href="${eventUrl}"
-                    style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:14px;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
-                    Register Now
-                  </a>
-                </td>
-              </tr>
-            </table>` : ''}
-
-          </td>
-        </tr>
-
-        <!-- Divider after CTA -->
-        <tr>
-          <td style="background:#ffffff;border-left:1px solid #D0DDEA;border-right:1px solid #D0DDEA;padding:0 40px 28px;">
-            <div style="height:1px;background:#D0DDEA;"></div>
-          </td>
-        </tr>` : ''}
-
-        <!-- Body content -->
-        <tr>
-          <td style="background:#ffffff;border-left:1px solid #D0DDEA;border-right:1px solid #D0DDEA;padding:0 40px 40px;">
-            ${body}
-          </td>
-        </tr>
+        <!-- Inhalt -->
+        <tr><td style="padding:32px 40px 40px;">
+          ${body}
+        </td></tr>
 
         <!-- Footer -->
-        <tr>
-          <td style="background:#F8F9FF;border:1px solid #D0DDEA;border-top:none;border-radius:0 0 20px 20px;padding:24px 40px;">
-            <p style="color:#A7C4DE;font-size:12px;margin:0;text-align:center;font-family:Arial,sans-serif;">
-              Impact Gstaad &nbsp;·&nbsp;
-              <a href="https://impactgstaad.ch" style="color:#1E3263;text-decoration:none;">impactgstaad.ch</a>
-            </p>
-            <p style="margin:10px 0 0;text-align:center;">
-              <a href="${unsubscribeUrl}" style="color:#A7C4DE;font-size:11px;text-decoration:underline;font-family:Arial,sans-serif;">Unsubscribe</a>
-            </p>
-          </td>
-        </tr>
+        <tr><td style="background:#F8F9FF;border-top:1px solid #D0DDEA;padding:20px 40px 24px;">
+          <p style="color:#A7C4DE;font-size:11px;margin:0 0 8px;text-align:center;font-family:Arial,sans-serif;">
+            Impact Gstaad &nbsp;·&nbsp;
+            <a href="https://impactgstaad.ch" style="color:#1E3263;text-decoration:none;">impactgstaad.ch</a>
+          </p>
+          <p style="margin:0;text-align:center;">
+            <a href="${unsubscribeUrl}" style="color:#A7C4DE;font-size:11px;text-decoration:underline;font-family:Arial,sans-serif;">Abmelden</a>
+          </p>
+        </td></tr>
 
       </table>
     </td></tr>
