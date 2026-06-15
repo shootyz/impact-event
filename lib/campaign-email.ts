@@ -42,8 +42,8 @@ function buildCampaignHtml({
         ${inviteCode ? `
         <tr><td style="padding:24px 40px 0;">
           <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td style="background:#F8F9FF;border-radius:16px;border:1.5px solid #D0DDEA;padding:20px 24px;">
-              <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 10px;font-family:Arial,sans-serif;">Your Personal Invite Code</p>
+            <tr><td style="background:#fdf8f0;border-radius:12px;border:2px solid #D28D28;padding:20px 24px;">
+              <p style="color:#D28D28;font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Your Personal Invite Code</p>
               <p style="color:#1E3263;font-size:28px;font-weight:700;letter-spacing:8px;margin:0;font-family:Arial,sans-serif;">${inviteCode}</p>
             </td></tr>
           </table>
@@ -82,8 +82,8 @@ function buildCampaignHtml({
         <tr><td style="padding:36px 40px 0;">
           <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28"
             style="display:block;margin-bottom:28px;" />
-          <div style="height:1px;background:#D0DDEA;margin-bottom:28px;"></div>
-          <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Dear ${member.first_name} ${member.last_name},</p>
+          <div style="height:1px;background:#e8e8e8;margin-bottom:28px;"></div>
+          <p style="color:#000000;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Dear ${member.first_name} ${member.last_name},</p>
         </td></tr>
 
         <!-- Body: intro (before CTA marker) -->
@@ -92,22 +92,22 @@ function buildCampaignHtml({
         <!-- Invite code + Register button -->
         ${ctaBlock}
 
-        <!-- Gold divider -->
-        <tr><td style="padding:32px 40px 0;">
-          <div style="height:2px;background:#D28D28;"></div>
+        <!-- Divider -->
+        <tr><td style="padding:28px 40px 0;">
+          <div style="height:1px;background:#e8e8e8;"></div>
         </td></tr>
 
         <!-- Body: rest (after CTA marker) -->
         <tr><td style="padding:32px 40px 40px;">${bodyAfter || ''}</td></tr>
 
         <!-- Footer -->
-        <tr><td style="background:#F8F9FF;border-top:1px solid #D0DDEA;padding:20px 40px 24px;">
-          <p style="color:#A7C4DE;font-size:11px;margin:0 0 8px;text-align:center;font-family:Arial,sans-serif;">
+        <tr><td style="background:#f5f5f5;border-top:1px solid #e8e8e8;padding:20px 40px 24px;">
+          <p style="color:#888888;font-size:11px;margin:0 0 8px;text-align:center;font-family:Arial,sans-serif;">
             Impact Gstaad &nbsp;·&nbsp;
             <a href="https://impactgstaad.ch" style="color:#1E3263;text-decoration:none;">impactgstaad.ch</a>
           </p>
           <p style="margin:0;text-align:center;">
-            <a href="${unsubscribeUrl}" style="color:#A7C4DE;font-size:11px;text-decoration:underline;font-family:Arial,sans-serif;">Unsubscribe</a>
+            <a href="${unsubscribeUrl}" style="color:#888888;font-size:11px;text-decoration:underline;font-family:Arial,sans-serif;">Unsubscribe</a>
           </p>
         </td></tr>
 
