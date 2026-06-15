@@ -45,8 +45,8 @@ export async function sendConfirmationEmail(
                         <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="26" style="display:block;" />
                       </td>
                       <td style="vertical-align:middle;text-align:right;">
-                        <p style="color:#D28D28;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 2px;">Your Ticket</p>
-                        <p style="color:#1E3263;font-size:14px;font-weight:700;margin:0;">${event.name}</p>
+                        <p style="color:#D28D28;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 3px;">Your Ticket</p>
+                        <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;">${event.name}</p>
                       </td>
                     </tr>
                   </table>
@@ -62,7 +62,7 @@ export async function sendConfirmationEmail(
                     <tr>
                       <td align="center">
                         <img src="cid:qrcode" width="240" height="240" alt="QR Code" style="display:block;margin:0 auto;border-radius:8px;"/>
-                        <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 0;">Show this code at the entrance</p>
+                        <p style="color:#A7C4DE;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 0;">Show this code at the entrance</p>
                       </td>
                     </tr>
                   </table>
@@ -72,7 +72,7 @@ export async function sendConfirmationEmail(
                     <tr>
                       <td>
                         <a href="${appUrl}/ticket/${registration.qr_token}"
-                           style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">
+                           style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:16px 32px;border-radius:10px;font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">
                           SHOW TICKET ONLINE
                         </a>
                       </td>
@@ -83,7 +83,7 @@ export async function sendConfirmationEmail(
                     <tr>
                       <td>
                         <a href="${appUrl}/api/ticket/${registration.qr_token}/pdf"
-                           style="display:block;background:transparent;color:#D28D28;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;border:2px solid #D28D28;">
+                           style="display:block;background:transparent;color:#D28D28;text-decoration:none;padding:15px 32px;border-radius:10px;font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;border:2px solid #D28D28;">
                           SAVE AS PDF
                         </a>
                       </td>
@@ -102,13 +102,13 @@ export async function sendConfirmationEmail(
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #D0DDEA;">
               <tr>
                 <td width="50%" style="padding:12px 16px;vertical-align:top;">
-                  <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;">Date</p>
-                  <p style="color:#1E3263;font-size:13px;margin:0;">${eventDate}</p>
+                  <p style="color:#A7C4DE;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;">Date</p>
+                  <p style="color:#1E3263;font-size:15px;margin:0;">${eventDate}</p>
                 </td>
                 <td width="1" style="background:#D0DDEA;"></td>
                 <td width="50%" style="padding:12px 16px;vertical-align:top;">
-                  <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;">Location</p>
-                  <p style="color:#1E3263;font-size:13px;margin:0;">${event.location}</p>
+                  <p style="color:#A7C4DE;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;">Location</p>
+                  <p style="color:#1E3263;font-size:15px;margin:0;">${event.location}</p>
                 </td>
               </tr>
             </table>
