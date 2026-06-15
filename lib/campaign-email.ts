@@ -39,8 +39,8 @@ function buildCampaignHtml({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
 </head>
-<body style="margin:0;padding:0;background:#EEF2F8;font-family:Georgia,'Times New Roman',serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#EEF2F8;padding:32px 16px 56px;">
+<body style="margin:0;padding:0;background:#F8F9FF;font-family:Georgia,'Times New Roman',serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:32px 16px 56px;">
     <tr><td align="center">
       <table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;">
 
@@ -53,9 +53,9 @@ function buildCampaignHtml({
           </td>
         </tr>
         <tr>
-          <td style="background:#ffffff;border-left:1px solid #D8E4EF;border-right:1px solid #D8E4EF;padding:32px 40px 0;">` : `
+          <td style="background:#ffffff;border-left:1px solid #D0DDEA;border-right:1px solid #D0DDEA;padding:32px 40px 0;">` : `
         <tr>
-          <td style="background:#ffffff;border:1px solid #D8E4EF;border-radius:20px 20px 0 0;padding:32px 40px 0;">`}
+          <td style="background:#ffffff;border:1px solid #D0DDEA;border-radius:20px 20px 0 0;padding:32px 40px 0;">`}
 
             <!-- Logo -->
             <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="30"
@@ -70,7 +70,7 @@ function buildCampaignHtml({
         ${(inviteCode || eventUrl) ? `
         <!-- CTA block: invite code + register button -->
         <tr>
-          <td style="background:#ffffff;border-left:1px solid #D8E4EF;border-right:1px solid #D8E4EF;padding:0 40px;">
+          <td style="background:#ffffff;border-left:1px solid #D0DDEA;border-right:1px solid #D0DDEA;padding:0 40px;">
 
             ${inviteCode ? `
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
@@ -99,21 +99,21 @@ function buildCampaignHtml({
 
         <!-- Divider after CTA -->
         <tr>
-          <td style="background:#ffffff;border-left:1px solid #D8E4EF;border-right:1px solid #D8E4EF;padding:0 40px 28px;">
+          <td style="background:#ffffff;border-left:1px solid #D0DDEA;border-right:1px solid #D0DDEA;padding:0 40px 28px;">
             <div style="height:1px;background:#D0DDEA;"></div>
           </td>
         </tr>` : ''}
 
         <!-- Body content -->
         <tr>
-          <td style="background:#ffffff;border-left:1px solid #D8E4EF;border-right:1px solid #D8E4EF;padding:0 40px 40px;">
+          <td style="background:#ffffff;border-left:1px solid #D0DDEA;border-right:1px solid #D0DDEA;padding:0 40px 40px;">
             ${body}
           </td>
         </tr>
 
         <!-- Footer -->
         <tr>
-          <td style="background:#F8F9FF;border:1px solid #D8E4EF;border-top:none;border-radius:0 0 20px 20px;padding:24px 40px;">
+          <td style="background:#F8F9FF;border:1px solid #D0DDEA;border-top:none;border-radius:0 0 20px 20px;padding:24px 40px;">
             <p style="color:#A7C4DE;font-size:12px;margin:0;text-align:center;font-family:Arial,sans-serif;">
               Impact Gstaad &nbsp;·&nbsp;
               <a href="https://impactgstaad.ch" style="color:#1E3263;text-decoration:none;">impactgstaad.ch</a>
