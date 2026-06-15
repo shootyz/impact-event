@@ -636,7 +636,7 @@ export default function CampaignBuilder({
               + Block hinzufügen
             </button>
             {addMenuOpen && (
-              <div className="absolute top-full mt-1 left-0 right-0 rounded-xl border shadow-lg z-10 overflow-hidden" style={{ background: "white", borderColor: "#e5e7eb" }}>
+              <div className="absolute top-full mt-1 left-0 right-0 rounded-xl border shadow-lg z-10 overflow-y-auto" style={{ background: "white", borderColor: "#e5e7eb", maxHeight: 320 }}>
                 {ADDABLE_BLOCKS.map(ab => (
                   <button key={ab.type} onClick={() => addBlock(ab.type)}
                     className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition"
