@@ -22,7 +22,7 @@ export default function TicketPage() {
   }, [token]);
 
   const eventDate = info?.event?.date
-    ? new Date(info.event.date).toLocaleDateString("de-CH", {
+    ? new Date(info.event.date).toLocaleDateString("en-GB", {
         weekday: "long", day: "numeric", month: "long", year: "numeric",
       })
     : null;
@@ -161,7 +161,7 @@ export default function TicketPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
             </svg>
-            Als PDF speichern
+            Save as PDF
           </a>
         </div>
       </main>
