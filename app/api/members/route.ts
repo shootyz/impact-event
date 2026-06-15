@@ -32,6 +32,16 @@ export async function POST(req: NextRequest) {
     .select()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Auto-generate invite codes for newly inserted members
+  if (data && data.length > 0) {
+    const codes = data.map((m: { id: string }) => ({
+      member_id: m.id,
+      code: Math.random().toString(36).slice(2, 8).toUpperCase(),
+    }))
+    await db.from('invite_codes').upsert(codes, { onConflict: 'member_id', ignoreDuplicates: true })
+  }
+
   return NextResponse.json({ inserted: data?.length ?? 0 })
 }
 

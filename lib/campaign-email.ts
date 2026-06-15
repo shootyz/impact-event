@@ -55,7 +55,7 @@ function buildCampaignHtml({
 
         <tr>
           <td style="padding:16px 32px 0;">
-            ${plainTextToHtml(bodyHtml)}
+            ${bodyHtml.trimStart().startsWith('<') ? bodyHtml : plainTextToHtml(bodyHtml)}
           </td>
         </tr>
 
