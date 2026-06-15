@@ -28,34 +28,75 @@ export async function sendConfirmationEmail(
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#F8F9FF;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:28px 16px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:24px 16px;">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;">
 
-        <!-- Logo -->
-        <tr>
-          <td align="center" style="padding-bottom:16px;">
-            <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="32" style="display:block;margin:0 auto;" />
-          </td>
-        </tr>
-
-        <!-- Divider -->
+        <!-- Main card: logo + event name + QR + buttons -->
         <tr>
           <td style="padding-bottom:16px;">
-            <div style="height:1px;background:#D0DDEA;"></div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;border:1px solid #D0DDEA;">
+              <tr>
+                <td style="padding:20px 24px 0;">
+                  <!-- Logo + event name inline -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="vertical-align:middle;">
+                        <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="26" style="display:block;" />
+                      </td>
+                      <td style="vertical-align:middle;text-align:right;">
+                        <p style="color:#D28D28;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 2px;">Your Ticket</p>
+                        <p style="color:#1E3263;font-size:14px;font-weight:700;margin:0;">${event.name}</p>
+                      </td>
+                    </tr>
+                  </table>
+                  <!-- Divider -->
+                  <div style="height:1px;background:#D0DDEA;margin:16px 0;"></div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 24px 24px;">
+
+                  <!-- QR Code -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                    <tr>
+                      <td align="center">
+                        <img src="cid:qrcode" width="240" height="240" alt="QR Code" style="display:block;margin:0 auto;border-radius:8px;"/>
+                        <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 0;">Show this code at the entrance</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Primary button -->
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
+                    <tr>
+                      <td>
+                        <a href="${appUrl}/ticket/${registration.qr_token}"
+                           style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">
+                          SHOW TICKET ONLINE
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  <!-- Secondary button (outline) -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td>
+                        <a href="${appUrl}/api/ticket/${registration.qr_token}/pdf"
+                           style="display:block;background:transparent;color:#D28D28;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;border:2px solid #D28D28;">
+                          SAVE AS PDF
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
 
-        <!-- Event label + name -->
-        <tr>
-          <td align="center" style="padding-bottom:16px;">
-            <p style="color:#D28D28;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;">YOUR TICKET</p>
-            <h1 style="color:#1E3263;font-size:22px;font-weight:700;margin:0 0 4px;">${event.name}</h1>
-            ${event.description ? `<p style="color:#A7C4DE;font-size:12px;margin:0;">${event.description}</p>` : ''}
-          </td>
-        </tr>
-
-        <!-- Info card: date + location compact -->
+        <!-- Info card: date + location -->
         <tr>
           <td style="padding-bottom:16px;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #D0DDEA;">
@@ -68,57 +109,6 @@ export async function sendConfirmationEmail(
                 <td width="50%" style="padding:12px 16px;vertical-align:top;">
                   <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;">Location</p>
                   <p style="color:#1E3263;font-size:13px;margin:0;">${event.location}</p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <!-- Main card: greeting + QR + buttons -->
-        <tr>
-          <td style="padding-bottom:24px;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;border:1px solid #D0DDEA;">
-              <tr>
-                <td style="padding:24px 24px;">
-
-                  <p style="color:#1E3263;font-size:14px;margin:0 0 4px;font-weight:600;">Hello ${registration.name},</p>
-                  <p style="color:#1E3263;font-size:13px;line-height:1.6;margin:0 0 20px;">
-                    Your registration is confirmed. Please show this QR code at the entrance.
-                  </p>
-
-                  <!-- QR Code -->
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-                    <tr>
-                      <td align="center">
-                        <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 12px;">Your personal QR code</p>
-                        <img src="cid:qrcode" width="220" height="220" alt="QR Code" style="display:block;margin:0 auto;border-radius:8px;"/>
-                      </td>
-                    </tr>
-                  </table>
-
-                  <!-- Primary button -->
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
-                    <tr>
-                      <td align="center">
-                        <a href="${appUrl}/ticket/${registration.qr_token}"
-                           style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">
-                          SHOW TICKET ONLINE
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  <!-- Secondary button (outline) -->
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center">
-                        <a href="${appUrl}/api/ticket/${registration.qr_token}/pdf"
-                           style="display:block;background:transparent;color:#D28D28;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;border:2px solid #D28D28;">
-                          SAVE AS PDF
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-
                 </td>
               </tr>
             </table>
