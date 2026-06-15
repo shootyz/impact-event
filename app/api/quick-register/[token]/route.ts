@@ -47,21 +47,32 @@ export async function GET(
   const email = member.email.toLowerCase().trim()
   const name = `${member.first_name} ${member.last_name}`.trim()
 
-  // Check if already registered — redirect to success if so
-  const { data: existing } = await db
+  // Check if already registered by invite_code_id (most reliable)
+  const { data: byCode } = await db
+    .from('registrations')
+    .select('qr_token')
+    .eq('invite_code_id', invite.id)
+    .single()
+
+  if (byCode) {
+    return NextResponse.redirect(`${appUrl}/success/${byCode.qr_token}?already=1`)
+  }
+
+  // Fallback: check by email + event
+  const { data: byEmail } = await db
     .from('registrations')
     .select('qr_token')
     .eq('email', email)
     .eq('event_id', event.id)
     .single()
 
-  if (existing) {
-    return NextResponse.redirect(`${appUrl}/success/${existing.qr_token}?already=1`)
+  if (byEmail) {
+    return NextResponse.redirect(`${appUrl}/success/${byEmail.qr_token}?already=1`)
   }
 
-  // If code already used by someone else, fall back to normal registration
+  // If code used but no registration found, reset used flag and let them register
   if (invite.used) {
-    return NextResponse.redirect(`${appUrl}/?code=${token}`)
+    await db.from('invite_codes').update({ used: false }).eq('id', invite.id)
   }
 
   // Create registration
