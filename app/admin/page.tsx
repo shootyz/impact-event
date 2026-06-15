@@ -1508,6 +1508,7 @@ export default function AdminPage() {
                     {campaignSending ? `Wird an ${members.filter(m => !m.unsubscribed).length} Mitglieder gesendet…` : "Kampagne senden"}
                   </BtnPrimary>
                 </div>
+                </div>
               </Card>
             )}
 
