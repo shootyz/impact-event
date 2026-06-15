@@ -54,14 +54,14 @@ export async function sendConfirmationEmail(
               <tr>
                 <td style="background:#F8F9FF;border-radius:10px;padding:14px 18px;border:1px solid #D0DDEA;">
                   <p style="color:#A7C4DE;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;">Date</p>
-                  <p style="color:#1E3263;font-size:14px;font-weight:600;margin:0;">${eventDate}</p>
+                  <p style="color:#1E3263;font-size:14px;margin:0;">${eventDate}</p>
                 </td>
               </tr>
               <tr><td style="height:10px;"></td></tr>
               <tr>
                 <td style="background:#F8F9FF;border-radius:10px;padding:14px 18px;border:1px solid #D0DDEA;">
                   <p style="color:#A7C4DE;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;">Location</p>
-                  <p style="color:#1E3263;font-size:14px;font-weight:600;margin:0;">${event.location}</p>
+                  <p style="color:#1E3263;font-size:14px;margin:0;">${event.location}</p>
                 </td>
               </tr>
             </table>
