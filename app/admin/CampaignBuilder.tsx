@@ -63,6 +63,11 @@ export type TextBlock = {
   content: string;
 };
 
+export type DeadlineBlock = {
+  type: "deadline";
+  text: string;
+};
+
 export type DividerBlock = { type: "divider" };
 
 export type CampaignBlock =
@@ -72,6 +77,7 @@ export type CampaignBlock =
   | FinalistsBlock
   | SpeakerBlock
   | TextBlock
+  | DeadlineBlock
   | DividerBlock;
 
 // ── HTML renderer ─────────────────────────────────────────────────────────────
@@ -185,6 +191,13 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
         .map(p => `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">${p.trim().replace(/\n/g, "<br/>")}</p>`)
         .join("\n");
 
+    case "deadline":
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+  <tr><td style="padding:12px 0 12px 16px;border-left:3px solid ${D.gold};">
+    <p style="color:${D.black};font-size:15px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${block.text}</p>
+  </td></tr>
+</table>`;
+
     case "divider":
       return dividerHtml();
   }
@@ -213,6 +226,7 @@ const BLOCK_LABELS: Record<CampaignBlock["type"], string> = {
   finalists: "Finalists / Award",
   speaker: "Keynote Speaker",
   text: "Text-Block",
+  deadline: "Deadline",
   divider: "Trennlinie",
 };
 
@@ -464,6 +478,16 @@ function TextEditor({ block, onChange }: { block: TextBlock; onChange: (b: TextB
   );
 }
 
+function DeadlineEditor({ block, onChange }: { block: DeadlineBlock; onChange: (b: DeadlineBlock) => void }) {
+  return (
+    <div>
+      <label className={labelCls} style={labelSty}>Text</label>
+      <FocusInput value={block.text} onChange={v => onChange({ ...block, text: v })} placeholder="Registration deadline: 5 January 2025" />
+      <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Wird fett mit goldenem Strich links angezeigt.</p>
+    </div>
+  );
+}
+
 // ── Block card ────────────────────────────────────────────────────────────────
 
 function BlockCard({ block, index, total, onChange, onRemove, onMove }: {
@@ -505,6 +529,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove }: {
           {block.type === "finalists" && <FinalistsEditor block={block} onChange={onChange as (b: FinalistsBlock) => void} />}
           {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} />}
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
+          {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
           {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
         </div>
       )}
@@ -521,6 +546,7 @@ const ADDABLE_BLOCKS: { type: CampaignBlock["type"]; label: string; icon: string
   { type: "finalists", label: "Finalists / Award", icon: "🏆" },
   { type: "speaker", label: "Keynote Speaker", icon: "🎤" },
   { type: "text", label: "Text-Block", icon: "📝" },
+  { type: "deadline", label: "Deadline", icon: "⏰" },
   { type: "divider", label: "Trennlinie", icon: "—" },
 ];
 
@@ -532,6 +558,7 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
     case "finalists": return { type, title: "Green Business Award", intro: "", items: [{ id: uid(), name: "", category: "", description: "" }], video_url: "", website_url: "", website_label: "" };
     case "speaker": return { type, photo_url: "", name: "", title: "", bio: "", book: "" };
     case "text": return { type, content: "" };
+    case "deadline": return { type, text: "" };
     case "divider": return { type: "divider" };
   }
 }
