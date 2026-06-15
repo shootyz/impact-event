@@ -35,11 +35,14 @@ export async function POST(req: NextRequest, props: any) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function PATCH(req: NextRequest, props: any) {
   const { id } = await props.params
-  const { scheduled_at } = await req.json()
+  const body = await req.json()
   const db = supabaseAdmin()
+  const allowed = ['scheduled_at', 'subject', 'body_html', 'event_url', 'blocks_json']
+  const patch: Record<string, unknown> = {}
+  for (const key of allowed) if (key in body) patch[key] = body[key]
   const { data, error } = await db
     .from('campaigns')
-    .update({ scheduled_at: scheduled_at ?? null })
+    .update(patch)
     .eq('id', id)
     .select()
     .single()

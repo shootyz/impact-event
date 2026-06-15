@@ -579,16 +579,24 @@ export default function CampaignBuilder({
   onSaveDraft,
   onSendNow,
   memberCount,
+  campaignId,
+  initialSubject,
+  initialBlocks,
+  initialEventUrl,
 }: {
-  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string) => Promise<void>;
-  onSendNow: (subject: string, bodyHtml: string, eventUrl: string) => Promise<void>;
+  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[]) => Promise<void>;
+  onSendNow: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[]) => Promise<void>;
   memberCount: number;
+  campaignId?: string;
+  initialSubject?: string;
+  initialBlocks?: CampaignBlock[];
+  initialEventUrl?: string;
 }) {
-  const [subject, setSubject] = useState("");
-  const [eventUrl, setEventUrl] = useState("");
-  const [blocks, setBlocks] = useState<CampaignBlock[]>([
-    { type: "intro", text: "" },
-  ]);
+  const [subject, setSubject] = useState(initialSubject ?? "");
+  const [eventUrl, setEventUrl] = useState(initialEventUrl ?? "");
+  const [blocks, setBlocks] = useState<CampaignBlock[]>(
+    initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
+  );
   const [showPreview, setShowPreview] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -706,7 +714,7 @@ export default function CampaignBuilder({
           style={{ borderColor: "#1E3263", color: "#1E3263" }}
           onClick={async () => {
             setSaving(true); setResult(null);
-            await onSaveDraft(subject, bodyHtml, eventUrl);
+            await onSaveDraft(subject, bodyHtml, eventUrl, blocks);
             setSaving(false);
             setResult({ ok: true, msg: "Als Entwurf gespeichert." });
           }}>
@@ -717,7 +725,7 @@ export default function CampaignBuilder({
           style={{ background: "#1E3263", color: "white" }}
           onClick={async () => {
             setSaving(true); setResult(null);
-            await onSendNow(subject, bodyHtml, eventUrl);
+            await onSendNow(subject, bodyHtml, eventUrl, blocks);
             setSaving(false);
           }}>
           {saving ? `Wird gesendet…` : `An ${memberCount} Mitglieder senden`}

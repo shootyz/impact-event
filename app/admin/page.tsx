@@ -162,11 +162,12 @@ type ImportResult = { imported: number; duplicates: string[]; errors: string[]; 
 
 // ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
 type CampaignType = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; };
-function CampaignCard({ c, onSend, onDelete, onSchedule }: {
+function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit }: {
   c: CampaignType;
   onSend: (id: string, sent: number) => void;
   onDelete: (id: string) => void;
   onSchedule?: (id: string, scheduled_at: string | null) => void;
+  onEdit?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [sending, setSending] = useState(false);
@@ -197,6 +198,13 @@ function CampaignCard({ c, onSend, onDelete, onSchedule }: {
             </button>
             {!c.sent_at && !confirmSend && !scheduling && (
               <>
+                {onEdit && (
+                  <button onClick={onEdit}
+                    className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                    style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+                    Bearbeiten
+                  </button>
+                )}
                 {onSchedule && (
                   <button onClick={() => { setScheduling(true); setScheduleValue(c.scheduled_at ? new Date(c.scheduled_at).toISOString().slice(0,16) : ""); }}
                     className="text-xs px-3 py-1.5 rounded-lg font-medium"
@@ -344,7 +352,8 @@ export default function AdminPage() {
 
   // Mailing state
   type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
-  type Campaign = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; };
+  type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; };
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [mailingTab, setMailingTab] = useState<"members" | "compose" | "drafts" | "campaigns">("members");
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
@@ -1394,29 +1403,66 @@ export default function AdminPage() {
             {/* ── Compose ── */}
             {mailingTab === "compose" && (
               <Card>
-                <CardHeader title="Neue Kampagne" subtitle="An alle aktiven Mitglieder senden" />
+                <CardHeader
+                  title={editingCampaign ? "Entwurf bearbeiten" : "Neue Kampagne"}
+                  subtitle={editingCampaign ? (
+                    <button className="text-xs underline" style={{ color: "var(--ig-gold)" }} onClick={() => { setEditingCampaign(null); }}>
+                      ← Zurück zu neuer Kampagne
+                    </button>
+                  ) : "An alle aktiven Mitglieder senden"}
+                />
                 <CampaignBuilder
+                  key={editingCampaign?.id ?? "new"}
                   memberCount={members.filter(m => !m.unsubscribed).length}
-                  onSaveDraft={async (subject, bodyHtml, eventUrl) => {
-                    const res = await fetch("/api/campaigns", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false }),
-                    });
-                    const d = await res.json();
-                    if (res.ok) {
-                      setCampaigns(prev => [d.campaign, ...prev]);
-                      setTimeout(() => setMailingTab("drafts"), 800);
+                  campaignId={editingCampaign?.id}
+                  initialSubject={editingCampaign?.subject}
+                  initialBlocks={editingCampaign?.blocks_json as import("./CampaignBuilder").CampaignBlock[] | undefined}
+                  initialEventUrl={editingCampaign?.event_url ?? undefined}
+                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks) => {
+                    if (editingCampaign) {
+                      const res = await fetch(`/api/campaigns/${editingCampaign.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocks }),
+                      });
+                      const d = await res.json();
+                      if (res.ok) {
+                        setCampaigns(prev => prev.map(c => c.id === editingCampaign.id ? d : c));
+                        setEditingCampaign(null);
+                        setTimeout(() => setMailingTab("drafts"), 300);
+                      }
+                    } else {
+                      const res = await fetch("/api/campaigns", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocks }),
+                      });
+                      const d = await res.json();
+                      if (res.ok) {
+                        setCampaigns(prev => [d.campaign, ...prev]);
+                        setTimeout(() => setMailingTab("drafts"), 800);
+                      }
                     }
                   }}
-                  onSendNow={async (subject, bodyHtml, eventUrl) => {
-                    const res = await fetch("/api/campaigns", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: true }),
-                    });
-                    const d = await res.json();
-                    if (res.ok) setCampaigns(prev => [d.campaign, ...prev]);
+                  onSendNow={async (subject, bodyHtml, eventUrl, blocks) => {
+                    if (editingCampaign) {
+                      await fetch(`/api/campaigns/${editingCampaign.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocks }),
+                      });
+                      const res = await fetch(`/api/campaigns/${editingCampaign.id}`, { method: "POST" });
+                      const d = await res.json();
+                      if (res.ok) { setCampaigns(prev => prev.filter(c => c.id !== editingCampaign.id)); setEditingCampaign(null); }
+                    } else {
+                      const res = await fetch("/api/campaigns", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: true, blocks_json: blocks }),
+                      });
+                      const d = await res.json();
+                      if (res.ok) setCampaigns(prev => [d.campaign, ...prev]);
+                    }
                   }}
                 />
               </Card>
@@ -1441,6 +1487,7 @@ export default function AdminPage() {
                       onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
                       onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                       onSchedule={(id, scheduled_at) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x))}
+                      onEdit={c.blocks_json ? () => { setEditingCampaign(c); setMailingTab("compose"); } : undefined}
                     />
                   ))}
                 </div>
