@@ -39,10 +39,10 @@ export async function sendConfirmationEmail(
 
               <!-- Header: logo + event info -->
               <tr>
-                <td style="padding:24px 24px 20px;">
-                  <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28" style="display:block;margin-bottom:16px;" />
-                  <p style="color:#1E3263;font-size:18px;font-weight:700;margin:0 0 4px;line-height:1.3;">${event.name}</p>
-                  <p style="color:#1E3263;font-size:13px;margin:0 0 2px;">${eventDate}</p>
+                <td style="padding:28px 28px 24px;">
+                  <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28" style="display:block;margin-bottom:20px;" />
+                  <p style="color:#1E3263;font-size:18px;font-weight:700;margin:0 0 6px;line-height:1.3;">${event.name}</p>
+                  <p style="color:#1E3263;font-size:13px;margin:0 0 3px;">${eventDate}</p>
                   <p style="color:#1E3263;font-size:13px;margin:0;">${event.location}</p>
                 </td>
               </tr>
@@ -55,7 +55,13 @@ export async function sendConfirmationEmail(
                 <td style="padding:20px 24px 0;">
                   <p style="color:#A7C4DE;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px;">Ticket for</p>
                   <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0 0 20px;">${registration.name}</p>
-                  <img src="cid:qrcode" width="100%" style="display:block;border-radius:10px;max-width:100%;" alt="QR Code"/>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center">
+                        <img src="cid:qrcode" width="260" height="260" style="display:block;border-radius:10px;" alt="QR Code"/>
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
 
