@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import CampaignBuilder from "./CampaignBuilder";
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 type IconProps = { className?: string; style?: React.CSSProperties };
@@ -1392,123 +1393,30 @@ export default function AdminPage() {
             {mailingTab === "compose" && (
               <Card>
                 <CardHeader title="Neue Kampagne" subtitle="An alle aktiven Mitglieder senden" />
-                <div className="p-5 space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Betreff *</label>
-                    <input className={inputClass} style={inputStyle} value={campaignSubject}
-                      onChange={e => setCampaignSubject(e.target.value)} placeholder="Impact Circle Event – Invitation"
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Header-Bild <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}>(optional)</span></label>
-                    <input ref={headerImageRef} type="file" accept="image/*" className="hidden" onChange={async e => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      setHeaderUploading(true);
-                      const fd = new FormData();
-                      fd.append("file", file);
-                      const res = await fetch("/api/upload", { method: "POST", body: fd });
-                      const d = await res.json();
-                      if (d.url) setCampaignHeaderUrl(d.url);
-                      setHeaderUploading(false);
-                    }} />
-                    <div className="flex gap-3 items-center">
-                      <BtnOutline onClick={() => headerImageRef.current?.click()} className="flex-1" disabled={headerUploading}>
-                        <IconUpload />
-                        {headerUploading ? "Wird hochgeladen…" : campaignHeaderUrl ? "Bild ersetzen" : "Bild hochladen"}
-                      </BtnOutline>
-                      {campaignHeaderUrl && (
-                        <button onClick={() => setCampaignHeaderUrl("")} className="text-xs px-3 py-2 rounded-lg transition" style={{ color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}
-                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
-                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
-                          Entfernen
-                        </button>
-                      )}
-                    </div>
-                    {campaignHeaderUrl && (
-                      <img src={campaignHeaderUrl} alt="Header-Vorschau" className="mt-3 rounded-xl w-full object-cover" style={{ maxHeight: 120 }} />
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Inhalt (HTML) *</label>
-                    <textarea className={inputClass} style={{ ...inputStyle, minHeight: 200, resize: "vertical", fontSize: 14, lineHeight: "1.6" }}
-                      value={campaignBody} onChange={e => setCampaignBody(e.target.value)}
-                      placeholder={"We are pleased to invite you to the next Impact Circle Event.\n\nThe evening will bring together…"}
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                    <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>Fliesstext — Leerzeilen erzeugen neue Absätze. Die Anrede wird automatisch hinzugefügt.</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Anmelde-Button URL <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}>(optional)</span></label>
-                    <input className={inputClass} style={inputStyle} value={campaignEventUrl}
-                      onChange={e => setCampaignEventUrl(e.target.value)} placeholder={typeof window !== "undefined" ? window.location.origin : "https://…"}
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                  </div>
-                  {campaignResult && (
-                    <div className="rounded-xl px-4 py-3 text-sm" style={{ background: campaignResult.ok ? "#f0fdf4" : "#fef2f2", color: campaignResult.ok ? "#16a34a" : "#dc2626", border: `1px solid ${campaignResult.ok ? "#bbf7d0" : "#fecaca"}` }}>
-                      {campaignResult.msg}
-                    </div>
-                  )}
-                  <div className="flex gap-3">
-                  <BtnOutline className="flex-1" disabled={!campaignSubject.trim() || !campaignBody.trim() || campaignSending}
-                    onClick={async () => {
-                      setCampaignSending(true);
-                      setCampaignResult(null);
-                      const res = await fetch("/api/campaigns", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          subject: campaignSubject,
-                          header_image_url: campaignHeaderUrl || null,
-                          body_html: campaignBody,
-                          event_url: campaignEventUrl || null,
-                          send_now: false,
-                        }),
-                      });
-                      const d = await res.json();
-                      setCampaignSending(false);
-                      if (!res.ok) {
-                        setCampaignResult({ ok: false, msg: d.error || "Fehler." });
-                      } else {
-                        setCampaignResult({ ok: true, msg: "Als Entwurf gespeichert." });
-                        setCampaignSubject(""); setCampaignBody(""); setCampaignHeaderUrl(""); setCampaignEventUrl("");
-                        setCampaigns(prev => [d.campaign, ...prev]);
-                        setTimeout(() => setMailingTab("drafts"), 800);
-                      }
-                    }}>
-                    Als Entwurf speichern
-                  </BtnOutline>
-                  <BtnPrimary className="flex-1" disabled={!campaignSubject.trim() || !campaignBody.trim() || campaignSending}
-                    onClick={async () => {
-                      setCampaignSending(true);
-                      setCampaignResult(null);
-                      const res = await fetch("/api/campaigns", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          subject: campaignSubject,
-                          header_image_url: campaignHeaderUrl || null,
-                          body_html: campaignBody,
-                          event_url: campaignEventUrl || null,
-                          send_now: true,
-                        }),
-                      });
-                      const d = await res.json();
-                      setCampaignSending(false);
-                      if (!res.ok) {
-                        setCampaignResult({ ok: false, msg: d.error || "Fehler beim Senden." });
-                      } else {
-                        setCampaignResult({ ok: true, msg: `An ${d.sent} Empfänger gesendet.` });
-                        setCampaignSubject(""); setCampaignBody(""); setCampaignHeaderUrl(""); setCampaignEventUrl("");
-                        setCampaigns(prev => [d.campaign, ...prev]);
-                      }
-                    }}>
-                    {campaignSending ? `Wird an ${members.filter(m => !m.unsubscribed).length} Mitglieder gesendet…` : "Kampagne senden"}
-                  </BtnPrimary>
-                </div>
-                </div>
+                <CampaignBuilder
+                  memberCount={members.filter(m => !m.unsubscribed).length}
+                  onSaveDraft={async (subject, bodyHtml, headerUrl, eventUrl) => {
+                    const res = await fetch("/api/campaigns", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ subject, header_image_url: headerUrl || null, body_html: bodyHtml, event_url: eventUrl || null, send_now: false }),
+                    });
+                    const d = await res.json();
+                    if (res.ok) {
+                      setCampaigns(prev => [d.campaign, ...prev]);
+                      setTimeout(() => setMailingTab("drafts"), 800);
+                    }
+                  }}
+                  onSendNow={async (subject, bodyHtml, headerUrl, eventUrl) => {
+                    const res = await fetch("/api/campaigns", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ subject, header_image_url: headerUrl || null, body_html: bodyHtml, event_url: eventUrl || null, send_now: true }),
+                    });
+                    const d = await res.json();
+                    if (res.ok) setCampaigns(prev => [d.campaign, ...prev]);
+                  }}
+                />
               </Card>
             )}
 
