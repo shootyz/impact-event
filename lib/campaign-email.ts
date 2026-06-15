@@ -53,10 +53,7 @@ function buildCampaignHtml({
             </td></tr>
           </table>
         </td></tr>
-        ${inviteCode ? `
-        <tr><td style="padding:10px 40px 0;text-align:center;">
-          <p style="color:#bbbbbb;font-size:11px;margin:0;font-family:Arial,sans-serif;">Personal code: <span style="letter-spacing:1px;">${inviteCode}</span> &nbsp;·&nbsp; One-time use</p>
-        </td></tr>` : ''}` : ''
+` : ''
 
   return `<!DOCTYPE html>
 <html lang="en">
