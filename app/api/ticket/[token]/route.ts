@@ -8,7 +8,7 @@ export async function GET(
   const { token } = await params
   const { data } = await supabaseAdmin()
     .from('registrations')
-    .select('name, events(name, date, location)')
+    .select('name, email, events(name, date, location)')
     .eq('qr_token', token)
     .single()
 
@@ -16,6 +16,7 @@ export async function GET(
 
   return NextResponse.json({
     name: data.name,
+    email: data.email,
     event: data.events,
   })
 }

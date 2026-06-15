@@ -501,7 +501,7 @@ export default function AdminPage() {
         r.email.toLowerCase().includes(guestSearch.toLowerCase());
     })
     .sort((a, b) => {
-      if (guestSort === "checkin") {
+      if (guestFilter === "checkedin") {
         return new Date(b.checked_in_at ?? 0).getTime() - new Date(a.checked_in_at ?? 0).getTime();
       }
       return lastName(a.name).localeCompare(lastName(b.name));
