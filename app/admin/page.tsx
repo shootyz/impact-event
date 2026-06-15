@@ -1451,7 +1451,36 @@ export default function AdminPage() {
                       {campaignResult.msg}
                     </div>
                   )}
-                  <BtnPrimary className="w-full" disabled={!campaignSubject.trim() || !campaignBody.trim() || campaignSending}
+                  <div className="flex gap-3">
+                  <BtnOutline className="flex-1" disabled={!campaignSubject.trim() || !campaignBody.trim() || campaignSending}
+                    onClick={async () => {
+                      setCampaignSending(true);
+                      setCampaignResult(null);
+                      const res = await fetch("/api/campaigns", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          subject: campaignSubject,
+                          header_image_url: campaignHeaderUrl || null,
+                          body_html: campaignBody,
+                          event_url: campaignEventUrl || null,
+                          send_now: false,
+                        }),
+                      });
+                      const d = await res.json();
+                      setCampaignSending(false);
+                      if (!res.ok) {
+                        setCampaignResult({ ok: false, msg: d.error || "Fehler." });
+                      } else {
+                        setCampaignResult({ ok: true, msg: "Als Entwurf gespeichert." });
+                        setCampaignSubject(""); setCampaignBody(""); setCampaignHeaderUrl(""); setCampaignEventUrl("");
+                        setCampaigns(prev => [d.campaign, ...prev]);
+                        setTimeout(() => setMailingTab("campaigns"), 800);
+                      }
+                    }}>
+                    Als Entwurf speichern
+                  </BtnOutline>
+                  <BtnPrimary className="flex-1" disabled={!campaignSubject.trim() || !campaignBody.trim() || campaignSending}
                     onClick={async () => {
                       setCampaignSending(true);
                       setCampaignResult(null);
