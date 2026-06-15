@@ -20,6 +20,36 @@ export type Event = {
   active: boolean
 }
 
+export type Member = {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  unsubscribe_token: string
+  unsubscribed: boolean
+  created_at: string
+}
+
+export type Campaign = {
+  id: string
+  subject: string
+  header_image_url: string | null
+  body_html: string
+  event_url: string | null
+  sent_at: string | null
+  recipient_count: number | null
+  created_at: string
+}
+
+export type InviteCode = {
+  id: string
+  member_id: string
+  event_id: string
+  code: string
+  used: boolean
+  created_at: string
+}
+
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

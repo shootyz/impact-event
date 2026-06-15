@@ -190,7 +190,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv">("list");
+  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv" | "mailing">("list");
 
   const [dialog, setDialog] = useState<{ title: string; message: string; danger?: boolean; onConfirm: () => void } | null>(null);
   const showConfirm = (title: string, message: string, danger: boolean, onConfirm: () => void) =>
@@ -221,6 +221,26 @@ export default function AdminPage() {
   const [archivedEvents, setArchivedEvents] = useState<ArchivedEvent[]>([]);
   const [archiveLoading, setArchiveLoading] = useState(false);
   const [archiveLoaded, setArchiveLoaded] = useState(false);
+
+  // Mailing state
+  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; };
+  type Campaign = { id: string; subject: string; sent_at: string | null; recipient_count: number | null; created_at: string; };
+  const [mailingTab, setMailingTab] = useState<"members" | "compose" | "campaigns">("members");
+  const [members, setMembers] = useState<Member[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersLoaded, setMembersLoaded] = useState(false);
+  const [memberCsvFile, setMemberCsvFile] = useState<File | null>(null);
+  const [memberCsvImporting, setMemberCsvImporting] = useState(false);
+  const [memberCsvResult, setMemberCsvResult] = useState<{ inserted: number } | null>(null);
+  const memberCsvRef = useRef<HTMLInputElement>(null);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(false);
+  const [campaignSubject, setCampaignSubject] = useState("");
+  const [campaignBody, setCampaignBody] = useState("");
+  const [campaignEventUrl, setCampaignEventUrl] = useState("");
+  const [campaignHeaderUrl, setCampaignHeaderUrl] = useState("");
+  const [campaignSending, setCampaignSending] = useState(false);
+  const [campaignResult, setCampaignResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const [guestSearch, setGuestSearch] = useState("");
   const [guestFilter, setGuestFilter] = useState<"all" | "checkedin" | "pending">("all");
@@ -256,6 +276,19 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (activeTab === "archiv") loadArchive();
+    if (activeTab === "mailing" && !membersLoaded) {
+      setMembersLoading(true);
+      fetch("/api/members").then(r => r.json()).then(d => {
+        if (Array.isArray(d)) setMembers(d);
+        setMembersLoading(false);
+        setMembersLoaded(true);
+      });
+      setCampaignsLoading(true);
+      fetch("/api/campaigns").then(r => r.json()).then(d => {
+        if (Array.isArray(d)) setCampaigns(d);
+        setCampaignsLoading(false);
+      });
+    }
     if (activeTab === "tools") {
       fetch(`/api/admin/event?password=${encodeURIComponent(savedPassword.current)}`)
         .then(r => r.json()).then(d => setCurrentEventPassword(d.registration_password ?? null));
@@ -555,6 +588,7 @@ export default function AdminPage() {
     { id: "list", label: "Gäste" },
     { id: "tools", label: "Tools" },
     { id: "archiv", label: "Archiv" },
+    { id: "mailing", label: "Mailing" },
   ] as const;
 
   return (
@@ -1060,6 +1094,215 @@ export default function AdminPage() {
             )}
           </div>
         )}
+
+        {/* ═══════════ MAILING TAB ═══════════ */}
+        {activeTab === "mailing" && (
+          <div className="space-y-4">
+
+            {/* Sub-tabs */}
+            <div className="flex gap-2 mb-2">
+              {(["members", "compose", "campaigns"] as const).map(t => (
+                <button key={t} onClick={() => setMailingTab(t)}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition capitalize"
+                  style={{
+                    background: mailingTab === t ? "var(--ig-navy)" : "white",
+                    color: mailingTab === t ? "white" : "var(--ig-navy)",
+                    border: "1.5px solid var(--ig-gray2)",
+                  }}>
+                  {t === "members" ? "Members" : t === "compose" ? "New Campaign" : "Archive"}
+                </button>
+              ))}
+            </div>
+
+            {/* ── Members ── */}
+            {mailingTab === "members" && (
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader title="Import Members" subtitle="CSV with columns: first_name, last_name, email" />
+                  <div className="p-5 space-y-3">
+                    <input ref={memberCsvRef} type="file" accept=".csv" className="hidden"
+                      onChange={e => setMemberCsvFile(e.target.files?.[0] ?? null)} />
+                    <div className="flex gap-3">
+                      <BtnOutline onClick={() => memberCsvRef.current?.click()} className="flex-1">
+                        <IconUpload />
+                        {memberCsvFile ? memberCsvFile.name : "Choose CSV"}
+                      </BtnOutline>
+                      <BtnPrimary className="flex-1 px-4" disabled={!memberCsvFile || memberCsvImporting}
+                        onClick={async () => {
+                          if (!memberCsvFile) return;
+                          setMemberCsvImporting(true);
+                          setMemberCsvResult(null);
+                          const text = await memberCsvFile.text();
+                          const lines = text.trim().split("\n");
+                          const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g, ""));
+                          const iFirst = headers.indexOf("first_name");
+                          const iLast = headers.indexOf("last_name");
+                          const iEmail = headers.indexOf("email");
+                          if (iFirst < 0 || iLast < 0 || iEmail < 0) {
+                            setMemberCsvResult({ inserted: -1 });
+                            setMemberCsvImporting(false);
+                            return;
+                          }
+                          const rows = lines.slice(1).map(l => {
+                            const cols = l.split(",").map(c => c.trim().replace(/"/g, ""));
+                            return { first_name: cols[iFirst], last_name: cols[iLast], email: cols[iEmail] };
+                          }).filter(r => r.email);
+                          const res = await fetch("/api/members", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ members: rows }),
+                          });
+                          const d = await res.json();
+                          setMemberCsvResult(d);
+                          setMemberCsvImporting(false);
+                          setMembersLoaded(false);
+                          // reload
+                          fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoaded(true); });
+                        }}>
+                        {memberCsvImporting ? "Importing…" : "Import"}
+                      </BtnPrimary>
+                    </div>
+                    {memberCsvResult && (
+                      <p className="text-sm" style={{ color: memberCsvResult.inserted < 0 ? "#dc2626" : "var(--ig-navy)" }}>
+                        {memberCsvResult.inserted < 0 ? "CSV must have columns: first_name, last_name, email" : `${memberCsvResult.inserted} members imported/updated.`}
+                      </p>
+                    )}
+                  </div>
+                </Card>
+
+                <Card>
+                  <CardHeader title={`Members (${members.filter(m => !m.unsubscribed).length} active)`} />
+                  <div className="divide-y" style={{ borderColor: "var(--ig-gray2)" }}>
+                    {membersLoading ? (
+                      <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Loading…</div>
+                    ) : members.length === 0 ? (
+                      <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>No members yet.</div>
+                    ) : members.map(m => (
+                      <div key={m.id} className="px-5 py-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate" style={{ color: m.unsubscribed ? "var(--ig-gray3)" : "var(--ig-navy)" }}>
+                            {m.first_name} {m.last_name}
+                            {m.unsubscribed && <span className="ml-2 text-xs" style={{ color: "var(--ig-gray3)" }}>(unsubscribed)</span>}
+                          </p>
+                          <p className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>{m.email}</p>
+                        </div>
+                        <button onClick={async () => {
+                          await fetch("/api/members", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id }) });
+                          setMembers(prev => prev.filter(x => x.id !== m.id));
+                        }} className="flex-shrink-0 p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                          <IconTrash className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* ── Compose ── */}
+            {mailingTab === "compose" && (
+              <Card>
+                <CardHeader title="New Campaign" subtitle="Send to all active members" />
+                <div className="p-5 space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Subject *</label>
+                    <input className={inputClass} style={inputStyle} value={campaignSubject}
+                      onChange={e => setCampaignSubject(e.target.value)} placeholder="Impact Circle Event – Invitation"
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Header Image URL <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}>(optional)</span></label>
+                    <input className={inputClass} style={inputStyle} value={campaignHeaderUrl}
+                      onChange={e => setCampaignHeaderUrl(e.target.value)} placeholder="https://…"
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Body (HTML) *</label>
+                    <textarea className={inputClass} style={{ ...inputStyle, minHeight: 200, resize: "vertical", fontFamily: "monospace", fontSize: 12 }}
+                      value={campaignBody} onChange={e => setCampaignBody(e.target.value)}
+                      placeholder={"<p>We are pleased to invite you to…</p>"}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                    <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>Plain HTML paragraphs. The greeting "Dear [Name]," is added automatically.</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Register Button URL <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}>(optional)</span></label>
+                    <input className={inputClass} style={inputStyle} value={campaignEventUrl}
+                      onChange={e => setCampaignEventUrl(e.target.value)} placeholder={typeof window !== "undefined" ? window.location.origin : "https://…"}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                  </div>
+                  {campaignResult && (
+                    <div className="rounded-xl px-4 py-3 text-sm" style={{ background: campaignResult.ok ? "#f0fdf4" : "#fef2f2", color: campaignResult.ok ? "#16a34a" : "#dc2626", border: `1px solid ${campaignResult.ok ? "#bbf7d0" : "#fecaca"}` }}>
+                      {campaignResult.msg}
+                    </div>
+                  )}
+                  <BtnPrimary className="w-full" disabled={!campaignSubject.trim() || !campaignBody.trim() || campaignSending}
+                    onClick={async () => {
+                      setCampaignSending(true);
+                      setCampaignResult(null);
+                      const res = await fetch("/api/campaigns", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          subject: campaignSubject,
+                          header_image_url: campaignHeaderUrl || null,
+                          body_html: campaignBody,
+                          event_url: campaignEventUrl || null,
+                          send_now: true,
+                        }),
+                      });
+                      const d = await res.json();
+                      setCampaignSending(false);
+                      if (!res.ok) {
+                        setCampaignResult({ ok: false, msg: d.error || "Send failed." });
+                      } else {
+                        setCampaignResult({ ok: true, msg: `Sent to ${d.sent} recipients.` });
+                        setCampaignSubject(""); setCampaignBody(""); setCampaignHeaderUrl(""); setCampaignEventUrl("");
+                        setCampaigns(prev => [d.campaign, ...prev]);
+                      }
+                    }}>
+                    {campaignSending ? `Sending to ${members.filter(m => !m.unsubscribed).length} members…` : "Send Campaign"}
+                  </BtnPrimary>
+                </div>
+              </Card>
+            )}
+
+            {/* ── Campaign Archive ── */}
+            {mailingTab === "campaigns" && (
+              <div className="space-y-3">
+                {campaignsLoading ? (
+                  <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Loading…</div></Card>
+                ) : campaigns.length === 0 ? (
+                  <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>No campaigns sent yet.</div></Card>
+                ) : campaigns.map(c => (
+                  <Card key={c.id}>
+                    <div className="p-5 flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{c.subject}</p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
+                          {c.sent_at ? new Date(c.sent_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Draft"}
+                        </p>
+                      </div>
+                      {c.sent_at && (
+                        <div className="flex-shrink-0 text-right">
+                          <p className="font-bold text-lg" style={{ color: "var(--ig-gold)" }}>{c.recipient_count ?? "–"}</p>
+                          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>sent</p>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+          </div>
+        )}
+
       </div>
 
       {dialog && (

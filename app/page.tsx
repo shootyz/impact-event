@@ -16,13 +16,16 @@ export default function RegistrationPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [eventLoading, setEventLoading] = useState(true);
   const [unlocked, setUnlocked] = useState(false);
-  const [gatePassword, setGatePassword] = useState("");
+  const [gateCode, setGateCode] = useState("");
   const [gateError, setGateError] = useState("");
   const [gateLoading, setGateLoading] = useState(false);
+  const [inviteCodeId, setInviteCodeId] = useState<string | null>(null);
   const [vorname, setVorname] = useState("");
   const [nachname, setNachname] = useState("");
   const [email, setEmail] = useState("");
   const [emailConfirm, setEmailConfirm] = useState("");
+  const [nameLocked, setNameLocked] = useState(false);
+  const [emailLocked, setEmailLocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,14 +45,35 @@ export default function RegistrationPage() {
     e.preventDefault();
     setGateError("");
     setGateLoading(true);
-    const res = await fetch("/api/event-auth", {
+
+    // Try invite code first
+    const inviteRes = await fetch(`/api/invite-code?code=${encodeURIComponent(gateCode)}`);
+    if (inviteRes.ok) {
+      const invite = await inviteRes.json();
+      if (invite.valid) {
+        const [first, ...rest] = (invite.name as string).split(" ");
+        setVorname(first ?? "");
+        setNachname(rest.join(" "));
+        setEmail(invite.email ?? "");
+        setEmailConfirm(invite.email ?? "");
+        setNameLocked(true);
+        setEmailLocked(true);
+        setInviteCodeId(invite.id);
+        setGateLoading(false);
+        setUnlocked(true);
+        return;
+      }
+    }
+
+    // Try general event password
+    const authRes = await fetch("/api/event-auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: gatePassword }),
+      body: JSON.stringify({ password: gateCode }),
     });
-    const data = await res.json();
+    const authData = await authRes.json();
     setGateLoading(false);
-    if (!res.ok) { setGateError(data.error || "Wrong code."); return; }
+    if (!authRes.ok) { setGateError(authData.error || "Invalid code."); return; }
     setUnlocked(true);
   };
 
@@ -64,7 +88,7 @@ export default function RegistrationPage() {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: `${vorname.trim()} ${nachname.trim()}`, email }),
+      body: JSON.stringify({ name: `${vorname.trim()} ${nachname.trim()}`, email, invite_code_id: inviteCodeId }),
     });
     const data = await res.json();
     setLoading(false);
@@ -78,6 +102,8 @@ export default function RegistrationPage() {
       })
     : null;
 
+  const inputStyle = { border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "var(--ig-light)" };
+
   return (
     <main className="min-h-screen flex flex-col justify-center px-6 py-16" style={{ background: "var(--ig-light)" }}>
       <div className="w-full max-w-md mx-auto">
@@ -85,7 +111,6 @@ export default function RegistrationPage() {
         {/* Logo */}
         <div className="text-center mb-10">
           <img src="/logo.png" alt="Impact Gstaad" className="h-12 mx-auto mb-8 object-contain" />
-          {/* Gold divider */}
           <div className="h-px mb-8" style={{ background: "var(--ig-gray2)" }} />
           <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--ig-gold)" }}>
             Event Registration
@@ -104,25 +129,21 @@ export default function RegistrationPage() {
           )}
         </div>
 
-        {/* Password gate */}
+        {/* Code gate */}
         {event && !unlocked && (
           <div className="rounded-2xl border p-8 shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
             <p className="text-sm text-center mb-6" style={{ color: "var(--ig-gray3)" }}>
-              This event is for invited members only.
+              Please enter your personal invite code or the general event code to continue.
             </p>
             <form onSubmit={handleUnlock} className="space-y-4">
               <input
-                type="password"
-                value={gatePassword}
-                onChange={(e) => setGatePassword(e.target.value)}
-                placeholder="Invite code"
+                type="text"
+                value={gateCode}
+                onChange={(e) => setGateCode(e.target.value)}
+                placeholder="Invite code or event code"
                 autoFocus
-                className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition"
-                style={{
-                  border: "1.5px solid var(--ig-gray2)",
-                  color: "var(--ig-black)",
-                  background: "var(--ig-light)",
-                }}
+                className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition text-center tracking-widest uppercase font-semibold"
+                style={inputStyle}
                 onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                 onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
               />
@@ -162,12 +183,17 @@ export default function RegistrationPage() {
 
             {/* Form card */}
             <div className="rounded-2xl border p-6 shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+              {inviteCodeId && (
+                <div className="rounded-xl px-4 py-3 mb-4 text-sm font-medium" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}>
+                  Welcome, {vorname}! Your details are pre-filled from your invitation.
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: "First name", value: vorname, set: setVorname, placeholder: "Maria" },
-                    { label: "Last name", value: nachname, set: setNachname, placeholder: "Muster" },
-                  ].map(({ label, value, set, placeholder }) => (
+                    { label: "First name", value: vorname, set: setVorname, placeholder: "Maria", locked: nameLocked },
+                    { label: "Last name", value: nachname, set: setNachname, placeholder: "Muster", locked: nameLocked },
+                  ].map(({ label, value, set, placeholder, locked }) => (
                     <div key={label}>
                       <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
                         {label} <span style={{ color: "var(--ig-gold)" }}>*</span>
@@ -175,20 +201,21 @@ export default function RegistrationPage() {
                       <input
                         type="text"
                         value={value}
-                        onChange={(e) => set(e.target.value)}
+                        onChange={(e) => !locked && set(e.target.value)}
                         placeholder={placeholder}
+                        readOnly={locked}
                         className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                        style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "var(--ig-light)" }}
-                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        style={{ ...inputStyle, opacity: locked ? 0.7 : 1, cursor: locked ? "default" : "text" }}
+                        onFocus={e => !locked && (e.currentTarget.style.borderColor = "var(--ig-navy)")}
                         onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
                       />
                     </div>
                   ))}
                 </div>
                 {[
-                  { label: "Email", value: email, set: setEmail, placeholder: "name@example.com", confirm: false },
-                  { label: "Confirm email", value: emailConfirm, set: setEmailConfirm, placeholder: "name@example.com", confirm: true },
-                ].map(({ label, value, set, placeholder, confirm }) => (
+                  { label: "Email", value: email, set: setEmail, placeholder: "name@example.com", locked: emailLocked, confirm: false },
+                  { label: "Confirm email", value: emailConfirm, set: setEmailConfirm, placeholder: "name@example.com", locked: emailLocked, confirm: true },
+                ].map(({ label, value, set, placeholder, locked, confirm }) => (
                   <div key={label}>
                     <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
                       {label} <span style={{ color: "var(--ig-gold)" }}>*</span>
@@ -196,12 +223,13 @@ export default function RegistrationPage() {
                     <input
                       type="text"
                       value={value}
-                      onChange={(e) => set(e.target.value)}
+                      onChange={(e) => !locked && set(e.target.value)}
                       placeholder={placeholder}
-                      onPaste={confirm ? (e) => e.preventDefault() : undefined}
+                      readOnly={locked}
+                      onPaste={confirm && !locked ? (e) => e.preventDefault() : undefined}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                      style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "var(--ig-light)" }}
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      style={{ ...inputStyle, opacity: locked ? 0.7 : 1, cursor: locked ? "default" : "text" }}
+                      onFocus={e => !locked && (e.currentTarget.style.borderColor = "var(--ig-navy)")}
                       onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
                     />
                   </div>

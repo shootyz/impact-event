@@ -4,7 +4,7 @@ import { sendConfirmationEmail } from '@/lib/email'
 import { randomUUID } from 'crypto'
 
 export async function POST(req: NextRequest) {
-  const { name, email } = await req.json()
+  const { name, email, invite_code_id } = await req.json()
 
   if (!name?.trim() || !email?.trim()) {
     return NextResponse.json({ error: 'Name und E-Mail sind erforderlich.' }, { status: 400 })
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       event_id: event.id,
       qr_token: qrToken,
       checked_in: false,
+      ...(invite_code_id ? { invite_code_id } : {}),
     })
     .select()
     .single()
@@ -50,6 +51,11 @@ export async function POST(req: NextRequest) {
   if (regError || !registration) {
     console.error(regError)
     return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
+  }
+
+  // Mark invite code as used
+  if (invite_code_id) {
+    await db.from('invite_codes').update({ used: true }).eq('id', invite_code_id)
   }
 
   try {
