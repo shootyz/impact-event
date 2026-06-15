@@ -88,7 +88,7 @@ export async function sendConfirmationEmail(
         <tr>
           <td style="padding-bottom:24px;">
             <a href="${appUrl}/api/ticket/${registration.qr_token}/pdf"
-               style="display:block;background:transparent;color:#D28D28;text-decoration:none;padding:13px 32px;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;border:2px solid #D28D28;">
+               style="display:block;background:transparent;color:#1E3263;text-decoration:none;padding:13px 32px;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;border:2px solid #1E3263;">
               SAVE AS PDF
             </a>
           </td>
