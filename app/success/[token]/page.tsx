@@ -73,15 +73,7 @@ function SuccessPageInner() {
             </p>
           </div>
 
-          {resendDone ? (
-            <p className="text-xs font-medium" style={{ color: "#16a34a" }}>Ticket sent — check your inbox.</p>
-          ) : (
-            <button onClick={resendEmail} disabled={resending}
-              className="text-xs underline transition disabled:opacity-40"
-              style={{ color: "var(--ig-navy)", background: "none", border: "none", cursor: "pointer" }}>
-              {resending ? "Sending…" : "Resend ticket email"}
-            </button>
-          )}
+          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Didn't receive the email? Check your spam folder.</p>
           <p className="text-xs mt-2" style={{ color: "var(--ig-gray3)" }}>
             Questions? <a href="mailto:info@impactgstaad.ch" style={{ color: "var(--ig-navy)", textDecoration: "underline" }}>info@impactgstaad.ch</a>
           </p>
@@ -101,6 +93,21 @@ function SuccessPageInner() {
           </svg>
           Save Ticket as PDF
         </a>
+
+        {/* Email ticket button */}
+        <button
+          onClick={resendEmail}
+          disabled={resending || resendDone}
+          className="mt-3 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition disabled:opacity-50"
+          style={{ background: "transparent", color: "var(--ig-navy)", border: "1.5px solid var(--ig-navy)", cursor: resendDone ? "default" : "pointer" }}
+          onMouseEnter={e => { if (!resendDone) (e.currentTarget as HTMLElement).style.background = "rgba(30,50,99,0.06)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          {resendDone ? "Ticket sent — check your inbox" : resending ? "Sending…" : "Email my ticket"}
+        </button>
 
       </div>
     </main>
