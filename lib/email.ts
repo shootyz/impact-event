@@ -58,7 +58,7 @@ export async function sendConfirmationEmail(
         <!-- Info card -->
         <tr>
           <td style="padding-bottom:28px;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;border:2px solid #D28D28;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:14px;border:1px solid #D0DDEA;">
               <tr>
                 <td width="50%" style="padding:16px 20px;vertical-align:top;">
                   <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 6px;">Date</p>
