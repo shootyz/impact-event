@@ -1395,11 +1395,11 @@ export default function AdminPage() {
                 <CardHeader title="Neue Kampagne" subtitle="An alle aktiven Mitglieder senden" />
                 <CampaignBuilder
                   memberCount={members.filter(m => !m.unsubscribed).length}
-                  onSaveDraft={async (subject, bodyHtml, headerUrl, eventUrl) => {
+                  onSaveDraft={async (subject, bodyHtml, eventUrl) => {
                     const res = await fetch("/api/campaigns", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ subject, header_image_url: headerUrl || null, body_html: bodyHtml, event_url: eventUrl || null, send_now: false }),
+                      body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false }),
                     });
                     const d = await res.json();
                     if (res.ok) {
@@ -1407,11 +1407,11 @@ export default function AdminPage() {
                       setTimeout(() => setMailingTab("drafts"), 800);
                     }
                   }}
-                  onSendNow={async (subject, bodyHtml, headerUrl, eventUrl) => {
+                  onSendNow={async (subject, bodyHtml, eventUrl) => {
                     const res = await fetch("/api/campaigns", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ subject, header_image_url: headerUrl || null, body_html: bodyHtml, event_url: eventUrl || null, send_now: true }),
+                      body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: true }),
                     });
                     const d = await res.json();
                     if (res.ok) setCampaigns(prev => [d.campaign, ...prev]);

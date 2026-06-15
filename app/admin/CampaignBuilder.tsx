@@ -543,12 +543,11 @@ export default function CampaignBuilder({
   onSendNow,
   memberCount,
 }: {
-  onSaveDraft: (subject: string, bodyHtml: string, headerUrl: string, eventUrl: string) => Promise<void>;
-  onSendNow: (subject: string, bodyHtml: string, headerUrl: string, eventUrl: string) => Promise<void>;
+  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string) => Promise<void>;
+  onSendNow: (subject: string, bodyHtml: string, eventUrl: string) => Promise<void>;
   memberCount: number;
 }) {
   const [subject, setSubject] = useState("");
-  const [headerUrl, setHeaderUrl] = useState("");
   const [eventUrl, setEventUrl] = useState("");
   const [blocks, setBlocks] = useState<CampaignBlock[]>([
     { type: "intro", text: "" },
@@ -557,9 +556,6 @@ export default function CampaignBuilder({
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const headerRef = useRef<HTMLInputElement>(null);
-  const [headerUploading, setHeaderUploading] = useState(false);
-
   const updateBlock = (i: number, b: CampaignBlock) =>
     setBlocks(prev => prev.map((x, idx) => idx === i ? b : x));
   const removeBlock = (i: number) =>
@@ -592,31 +588,6 @@ export default function CampaignBuilder({
           onChange={e => setSubject(e.target.value)} placeholder="Impact Circle Event – Invitation"
           onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
           onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
-      </div>
-
-      {/* Header image */}
-      <div>
-        <label className={labelCls2} style={labelSty2}>Header-Bild <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
-        <input ref={headerRef} type="file" accept="image/*" className="hidden" onChange={async e => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          setHeaderUploading(true);
-          const fd = new FormData();
-          fd.append("file", file);
-          const res = await fetch("/api/upload", { method: "POST", body: fd });
-          const d = await res.json();
-          if (d.url) setHeaderUrl(d.url);
-          setHeaderUploading(false);
-        }} />
-        <div className="flex gap-3 items-center">
-          <button onClick={() => headerRef.current?.click()}
-            className="flex-1 py-2 rounded-xl border text-sm font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
-            disabled={headerUploading}>
-            {headerUploading ? "Wird hochgeladen…" : headerUrl ? "Bild ersetzen" : "Bild hochladen"}
-          </button>
-          {headerUrl && <button onClick={() => setHeaderUrl("")} className="text-xs px-3 py-2 rounded-lg" style={{ color: "#dc2626", border: "1px solid #fecaca" }}>Entfernen</button>}
-        </div>
-        {headerUrl && <img src={headerUrl} alt="" className="mt-2 rounded-xl w-full object-cover" style={{ maxHeight: 120 }} />}
       </div>
 
       {/* Blocks */}
@@ -698,7 +669,7 @@ export default function CampaignBuilder({
           style={{ borderColor: "#1E3263", color: "#1E3263" }}
           onClick={async () => {
             setSaving(true); setResult(null);
-            await onSaveDraft(subject, bodyHtml, headerUrl, eventUrl);
+            await onSaveDraft(subject, bodyHtml, eventUrl);
             setSaving(false);
             setResult({ ok: true, msg: "Als Entwurf gespeichert." });
           }}>
@@ -709,7 +680,7 @@ export default function CampaignBuilder({
           style={{ background: "#1E3263", color: "white" }}
           onClick={async () => {
             setSaving(true); setResult(null);
-            await onSendNow(subject, bodyHtml, headerUrl, eventUrl);
+            await onSendNow(subject, bodyHtml, eventUrl);
             setSaving(false);
           }}>
           {saving ? `Wird gesendet…` : `An ${memberCount} Mitglieder senden`}
