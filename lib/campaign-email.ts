@@ -6,7 +6,7 @@ function plainTextToHtml(text: string): string {
   return text
     .trim()
     .split(/\n\s*\n/)
-    .map(p => `<p style="color:#1E3263;font-size:15px;line-height:1.7;margin:0 0 16px;">${p.trim().replace(/\n/g, '<br/>')}</p>`)
+    .map(p => `<p style="color:#1E3263;font-size:15px;line-height:1.75;margin:0 0 16px;">${p.trim().replace(/\n/g, '<br/>')}</p>`)
     .join('')
 }
 
@@ -30,67 +30,96 @@ function buildCampaignHtml({
   inviteCode: string | null
 }) {
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${member.unsubscribe_token}`
+  const body = bodyHtml.trimStart().startsWith('<') ? bodyHtml : plainTextToHtml(bodyHtml)
 
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#F8F9FF;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:24px 16px 48px;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+</head>
+<body style="margin:0;padding:0;background:#EEF2F8;font-family:Georgia,'Times New Roman',serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#EEF2F8;padding:32px 16px 56px;">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:20px;border:1px solid #D0DDEA;overflow:hidden;">
+      <table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;">
 
         ${headerImageUrl ? `
+        <!-- Header image — full bleed, rounded top -->
         <tr>
           <td style="padding:0;">
-            <img src="${headerImageUrl}" alt="${subject}" width="560" style="display:block;width:100%;max-width:560px;border-radius:20px 20px 0 0;" />
+            <img src="${headerImageUrl}" alt="${subject}" width="580"
+              style="display:block;width:100%;max-width:580px;border-radius:20px 20px 0 0;border:0;" />
           </td>
-        </tr>` : ''}
-
+        </tr>
         <tr>
-          <td style="padding:32px 32px 0;">
-            <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28" style="display:block;margin-bottom:24px;" />
-            <p style="color:#1E3263;font-size:15px;font-weight:600;margin:0 0 6px;">Dear ${member.first_name} ${member.last_name},</p>
+          <td style="background:#ffffff;border-left:1px solid #D8E4EF;border-right:1px solid #D8E4EF;padding:32px 40px 0;">` : `
+        <tr>
+          <td style="background:#ffffff;border:1px solid #D8E4EF;border-radius:20px 20px 0 0;padding:32px 40px 0;">`}
+
+            <!-- Logo -->
+            <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="30"
+              style="display:block;margin-bottom:28px;" />
+
+            <!-- Greeting -->
+            <p style="color:#1E3263;font-size:17px;font-weight:700;margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;">Dear ${member.first_name} ${member.last_name},</p>
+
           </td>
         </tr>
 
+        ${(inviteCode || eventUrl) ? `
+        <!-- CTA block: invite code + register button -->
         <tr>
-          <td style="padding:16px 32px 0;">
-            ${bodyHtml.trimStart().startsWith('<') ? bodyHtml : plainTextToHtml(bodyHtml)}
-          </td>
-        </tr>
+          <td style="background:#ffffff;border-left:1px solid #D8E4EF;border-right:1px solid #D8E4EF;padding:0 40px;">
 
-        ${inviteCode ? `
-        <tr>
-          <td style="padding:24px 32px 0;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;border-radius:12px;border:1px solid #D0DDEA;">
+            ${inviteCode ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
               <tr>
-                <td style="padding:16px 20px;">
-                  <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;">Your personal invite code</p>
-                  <p style="color:#1E3263;font-size:22px;font-weight:700;letter-spacing:4px;margin:0;">${inviteCode}</p>
+                <td style="background:#F8F9FF;border-radius:14px;border:1.5px solid #D0DDEA;padding:16px 22px;">
+                  <p style="color:#A7C4DE;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Your Personal Invite Code</p>
+                  <p style="color:#1E3263;font-size:26px;font-weight:700;letter-spacing:6px;margin:0;font-family:Arial,sans-serif;">${inviteCode}</p>
                 </td>
               </tr>
-            </table>
+            </table>` : ''}
+
+            ${eventUrl ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+              <tr>
+                <td align="center">
+                  <a href="${eventUrl}"
+                    style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:14px;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
+                    Register Now
+                  </a>
+                </td>
+              </tr>
+            </table>` : ''}
+
+          </td>
+        </tr>
+
+        <!-- Divider after CTA -->
+        <tr>
+          <td style="background:#ffffff;border-left:1px solid #D8E4EF;border-right:1px solid #D8E4EF;padding:0 40px 28px;">
+            <div style="height:1px;background:#D0DDEA;"></div>
           </td>
         </tr>` : ''}
 
-        ${eventUrl ? `
+        <!-- Body content -->
         <tr>
-          <td style="padding:24px 32px 0;">
-            <a href="${eventUrl}"
-               style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:15px 32px;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">
-              REGISTER NOW
-            </a>
+          <td style="background:#ffffff;border-left:1px solid #D8E4EF;border-right:1px solid #D8E4EF;padding:0 40px 40px;">
+            ${body}
           </td>
-        </tr>` : ''}
+        </tr>
 
+        <!-- Footer -->
         <tr>
-          <td style="padding:32px 32px 24px;">
-            <div style="height:1px;background:#D0DDEA;margin-bottom:20px;"></div>
-            <p style="color:#A7C4DE;font-size:12px;margin:0;text-align:center;">
-              Impact Gstaad · <a href="https://impactgstaad.ch" style="color:#1E3263;text-decoration:none;">impactgstaad.ch</a>
+          <td style="background:#F8F9FF;border:1px solid #D8E4EF;border-top:none;border-radius:0 0 20px 20px;padding:24px 40px;">
+            <p style="color:#A7C4DE;font-size:12px;margin:0;text-align:center;font-family:Arial,sans-serif;">
+              Impact Gstaad &nbsp;·&nbsp;
+              <a href="https://impactgstaad.ch" style="color:#1E3263;text-decoration:none;">impactgstaad.ch</a>
             </p>
-            <p style="color:#A7C4DE;font-size:11px;margin:8px 0 0;text-align:center;">
-              <a href="${unsubscribeUrl}" style="color:#A7C4DE;text-decoration:underline;">Unsubscribe</a>
+            <p style="margin:10px 0 0;text-align:center;">
+              <a href="${unsubscribeUrl}" style="color:#A7C4DE;font-size:11px;text-decoration:underline;font-family:Arial,sans-serif;">Unsubscribe</a>
             </p>
           </td>
         </tr>
@@ -119,7 +148,6 @@ export async function sendCampaign({
 }) {
   const db = supabaseAdmin()
 
-  // Load active members
   const { data: members, error } = await db
     .from('members')
     .select('*')
@@ -127,7 +155,6 @@ export async function sendCampaign({
 
   if (error || !members) throw new Error('Failed to load members')
 
-  // Load invite codes for this campaign's event (if event URL points to our app)
   const { data: inviteCodes } = await db
     .from('invite_codes')
     .select('member_id, code')
@@ -167,7 +194,6 @@ export async function sendCampaign({
     }
   }
 
-  // Mark campaign as sent
   await db
     .from('campaigns')
     .update({ sent_at: new Date().toISOString(), recipient_count: sent })
