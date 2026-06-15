@@ -1405,12 +1405,15 @@ export default function AdminPage() {
               <Card>
                 <CardHeader
                   title={editingCampaign ? "Entwurf bearbeiten" : "Neue Kampagne"}
-                  subtitle={editingCampaign ? (
-                    <button className="text-xs underline" style={{ color: "var(--ig-gold)" }} onClick={() => { setEditingCampaign(null); }}>
+                  subtitle={editingCampaign ? undefined : "An alle aktiven Mitglieder senden"}
+                />
+                {editingCampaign && (
+                  <div className="px-5 pb-2">
+                    <button className="text-xs underline" style={{ color: "var(--ig-gold)" }} onClick={() => setEditingCampaign(null)}>
                       ← Zurück zu neuer Kampagne
                     </button>
-                  ) : "An alle aktiven Mitglieder senden"}
-                />
+                  </div>
+                )}
                 <CampaignBuilder
                   key={editingCampaign?.id ?? "new"}
                   memberCount={members.filter(m => !m.unsubscribed).length}
