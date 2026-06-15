@@ -94,8 +94,8 @@ function SuccessPageInner() {
           Save Ticket as PDF
         </a>
 
-        {/* Email ticket button */}
-        <button
+        {/* Email ticket button — only shown for already-registered users */}
+        {already && <button
           onClick={resendEmail}
           disabled={resending || resendDone}
           className="mt-3 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition disabled:opacity-50"
@@ -107,7 +107,7 @@ function SuccessPageInner() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
           {resendDone ? "Ticket sent — check your inbox" : resending ? "Sending…" : "Email my ticket"}
-        </button>
+        </button>}
 
       </div>
     </main>
