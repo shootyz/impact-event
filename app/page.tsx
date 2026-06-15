@@ -47,7 +47,6 @@ function RegistrationPageInner() {
     setGateError("");
     setGateLoading(true);
 
-    // Try invite code first
     const inviteRes = await fetch(`/api/invite-code?code=${encodeURIComponent(gateCode)}`);
     if (inviteRes.ok) {
       const invite = await inviteRes.json();
@@ -66,16 +65,8 @@ function RegistrationPageInner() {
       }
     }
 
-    // Try general event password
-    const authRes = await fetch("/api/event-auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: gateCode }),
-    });
-    const authData = await authRes.json();
     setGateLoading(false);
-    if (!authRes.ok) { setGateError(authData.error || "Invalid code."); return; }
-    setUnlocked(true);
+    setGateError("Invalid invite code.");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,14 +125,14 @@ function RegistrationPageInner() {
         {event && !unlocked && (
           <div className="rounded-2xl border p-8 shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
             <p className="text-sm text-center mb-6" style={{ color: "var(--ig-gray3)" }}>
-              Please enter your personal invite code or the general event code to continue.
+              Please enter your personal invite code to continue.
             </p>
             <form onSubmit={handleUnlock} className="space-y-4">
               <input
                 type="text"
                 value={gateCode}
                 onChange={(e) => setGateCode(e.target.value)}
-                placeholder="Invite code or event code"
+                placeholder="Invite code"
                 autoFocus
                 className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition text-center tracking-widest uppercase font-semibold"
                 style={inputStyle}
