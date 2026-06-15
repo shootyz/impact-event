@@ -5,7 +5,7 @@ export async function generateQRCodeDataURL(token: string, appUrl: string): Prom
   return QRCode.toDataURL(url, {
     width: 300,
     margin: 2,
-    color: { dark: '#1a1a1a', light: '#ffffff' },
+    color: { dark: '#1E3263', light: '#ffffff' },
   })
 }
 

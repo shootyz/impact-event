@@ -34,8 +34,8 @@ export async function sendConfirmationEmail(
 
         <!-- Header -->
         <tr>
-          <td style="padding:32px 32px 24px;border-bottom:3px solid #D28D28;">
-            <p style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#D28D28;margin:0 0 6px;">Impact Gstaad</p>
+          <td style="padding:28px 32px 20px;border-bottom:3px solid #D28D28;">
+            <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28" style="display:block;margin:0 0 16px;" />
             <h1 style="color:#1E3263;font-size:22px;margin:0;font-weight:700;">${event.name}</h1>
           </td>
         </tr>
@@ -45,7 +45,7 @@ export async function sendConfirmationEmail(
           <td style="padding:32px;">
 
             <p style="color:#1E3263;font-size:16px;margin:0 0 6px;font-weight:600;">Hello ${registration.name},</p>
-            <p style="color:#A7C4DE;font-size:14px;line-height:1.6;margin:0 0 28px;">
+            <p style="color:#1E3263;font-size:14px;line-height:1.6;margin:0 0 28px;">
               Your registration is confirmed. Please show this QR code at the entrance.
             </p>
 
@@ -67,24 +67,36 @@ export async function sendConfirmationEmail(
             </table>
 
             <!-- QR Code -->
-            <div style="text-align:center;margin:0 0 28px;">
-              <p style="color:#A7C4DE;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 16px;">Your personal QR code</p>
-              <img src="cid:qrcode" width="200" height="200" alt="QR Code" style="display:block;margin:0 auto;border-radius:10px;"/>
-            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
+              <tr>
+                <td align="center">
+                  <p style="color:#A7C4DE;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 16px;">Your personal QR code</p>
+                  <img src="cid:qrcode" width="200" height="200" alt="QR Code" style="display:block;margin:0 auto;border-radius:10px;"/>
+                </td>
+              </tr>
+            </table>
 
             <!-- Buttons -->
-            <div style="text-align:center;margin-bottom:8px;">
-              <a href="${appUrl}/ticket/${registration.qr_token}"
-                 style="display:inline-block;background:#1E3263;color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:14px;font-weight:700;letter-spacing:0.5px;">
-                View ticket online →
-              </a>
-            </div>
-            <div style="text-align:center;">
-              <a href="${appUrl}/api/ticket/${registration.qr_token}/pdf"
-                 style="display:inline-block;background:#D28D28;color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:14px;font-weight:700;letter-spacing:0.5px;">
-                Save as PDF ↓
-              </a>
-            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+              <tr>
+                <td align="center">
+                  <a href="${appUrl}/ticket/${registration.qr_token}"
+                     style="display:inline-block;background:#D28D28;color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:14px;font-weight:700;letter-spacing:0.5px;">
+                    🎟 View ticket online
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <a href="${appUrl}/api/ticket/${registration.qr_token}/pdf"
+                     style="display:inline-block;background:#D28D28;color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:10px;font-size:14px;font-weight:700;letter-spacing:0.5px;">
+                    📄 Save as PDF
+                  </a>
+                </td>
+              </tr>
+            </table>
 
           </td>
         </tr>
