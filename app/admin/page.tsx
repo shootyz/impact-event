@@ -1222,12 +1222,12 @@ export default function AdminPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Body (HTML) *</label>
-                    <textarea className={inputClass} style={{ ...inputStyle, minHeight: 200, resize: "vertical", fontFamily: "monospace", fontSize: 12 }}
+                    <textarea className={inputClass} style={{ ...inputStyle, minHeight: 200, resize: "vertical", fontSize: 14, lineHeight: "1.6" }}
                       value={campaignBody} onChange={e => setCampaignBody(e.target.value)}
-                      placeholder={"<p>We are pleased to invite you to…</p>"}
+                      placeholder={"We are pleased to invite you to the next Impact Circle Event.\n\nThe evening will bring together…"}
                       onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                       onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                    <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>Plain HTML paragraphs. The greeting "Dear [Name]," is added automatically.</p>
+                    <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>Plain text — empty lines create new paragraphs. Greeting is added automatically.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold tracking-wide uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Register Button URL <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}>(optional)</span></label>

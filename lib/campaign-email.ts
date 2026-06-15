@@ -2,6 +2,14 @@ import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase'
 import type { Member } from './supabase'
 
+function plainTextToHtml(text: string): string {
+  return text
+    .trim()
+    .split(/\n\s*\n/)
+    .map(p => `<p style="color:#1E3263;font-size:15px;line-height:1.7;margin:0 0 16px;">${p.trim().replace(/\n/g, '<br/>')}</p>`)
+    .join('')
+}
+
 const getResend = () => new Resend(process.env.RESEND_API_KEY)
 
 function buildCampaignHtml({
@@ -46,8 +54,8 @@ function buildCampaignHtml({
         </tr>
 
         <tr>
-          <td style="padding:16px 32px 0;color:#1E3263;font-size:14px;line-height:1.7;">
-            ${bodyHtml}
+          <td style="padding:16px 32px 0;">
+            ${plainTextToHtml(bodyHtml)}
           </td>
         </tr>
 
