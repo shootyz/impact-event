@@ -160,27 +160,33 @@ type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: s
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
 // ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
-type CampaignType = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; recipient_count: number | null; created_at: string; };
-function CampaignCard({ c, onSend, onDelete }: {
+type CampaignType = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; };
+function CampaignCard({ c, onSend, onDelete, onSchedule }: {
   c: CampaignType;
   onSend: (id: string, sent: number) => void;
   onDelete: (id: string) => void;
+  onSchedule?: (id: string, scheduled_at: string | null) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
   const [confirmSend, setConfirmSend] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
+  const [scheduleValue, setScheduleValue] = useState("");
+
+  const statusText = c.sent_at
+    ? `Sent ${new Date(c.sent_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${c.recipient_count ?? "–"} recipients`
+    : c.scheduled_at
+    ? `Scheduled for ${new Date(c.scheduled_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
+    : "Draft – not sent yet";
+
   return (
     <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
       <div className="p-5">
         <div className="flex items-start justify-between gap-4 mb-2">
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{c.subject}</p>
-            <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
-              {c.sent_at
-                ? `Sent ${new Date(c.sent_at).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${c.recipient_count ?? "–"} recipients`
-                : "Draft – not sent yet"}
-            </p>
+            <p className="text-xs mt-0.5" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>{statusText}</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={() => setExpanded(e => !e)}
@@ -188,12 +194,21 @@ function CampaignCard({ c, onSend, onDelete }: {
               style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
               {expanded ? "Hide" : "Preview"}
             </button>
-            {!c.sent_at && !confirmSend && (
-              <button disabled={sending} onClick={() => setConfirmSend(true)}
-                className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                style={{ background: "var(--ig-gold)", color: "#fff", border: "none" }}>
-                Send Now
-              </button>
+            {!c.sent_at && !confirmSend && !scheduling && (
+              <>
+                {onSchedule && (
+                  <button onClick={() => { setScheduling(true); setScheduleValue(c.scheduled_at ? new Date(c.scheduled_at).toISOString().slice(0,16) : ""); }}
+                    className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                    style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+                    {c.scheduled_at ? "Reschedule" : "Schedule"}
+                  </button>
+                )}
+                <button disabled={sending} onClick={() => setConfirmSend(true)}
+                  className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                  style={{ background: "var(--ig-gold)", color: "#fff", border: "none" }}>
+                  Send Now
+                </button>
+              </>
             )}
             {!c.sent_at && confirmSend && (
               <div className="flex gap-1.5">
@@ -221,6 +236,33 @@ function CampaignCard({ c, onSend, onDelete }: {
             </button>
           </div>
         </div>
+        {/* Schedule picker */}
+        {scheduling && (
+          <div className="flex items-center gap-2 mt-2 mb-1">
+            <input type="datetime-local" value={scheduleValue} onChange={e => setScheduleValue(e.target.value)}
+              className="text-xs px-3 py-1.5 rounded-lg flex-1"
+              style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "var(--ig-light)", outline: "none" }} />
+            <button onClick={async () => {
+              if (!scheduleValue) return;
+              const res = await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scheduled_at: new Date(scheduleValue).toISOString() }) });
+              if (res.ok && onSchedule) { onSchedule(c.id, new Date(scheduleValue).toISOString()); setScheduling(false); }
+            }} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{ background: "var(--ig-navy)", color: "#fff", border: "none" }}>
+              Save
+            </button>
+            {c.scheduled_at && (
+              <button onClick={async () => {
+                await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scheduled_at: null }) });
+                if (onSchedule) { onSchedule(c.id, null); setScheduling(false); }
+              }} className="text-xs px-3 py-1.5 rounded-lg font-medium" style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid #dc2626" }}>
+                Remove
+              </button>
+            )}
+            <button onClick={() => setScheduling(false)} className="text-xs px-3 py-1.5 rounded-lg font-medium"
+              style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>
+              Cancel
+            </button>
+          </div>
+        )}
         {sendResult && <p className="text-xs mt-1 mb-2 font-medium" style={{ color: sendResult.startsWith("✓") ? "var(--ig-navy)" : "#dc2626" }}>{sendResult}</p>}
         {expanded && (
           <div style={{ border: "1.5px solid var(--ig-gray2)", borderRadius: 12, overflow: "hidden", marginTop: 8 }}>
@@ -301,8 +343,8 @@ export default function AdminPage() {
 
   // Mailing state
   type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
-  type Campaign = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; recipient_count: number | null; created_at: string; };
-  const [mailingTab, setMailingTab] = useState<"members" | "compose" | "campaigns">("members");
+  type Campaign = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; };
+  const [mailingTab, setMailingTab] = useState<"members" | "compose" | "scheduled" | "campaigns">("members");
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [membersLoaded, setMembersLoaded] = useState(false);
@@ -1185,7 +1227,7 @@ export default function AdminPage() {
 
             {/* Sub-tabs */}
             <div className="flex gap-2 mb-2">
-              {(["members", "compose", "campaigns"] as const).map(t => (
+              {(["members", "compose", "scheduled", "campaigns"] as const).map(t => (
                 <button key={t} onClick={() => setMailingTab(t)}
                   className="px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition capitalize"
                   style={{
@@ -1193,7 +1235,7 @@ export default function AdminPage() {
                     color: mailingTab === t ? "white" : "var(--ig-navy)",
                     border: "1.5px solid var(--ig-gray2)",
                   }}>
-                  {t === "members" ? "Members" : t === "compose" ? "New Campaign" : "Archive"}
+                  {t === "members" ? "Members" : t === "compose" ? "New Campaign" : t === "scheduled" ? "Scheduled" : "Archive"}
                 </button>
               ))}
             </div>
@@ -1430,6 +1472,31 @@ export default function AdminPage() {
               </Card>
             )}
 
+            {/* ── Scheduled ── */}
+            {mailingTab === "scheduled" && (() => {
+              const scheduled = campaigns.filter(c => c.scheduled_at && !c.sent_at);
+              return (
+                <div className="space-y-3">
+                  {campaignsLoading ? (
+                    <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Loading…</div></Card>
+                  ) : scheduled.length === 0 ? (
+                    <Card>
+                      <div className="p-8 text-center">
+                        <p className="text-sm font-medium mb-1" style={{ color: "var(--ig-navy)" }}>No scheduled campaigns</p>
+                        <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Go to Archive, open a draft and click "Schedule"</p>
+                      </div>
+                    </Card>
+                  ) : scheduled.map(c => (
+                    <CampaignCard key={c.id} c={c}
+                      onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
+                      onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
+                      onSchedule={(id, scheduled_at) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x))}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
+
             {/* ── Campaign Archive ── */}
             {mailingTab === "campaigns" && (
               <div className="space-y-3">
@@ -1440,10 +1507,8 @@ export default function AdminPage() {
                 ) : campaigns.map(c => (
                   <CampaignCard key={c.id} c={c}
                     onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
-                    onDelete={async (id) => {
-                      await fetch(`/api/campaigns/${id}`, { method: "DELETE" });
-                      setCampaigns(prev => prev.filter(x => x.id !== id));
-                    }}
+                    onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
+                    onSchedule={(id, scheduled_at) => { setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x)); if (scheduled_at) setMailingTab("scheduled"); }}
                   />
                 ))}
               </div>

@@ -5,7 +5,7 @@ export async function GET() {
   const db = supabaseAdmin()
   const { data, error } = await db
     .from('members')
-    .select('*')
+    .select('*, invite_codes(code, used)')
     .order('last_name', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
