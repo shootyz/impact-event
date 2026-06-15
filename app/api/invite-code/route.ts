@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
   if (error || !data) return NextResponse.json({ error: 'Invalid code' }, { status: 404 })
   if (data.used) return NextResponse.json({ error: 'Code already used' }, { status: 409 })
 
-  const member = data.members as { first_name: string; last_name: string; email: string } | null
+  const memberRaw = data.members
+  const member = (Array.isArray(memberRaw) ? memberRaw[0] : memberRaw) as { first_name: string; last_name: string; email: string } | null
   return NextResponse.json({
     valid: true,
     id: data.id,
