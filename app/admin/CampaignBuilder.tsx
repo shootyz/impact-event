@@ -606,7 +606,7 @@ export default function CampaignBuilder({
   initialZielgruppeId,
   zielgruppen,
 }: {
-  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string) => Promise<string>;
+  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string, isAutoSave?: boolean) => Promise<string>;
   campaignId?: string;
   initialSubject?: string;
   initialBlocks?: CampaignBlock[];
@@ -665,7 +665,7 @@ export default function CampaignBuilder({
       isDirtyRef.current = false;
       setAutoSaveStatus("Wird gespeichert…");
       try {
-        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current);
+        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true);
         autoIdRef.current = id;
         const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
         setAutoSaveStatus(`Automatisch gespeichert · ${time}`);

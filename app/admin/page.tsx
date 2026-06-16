@@ -1725,7 +1725,7 @@ export default function AdminPage() {
                   initialEventUrl={editingCampaign?.event_url ?? undefined}
                   initialZielgruppeId={editingCampaign?.zielgruppe_id ?? null}
                   zielgruppen={zielgruppen}
-                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId) => {
+                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId, isAutoSave) => {
                     const existingId = autoId ?? editingCampaign?.id;
                     if (existingId) {
                       const res = await fetch(`/api/campaigns/${existingId}`, {
@@ -1735,7 +1735,7 @@ export default function AdminPage() {
                       });
                       const d = await res.json();
                       if (res.ok) setCampaigns(prev => prev.map(c => c.id === existingId ? d : c).concat(prev.find(c => c.id === existingId) ? [] : [d]));
-                      if (!autoId && editingCampaign) { setEditingCampaign(null); setTimeout(() => setMailingTab("drafts"), 300); }
+                      if (!isAutoSave && editingCampaign) { setEditingCampaign(null); setTimeout(() => setMailingTab("drafts"), 300); }
                       return existingId;
                     } else {
                       const res = await fetch("/api/campaigns", {
@@ -1746,7 +1746,7 @@ export default function AdminPage() {
                       const d = await res.json();
                       if (res.ok) {
                         setCampaigns(prev => [d.campaign, ...prev]);
-                        if (!autoId) setTimeout(() => setMailingTab("drafts"), 800);
+                        if (!isAutoSave) setTimeout(() => setMailingTab("drafts"), 800);
                         return d.campaign.id;
                       }
                       return "";
