@@ -484,6 +484,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [adminSection, setAdminSection] = useState<"home" | "events" | "mailing">("home");
   const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv" | "mailing">("list");
 
   const [dialog, setDialog] = useState<{ title: string; message: string; danger?: boolean; onConfirm: () => void } | null>(null);
@@ -586,7 +587,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (activeTab === "archiv") loadArchive();
-    if (activeTab === "mailing" && !membersLoaded) {
+    if (adminSection === "mailing" && !membersLoaded) {
       setMembersLoading(true);
       fetch("/api/members").then(r => r.json()).then(d => {
         if (Array.isArray(d)) setMembers(d);
@@ -606,7 +607,7 @@ export default function AdminPage() {
       fetch(`/api/admin/event?password=${encodeURIComponent(savedPassword.current)}`)
         .then(r => r.json()).then(d => setCurrentEventPassword(d.registration_password ?? null));
     }
-  }, [activeTab, loadArchive]);
+  }, [activeTab, adminSection, loadArchive]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("adminPw");
@@ -896,12 +897,17 @@ export default function AdminPage() {
   }
 
   // ─── MAIN ADMIN ──────────────────────────────────────────────────────────────
-  const tabs = [
+  const eventTabs = [
     { id: "scanner", label: "Scanner" },
     { id: "list", label: "Gäste" },
     { id: "tools", label: "Tools" },
     { id: "archiv", label: "Archiv" },
-    { id: "mailing", label: "Mailing" },
+  ] as const;
+  const mailingTabs = [
+    { id: "members", label: "Mitglieder" },
+    { id: "compose", label: "Neue Kampagne" },
+    { id: "drafts", label: "Entwürfe" },
+    { id: "campaigns", label: "Archiv" },
   ] as const;
 
   return (
@@ -910,61 +916,128 @@ export default function AdminPage() {
       {/* ── Header ── */}
       <header className="sticky top-0 z-20 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {adminSection !== "home" && (
+              <button
+                onClick={() => setAdminSection("home")}
+                className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition"
+                style={{ color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
+              >
+                ← <span className="hidden sm:inline">{adminSection === "events" ? "Event-Management" : "Mailings"}</span>
+              </button>
+            )}
             <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
-            {event && (
+            {adminSection !== "home" && event && (
               <>
                 <div className="w-px h-5 hidden sm:block" style={{ background: "var(--ig-gray2)" }} />
                 <span className="text-sm font-medium hidden sm:block truncate max-w-xs" style={{ color: "var(--ig-gray3)" }}>{event.name}</span>
               </>
             )}
           </div>
-          <button
-            onClick={() => {
-              if (activeTab === "mailing") {
-                if (mailingTab === "compose") return;
-                setMembersLoaded(false);
-                setMembersLoading(true);
-                fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
-                setCampaignsLoading(true);
-                fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
-              } else {
-                loadRegistrations(savedPassword.current);
-              }
-            }}
-            disabled={activeTab === "mailing" && mailingTab === "compose"}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition"
-            style={{ color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
-          >
-            <IconRefresh className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Aktualisieren</span>
-          </button>
+          {adminSection !== "home" && (
+            <button
+              onClick={() => {
+                if (adminSection === "mailing") {
+                  if (mailingTab === "compose") return;
+                  setMembersLoaded(false);
+                  setMembersLoading(true);
+                  fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
+                  setCampaignsLoading(true);
+                  fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
+                } else {
+                  loadRegistrations(savedPassword.current);
+                }
+              }}
+              disabled={adminSection === "mailing" && mailingTab === "compose"}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+              style={{ color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
+            >
+              <IconRefresh className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Aktualisieren</span>
+            </button>
+          )}
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
 
-        {/* ── Tabs ── */}
-        <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
-              style={{ color: activeTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)", fontWeight: 700 }}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />
-              )}
-            </button>
-          ))}
-        </div>
+        {/* ── Landing ── */}
+        {adminSection === "home" && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+            <img src="/logo.png" alt="Impact Gstaad" className="h-10 object-contain mb-2" />
+            <div className="flex gap-5 w-full max-w-lg">
+              {[
+                { section: "events" as const, label: "Event-Management", icon: "🎫", sub: "Scanner, Gäste, Tools, Archiv" },
+                { section: "mailing" as const, label: "Mailings", icon: "✉️", sub: "Mitglieder, Kampagnen, Entwürfe" },
+              ].map(({ section, label, icon, sub }) => (
+                <button
+                  key={section}
+                  onClick={() => {
+                    setAdminSection(section);
+                    if (section === "mailing" && !membersLoaded) {
+                      setMembersLoading(true);
+                      fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
+                      fetch("/api/zielgruppen").then(r => r.json()).then(d => { if (Array.isArray(d)) setZielgruppen(d); });
+                      setCampaignsLoading(true);
+                      fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
+                    }
+                  }}
+                  className="flex-1 rounded-2xl border p-8 text-left transition group"
+                  style={{ background: "white", borderColor: "var(--ig-gray2)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(210,141,40,0.12)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+                >
+                  <div className="text-3xl mb-4">{icon}</div>
+                  <p className="font-bold text-base mb-1" style={{ color: "var(--ig-navy)" }}>{label}</p>
+                  <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{sub}</p>
+                </button>
+              ))}
+            </div>
+            {event && <p className="text-xs mt-2" style={{ color: "var(--ig-gray3)" }}>{event.name}</p>}
+          </div>
+        )}
 
+        {/* ── Event-Management Tabs ── */}
+        {adminSection === "events" && (
+          <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
+            {eventTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
+                style={{ color: activeTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}
+              >
+                {tab.label}
+                {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── Mailing Tabs ── */}
+        {adminSection === "mailing" && (
+          <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
+            {mailingTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setMailingTab(tab.id as typeof mailingTab)}
+                className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
+                style={{ color: mailingTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}
+              >
+                {tab.label}
+                {mailingTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── Event-Management Content ── */}
         {/* ── Filter Pills ── */}
-        {activeTab === "list" && (
+        {adminSection === "events" && activeTab === "list" && (
           <div className="flex gap-2 mb-5 flex-wrap justify-center">
             {([
               { label: "Alle", value: registrations.length, filter: "all" as const },
@@ -995,7 +1068,7 @@ export default function AdminPage() {
         )}
 
         {/* ═══════════ SCANNER TAB ═══════════ */}
-        {activeTab === "scanner" && (
+        {adminSection === "events" && activeTab === "scanner" && (
           <div className="sm:max-w-sm sm:mx-auto">
 
             {/* Camera card */}
@@ -1094,7 +1167,7 @@ export default function AdminPage() {
         )}
 
         {/* ═══════════ GÄSTE TAB ═══════════ */}
-        {activeTab === "list" && (
+        {adminSection === "events" && activeTab === "list" && (
           <div className="space-y-4">
             {/* Manual add */}
             <Card>
@@ -1223,7 +1296,7 @@ export default function AdminPage() {
         )}
 
         {/* ═══════════ TOOLS TAB ═══════════ */}
-        {activeTab === "tools" && (
+        {adminSection === "events" && activeTab === "tools" && (
           <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 items-start">
 
             {/* Anmeldeseite sperren */}
@@ -1369,7 +1442,7 @@ export default function AdminPage() {
         )}
 
         {/* ═══════════ ARCHIV TAB ═══════════ */}
-        {activeTab === "archiv" && (
+        {adminSection === "events" && activeTab === "archiv" && (
           <div className="space-y-4">
             {archiveLoading ? (
               <Card><div className="p-10 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div></Card>
@@ -1421,7 +1494,7 @@ export default function AdminPage() {
         )}
 
         {/* ═══════════ MAILING TAB ═══════════ */}
-        {activeTab === "mailing" && (
+        {adminSection === "mailing" && (
           <div className="space-y-4">
 
             {/* Sub-tabs */}
