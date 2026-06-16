@@ -1441,7 +1441,7 @@ export default function AdminPage() {
 
             {/* ── Members / Zielgruppen ── */}
             {mailingTab === "members" && (
-              <div className="space-y-4">
+              <div className="max-w-3xl mx-auto space-y-4">
 
                 {/* Zielgruppen */}
                 <Card>
@@ -1760,7 +1760,7 @@ export default function AdminPage() {
             {mailingTab === "drafts" && (() => {
               const drafts = campaigns.filter(c => !c.sent_at && !c.scheduled_at);
               return (
-                <div className="space-y-3">
+                <div className="max-w-3xl mx-auto space-y-3">
                   {campaignsLoading ? (
                     <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div></Card>
                   ) : drafts.length === 0 ? (
@@ -1787,7 +1787,7 @@ export default function AdminPage() {
             {mailingTab === "campaigns" && (() => {
               const sent = campaigns.filter(c => !!c.sent_at);
               return (
-              <div className="space-y-3">
+              <div className="max-w-3xl mx-auto space-y-3">
                 {campaignsLoading ? (
                   <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div></Card>
                 ) : sent.length === 0 ? (
