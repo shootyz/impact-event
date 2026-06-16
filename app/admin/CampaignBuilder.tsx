@@ -744,30 +744,13 @@ export default function CampaignBuilder({
       {/* Right: editor */}
       <div className="flex-1 p-5 space-y-5" style={{ minWidth: 0 }}>
 
-        {/* Subject + Zielgruppe */}
-        <div className="flex items-end gap-3">
-          <div className="flex-1">
-            <label className={labelCls2} style={labelSty2}>Betreff *</label>
-            <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={subject}
-              onChange={e => setSubject(e.target.value)} placeholder="Impact Circle Event – Invitation"
-              onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
-              onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
-          </div>
-          <div className="flex-shrink-0">
-            <label className={labelCls2} style={labelSty2}>Zielgruppe</label>
-            <select
-              className="rounded-lg border px-3 py-2 text-xs outline-none transition"
-              style={{ borderColor: "#d1d5db", color: "#1E3263", background: "white" }}
-              value={zielgruppeId ?? ""}
-              onChange={e => setZielgruppeId(e.target.value || null)}
-              onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
-              onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"}>
-              <option value="">Alle Mitglieder</option>
-              {zielgruppen?.map(z => (
-                <option key={z.id} value={z.id}>{z.name}</option>
-              ))}
-            </select>
-          </div>
+        {/* Subject */}
+        <div>
+          <label className={labelCls2} style={labelSty2}>Betreff *</label>
+          <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={subject}
+            onChange={e => setSubject(e.target.value)} placeholder="Impact Circle Event – Invitation"
+            onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
+            onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
         </div>
 
         {/* Blocks */}
