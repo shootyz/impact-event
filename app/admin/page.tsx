@@ -909,7 +909,7 @@ export default function AdminPage() {
 
       {/* ── Header ── */}
       <header className="sticky top-0 z-20 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+        <div className="w-full px-4 sm:px-8 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
             {event && (
@@ -944,7 +944,7 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="max-w-screen-2xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+      <div className="w-full px-4 sm:px-8 py-6 flex-1">
 
         {/* ── Tabs ── */}
         <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
