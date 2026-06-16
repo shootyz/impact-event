@@ -970,10 +970,33 @@ export default function AdminPage() {
           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
             <img src="/logo.png" alt="Impact Gstaad" className="h-10 object-contain mb-2" />
             <div className="flex gap-5 w-full max-w-lg">
-              {[
-                { section: "events" as const, label: "Event-Management", icon: "🎫", sub: "Scanner, Gäste, Tools, Archiv" },
-                { section: "mailing" as const, label: "Mailings", icon: "✉️", sub: "Mitglieder, Kampagnen, Entwürfe" },
-              ].map(({ section, label, icon, sub }) => (
+              {([
+                {
+                  section: "events" as const,
+                  label: "Event-Management",
+                  sub: "Scanner, Gäste, Tools, Archiv",
+                  svg: (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="16" rx="2"/>
+                      <path d="M16 2v4M8 2v4M3 10h18"/>
+                      <circle cx="8" cy="15" r="1" fill="white" stroke="none"/>
+                      <circle cx="12" cy="15" r="1" fill="white" stroke="none"/>
+                      <circle cx="16" cy="15" r="1" fill="white" stroke="none"/>
+                    </svg>
+                  ),
+                },
+                {
+                  section: "mailing" as const,
+                  label: "Mailings",
+                  sub: "Mitglieder, Kampagnen, Entwürfe",
+                  svg: (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="5" width="20" height="14" rx="2"/>
+                      <path d="M2 7l10 7 10-7"/>
+                    </svg>
+                  ),
+                },
+              ] as { section: "events" | "mailing"; label: string; sub: string; svg: React.ReactNode }[]).map(({ section, label, sub, svg }) => (
                 <button
                   key={section}
                   onClick={() => {
@@ -986,12 +1009,14 @@ export default function AdminPage() {
                       fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
                     }
                   }}
-                  className="flex-1 rounded-2xl border p-8 text-left transition group"
+                  className="flex-1 rounded-2xl border p-8 text-left transition"
                   style={{ background: "white", borderColor: "var(--ig-gray2)" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(210,141,40,0.12)"; }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(210,141,40,0.10)"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
                 >
-                  <div className="text-3xl mb-4">{icon}</div>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: "var(--ig-navy)" }}>
+                    {svg}
+                  </div>
                   <p className="font-bold text-base mb-1" style={{ color: "var(--ig-navy)" }}>{label}</p>
                   <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{sub}</p>
                 </button>
