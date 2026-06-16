@@ -987,7 +987,13 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+      <div
+        className="mx-auto w-full px-4 sm:px-6 py-6 flex-1"
+        style={{
+          maxWidth: adminSection === "mailing" && mailingTab === "compose" ? "100%" : "56rem",
+          transition: "max-width 0.35s cubic-bezier(0.4,0,0.2,1)",
+        }}
+      >
 
         {/* ── Landing ── */}
         {adminSection === "home" && (
@@ -1630,16 +1636,21 @@ export default function AdminPage() {
                         setZielgruppeLoading(false);
                       };
                       return (
-                        <div className="flex items-center rounded-xl border overflow-hidden" style={{ borderColor: "var(--ig-gray2)" }}>
-                          <input className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent" placeholder="Neue Zielgruppe…" value={newZielgruppeName}
+                        <div className="space-y-2">
+                          <input className="w-full px-3 py-2 text-sm outline-none rounded-xl border bg-transparent" placeholder="Neue Zielgruppe…" value={newZielgruppeName}
+                            style={{ borderColor: "var(--ig-gray2)" }}
                             onChange={e => setNewZielgruppeName(e.target.value)}
+                            onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                            onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
                             onKeyDown={e => { if (e.key === "Enter") doCreate(); }} />
-                          <button disabled={!newZielgruppeName.trim() || zielgruppeLoading}
-                            onClick={doCreate}
-                            className="px-4 py-2.5 text-sm font-semibold transition disabled:opacity-40 flex-shrink-0"
-                            style={{ background: "var(--ig-gold)", color: "white", borderLeft: "1px solid rgba(0,0,0,0.08)" }}>
-                            {zielgruppeLoading ? "…" : "+ Erstellen"}
-                          </button>
+                          <div className="flex justify-end">
+                            <button disabled={!newZielgruppeName.trim() || zielgruppeLoading}
+                              onClick={doCreate}
+                              className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-40"
+                              style={{ background: "var(--ig-gold)", color: "white" }}>
+                              {zielgruppeLoading ? "…" : "+ Erstellen"}
+                            </button>
+                          </div>
                         </div>
                       );
                     })()}

@@ -351,7 +351,9 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
             </div>
           )}
           <div className="flex gap-3">
-            <button onClick={() => addSubItem(slot.id)} className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#D28D28", color: "#D28D28" }}>
+            <button onClick={() => addSubItem(slot.id)} className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#D28D28"; (e.currentTarget as HTMLElement).style.color = "#D28D28"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLElement).style.color = "#6b7280"; }}>
               + Unterpunkt
             </button>
           </div>
@@ -361,7 +363,7 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
           </div>
         </div>
       ))}
-      <button onClick={addSlot} className="w-full py-2 rounded-xl border-2 border-dashed text-sm font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
+      <button onClick={addSlot} className="px-3 py-1.5 rounded-lg border text-xs font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#1E3263"; (e.currentTarget as HTMLElement).style.color = "#1E3263"; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLElement).style.color = "#6b7280"; }}>
         + Slot hinzufügen
@@ -410,7 +412,7 @@ function FinalistsEditor({ block, onChange }: { block: FinalistsBlock; onChange:
           </div>
         </div>
       ))}
-      <button onClick={addItem} className="w-full py-2 rounded-xl border-2 border-dashed text-sm font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
+      <button onClick={addItem} className="px-3 py-1.5 rounded-lg border text-xs font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#1E3263"; (e.currentTarget as HTMLElement).style.color = "#1E3263"; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLElement).style.color = "#6b7280"; }}>
         + Finalist hinzufügen
@@ -454,7 +456,7 @@ function SpeakerEditor({ block, onChange }: { block: SpeakerBlock; onChange: (b:
         }} />
         <div className="flex gap-3 items-center">
           <button onClick={() => fileRef.current?.click()}
-            className="text-xs px-3 py-2 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
+            className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
             disabled={uploading}>
             {uploading ? "Wird hochgeladen…" : block.photo_url ? "Bild ersetzen" : "Bild hochladen"}
           </button>
@@ -763,7 +765,7 @@ export default function CampaignBuilder({
             {/* Add block */}
             <div>
               <button onClick={() => setAddMenuOpen(o => !o)}
-                className="w-full py-2.5 rounded-xl border-2 border-dashed text-sm font-medium transition"
+                className="px-3 py-1.5 rounded-lg border text-xs font-medium transition"
                 style={{ borderColor: addMenuOpen ? "#1E3263" : "#d1d5db", color: addMenuOpen ? "#1E3263" : "#6b7280" }}>
                 {addMenuOpen ? "▴ Schliessen" : "+ Block hinzufügen"}
               </button>
@@ -831,21 +833,23 @@ export default function CampaignBuilder({
         )}
 
         {/* Save button */}
-        <button disabled={!canSave || saving}
-          className="w-full py-3 rounded-xl border font-semibold text-sm tracking-wide transition disabled:opacity-40"
-          style={{ borderColor: "#1E3263", color: "#1E3263" }}
-          onClick={async () => {
-            setSaving(true); setResult(null);
-            isDirtyRef.current = false;
-            const id = await onSaveDraft(subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoIdRef.current);
-            autoIdRef.current = id;
-            setSaving(false);
-            const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
-            setAutoSaveStatus(null);
-            setResult({ ok: true, msg: `Gespeichert · ${time}` });
-          }}>
-          {saving ? "Wird gespeichert…" : "Als Entwurf speichern"}
-        </button>
+        <div className="flex justify-end">
+          <button disabled={!canSave || saving}
+            className="px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition disabled:opacity-40"
+            style={{ background: "#D28D28", color: "white" }}
+            onClick={async () => {
+              setSaving(true); setResult(null);
+              isDirtyRef.current = false;
+              const id = await onSaveDraft(subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoIdRef.current);
+              autoIdRef.current = id;
+              setSaving(false);
+              const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
+              setAutoSaveStatus(null);
+              setResult({ ok: true, msg: `Gespeichert · ${time}` });
+            }}>
+            {saving ? "Wird gespeichert…" : "Als Entwurf speichern"}
+          </button>
+        </div>
       </div>
     </div>
   );
