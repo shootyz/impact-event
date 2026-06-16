@@ -912,10 +912,10 @@ export default function AdminPage() {
   ] as const;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--ig-light)" }}>
+    <div className="min-h-screen flex flex-col items-center" style={{ background: "var(--ig-light)" }}>
 
       {/* ── Header ── */}
-      <header className="sticky top-0 z-20 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+      <header className="sticky top-0 z-20 border-b w-full" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain cursor-pointer" onClick={() => setAdminSection("home")} />
