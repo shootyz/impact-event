@@ -65,7 +65,7 @@ export type TextBlock = {
 
 export type DeadlineBlock = {
   type: "deadline";
-  text: string;
+  date: string; // ISO date string e.g. "2025-01-05"
 };
 
 export type DividerBlock = { type: "divider" };
@@ -191,12 +191,16 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
         .map(p => `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">${p.trim().replace(/\n/g, "<br/>")}</p>`)
         .join("\n");
 
-    case "deadline":
+    case "deadline": {
+      const formatted = block.date
+        ? new Date(block.date + 'T12:00:00').toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        : "–";
       return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
   <tr><td style="padding:12px 0 12px 16px;border-left:3px solid ${D.gold};">
-    <p style="color:${D.black};font-size:15px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${block.text}</p>
+    <p style="color:${D.black};font-size:15px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Registration deadline: ${formatted}</p>
   </td></tr>
 </table>`;
+    }
 
     case "divider":
       return dividerHtml();
@@ -489,11 +493,27 @@ function TextEditor({ block, onChange }: { block: TextBlock; onChange: (b: TextB
 }
 
 function DeadlineEditor({ block, onChange }: { block: DeadlineBlock; onChange: (b: DeadlineBlock) => void }) {
+  const [focus, setFocus] = useState(false);
   return (
-    <div>
-      <label className={labelCls} style={labelSty}>Text</label>
-      <FocusInput value={block.text} onChange={v => onChange({ ...block, text: v })} placeholder="Registration deadline: 5 January 2025" />
-      <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Wird fett mit goldenem Strich links angezeigt.</p>
+    <div className="space-y-2">
+      <label className={labelCls} style={labelSty}>Datum</label>
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-semibold" style={{ color: "#000", whiteSpace: "nowrap" }}>Registration deadline:</span>
+        <input
+          type="date"
+          value={block.date}
+          onChange={e => onChange({ ...block, date: e.target.value })}
+          className={inputCls}
+          style={{ ...inputSty, borderColor: focus ? "#1E3263" : "#d1d5db", maxWidth: 180 }}
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
+        />
+      </div>
+      {block.date && (
+        <p className="text-xs" style={{ color: "#9ca3af" }}>
+          Vorschau: <strong>Registration deadline: {new Date(block.date + 'T12:00:00').toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</strong>
+        </p>
+      )}
     </div>
   );
 }
@@ -568,7 +588,7 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
     case "finalists": return { type, title: "Green Business Award", intro: "", items: [{ id: uid(), name: "", category: "", description: "" }], video_url: "", website_url: "", website_label: "" };
     case "speaker": return { type, photo_url: "", name: "", title: "", bio: "", book: "" };
     case "text": return { type, content: "" };
-    case "deadline": return { type, text: "" };
+    case "deadline": return { type, date: "" };
     case "divider": return { type: "divider" };
   }
 }
