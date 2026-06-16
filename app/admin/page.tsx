@@ -189,6 +189,8 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
   const [testCustom, setTestCustom] = useState("");
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const testBtnRef = useRef<HTMLButtonElement>(null);
+  const [testPanelPos, setTestPanelPos] = useState({ top: 0, right: 0 });
 
   const statusText = c.sent_at
     ? `Gesendet am ${new Date(c.sent_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${c.recipient_count ?? "–"} Empfänger`
@@ -223,7 +225,13 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                     </button>
                     {/* Testmail button with popup */}
                     <div className="relative">
-                      <button onClick={() => setShowTestPanel(o => !o)}
+                      <button ref={testBtnRef} onClick={() => {
+                        if (testBtnRef.current) {
+                          const r = testBtnRef.current.getBoundingClientRect();
+                          setTestPanelPos({ top: r.bottom + 6, right: window.innerWidth - r.right });
+                        }
+                        setShowTestPanel(o => !o);
+                      }}
                         className="text-xs px-3 py-1.5 rounded-lg font-medium"
                         style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                         Testmail
@@ -231,8 +239,8 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                       {showTestPanel && (
                         <>
                           <div className="fixed inset-0 z-10" onClick={() => setShowTestPanel(false)} />
-                          <div className="absolute right-0 top-full mt-1.5 z-20 rounded-xl border shadow-lg p-4 space-y-3"
-                            style={{ background: "white", borderColor: "var(--ig-gray2)", minWidth: 260 }}>
+                          <div className="fixed z-20 rounded-xl border shadow-lg p-4 space-y-3"
+                            style={{ top: testPanelPos.top, right: testPanelPos.right, background: "white", borderColor: "var(--ig-gray2)", minWidth: 260 }}>
                             <p className="text-xs font-semibold" style={{ color: "var(--ig-navy)" }}>Empfänger wählen</p>
                             <div className="space-y-2">
                               {TEST_EMAILS.map(email => (
