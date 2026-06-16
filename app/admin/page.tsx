@@ -950,25 +950,35 @@ export default function AdminPage() {
                 <span className="hidden sm:inline">Aktualisieren</span>
               </button>
               <button
-                onClick={() => setAdminSection("home")}
-                title="Zurück zur Übersicht"
+                onClick={() => {
+                  const target = adminSection === "events" ? "mailing" : "events";
+                  setAdminSection(target);
+                  if (target === "mailing" && !membersLoaded) {
+                    setMembersLoading(true);
+                    fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
+                    fetch("/api/zielgruppen").then(r => r.json()).then(d => { if (Array.isArray(d)) setZielgruppen(d); });
+                    setCampaignsLoading(true);
+                    fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
+                  }
+                }}
+                title={adminSection === "events" ? "Zu Mailings" : "Zu Event-Management"}
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition"
-                style={{ background: "var(--ig-navy)" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#162550"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; }}
+                style={{ background: "var(--ig-gray2)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-gray2)"; }}
               >
                 {adminSection === "events" ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="16" rx="2"/>
-                    <path d="M16 2v4M8 2v4M3 10h18"/>
-                    <circle cx="8" cy="15" r="1" fill="white" stroke="none"/>
-                    <circle cx="12" cy="15" r="1" fill="white" stroke="none"/>
-                    <circle cx="16" cy="15" r="1" fill="white" stroke="none"/>
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ig-navy)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="transition">
                     <rect x="2" y="5" width="20" height="14" rx="2"/>
                     <path d="M2 7l10 7 10-7"/>
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ig-navy)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="16" rx="2"/>
+                    <path d="M16 2v4M8 2v4M3 10h18"/>
+                    <circle cx="8" cy="15" r="1" fill="var(--ig-navy)" stroke="none"/>
+                    <circle cx="12" cy="15" r="1" fill="var(--ig-navy)" stroke="none"/>
+                    <circle cx="16" cy="15" r="1" fill="var(--ig-navy)" stroke="none"/>
                   </svg>
                 )}
               </button>
