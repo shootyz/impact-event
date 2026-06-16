@@ -917,17 +917,6 @@ export default function AdminPage() {
       <header className="sticky top-0 z-20 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            {adminSection !== "home" && (
-              <button
-                onClick={() => setAdminSection("home")}
-                className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition"
-                style={{ color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
-              >
-                ← <span className="hidden sm:inline">{adminSection === "events" ? "Event-Management" : "Mailings"}</span>
-              </button>
-            )}
             <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
             {adminSection !== "home" && event && (
               <>
@@ -937,28 +926,53 @@ export default function AdminPage() {
             )}
           </div>
           {adminSection !== "home" && (
-            <button
-              onClick={() => {
-                if (adminSection === "mailing") {
-                  if (mailingTab === "compose") return;
-                  setMembersLoaded(false);
-                  setMembersLoading(true);
-                  fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
-                  setCampaignsLoading(true);
-                  fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
-                } else {
-                  loadRegistrations(savedPassword.current);
-                }
-              }}
-              disabled={adminSection === "mailing" && mailingTab === "compose"}
-              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition"
-              style={{ color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
-            >
-              <IconRefresh className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Aktualisieren</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (adminSection === "mailing") {
+                    if (mailingTab === "compose") return;
+                    setMembersLoaded(false);
+                    setMembersLoading(true);
+                    fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
+                    setCampaignsLoading(true);
+                    fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
+                  } else {
+                    loadRegistrations(savedPassword.current);
+                  }
+                }}
+                disabled={adminSection === "mailing" && mailingTab === "compose"}
+                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                style={{ color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
+              >
+                <IconRefresh className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Aktualisieren</span>
+              </button>
+              <button
+                onClick={() => setAdminSection("home")}
+                title="Zurück zur Übersicht"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition"
+                style={{ background: "var(--ig-navy)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#162550"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; }}
+              >
+                {adminSection === "events" ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="16" rx="2"/>
+                    <path d="M16 2v4M8 2v4M3 10h18"/>
+                    <circle cx="8" cy="15" r="1" fill="white" stroke="none"/>
+                    <circle cx="12" cy="15" r="1" fill="white" stroke="none"/>
+                    <circle cx="16" cy="15" r="1" fill="white" stroke="none"/>
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <path d="M2 7l10 7 10-7"/>
+                  </svg>
+                )}
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -996,7 +1010,7 @@ export default function AdminPage() {
                     </svg>
                   ),
                 },
-              ] as { section: "events" | "mailing"; label: string; sub: string; svg: React.ReactNode }[]).map(({ section, label, sub, svg }) => (
+              ] as { section: "events" | "mailing"; label: string; sub: string; svg: React.ReactNode }[]).map(({ section, label, svg }) => (
                 <button
                   key={section}
                   onClick={() => {
@@ -1017,8 +1031,7 @@ export default function AdminPage() {
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: "var(--ig-navy)" }}>
                     {svg}
                   </div>
-                  <p className="font-bold text-base mb-1" style={{ color: "var(--ig-navy)" }}>{label}</p>
-                  <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{sub}</p>
+                  <p className="font-bold text-base" style={{ color: "var(--ig-navy)" }}>{label}</p>
                 </button>
               ))}
             </div>
