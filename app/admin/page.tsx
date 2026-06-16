@@ -909,7 +909,7 @@ export default function AdminPage() {
 
       {/* ── Header ── */}
       <header className="sticky top-0 z-20 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
-        <div className="w-full px-4 sm:px-8 h-14 flex items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
             {event && (
@@ -944,7 +944,7 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div className="w-full px-4 sm:px-8 py-6 flex-1">
+      <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
 
         {/* ── Tabs ── */}
         <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
@@ -1441,7 +1441,7 @@ export default function AdminPage() {
 
             {/* ── Members / Zielgruppen ── */}
             {mailingTab === "members" && (
-              <div className="max-w-3xl mx-auto space-y-4">
+              <div className="space-y-4">
 
                 {/* Zielgruppen */}
                 <Card>
@@ -1760,7 +1760,7 @@ export default function AdminPage() {
             {mailingTab === "drafts" && (() => {
               const drafts = campaigns.filter(c => !c.sent_at && !c.scheduled_at);
               return (
-                <div className="max-w-3xl mx-auto space-y-3">
+                <div className="space-y-3">
                   {campaignsLoading ? (
                     <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div></Card>
                   ) : drafts.length === 0 ? (
