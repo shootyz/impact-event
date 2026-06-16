@@ -62,8 +62,8 @@ function buildCampaignHtml({
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
 </head>
-<body style="margin:0;padding:0;background:#F8F9FF;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:40px 16px 60px;">
+<body style="margin:0;padding:0;background:#F8F9FF;font-family:Arial,sans-serif;min-height:100%;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:40px 16px 60px;min-height:100%;">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:24px;border:1px solid #D0DDEA;">
 
