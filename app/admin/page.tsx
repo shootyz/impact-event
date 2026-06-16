@@ -917,7 +917,7 @@ export default function AdminPage() {
       <header className="sticky top-0 z-20 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
+            <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain cursor-pointer" onClick={() => setAdminSection("home")} />
             {adminSection !== "home" && event && (
               <>
                 <div className="w-px h-5 hidden sm:block" style={{ background: "var(--ig-gray2)" }} />
