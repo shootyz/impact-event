@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // ── Block type definitions ────────────────────────────────────────────────────
 
@@ -613,9 +613,7 @@ export default function CampaignBuilder({
   const [blocks, setBlocks] = useState<CampaignBlock[]>(
     initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
   );
-  const [showPreview, setShowPreview] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -638,110 +636,106 @@ export default function CampaignBuilder({
   const bodyHtml = renderBlocksToHtml(blocks);
   const canSave = subject.trim() && blocks.length > 0;
 
+  useEffect(() => {
+    const t = setTimeout(async () => {
+      const res = await fetch("/api/campaigns/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject: subject || "Vorschau", body_html: bodyHtml, event_url: eventUrl || null }),
+      });
+      setPreviewHtml(await res.text());
+    }, 700);
+    return () => clearTimeout(t);
+  }, [subject, bodyHtml, eventUrl]);
+
   const labelCls2 = "block text-xs font-semibold tracking-wide uppercase mb-2";
   const labelSty2 = { color: "#1E3263" };
   const inputCls2 = "w-full rounded-lg border px-3 py-2 text-sm outline-none transition";
 
   return (
-    <div className="p-5 space-y-5">
-      {/* Subject */}
-      <div>
-        <label className={labelCls2} style={labelSty2}>Betreff *</label>
-        <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={subject}
-          onChange={e => setSubject(e.target.value)} placeholder="Impact Circle Event – Invitation"
-          onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
-          onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
+    <div className="flex gap-0" style={{ minHeight: 600 }}>
+      {/* Left: live preview */}
+      <div className="hidden lg:flex flex-col" style={{ width: "50%", borderRight: "1px solid #e5e7eb", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh" }}>
+        <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "#e5e7eb" }}>
+          <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#1E3263" }}>Vorschau</p>
+        </div>
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          {previewHtml
+            ? <iframe srcDoc={previewHtml} style={{ width: "100%", height: "100%", border: "none", display: "block", minHeight: 600 }} />
+            : <div className="flex items-center justify-center h-full text-xs" style={{ color: "#9ca3af" }}>Wird geladen…</div>
+          }
+        </div>
       </div>
 
-      {/* Blocks */}
-      <div>
-        <label className={labelCls2} style={labelSty2}>Inhalt</label>
-        <div className="space-y-3">
-          {blocks.map((block, i) => (
-            <BlockCard key={i} block={block} index={i} total={blocks.length}
-              onChange={b => updateBlock(i, b)}
-              onRemove={() => removeBlock(i)}
-              onMove={dir => moveBlock(i, dir)} />
-          ))}
+      {/* Right: editor */}
+      <div className="flex-1 p-5 space-y-5" style={{ minWidth: 0 }}>
 
-          {/* Add block */}
-          <div>
-            <button onClick={() => setAddMenuOpen(o => !o)}
-              className="w-full py-2.5 rounded-xl border-2 border-dashed text-sm font-medium transition"
-              style={{ borderColor: addMenuOpen ? "#1E3263" : "#d1d5db", color: addMenuOpen ? "#1E3263" : "#6b7280" }}>
-              {addMenuOpen ? "▴ Schliessen" : "+ Block hinzufügen"}
-            </button>
-            {addMenuOpen && (
-              <div className="mt-2 rounded-xl border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
-                {ADDABLE_BLOCKS.map(ab => (
-                  <button key={ab.type} onClick={() => addBlock(ab.type)}
-                    className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition"
-                    style={{ color: "#111", borderBottom: "1px solid #f3f4f6" }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#f9fafb"}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}>
-                    <span>{ab.icon}</span>
-                    <span>{ab.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+        {/* Subject */}
+        <div>
+          <label className={labelCls2} style={labelSty2}>Betreff *</label>
+          <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={subject}
+            onChange={e => setSubject(e.target.value)} placeholder="Impact Circle Event – Invitation"
+            onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
+            onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
+        </div>
+
+        {/* Blocks */}
+        <div>
+          <label className={labelCls2} style={labelSty2}>Inhalt</label>
+          <div className="space-y-3">
+            {blocks.map((block, i) => (
+              <BlockCard key={i} block={block} index={i} total={blocks.length}
+                onChange={b => updateBlock(i, b)}
+                onRemove={() => removeBlock(i)}
+                onMove={dir => moveBlock(i, dir)} />
+            ))}
+
+            {/* Add block */}
+            <div>
+              <button onClick={() => setAddMenuOpen(o => !o)}
+                className="w-full py-2.5 rounded-xl border-2 border-dashed text-sm font-medium transition"
+                style={{ borderColor: addMenuOpen ? "#1E3263" : "#d1d5db", color: addMenuOpen ? "#1E3263" : "#6b7280" }}>
+                {addMenuOpen ? "▴ Schliessen" : "+ Block hinzufügen"}
+              </button>
+              {addMenuOpen && (
+                <div className="mt-2 rounded-xl border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
+                  {ADDABLE_BLOCKS.map(ab => (
+                    <button key={ab.type} onClick={() => addBlock(ab.type)}
+                      className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition"
+                      style={{ color: "#111", borderBottom: "1px solid #f3f4f6" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#f9fafb"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}>
+                      <span>{ab.icon}</span>
+                      <span>{ab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Event URL */}
-      <div>
-        <label className={labelCls2} style={labelSty2}>Register-Button URL <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional — wird automatisch aus Einladungslink generiert)</span></label>
-        <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={eventUrl}
-          onChange={e => setEventUrl(e.target.value)} placeholder="https://impactgstaad.vercel.app"
-          onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
-          onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
-      </div>
-
-      {/* Preview */}
-      <div>
-        <button
-          onClick={async () => {
-            if (showPreview) { setShowPreview(false); return; }
-            setPreviewLoading(true);
-            setShowPreview(true);
-            const res = await fetch("/api/campaigns/preview", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null }),
-            });
-            const html = await res.text();
-            setPreviewHtml(html);
-            setPreviewLoading(false);
-          }}
-          className="w-full py-2.5 rounded-xl border text-sm font-medium transition"
-          style={{ borderColor: "#1E3263", color: "#1E3263" }}>
-          {showPreview ? "Vorschau ausblenden" : "E-Mail Vorschau anzeigen"}
-        </button>
-        {showPreview && (
-          previewLoading
-            ? <div className="mt-3 text-xs text-center py-6" style={{ color: "#9ca3af" }}>Wird geladen…</div>
-            : <iframe
-                className="w-full mt-3 rounded-xl border"
-                style={{ height: 600, borderColor: "#e5e7eb" }}
-                srcDoc={previewHtml ?? ""}
-              />
-        )}
-      </div>
-
-      {/* Result */}
-      {result && (
-        <div className="rounded-xl px-4 py-3 text-sm" style={{
-          background: result.ok ? "#f0fdf4" : "#fef2f2",
-          color: result.ok ? "#16a34a" : "#dc2626",
-          border: `1px solid ${result.ok ? "#bbf7d0" : "#fecaca"}`
-        }}>
-          {result.msg}
+        {/* Event URL */}
+        <div>
+          <label className={labelCls2} style={labelSty2}>Register-Button URL <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
+          <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={eventUrl}
+            onChange={e => setEventUrl(e.target.value)} placeholder="https://impactgstaad.vercel.app"
+            onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
+            onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
         </div>
-      )}
 
-      {/* Buttons */}
-      <div className="flex gap-3">
+        {/* Result */}
+        {result && (
+          <div className="rounded-xl px-4 py-3 text-sm" style={{
+            background: result.ok ? "#f0fdf4" : "#fef2f2",
+            color: result.ok ? "#16a34a" : "#dc2626",
+            border: `1px solid ${result.ok ? "#bbf7d0" : "#fecaca"}`
+          }}>
+            {result.msg}
+          </div>
+        )}
+
+        {/* Save button */}
         <button disabled={!canSave || saving}
           className="w-full py-3 rounded-xl border font-semibold text-sm tracking-wide transition disabled:opacity-40"
           style={{ borderColor: "#1E3263", color: "#1E3263" }}

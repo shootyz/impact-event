@@ -1480,7 +1480,7 @@ export default function AdminPage() {
 
             {/* ── Compose ── */}
             {mailingTab === "compose" && (
-              <Card>
+              <div className="rounded-2xl border" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
                 <CardHeader
                   title={editingCampaign ? "Entwurf bearbeiten" : "Neue Kampagne"}
                   subtitle={editingCampaign ? undefined : "An alle aktiven Mitglieder senden"}
@@ -1525,7 +1525,7 @@ export default function AdminPage() {
                     }
                   }}
                 />
-              </Card>
+              </div>
             )}
 
             {/* ── Scheduled ── */}
