@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!
   const html = buildCampaignHtmlForTest({
     appUrl,
-    email: 'vorschau@impactgstaad.ch',
+    email: '[Name]@impactgstaad.ch',
     subject: subject || 'Vorschau',
     bodyHtml: body_html,
     eventUrl: event_url || null,

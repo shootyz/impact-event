@@ -78,7 +78,7 @@ function buildCampaignHtml({
           <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28"
             style="display:block;margin-bottom:28px;" />
           <div style="height:1px;background:#e8e8e8;margin-bottom:28px;"></div>
-          <p style="color:#000000;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Dear ${member.first_name} ${member.last_name},</p>
+          <p style="color:#000000;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Dear ${member.first_name},</p>
         </td></tr>
 
         <!-- Body: intro (before CTA marker) -->
@@ -108,13 +108,18 @@ function buildCampaignHtml({
 </html>`
 }
 
+function firstNameFromEmail(email: string): string {
+  const local = email.split('@')[0]
+  const first = local.split('.')[0]
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
+}
+
 export function buildCampaignHtmlForTest({ appUrl, email, subject, bodyHtml, eventUrl }: {
   appUrl: string; email: string; subject: string; bodyHtml: string; eventUrl: string | null
 }) {
-  const namePart = email.split('@')[0]
   return buildCampaignHtml({
     appUrl,
-    member: { id: 'test', first_name: namePart, last_name: '', email, unsubscribe_token: 'test', unsubscribed: false, created_at: '' },
+    member: { id: 'test', first_name: firstNameFromEmail(email), last_name: '', email, unsubscribe_token: 'test', unsubscribed: false, created_at: '' },
     subject,
     headerImageUrl: null,
     bodyHtml,
