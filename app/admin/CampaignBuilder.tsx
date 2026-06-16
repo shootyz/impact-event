@@ -644,7 +644,7 @@ export default function CampaignBuilder({
         body: JSON.stringify({ subject: subject || "Vorschau", body_html: bodyHtml, event_url: eventUrl || null }),
       });
       setPreviewHtml(await res.text());
-    }, 700);
+    }, 300);
     return () => clearTimeout(t);
   }, [subject, bodyHtml, eventUrl]);
 
