@@ -723,23 +723,24 @@ export default function CampaignBuilder({
         </div>
 
         {/* Zielgruppe */}
-        {zielgruppen && zielgruppen.length > 0 && (
-          <div>
-            <label className={labelCls2} style={labelSty2}>Zielgruppe <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional — leer = alle Mitglieder)</span></label>
-            <select
-              className={inputCls2}
-              style={{ ...inputSty, borderColor: "#d1d5db" }}
-              value={zielgruppeId ?? ""}
-              onChange={e => setZielgruppeId(e.target.value || null)}
-              onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
-              onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"}>
-              <option value="">Alle Mitglieder</option>
-              {zielgruppen.map(z => (
-                <option key={z.id} value={z.id}>{z.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div>
+          <label className={labelCls2} style={labelSty2}>Zielgruppe <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional — leer = alle Mitglieder)</span></label>
+          <select
+            className={inputCls2}
+            style={{ ...inputSty, borderColor: "#d1d5db" }}
+            value={zielgruppeId ?? ""}
+            onChange={e => setZielgruppeId(e.target.value || null)}
+            onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
+            onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"}>
+            <option value="">Alle Mitglieder</option>
+            {zielgruppen?.map(z => (
+              <option key={z.id} value={z.id}>{z.name}</option>
+            ))}
+          </select>
+          {(!zielgruppen || zielgruppen.length === 0) && (
+            <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Keine Zielgruppen vorhanden — im Mitglieder-Tab erstellen.</p>
+          )}
+        </div>
 
         {/* Event URL */}
         <div>
