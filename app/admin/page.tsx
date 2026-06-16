@@ -193,9 +193,16 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const testBtnRef = useRef<HTMLButtonElement>(null);
   const [testPanelPos, setTestPanelPos] = useState({ top: 0, right: 0 });
+  const [showRecipients, setShowRecipients] = useState(false);
+  const [recipients, setRecipients] = useState<{ email: string; first_name: string; last_name: string }[] | null>(null);
+  const recipientsBtnRef = useRef<HTMLButtonElement>(null);
+  const [recipientsPos, setRecipientsPos] = useState({ top: 0, left: 0 });
 
+  const sentDateText = c.sent_at
+    ? `Gesendet am ${new Date(c.sent_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
+    : null;
   const statusText = c.sent_at
-    ? `Gesendet am ${new Date(c.sent_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${c.recipient_count ?? "–"} Empfänger`
+    ? sentDateText!
     : c.scheduled_at
     ? `Geplant für ${new Date(c.scheduled_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
     : new Date(c.created_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -208,7 +215,63 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
             <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{c.subject}</p>
             <p className="text-xs mt-0.5" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
               {statusText}{zielgruppeName ? ` · ${zielgruppeName}` : ""}
+              {c.sent_at && c.recipient_count != null && (
+                <> · <button ref={recipientsBtnRef}
+                  className="underline"
+                  style={{ color: "var(--ig-navy)", cursor: "pointer", background: "none", border: "none", padding: 0, font: "inherit" }}
+                  onClick={async () => {
+                    if (showRecipients) { setShowRecipients(false); return; }
+                    const btn = recipientsBtnRef.current;
+                    if (btn) {
+                      const r = btn.getBoundingClientRect();
+                      setRecipientsPos({ top: r.bottom + 6, left: r.left });
+                    }
+                    setShowRecipients(true);
+                    if (!recipients) {
+                      const res = await fetch(`/api/campaigns/${c.id}/recipients`);
+                      const d = await res.json();
+                      setRecipients(Array.isArray(d) ? d : []);
+                    }
+                  }}>
+                  {c.recipient_count} Empfänger
+                </button></>
+              )}
             </p>
+            {/* Recipients popup */}
+            {showRecipients && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowRecipients(false)} />
+                <div className="fixed z-20 rounded-xl border shadow-lg" style={{ top: recipientsPos.top, left: recipientsPos.left, background: "white", borderColor: "var(--ig-gray2)", minWidth: 280, maxWidth: 360, maxHeight: 400, display: "flex", flexDirection: "column" }}>
+                  <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--ig-gray2)" }}>
+                    <p className="text-xs font-semibold" style={{ color: "var(--ig-navy)" }}>{recipients ? `${recipients.length} Empfänger` : "Lädt…"}</p>
+                    {recipients && recipients.length > 0 && (
+                      <button className="text-xs px-2 py-1 rounded-lg font-medium" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}
+                        onClick={() => {
+                          const csv = ["Vorname,Nachname,E-Mail", ...recipients.map(r => `${r.first_name},${r.last_name},${r.email}`)].join("\n");
+                          const a = document.createElement("a");
+                          a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                          a.download = `empfaenger-${c.subject.slice(0, 30).replace(/[^a-z0-9]/gi, "-")}.csv`;
+                          a.click();
+                        }}>
+                        CSV ↓
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ overflowY: "auto", flex: 1 }}>
+                    {!recipients ? (
+                      <p className="p-4 text-xs" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</p>
+                    ) : recipients.length === 0 ? (
+                      <p className="p-4 text-xs" style={{ color: "var(--ig-gray3)" }}>Keine Empfänger gespeichert.</p>
+                    ) : recipients.map(r => (
+                      <div key={r.email} className="px-4 py-2 border-b" style={{ borderColor: "var(--ig-gray2)" }}>
+                        <p className="text-xs font-medium" style={{ color: "var(--ig-navy)" }}>{r.first_name} {r.last_name}</p>
+                        <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{r.email}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={async () => {

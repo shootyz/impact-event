@@ -197,5 +197,19 @@ export async function sendCampaign({
     .update({ sent_at: new Date().toISOString(), recipient_count: sent })
     .eq('id', campaignId)
 
+  // Log recipients
+  const recipientRows = (members as Member[]).filter(m => {
+    // only those we actually tried to send to (all non-unsubscribed in scope)
+    return !m.unsubscribed && (!zielgruppeId || m.zielgruppe_id === zielgruppeId)
+  }).map(m => ({
+    campaign_id: campaignId,
+    email: m.email,
+    first_name: m.first_name,
+    last_name: m.last_name,
+  }))
+  if (recipientRows.length > 0) {
+    await db.from('campaign_recipients').insert(recipientRows)
+  }
+
   return { sent }
 }
