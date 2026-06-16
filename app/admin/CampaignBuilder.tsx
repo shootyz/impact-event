@@ -614,6 +614,8 @@ export default function CampaignBuilder({
     initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
   );
   const [showPreview, setShowPreview] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -698,17 +700,32 @@ export default function CampaignBuilder({
 
       {/* Preview */}
       <div>
-        <button onClick={() => setShowPreview(o => !o)}
+        <button
+          onClick={async () => {
+            if (showPreview) { setShowPreview(false); return; }
+            setPreviewLoading(true);
+            setShowPreview(true);
+            const res = await fetch("/api/campaigns/preview", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null }),
+            });
+            const html = await res.text();
+            setPreviewHtml(html);
+            setPreviewLoading(false);
+          }}
           className="w-full py-2.5 rounded-xl border text-sm font-medium transition"
           style={{ borderColor: "#1E3263", color: "#1E3263" }}>
           {showPreview ? "Vorschau ausblenden" : "E-Mail Vorschau anzeigen"}
         </button>
         {showPreview && (
-          <iframe
-            className="w-full mt-3 rounded-xl border"
-            style={{ height: 500, borderColor: "#e5e7eb" }}
-            srcDoc={`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:20px;background:#F8F9FF;font-family:Arial,sans-serif;}</style></head><body>${bodyHtml}</body></html>`}
-          />
+          previewLoading
+            ? <div className="mt-3 text-xs text-center py-6" style={{ color: "#9ca3af" }}>Wird geladen…</div>
+            : <iframe
+                className="w-full mt-3 rounded-xl border"
+                style={{ height: 600, borderColor: "#e5e7eb" }}
+                srcDoc={previewHtml ?? ""}
+              />
         )}
       </div>
 
