@@ -606,7 +606,7 @@ export default function CampaignBuilder({
   initialZielgruppeId,
   zielgruppen,
 }: {
-  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null) => Promise<void>;
+  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string) => Promise<string>;
   campaignId?: string;
   initialSubject?: string;
   initialBlocks?: CampaignBlock[];
@@ -624,6 +624,14 @@ export default function CampaignBuilder({
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<string | null>(null);
+  const autoIdRef = useRef<string | undefined>(campaignId);
+  const isDirtyRef = useRef(false);
+  const subjectRef = useRef(subject);
+  const bodyHtmlRef = useRef("");
+  const eventUrlRef = useRef(eventUrl);
+  const blocksRef = useRef(blocks);
+  const zielgruppeIdRef = useRef(zielgruppeId);
   const updateBlock = (i: number, b: CampaignBlock) =>
     setBlocks(prev => prev.map((x, idx) => idx === i ? b : x));
   const removeBlock = (i: number) =>
@@ -643,6 +651,32 @@ export default function CampaignBuilder({
   const bodyHtml = renderBlocksToHtml(blocks);
   const canSave = subject.trim() && blocks.length > 0;
 
+  // Keep refs in sync so the interval always reads latest values
+  useEffect(() => { subjectRef.current = subject; isDirtyRef.current = true; }, [subject]);
+  useEffect(() => { eventUrlRef.current = eventUrl; isDirtyRef.current = true; }, [eventUrl]);
+  useEffect(() => { blocksRef.current = blocks; isDirtyRef.current = true; }, [blocks]);
+  useEffect(() => { zielgruppeIdRef.current = zielgruppeId; isDirtyRef.current = true; }, [zielgruppeId]);
+  useEffect(() => { bodyHtmlRef.current = bodyHtml; }, [bodyHtml]);
+
+  // Auto-save every 20 seconds if dirty and subject is non-empty
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!isDirtyRef.current || !subjectRef.current.trim()) return;
+      isDirtyRef.current = false;
+      setAutoSaveStatus("Wird gespeichert…");
+      try {
+        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current);
+        autoIdRef.current = id;
+        const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
+        setAutoSaveStatus(`Automatisch gespeichert · ${time}`);
+      } catch {
+        setAutoSaveStatus("Fehler beim Speichern");
+      }
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [onSaveDraft]);
+
+  // Preview debounce
   useEffect(() => {
     const t = setTimeout(async () => {
       const res = await fetch("/api/campaigns/preview", {
@@ -752,6 +786,11 @@ export default function CampaignBuilder({
         </div>
 
         {/* Result */}
+        {/* Auto-save status */}
+        {autoSaveStatus && (
+          <p className="text-xs text-center" style={{ color: "#9ca3af" }}>{autoSaveStatus}</p>
+        )}
+
         {result && (
           <div className="rounded-xl px-4 py-3 text-sm" style={{
             background: result.ok ? "#f0fdf4" : "#fef2f2",
@@ -768,9 +807,13 @@ export default function CampaignBuilder({
           style={{ borderColor: "#1E3263", color: "#1E3263" }}
           onClick={async () => {
             setSaving(true); setResult(null);
-            await onSaveDraft(subject, bodyHtml, eventUrl, blocks, zielgruppeId);
+            isDirtyRef.current = false;
+            const id = await onSaveDraft(subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoIdRef.current);
+            autoIdRef.current = id;
             setSaving(false);
-            setResult({ ok: true, msg: "Als Entwurf gespeichert." });
+            const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
+            setAutoSaveStatus(null);
+            setResult({ ok: true, msg: `Gespeichert · ${time}` });
           }}>
           {saving ? "Wird gespeichert…" : "Als Entwurf speichern"}
         </button>

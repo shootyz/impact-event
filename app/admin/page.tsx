@@ -1662,19 +1662,18 @@ export default function AdminPage() {
                   initialEventUrl={editingCampaign?.event_url ?? undefined}
                   initialZielgruppeId={editingCampaign?.zielgruppe_id ?? null}
                   zielgruppen={zielgruppen}
-                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId) => {
-                    if (editingCampaign) {
-                      const res = await fetch(`/api/campaigns/${editingCampaign.id}`, {
+                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId) => {
+                    const existingId = autoId ?? editingCampaign?.id;
+                    if (existingId) {
+                      const res = await fetch(`/api/campaigns/${existingId}`, {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocks, zielgruppe_id: zielgruppeId }),
                       });
                       const d = await res.json();
-                      if (res.ok) {
-                        setCampaigns(prev => prev.map(c => c.id === editingCampaign.id ? d : c));
-                        setEditingCampaign(null);
-                        setTimeout(() => setMailingTab("drafts"), 300);
-                      }
+                      if (res.ok) setCampaigns(prev => prev.map(c => c.id === existingId ? d : c).concat(prev.find(c => c.id === existingId) ? [] : [d]));
+                      if (!autoId && editingCampaign) { setEditingCampaign(null); setTimeout(() => setMailingTab("drafts"), 300); }
+                      return existingId;
                     } else {
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
@@ -1684,8 +1683,10 @@ export default function AdminPage() {
                       const d = await res.json();
                       if (res.ok) {
                         setCampaigns(prev => [d.campaign, ...prev]);
-                        setTimeout(() => setMailingTab("drafts"), 800);
+                        if (!autoId) setTimeout(() => setMailingTab("drafts"), 800);
+                        return d.campaign.id;
                       }
+                      return "";
                     }
                   }}
                 />
