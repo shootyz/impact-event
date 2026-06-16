@@ -601,6 +601,17 @@ export default function CampaignBuilder({
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const TEST_EMAILS = [
+    "nik.thomi@impactgstaad.ch",
+    "andreas.wandfluh@impactgstaad.ch",
+    "michel.hediger@impactgstaad.ch",
+    "chantal.reichenbach@impactgstaad.ch",
+  ];
+  const [testSelected, setTestSelected] = useState<string[]>([]);
+  const [testCustom, setTestCustom] = useState("");
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [showTestPanel, setShowTestPanel] = useState(false);
   const updateBlock = (i: number, b: CampaignBlock) =>
     setBlocks(prev => prev.map((x, idx) => idx === i ? b : x));
   const removeBlock = (i: number) =>
@@ -693,6 +704,67 @@ export default function CampaignBuilder({
             style={{ height: 500, borderColor: "#e5e7eb" }}
             srcDoc={`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:20px;background:#F8F9FF;font-family:Arial,sans-serif;}</style></head><body>${bodyHtml}</body></html>`}
           />
+        )}
+      </div>
+
+      {/* Test email */}
+      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
+        <button onClick={() => setShowTestPanel(o => !o)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium"
+          style={{ background: "#f9fafb", color: "#1E3263" }}>
+          <span>Testmail senden</span>
+          <span>{showTestPanel ? "▴" : "▾"}</span>
+        </button>
+        {showTestPanel && (
+          <div className="p-4 space-y-3">
+            <div className="space-y-2">
+              {TEST_EMAILS.map(email => (
+                <label key={email} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "#111" }}>
+                  <input type="checkbox" checked={testSelected.includes(email)}
+                    onChange={e => setTestSelected(prev => e.target.checked ? [...prev, email] : prev.filter(x => x !== email))}
+                    className="rounded" />
+                  {email}
+                </label>
+              ))}
+              <div className="flex gap-2 items-center">
+                <input type="checkbox" checked={!!testCustom && testSelected.includes(testCustom)}
+                  onChange={e => {
+                    if (e.target.checked && testCustom) setTestSelected(prev => [...prev.filter(x => x !== testCustom), testCustom]);
+                    else setTestSelected(prev => prev.filter(x => x !== testCustom));
+                  }} className="rounded shrink-0" />
+                <input className="flex-1 rounded-lg border px-3 py-1.5 text-sm outline-none"
+                  style={{ borderColor: "#d1d5db" }} placeholder="Weitere E-Mail-Adresse"
+                  value={testCustom}
+                  onChange={e => {
+                    const old = testCustom;
+                    setTestCustom(e.target.value);
+                    setTestSelected(prev => prev.filter(x => x !== old));
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
+                  onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
+              </div>
+            </div>
+            {testResult && (
+              <p className="text-xs" style={{ color: testResult.ok ? "#16a34a" : "#dc2626" }}>{testResult.msg}</p>
+            )}
+            <button
+              disabled={testSending || testSelected.length === 0 || !canSave}
+              className="w-full py-2 rounded-xl text-sm font-semibold transition disabled:opacity-40"
+              style={{ background: "#1E3263", color: "white" }}
+              onClick={async () => {
+                setTestSending(true); setTestResult(null);
+                const res = await fetch("/api/campaigns/test", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, recipients: testSelected }),
+                });
+                const d = await res.json();
+                setTestSending(false);
+                setTestResult(res.ok ? { ok: true, msg: `✓ Testmail an ${d.sent} Empfänger gesendet` } : { ok: false, msg: d.error || "Fehler" });
+              }}>
+              {testSending ? "Wird gesendet…" : `Testmail senden (${testSelected.length})`}
+            </button>
+          </div>
         )}
       </div>
 

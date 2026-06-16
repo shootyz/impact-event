@@ -162,12 +162,13 @@ type ImportResult = { imported: number; duplicates: string[]; errors: string[]; 
 
 // ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
 type CampaignType = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; };
-function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit }: {
+function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate }: {
   c: CampaignType;
   onSend: (id: string, sent: number) => void;
   onDelete: (id: string) => void;
   onSchedule?: (id: string, scheduled_at: string | null) => void;
   onEdit?: () => void;
+  onDuplicate?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [sending, setSending] = useState(false);
@@ -230,6 +231,12 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit }: {
                   Abbrechen
                 </button>
               </div>
+            )}
+            {onDuplicate && (
+              <button onClick={onDuplicate} className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+                Duplizieren
+              </button>
             )}
             <button onClick={() => onDelete(c.id)} className="p-1.5 rounded-lg" style={{ color: "var(--ig-gray3)" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
@@ -1504,6 +1511,19 @@ export default function AdminPage() {
                     onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
                     onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                     onSchedule={(id, scheduled_at) => { setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x)); }}
+                    onDuplicate={async () => {
+                      const res = await fetch("/api/campaigns", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ subject: `${c.subject} (Kopie)`, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null, send_now: false }),
+                      });
+                      const d = await res.json();
+                      if (res.ok) {
+                        setCampaigns(prev => [d.campaign, ...prev]);
+                        if (d.campaign.blocks_json) { setEditingCampaign(d.campaign); setMailingTab("compose"); }
+                        else setMailingTab("drafts");
+                      }
+                    }}
                   />
                 ))}
               </div>

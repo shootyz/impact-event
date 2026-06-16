@@ -108,6 +108,21 @@ function buildCampaignHtml({
 </html>`
 }
 
+export function buildCampaignHtmlForTest({ appUrl, email, subject, bodyHtml, eventUrl }: {
+  appUrl: string; email: string; subject: string; bodyHtml: string; eventUrl: string | null
+}) {
+  const namePart = email.split('@')[0]
+  return buildCampaignHtml({
+    appUrl,
+    member: { id: 'test', first_name: namePart, last_name: '', email, unsubscribe_token: 'test', unsubscribed: false, created_at: '' },
+    subject,
+    headerImageUrl: null,
+    bodyHtml,
+    eventUrl,
+    inviteCode: null,
+  })
+}
+
 export async function sendCampaign({
   campaignId,
   subject,
