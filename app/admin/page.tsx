@@ -887,7 +887,7 @@ export default function AdminPage() {
                   </button>
                 </div>
                 {authError && <p className="text-sm text-red-500">{authError}</p>}
-                <BtnPrimary type="submit" className="w-full">Anmelden</BtnPrimary>
+                <div className="flex justify-end"><BtnPrimary type="submit">Anmelden</BtnPrimary></div>
               </form>
             </div>
           </Card>
@@ -1242,9 +1242,7 @@ export default function AdminPage() {
                     {manualStatus && (
                       <p className={`text-xs ${manualStatus.ok ? "text-green-600" : "text-red-500"}`}>{manualStatus.msg}</p>
                     )}
-                    <BtnPrimary type="submit" disabled={manualLoading} className="w-full">
-                      {manualLoading ? "Wird gespeichert…" : "Speichern"}
-                    </BtnPrimary>
+                    <div className="flex justify-end"><BtnPrimary type="submit" disabled={manualLoading}>{manualLoading ? "Wird gespeichert…" : "Speichern"}</BtnPrimary></div>
                   </form>
                 </div>
               )}
@@ -1363,9 +1361,7 @@ export default function AdminPage() {
                   {pwStatus && (
                     <p className={`text-xs ${pwStatus.ok ? "text-green-600" : "text-red-500"}`}>{pwStatus.msg}</p>
                   )}
-                  <BtnPrimary type="submit" disabled={pwLoading} className="w-full">
-                    {pwLoading ? "Speichert…" : "Speichern"}
-                  </BtnPrimary>
+                  <div className="flex justify-end"><BtnPrimary type="submit" disabled={pwLoading}>{pwLoading ? "Speichert…" : "Speichern"}</BtnPrimary></div>
                 </form>
               </div>
             </Card>
@@ -1375,21 +1371,14 @@ export default function AdminPage() {
               <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
               <CardHeader title="CSV-Import" subtitle="Spalten: Name, Vorname, E-Mail" />
               <div className="p-5 space-y-3">
-                <label className="block cursor-pointer mb-3">
-                  <input ref={csvInputRef} type="file" accept=".csv,text/csv"
-                    onChange={e => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
-                    className="hidden" />
-                  <div className="w-full px-4 py-3 rounded-xl text-sm text-center transition flex items-center justify-center gap-2 cursor-pointer border"
-                    style={{ borderColor: "var(--ig-navy)", color: "var(--ig-navy)", background: "var(--ig-light)" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}>
-                    <IconUpload className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">{csvFile ? csvFile.name : "CSV-Datei wählen…"}</span>
-                  </div>
-                </label>
-                <BtnPrimary onClick={handleCSVImport} disabled={!csvFile || csvImporting} className="w-full">
-                  {csvImporting ? "Importiert…" : "Importieren"}
-                </BtnPrimary>
+                <input ref={csvInputRef} type="file" accept=".csv,text/csv"
+                  onChange={e => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
+                  className="hidden" />
+                <BtnOutline onClick={() => csvInputRef.current?.click()} className="w-full">
+                  <IconUpload className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">{csvFile ? csvFile.name : "CSV-Datei wählen…"}</span>
+                </BtnOutline>
+                <div className="flex justify-end"><BtnPrimary onClick={handleCSVImport} disabled={!csvFile || csvImporting}>{csvImporting ? "Importiert…" : "Importieren"}</BtnPrimary></div>
                 {csvResult && (
                   <div className="space-y-2">
                     <div className="rounded-xl px-4 py-3 text-xs space-y-1" style={{ background: "var(--ig-light)", border: "1px solid var(--ig-gray2)" }}>
@@ -1402,10 +1391,7 @@ export default function AdminPage() {
                       )}
                     </div>
                     {csvResult.imported > 0 && (
-                      <BtnPrimary onClick={handleSendQRToImported} disabled={csvSending} className="w-full">
-                        <IconMail className="w-4 h-4" />
-                        {csvSending ? "QR-Codes werden gesendet…" : `QR-Codes an ${csvResult.imported} Gäste senden`}
-                      </BtnPrimary>
+                      <div className="flex justify-end"><BtnPrimary onClick={handleSendQRToImported} disabled={csvSending}><IconMail className="w-3.5 h-3.5" />{csvSending ? "QR-Codes werden gesendet…" : `QR-Codes an ${csvResult.imported} Gäste senden`}</BtnPrimary></div>
                     )}
                     {csvSendResult && (
                       <p className={`text-xs ${csvSendResult.ok ? "text-green-600" : "text-red-500"}`}>{csvSendResult.msg}</p>
@@ -1451,29 +1437,31 @@ export default function AdminPage() {
                 <p className="text-xs mb-4" style={{ color: "var(--ig-gray3)" }}>
                   Löscht sämtliche Registrierungen des aktuellen Events. Nicht rückgängig zu machen.
                 </p>
-                <button
-                  onClick={() => showConfirm(
-                    "Alle Gäste löschen",
-                    `Wirklich alle ${registrations.length} Gäste löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-                    true,
-                    async () => {
-                      const res = await fetch("/api/admin/clear", {
-                        method: "DELETE", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ adminPassword: savedPassword.current }),
-                      });
-                      const data = await res.json();
-                      setDialog(null);
-                      if (res.ok) loadRegistrations(savedPassword.current);
-                    }
-                  )}
-                  className="w-full py-3 rounded-xl text-sm font-semibold tracking-wide flex items-center justify-center gap-2 transition"
-                  style={{ border: "1.5px solid #fecaca", color: "#dc2626", background: "#fff5f5" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fee2e2"; (e.currentTarget as HTMLElement).style.borderColor = "#dc2626"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#fff5f5"; (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; }}
-                >
-                  <IconTrash className="w-4 h-4" />
-                  Alle {registrations.length} Gäste löschen
-                </button>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => showConfirm(
+                      "Alle Gäste löschen",
+                      `Wirklich alle ${registrations.length} Gäste löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+                      true,
+                      async () => {
+                        const res = await fetch("/api/admin/clear", {
+                          method: "DELETE", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ adminPassword: savedPassword.current }),
+                        });
+                        await res.json();
+                        setDialog(null);
+                        if (res.ok) loadRegistrations(savedPassword.current);
+                      }
+                    )}
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition"
+                    style={{ border: "1.5px solid #fecaca", color: "#dc2626", background: "#fff5f5" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fee2e2"; (e.currentTarget as HTMLElement).style.borderColor = "#dc2626"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#fff5f5"; (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; }}
+                  >
+                    <IconTrash className="w-3.5 h-3.5" />
+                    Alle {registrations.length} Gäste löschen
+                  </button>
+                </div>
               </div>
             </Card>
           </div>
@@ -1675,7 +1663,7 @@ export default function AdminPage() {
                       </select>
                     )}
                     {newMemberError && <p className="text-xs text-red-500">{newMemberError}</p>}
-                    <BtnPrimary className="w-full" disabled={newMemberLoading}
+                    <div className="flex justify-end"><BtnPrimary disabled={newMemberLoading}
                       onClick={async () => {
                         if (!newMemberFirst.trim() || !newMemberLast.trim() || !newMemberEmail.trim()) {
                           setNewMemberError("Alle Felder sind erforderlich."); return;
@@ -1694,7 +1682,7 @@ export default function AdminPage() {
                         fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); });
                       }}>
                       {newMemberLoading ? "Wird hinzugefügt…" : "Mitglied hinzufügen"}
-                    </BtnPrimary>
+                    </BtnPrimary></div>
                   </div>
                 </Card>
 
