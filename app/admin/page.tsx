@@ -179,6 +179,8 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
   zielgruppeName?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
   const [confirmSend, setConfirmSend] = useState(false);
@@ -209,7 +211,20 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button onClick={() => setExpanded(e => !e)}
+            <button onClick={async () => {
+                if (expanded) { setExpanded(false); return; }
+                setExpanded(true);
+                if (!previewHtml) {
+                  setPreviewLoading(true);
+                  const res = await fetch("/api/campaigns/preview", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ subject: c.subject, body_html: c.body_html, event_url: c.event_url || null }),
+                  });
+                  setPreviewHtml(await res.text());
+                  setPreviewLoading(false);
+                }
+              }}
               className="text-xs px-3 py-1.5 rounded-lg font-medium"
               style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
               {expanded ? "Schliessen" : "Vorschau"}
@@ -364,11 +379,10 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
         {sendResult && <p className="text-xs mt-1 mb-2 font-medium" style={{ color: sendResult.startsWith("✓") ? "var(--ig-navy)" : "#dc2626" }}>{sendResult}</p>}
         {expanded && (
           <div style={{ border: "1.5px solid var(--ig-gray2)", borderRadius: 12, overflow: "hidden", marginTop: 8 }}>
-            <iframe
-              srcDoc={`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;padding:20px;background:#F8F9FF;font-family:Arial,sans-serif;}</style></head><body>${c.body_html}</body></html>`}
-              style={{ width: "100%", height: 520, border: "none", display: "block" }}
-              title={c.subject}
-            />
+            {previewLoading
+              ? <div className="p-8 text-center text-xs" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
+              : <iframe srcDoc={previewHtml ?? ""} style={{ width: "100%", height: 600, border: "none", display: "block" }} title={c.subject} />
+            }
           </div>
         )}
       </div>
