@@ -88,12 +88,8 @@ function BtnPrimary({ children, onClick, disabled, type = "button", className = 
       disabled={disabled}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className={`py-2 rounded-lg font-semibold text-xs tracking-widest uppercase transition disabled:opacity-40 flex items-center justify-center gap-1.5 ${className}`}
-      style={{
-        border: `1.5px solid ${hover && !disabled ? "#B8791F" : "var(--ig-gold)"}`,
-        color: hover && !disabled ? "#fff" : "var(--ig-gold)",
-        background: hover && !disabled ? "var(--ig-gold)" : "white",
-      }}
+      className={`px-4 py-1.5 rounded-lg font-semibold text-xs tracking-wide transition disabled:opacity-40 flex items-center justify-center gap-1.5 ${className}`}
+      style={{ background: hover && !disabled ? "#B8791F" : "var(--ig-gold)", color: "#fff" }}
     >
       {children}
     </button>
