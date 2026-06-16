@@ -87,11 +87,6 @@ function buildCampaignHtml({
         <!-- Invite code + Register button -->
         ${ctaBlock}
 
-        <!-- Divider -->
-        <tr><td style="padding:28px 40px 0;">
-          <div style="height:1px;background:#e8e8e8;"></div>
-        </td></tr>
-
         <!-- Body: rest (after CTA marker) -->
         <tr><td style="padding:32px 40px 40px;">${bodyAfter || ''}</td></tr>
 
