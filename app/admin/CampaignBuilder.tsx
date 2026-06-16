@@ -627,6 +627,7 @@ export default function CampaignBuilder({
   const [autoSaveStatus, setAutoSaveStatus] = useState<string | null>(null);
   const autoIdRef = useRef<string | undefined>(campaignId);
   const isDirtyRef = useRef(false);
+  const firstSaveDoneRef = useRef(!!campaignId);
   const subjectRef = useRef(subject);
   const bodyHtmlRef = useRef("");
   const eventUrlRef = useRef(eventUrl);
@@ -657,6 +658,27 @@ export default function CampaignBuilder({
   useEffect(() => { blocksRef.current = blocks; isDirtyRef.current = true; }, [blocks]);
   useEffect(() => { zielgruppeIdRef.current = zielgruppeId; isDirtyRef.current = true; }, [zielgruppeId]);
   useEffect(() => { bodyHtmlRef.current = bodyHtml; }, [bodyHtml]);
+
+  // First-save: 2 seconds after first keystroke
+  useEffect(() => {
+    if (firstSaveDoneRef.current || !isDirtyRef.current || !subjectRef.current.trim()) return;
+    const t = setTimeout(async () => {
+      if (firstSaveDoneRef.current) return;
+      firstSaveDoneRef.current = true;
+      isDirtyRef.current = false;
+      setAutoSaveStatus("Wird gespeichert…");
+      try {
+        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true);
+        autoIdRef.current = id;
+        const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
+        setAutoSaveStatus(`Automatisch gespeichert · ${time}`);
+      } catch {
+        firstSaveDoneRef.current = false;
+        setAutoSaveStatus("Fehler beim Speichern");
+      }
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [subject, blocks, eventUrl, zielgruppeId, onSaveDraft]);
 
   // Auto-save every 20 seconds if dirty and subject is non-empty
   useEffect(() => {
