@@ -522,6 +522,7 @@ export default function AdminPage() {
   type Zielgruppe = { id: string; name: string; created_at: string };
   type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; };
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [builderZielgruppeId, setBuilderZielgruppeId] = useState<string | null>(null);
   const [mailingTab, setMailingTab] = useState<"members" | "compose" | "drafts" | "campaigns">("members");
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
@@ -1826,24 +1827,38 @@ export default function AdminPage() {
             {/* ── Compose ── */}
             {mailingTab === "compose" && (
               <div className="rounded-2xl border" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
-                <CardHeader
-                  title={editingCampaign ? "Entwurf bearbeiten" : "Neue Kampagne"}
-                  subtitle={editingCampaign ? undefined : "An alle aktiven Mitglieder senden"}
-                />
-                {editingCampaign && (
-                  <div className="px-5 pb-2">
-                    <button className="text-xs underline" style={{ color: "var(--ig-gold)" }} onClick={() => setEditingCampaign(null)}>
-                      ← Zurück zu neuer Kampagne
-                    </button>
+                {/* Header with Zielgruppe selector */}
+                <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--ig-gray2)" }}>
+                  <div>
+                    <p className="font-bold text-sm" style={{ color: "var(--ig-navy)" }}>{editingCampaign ? "Entwurf bearbeiten" : "Neue Kampagne"}</p>
+                    {editingCampaign && (
+                      <button className="text-xs underline mt-0.5 block" style={{ color: "var(--ig-gold)" }} onClick={() => { setEditingCampaign(null); setBuilderZielgruppeId(null); }}>
+                        ← Zurück zu neuer Kampagne
+                      </button>
+                    )}
                   </div>
-                )}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--ig-navy)" }}>Zielgruppe</span>
+                    <select
+                      className="rounded-lg border px-3 py-1.5 text-xs outline-none transition"
+                      style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+                      value={builderZielgruppeId ?? ""}
+                      onChange={e => setBuilderZielgruppeId(e.target.value || null)}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
+                      <option value="">Alle Mitglieder</option>
+                      {zielgruppen.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                    </select>
+                  </div>
+                </div>
                 <CampaignBuilder
                   key={editingCampaign?.id ?? "new"}
                   campaignId={editingCampaign?.id}
                   initialSubject={editingCampaign?.subject}
                   initialBlocks={editingCampaign?.blocks_json as import("./CampaignBuilder").CampaignBlock[] | undefined}
                   initialEventUrl={editingCampaign?.event_url ?? undefined}
-                  initialZielgruppeId={editingCampaign?.zielgruppe_id ?? null}
+                  zielgruppeId={builderZielgruppeId}
+                  onZielgruppeChange={setBuilderZielgruppeId}
                   zielgruppen={zielgruppen}
                   onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId, isAutoSave) => {
                     const existingId = autoId ?? editingCampaign?.id;
@@ -1896,7 +1911,7 @@ export default function AdminPage() {
                       onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
                       onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                       onSchedule={(id, scheduled_at) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x))}
-                      onEdit={c.blocks_json ? () => { setEditingCampaign(c); setMailingTab("compose"); } : undefined}
+                      onEdit={c.blocks_json ? () => { setEditingCampaign(c); setBuilderZielgruppeId(c.zielgruppe_id ?? null); setMailingTab("compose"); } : undefined}
                     />
                   ))}
                 </div>
@@ -1927,7 +1942,7 @@ export default function AdminPage() {
                       const d = await res.json();
                       if (res.ok) {
                         setCampaigns(prev => [d.campaign, ...prev]);
-                        if (d.campaign.blocks_json) { setEditingCampaign(d.campaign); setMailingTab("compose"); }
+                        if (d.campaign.blocks_json) { setEditingCampaign(d.campaign); setBuilderZielgruppeId(d.campaign.zielgruppe_id ?? null); setMailingTab("compose"); }
                         else setMailingTab("drafts");
                       }
                     }}

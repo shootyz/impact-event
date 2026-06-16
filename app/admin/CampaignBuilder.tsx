@@ -605,7 +605,8 @@ export default function CampaignBuilder({
   initialSubject,
   initialBlocks,
   initialEventUrl,
-  initialZielgruppeId,
+  zielgruppeId,
+  onZielgruppeChange,
   zielgruppen,
 }: {
   onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string, isAutoSave?: boolean) => Promise<string>;
@@ -613,12 +614,13 @@ export default function CampaignBuilder({
   initialSubject?: string;
   initialBlocks?: CampaignBlock[];
   initialEventUrl?: string;
-  initialZielgruppeId?: string | null;
+  zielgruppeId: string | null;
+  onZielgruppeChange: (id: string | null) => void;
   zielgruppen?: ZielgruppeOption[];
 }) {
   const [subject, setSubject] = useState(initialSubject ?? "");
   const [eventUrl, setEventUrl] = useState(initialEventUrl ?? "");
-  const [zielgruppeId, setZielgruppeId] = useState<string | null>(initialZielgruppeId ?? null);
+  const setZielgruppeId = onZielgruppeChange;
   const [blocks, setBlocks] = useState<CampaignBlock[]>(
     initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
   );
@@ -742,13 +744,30 @@ export default function CampaignBuilder({
       {/* Right: editor */}
       <div className="flex-1 p-5 space-y-5" style={{ minWidth: 0 }}>
 
-        {/* Subject */}
-        <div>
-          <label className={labelCls2} style={labelSty2}>Betreff *</label>
-          <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={subject}
-            onChange={e => setSubject(e.target.value)} placeholder="Impact Circle Event – Invitation"
-            onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
-            onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
+        {/* Subject + Zielgruppe */}
+        <div className="flex items-end gap-3">
+          <div className="flex-1">
+            <label className={labelCls2} style={labelSty2}>Betreff *</label>
+            <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={subject}
+              onChange={e => setSubject(e.target.value)} placeholder="Impact Circle Event – Invitation"
+              onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
+              onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
+          </div>
+          <div className="flex-shrink-0">
+            <label className={labelCls2} style={labelSty2}>Zielgruppe</label>
+            <select
+              className="rounded-lg border px-3 py-2 text-xs outline-none transition"
+              style={{ borderColor: "#d1d5db", color: "#1E3263", background: "white" }}
+              value={zielgruppeId ?? ""}
+              onChange={e => setZielgruppeId(e.target.value || null)}
+              onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
+              onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"}>
+              <option value="">Alle Mitglieder</option>
+              {zielgruppen?.map(z => (
+                <option key={z.id} value={z.id}>{z.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Blocks */}
@@ -785,26 +804,6 @@ export default function CampaignBuilder({
               )}
             </div>
           </div>
-        </div>
-
-        {/* Zielgruppe */}
-        <div>
-          <label className={labelCls2} style={labelSty2}>Zielgruppe <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional — leer = alle Mitglieder)</span></label>
-          <select
-            className={inputCls2}
-            style={{ ...inputSty, borderColor: "#d1d5db" }}
-            value={zielgruppeId ?? ""}
-            onChange={e => setZielgruppeId(e.target.value || null)}
-            onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
-            onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"}>
-            <option value="">Alle Mitglieder</option>
-            {zielgruppen?.map(z => (
-              <option key={z.id} value={z.id}>{z.name}</option>
-            ))}
-          </select>
-          {(!zielgruppen || zielgruppen.length === 0) && (
-            <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Keine Zielgruppen vorhanden — im Mitglieder-Tab erstellen.</p>
-          )}
         </div>
 
         {/* Event URL */}
