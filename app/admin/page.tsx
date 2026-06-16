@@ -1434,30 +1434,29 @@ export default function AdminPage() {
                       </button>
                     )}
                     {/* Create new group */}
-                    <div className="flex gap-2 pt-1">
-                      <input className={inputClass} style={{ ...inputStyle, flex: 1 }} placeholder="Neue Zielgruppe…" value={newZielgruppeName}
-                        onChange={e => setNewZielgruppeName(e.target.value)}
-                        onKeyDown={async e => {
-                          if (e.key !== "Enter" || !newZielgruppeName.trim()) return;
-                          setZielgruppeLoading(true);
-                          const res = await fetch("/api/zielgruppen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newZielgruppeName.trim() }) });
-                          const d = await res.json();
-                          if (res.ok) { setZielgruppen(prev => [...prev, d].sort((a, b) => a.name.localeCompare(b.name))); setNewZielgruppeName(""); }
-                          setZielgruppeLoading(false);
-                        }}
-                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                      <BtnPrimary disabled={!newZielgruppeName.trim() || zielgruppeLoading} onClick={async () => {
-                        if (!newZielgruppeName.trim()) return;
+                    {(() => {
+                      const doCreate = async () => {
+                        if (!newZielgruppeName.trim() || zielgruppeLoading) return;
                         setZielgruppeLoading(true);
                         const res = await fetch("/api/zielgruppen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newZielgruppeName.trim() }) });
                         const d = await res.json();
                         if (res.ok) { setZielgruppen(prev => [...prev, d].sort((a, b) => a.name.localeCompare(b.name))); setNewZielgruppeName(""); }
                         setZielgruppeLoading(false);
-                      }}>
-                        {zielgruppeLoading ? "…" : "+ Erstellen"}
-                      </BtnPrimary>
-                    </div>
+                      };
+                      return (
+                        <div className="flex items-center rounded-xl border overflow-hidden" style={{ borderColor: "var(--ig-gray2)" }}>
+                          <input className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent" placeholder="Neue Zielgruppe…" value={newZielgruppeName}
+                            onChange={e => setNewZielgruppeName(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter") doCreate(); }} />
+                          <button disabled={!newZielgruppeName.trim() || zielgruppeLoading}
+                            onClick={doCreate}
+                            className="px-4 py-2.5 text-sm font-semibold transition disabled:opacity-40 flex-shrink-0"
+                            style={{ background: "var(--ig-gold)", color: "white", borderLeft: "1px solid rgba(0,0,0,0.08)" }}>
+                            {zielgruppeLoading ? "…" : "+ Erstellen"}
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </Card>
 
