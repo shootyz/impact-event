@@ -162,6 +162,13 @@ type ImportResult = { imported: number; duplicates: string[]; errors: string[]; 
 
 // ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
 type CampaignType = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; };
+const TEST_EMAILS = [
+  "nik.thomi@impactgstaad.ch",
+  "andreas.wandfluh@impactgstaad.ch",
+  "michel.hediger@impactgstaad.ch",
+  "chantal.reichenbach@impactgstaad.ch",
+];
+
 function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate }: {
   c: CampaignType;
   onSend: (id: string, sent: number) => void;
@@ -176,6 +183,11 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate }: 
   const [confirmSend, setConfirmSend] = useState(false);
   const [scheduling, setScheduling] = useState(false);
   const [scheduleValue, setScheduleValue] = useState("");
+  const [showTestPanel, setShowTestPanel] = useState(false);
+  const [testSelected, setTestSelected] = useState<string[]>([]);
+  const [testCustom, setTestCustom] = useState("");
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const statusText = c.sent_at
     ? `Gesendet am ${new Date(c.sent_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })} · ${c.recipient_count ?? "–"} Empfänger`
@@ -280,6 +292,68 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate }: 
               style={{ width: "100%", height: 520, border: "none", display: "block" }}
               title={c.subject}
             />
+          </div>
+        )}
+        {/* Testmail panel – only for unsent drafts */}
+        {!c.sent_at && onEdit !== undefined && (
+          <div className="rounded-xl border overflow-hidden mt-3" style={{ borderColor: "var(--ig-gray2)" }}>
+            <button onClick={() => setShowTestPanel(o => !o)}
+              className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium"
+              style={{ background: "var(--ig-light)", color: "var(--ig-navy)" }}>
+              <span>Testmail senden</span>
+              <span>{showTestPanel ? "▴" : "▾"}</span>
+            </button>
+            {showTestPanel && (
+              <div className="p-4 space-y-3">
+                <div className="space-y-2">
+                  {TEST_EMAILS.map(email => (
+                    <label key={email} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "#111" }}>
+                      <input type="checkbox" checked={testSelected.includes(email)}
+                        onChange={e => setTestSelected(prev => e.target.checked ? [...prev, email] : prev.filter(x => x !== email))}
+                        className="rounded" />
+                      {email}
+                    </label>
+                  ))}
+                  <div className="flex gap-2 items-center">
+                    <input type="checkbox" checked={!!testCustom && testSelected.includes(testCustom)}
+                      onChange={e => {
+                        if (e.target.checked && testCustom) setTestSelected(prev => [...prev.filter(x => x !== testCustom), testCustom]);
+                        else setTestSelected(prev => prev.filter(x => x !== testCustom));
+                      }} className="rounded shrink-0" />
+                    <input className="flex-1 rounded-lg border px-3 py-1.5 text-sm outline-none"
+                      style={{ borderColor: "var(--ig-gray2)" }} placeholder="Weitere E-Mail-Adresse"
+                      value={testCustom}
+                      onChange={e => {
+                        const old = testCustom;
+                        setTestCustom(e.target.value);
+                        setTestSelected(prev => prev.filter(x => x !== old));
+                      }}
+                      onFocus={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--ig-gray2)"} />
+                  </div>
+                </div>
+                {testResult && (
+                  <p className="text-xs" style={{ color: testResult.ok ? "#16a34a" : "#dc2626" }}>{testResult.msg}</p>
+                )}
+                <button
+                  disabled={testSending || testSelected.length === 0}
+                  className="w-full py-2 rounded-xl text-sm font-semibold transition disabled:opacity-40"
+                  style={{ background: "var(--ig-navy)", color: "white" }}
+                  onClick={async () => {
+                    setTestSending(true); setTestResult(null);
+                    const res = await fetch("/api/campaigns/test", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, recipients: testSelected }),
+                    });
+                    const d = await res.json();
+                    setTestSending(false);
+                    setTestResult(res.ok ? { ok: true, msg: `✓ Testmail an ${d.sent} Empfänger gesendet` } : { ok: false, msg: d.error || "Fehler" });
+                  }}>
+                  {testSending ? "Wird gesendet…" : `Testmail senden (${testSelected.length})`}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1416,7 +1490,6 @@ export default function AdminPage() {
                 )}
                 <CampaignBuilder
                   key={editingCampaign?.id ?? "new"}
-                  memberCount={members.filter(m => !m.unsubscribed).length}
                   campaignId={editingCampaign?.id}
                   initialSubject={editingCampaign?.subject}
                   initialBlocks={editingCampaign?.blocks_json as import("./CampaignBuilder").CampaignBlock[] | undefined}
@@ -1445,26 +1518,6 @@ export default function AdminPage() {
                         setCampaigns(prev => [d.campaign, ...prev]);
                         setTimeout(() => setMailingTab("drafts"), 800);
                       }
-                    }
-                  }}
-                  onSendNow={async (subject, bodyHtml, eventUrl, blocks) => {
-                    if (editingCampaign) {
-                      await fetch(`/api/campaigns/${editingCampaign.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocks }),
-                      });
-                      const res = await fetch(`/api/campaigns/${editingCampaign.id}`, { method: "POST" });
-                      const d = await res.json();
-                      if (res.ok) { setCampaigns(prev => prev.filter(c => c.id !== editingCampaign.id)); setEditingCampaign(null); }
-                    } else {
-                      const res = await fetch("/api/campaigns", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: true, blocks_json: blocks }),
-                      });
-                      const d = await res.json();
-                      if (res.ok) setCampaigns(prev => [d.campaign, ...prev]);
                     }
                   }}
                 />
