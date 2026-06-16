@@ -918,7 +918,7 @@ export default function AdminPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain cursor-pointer" onClick={() => setAdminSection("home")} />
-            {adminSection !== "home" && event && (
+            {adminSection === "events" && event && (
               <>
                 <div className="w-px h-5 hidden sm:block" style={{ background: "var(--ig-gray2)" }} />
                 <span className="text-sm font-medium hidden sm:block truncate max-w-xs" style={{ color: "var(--ig-gray3)" }}>{event.name}</span>
