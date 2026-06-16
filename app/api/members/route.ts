@@ -13,8 +13,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { members } = await req.json()
-  // members: Array<{ first_name, last_name, email }>
+  const body = await req.json()
+  const { members, zielgruppe_id } = body
   if (!Array.isArray(members) || members.length === 0) {
     return NextResponse.json({ error: 'No members provided' }, { status: 400 })
   }
@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
     first_name: m.first_name.trim(),
     last_name: m.last_name.trim(),
     email: m.email.toLowerCase().trim(),
+    ...(zielgruppe_id ? { zielgruppe_id } : {}),
   }))
 
   const { data, error } = await db
@@ -33,7 +34,6 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Auto-generate invite codes for newly inserted members
   if (data && data.length > 0) {
     const codes = data.map((m: { id: string }) => ({
       member_id: m.id,

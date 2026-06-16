@@ -595,21 +595,28 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
 
 // ── Main CampaignBuilder ──────────────────────────────────────────────────────
 
+export type ZielgruppeOption = { id: string; name: string };
+
 export default function CampaignBuilder({
   onSaveDraft,
   campaignId,
   initialSubject,
   initialBlocks,
   initialEventUrl,
+  initialZielgruppeId,
+  zielgruppen,
 }: {
-  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[]) => Promise<void>;
+  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null) => Promise<void>;
   campaignId?: string;
   initialSubject?: string;
   initialBlocks?: CampaignBlock[];
   initialEventUrl?: string;
+  initialZielgruppeId?: string | null;
+  zielgruppen?: ZielgruppeOption[];
 }) {
   const [subject, setSubject] = useState(initialSubject ?? "");
   const [eventUrl, setEventUrl] = useState(initialEventUrl ?? "");
+  const [zielgruppeId, setZielgruppeId] = useState<string | null>(initialZielgruppeId ?? null);
   const [blocks, setBlocks] = useState<CampaignBlock[]>(
     initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
   );
@@ -715,6 +722,25 @@ export default function CampaignBuilder({
           </div>
         </div>
 
+        {/* Zielgruppe */}
+        {zielgruppen && zielgruppen.length > 0 && (
+          <div>
+            <label className={labelCls2} style={labelSty2}>Zielgruppe <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional — leer = alle Mitglieder)</span></label>
+            <select
+              className={inputCls2}
+              style={{ ...inputSty, borderColor: "#d1d5db" }}
+              value={zielgruppeId ?? ""}
+              onChange={e => setZielgruppeId(e.target.value || null)}
+              onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
+              onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"}>
+              <option value="">Alle Mitglieder</option>
+              {zielgruppen.map(z => (
+                <option key={z.id} value={z.id}>{z.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Event URL */}
         <div>
           <label className={labelCls2} style={labelSty2}>Register-Button URL <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
@@ -741,7 +767,7 @@ export default function CampaignBuilder({
           style={{ borderColor: "#1E3263", color: "#1E3263" }}
           onClick={async () => {
             setSaving(true); setResult(null);
-            await onSaveDraft(subject, bodyHtml, eventUrl, blocks);
+            await onSaveDraft(subject, bodyHtml, eventUrl, blocks, zielgruppeId);
             setSaving(false);
             setResult({ ok: true, msg: "Als Entwurf gespeichert." });
           }}>

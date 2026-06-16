@@ -169,13 +169,14 @@ const TEST_EMAILS = [
   "chantal.reichenbach@impactgstaad.ch",
 ];
 
-function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate }: {
+function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zielgruppeName }: {
   c: CampaignType;
   onSend: (id: string, sent: number) => void;
   onDelete: (id: string) => void;
   onSchedule?: (id: string, scheduled_at: string | null) => void;
   onEdit?: () => void;
   onDuplicate?: () => void;
+  zielgruppeName?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [sending, setSending] = useState(false);
@@ -201,7 +202,9 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate }: 
         <div className="flex items-start justify-between gap-4 mb-2">
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{c.subject}</p>
-            <p className="text-xs mt-0.5" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>{statusText}</p>
+            <p className="text-xs mt-0.5" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
+              {statusText}{zielgruppeName ? ` · ${zielgruppeName}` : ""}
+            </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={() => setExpanded(e => !e)}
@@ -429,20 +432,27 @@ export default function AdminPage() {
   const [archiveLoaded, setArchiveLoaded] = useState(false);
 
   // Mailing state
-  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
-  type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; };
+  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; zielgruppe_id: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
+  type Zielgruppe = { id: string; name: string; created_at: string };
+  type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; };
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [mailingTab, setMailingTab] = useState<"members" | "compose" | "drafts" | "campaigns">("members");
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [membersLoaded, setMembersLoaded] = useState(false);
+  const [zielgruppen, setZielgruppen] = useState<Zielgruppe[]>([]);
+  const [activeZielgruppe, setActiveZielgruppe] = useState<string | null>(null);
+  const [newZielgruppeName, setNewZielgruppeName] = useState("");
+  const [zielgruppeLoading, setZielgruppeLoading] = useState(false);
   const [memberCsvFile, setMemberCsvFile] = useState<File | null>(null);
   const [memberCsvImporting, setMemberCsvImporting] = useState(false);
   const [memberCsvResult, setMemberCsvResult] = useState<{ inserted: number } | null>(null);
+  const [memberCsvZielgruppe, setMemberCsvZielgruppe] = useState<string>("");
   const memberCsvRef = useRef<HTMLInputElement>(null);
   const [newMemberFirst, setNewMemberFirst] = useState("");
   const [newMemberLast, setNewMemberLast] = useState("");
   const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberZielgruppe, setNewMemberZielgruppe] = useState<string>("");
   const [newMemberLoading, setNewMemberLoading] = useState(false);
   const [newMemberError, setNewMemberError] = useState("");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -496,6 +506,9 @@ export default function AdminPage() {
         if (Array.isArray(d)) setMembers(d);
         setMembersLoading(false);
         setMembersLoaded(true);
+      });
+      fetch("/api/zielgruppen").then(r => r.json()).then(d => {
+        if (Array.isArray(d)) setZielgruppen(d);
       });
       setCampaignsLoading(true);
       fetch("/api/campaigns").then(r => r.json()).then(d => {
@@ -1340,9 +1353,70 @@ export default function AdminPage() {
               ))}
             </div>
 
-            {/* ── Members ── */}
+            {/* ── Members / Zielgruppen ── */}
             {mailingTab === "members" && (
               <div className="space-y-4">
+
+                {/* Zielgruppen */}
+                <Card>
+                  <CardHeader title="Zielgruppen" />
+                  <div className="p-5 space-y-3">
+                    {/* Existing groups */}
+                    {zielgruppen.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-1">
+                        {zielgruppen.map(z => {
+                          const count = members.filter(m => m.zielgruppe_id === z.id && !m.unsubscribed).length;
+                          return (
+                            <div key={z.id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium"
+                              style={{ background: activeZielgruppe === z.id ? "var(--ig-navy)" : "var(--ig-light)", color: activeZielgruppe === z.id ? "white" : "var(--ig-navy)", borderColor: activeZielgruppe === z.id ? "var(--ig-navy)" : "var(--ig-gray2)", cursor: "pointer" }}
+                              onClick={() => setActiveZielgruppe(activeZielgruppe === z.id ? null : z.id)}>
+                              <span>{z.name}</span>
+                              <span className="text-xs opacity-70">({count})</span>
+                              <button onClick={async (e) => {
+                                e.stopPropagation();
+                                await fetch(`/api/zielgruppen/${z.id}`, { method: "DELETE" });
+                                setZielgruppen(prev => prev.filter(x => x.id !== z.id));
+                                setMembers(prev => prev.map(m => m.zielgruppe_id === z.id ? { ...m, zielgruppe_id: null } : m));
+                                if (activeZielgruppe === z.id) setActiveZielgruppe(null);
+                              }} className="ml-1 opacity-60 hover:opacity-100" style={{ fontSize: 12 }}>✕</button>
+                            </div>
+                          );
+                        })}
+                        {activeZielgruppe && (
+                          <button onClick={() => setActiveZielgruppe(null)} className="px-3 py-1.5 rounded-xl border text-sm"
+                            style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-gray3)" }}>
+                            Alle anzeigen
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {/* Create new group */}
+                    <div className="flex gap-2">
+                      <input className={inputClass} style={{ ...inputStyle, flex: 1 }} placeholder="Neue Zielgruppe…" value={newZielgruppeName}
+                        onChange={e => setNewZielgruppeName(e.target.value)}
+                        onKeyDown={async e => {
+                          if (e.key !== "Enter" || !newZielgruppeName.trim()) return;
+                          setZielgruppeLoading(true);
+                          const res = await fetch("/api/zielgruppen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newZielgruppeName.trim() }) });
+                          const d = await res.json();
+                          if (res.ok) { setZielgruppen(prev => [...prev, d].sort((a, b) => a.name.localeCompare(b.name))); setNewZielgruppeName(""); }
+                          setZielgruppeLoading(false);
+                        }}
+                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                      <BtnOutline disabled={!newZielgruppeName.trim() || zielgruppeLoading} onClick={async () => {
+                        if (!newZielgruppeName.trim()) return;
+                        setZielgruppeLoading(true);
+                        const res = await fetch("/api/zielgruppen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newZielgruppeName.trim() }) });
+                        const d = await res.json();
+                        if (res.ok) { setZielgruppen(prev => [...prev, d].sort((a, b) => a.name.localeCompare(b.name))); setNewZielgruppeName(""); }
+                        setZielgruppeLoading(false);
+                      }}>
+                        {zielgruppeLoading ? "…" : "+ Erstellen"}
+                      </BtnOutline>
+                    </div>
+                  </div>
+                </Card>
 
                 {/* Add single member */}
                 <Card>
@@ -1362,6 +1436,14 @@ export default function AdminPage() {
                       onChange={e => setNewMemberEmail(e.target.value)}
                       onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                       onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                    {zielgruppen.length > 0 && (
+                      <select className={inputClass} style={inputStyle} value={newMemberZielgruppe} onChange={e => setNewMemberZielgruppe(e.target.value)}
+                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
+                        <option value="">Keine Zielgruppe</option>
+                        {zielgruppen.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                      </select>
+                    )}
                     {newMemberError && <p className="text-xs text-red-500">{newMemberError}</p>}
                     <BtnPrimary className="w-full" disabled={newMemberLoading}
                       onClick={async () => {
@@ -1373,12 +1455,12 @@ export default function AdminPage() {
                         const res = await fetch("/api/members", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ members: [{ first_name: newMemberFirst, last_name: newMemberLast, email: newMemberEmail }] }),
+                          body: JSON.stringify({ members: [{ first_name: newMemberFirst, last_name: newMemberLast, email: newMemberEmail }], zielgruppe_id: newMemberZielgruppe || null }),
                         });
                         const d = await res.json();
                         setNewMemberLoading(false);
                         if (!res.ok) { setNewMemberError(d.error || "Fehler"); return; }
-                        setNewMemberFirst(""); setNewMemberLast(""); setNewMemberEmail("");
+                        setNewMemberFirst(""); setNewMemberLast(""); setNewMemberEmail(""); setNewMemberZielgruppe("");
                         fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); });
                       }}>
                       {newMemberLoading ? "Wird hinzugefügt…" : "Mitglied hinzufügen"}
@@ -1386,11 +1468,20 @@ export default function AdminPage() {
                   </div>
                 </Card>
 
+                {/* CSV Import */}
                 <Card>
                   <CardHeader title="Mitglieder importieren" subtitle="CSV mit Spalten: first_name, last_name, email" />
                   <div className="p-5 space-y-3">
                     <input ref={memberCsvRef} type="file" accept=".csv" className="hidden"
                       onChange={e => setMemberCsvFile(e.target.files?.[0] ?? null)} />
+                    {zielgruppen.length > 0 && (
+                      <select className={inputClass} style={inputStyle} value={memberCsvZielgruppe} onChange={e => setMemberCsvZielgruppe(e.target.value)}
+                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
+                        <option value="">Keine Zielgruppe</option>
+                        {zielgruppen.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                      </select>
+                    )}
                     <div className="flex gap-3">
                       <BtnOutline onClick={() => memberCsvRef.current?.click()} className="flex-1">
                         <IconUpload />
@@ -1419,14 +1510,12 @@ export default function AdminPage() {
                           const res = await fetch("/api/members", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ members: rows }),
+                            body: JSON.stringify({ members: rows, zielgruppe_id: memberCsvZielgruppe || null }),
                           });
                           const d = await res.json();
                           setMemberCsvResult(d);
                           setMemberCsvImporting(false);
-                          setMembersLoaded(false);
-                          // reload
-                          fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoaded(true); });
+                          fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) { setMembers(d); setMembersLoaded(true); } });
                         }}>
                         {memberCsvImporting ? "Importiert…" : "Importieren"}
                       </BtnPrimary>
@@ -1439,14 +1528,15 @@ export default function AdminPage() {
                   </div>
                 </Card>
 
+                {/* Member list */}
                 <Card>
-                  <CardHeader title={`Mitglieder (${members.filter(m => !m.unsubscribed).length} aktiv)`} />
+                  <CardHeader title={`Mitglieder (${(activeZielgruppe ? members.filter(m => m.zielgruppe_id === activeZielgruppe) : members).filter(m => !m.unsubscribed).length} aktiv${activeZielgruppe ? ` · ${zielgruppen.find(z => z.id === activeZielgruppe)?.name}` : ""})`} />
                   <div className="divide-y" style={{ borderColor: "var(--ig-gray2)" }}>
                     {membersLoading ? (
                       <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
                     ) : members.length === 0 ? (
                       <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Noch keine Mitglieder.</div>
-                    ) : members.map(m => (
+                    ) : (activeZielgruppe ? members.filter(m => m.zielgruppe_id === activeZielgruppe) : members).map(m => (
                       <div key={m.id} className="px-5 py-3 flex items-center justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate" style={{ color: m.unsubscribed ? "var(--ig-gray3)" : "var(--ig-navy)" }}>
@@ -1455,22 +1545,38 @@ export default function AdminPage() {
                           </p>
                           <p className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>{m.email}</p>
                         </div>
-                        {(() => {
-                          const ic = Array.isArray(m.invite_codes) ? m.invite_codes[0] : m.invite_codes;
-                          return ic?.code ? (
-                            <span className="flex-shrink-0 text-xs font-mono font-bold px-2 py-1 rounded-lg" style={{ background: ic.used ? "var(--ig-gray2)" : "#F8F9FF", color: ic.used ? "var(--ig-gray3)" : "var(--ig-gold)", border: "1px solid var(--ig-gray2)", letterSpacing: "0.1em", textDecoration: ic.used ? "line-through" : "none" }}>
-                              {ic.code}
-                            </span>
-                          ) : null;
-                        })()}
-                        <button onClick={async () => {
-                          await fetch("/api/members", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id }) });
-                          setMembers(prev => prev.filter(x => x.id !== m.id));
-                        }} className="flex-shrink-0 p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
-                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
-                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
-                          <IconTrash className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {/* Zielgruppe badge / selector */}
+                          {zielgruppen.length > 0 && (
+                            <select className="text-xs rounded-lg border px-2 py-1 outline-none"
+                              style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "var(--ig-light)" }}
+                              value={m.zielgruppe_id ?? ""}
+                              onChange={async e => {
+                                const val = e.target.value || null;
+                                await fetch(`/api/members/${m.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ zielgruppe_id: val }) });
+                                setMembers(prev => prev.map(x => x.id === m.id ? { ...x, zielgruppe_id: val } : x));
+                              }}>
+                              <option value="">–</option>
+                              {zielgruppen.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                            </select>
+                          )}
+                          {(() => {
+                            const ic = Array.isArray(m.invite_codes) ? m.invite_codes[0] : m.invite_codes;
+                            return ic?.code ? (
+                              <span className="text-xs font-mono font-bold px-2 py-1 rounded-lg" style={{ background: ic.used ? "var(--ig-gray2)" : "#F8F9FF", color: ic.used ? "var(--ig-gray3)" : "var(--ig-gold)", border: "1px solid var(--ig-gray2)", letterSpacing: "0.1em", textDecoration: ic.used ? "line-through" : "none" }}>
+                                {ic.code}
+                              </span>
+                            ) : null;
+                          })()}
+                          <button onClick={async () => {
+                            await fetch("/api/members", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id }) });
+                            setMembers(prev => prev.filter(x => x.id !== m.id));
+                          }} className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
+                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
+                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1498,12 +1604,14 @@ export default function AdminPage() {
                   initialSubject={editingCampaign?.subject}
                   initialBlocks={editingCampaign?.blocks_json as import("./CampaignBuilder").CampaignBlock[] | undefined}
                   initialEventUrl={editingCampaign?.event_url ?? undefined}
-                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks) => {
+                  initialZielgruppeId={editingCampaign?.zielgruppe_id ?? null}
+                  zielgruppen={zielgruppen}
+                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId) => {
                     if (editingCampaign) {
                       const res = await fetch(`/api/campaigns/${editingCampaign.id}`, {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocks }),
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocks, zielgruppe_id: zielgruppeId }),
                       });
                       const d = await res.json();
                       if (res.ok) {
@@ -1515,7 +1623,7 @@ export default function AdminPage() {
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocks }),
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocks, zielgruppe_id: zielgruppeId }),
                       });
                       const d = await res.json();
                       if (res.ok) {
@@ -1544,6 +1652,7 @@ export default function AdminPage() {
                     </Card>
                   ) : drafts.map(c => (
                     <CampaignCard key={c.id} c={c}
+                      zielgruppeName={zielgruppen.find(z => z.id === c.zielgruppe_id)?.name}
                       onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
                       onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                       onSchedule={(id, scheduled_at) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x))}
@@ -1565,6 +1674,7 @@ export default function AdminPage() {
                   <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Noch keine gesendeten Kampagnen.</div></Card>
                 ) : sent.map(c => (
                   <CampaignCard key={c.id} c={c}
+                    zielgruppeName={zielgruppen.find(z => z.id === c.zielgruppe_id)?.name}
                     onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
                     onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                     onSchedule={(id, scheduled_at) => { setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x)); }}
@@ -1572,7 +1682,7 @@ export default function AdminPage() {
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject: `${c.subject} (Kopie)`, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null, send_now: false }),
+                        body: JSON.stringify({ subject: `${c.subject} (Kopie)`, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null, zielgruppe_id: c.zielgruppe_id || null, send_now: false }),
                       });
                       const d = await res.json();
                       if (res.ok) {

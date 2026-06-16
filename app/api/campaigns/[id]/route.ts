@@ -24,6 +24,7 @@ export async function POST(req: NextRequest, props: any) {
       bodyHtml: campaign.body_html,
       eventUrl: campaign.event_url,
       appUrl,
+      zielgruppeId: campaign.zielgruppe_id ?? null,
     })
     return NextResponse.json({ sent: result.sent })
   } catch (e) {
@@ -37,7 +38,7 @@ export async function PATCH(req: NextRequest, props: any) {
   const { id } = await props.params
   const body = await req.json()
   const db = supabaseAdmin()
-  const allowed = ['scheduled_at', 'subject', 'body_html', 'event_url', 'blocks_json']
+  const allowed = ['scheduled_at', 'subject', 'body_html', 'event_url', 'blocks_json', 'zielgruppe_id']
   const patch: Record<string, unknown> = {}
   for (const key of allowed) if (key in body) patch[key] = body[key]
   const { data, error } = await db

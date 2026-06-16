@@ -119,7 +119,7 @@ export function buildCampaignHtmlForTest({ appUrl, email, subject, bodyHtml, eve
 }) {
   return buildCampaignHtml({
     appUrl,
-    member: { id: 'test', first_name: firstNameFromEmail(email), last_name: '', email, unsubscribe_token: 'test', unsubscribed: false, created_at: '' },
+    member: { id: 'test', first_name: firstNameFromEmail(email), last_name: '', email, unsubscribe_token: 'test', unsubscribed: false, created_at: '', zielgruppe_id: null },
     subject,
     headerImageUrl: null,
     bodyHtml,
@@ -135,6 +135,7 @@ export async function sendCampaign({
   bodyHtml,
   eventUrl,
   appUrl,
+  zielgruppeId,
 }: {
   campaignId: string
   subject: string
@@ -142,13 +143,13 @@ export async function sendCampaign({
   bodyHtml: string
   eventUrl: string | null
   appUrl: string
+  zielgruppeId?: string | null
 }) {
   const db = supabaseAdmin()
 
-  const { data: members, error } = await db
-    .from('members')
-    .select('*')
-    .eq('unsubscribed', false)
+  let query = db.from('members').select('*').eq('unsubscribed', false)
+  if (zielgruppeId) query = query.eq('zielgruppe_id', zielgruppeId)
+  const { data: members, error } = await query
 
   if (error || !members) throw new Error('Failed to load members')
 

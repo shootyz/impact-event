@@ -20,6 +20,12 @@ export type Event = {
   active: boolean
 }
 
+export type Zielgruppe = {
+  id: string
+  name: string
+  created_at: string
+}
+
 export type Member = {
   id: string
   first_name: string
@@ -28,6 +34,7 @@ export type Member = {
   unsubscribe_token: string
   unsubscribed: boolean
   created_at: string
+  zielgruppe_id: string | null
   invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null
 }
 
