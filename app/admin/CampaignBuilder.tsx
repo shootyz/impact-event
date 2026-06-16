@@ -718,14 +718,21 @@ export default function CampaignBuilder({
   return (
     <div className="flex gap-0" style={{ minHeight: 600 }}>
       {/* Left: live preview */}
-      <div className="hidden lg:flex flex-col" style={{ width: "50%", borderRight: "1px solid #e5e7eb", position: "sticky", top: 0, alignSelf: "flex-start", maxHeight: "100vh" }}>
+      <div className="hidden lg:flex flex-col" style={{ width: "50%", borderRight: "1px solid #e5e7eb" }}>
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "#e5e7eb" }}>
           <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#1E3263" }}>Vorschau</p>
         </div>
-        <div style={{ flex: 1, overflow: "hidden" }}>
+        <div>
           {previewHtml
-            ? <iframe srcDoc={previewHtml} style={{ width: "100%", height: "100%", border: "none", display: "block", minHeight: 600 }} />
-            : <div className="flex items-center justify-center h-full text-xs" style={{ color: "#9ca3af" }}>Wird geladen…</div>
+            ? <iframe
+                srcDoc={previewHtml}
+                style={{ width: "100%", border: "none", display: "block", minHeight: 600 }}
+                onLoad={e => {
+                  const f = e.currentTarget;
+                  try { f.style.height = (f.contentWindow?.document.body.scrollHeight ?? 600) + "px"; } catch {}
+                }}
+              />
+            : <div className="flex items-center justify-center py-20 text-xs" style={{ color: "#9ca3af" }}>Wird geladen…</div>
           }
         </div>
       </div>
