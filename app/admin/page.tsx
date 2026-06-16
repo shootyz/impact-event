@@ -988,16 +988,9 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <div
-        className="mx-auto w-full px-4 sm:px-6 py-6 flex-1"
-        style={{
-          maxWidth: adminSection === "mailing" && mailingTab === "compose" ? "100%" : "56rem",
-          transition: "max-width 0.35s cubic-bezier(0.4,0,0.2,1)",
-        }}
-      >
-
-        {/* ── Landing ── */}
-        {adminSection === "home" && (
+      {/* ── Landing ── */}
+      {adminSection === "home" && (
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
             <img src="/logo.png" alt="Impact Gstaad" className="h-10 object-contain mb-2" />
             <div className="flex gap-5 w-full max-w-lg">
@@ -1054,41 +1047,48 @@ export default function AdminPage() {
             </div>
             {event && <p className="text-xs mt-2" style={{ color: "var(--ig-gray3)" }}>{event.name}</p>}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ── Event-Management Tabs ── */}
-        {adminSection === "events" && (
-          <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
-            {eventTabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
-                style={{ color: activeTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}
-              >
-                {tab.label}
-                {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* ── Tabs (fixed width, never expand) ── */}
+      {adminSection !== "home" && (
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6">
+          {adminSection === "events" && (
+            <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
+              {eventTabs.map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                  className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
+                  style={{ color: activeTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
+                  {tab.label}
+                  {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+                </button>
+              ))}
+            </div>
+          )}
+          {adminSection === "mailing" && (
+            <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
+              {mailingTabs.map(tab => (
+                <button key={tab.id} onClick={() => setMailingTab(tab.id as typeof mailingTab)}
+                  className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
+                  style={{ color: mailingTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
+                  {tab.label}
+                  {mailingTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-        {/* ── Mailing Tabs ── */}
-        {adminSection === "mailing" && (
-          <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
-            {mailingTabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setMailingTab(tab.id as typeof mailingTab)}
-                className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
-                style={{ color: mailingTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}
-              >
-                {tab.label}
-                {mailingTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* ── Content (animates to full width for builder) ── */}
+      {adminSection !== "home" && (
+      <div
+        className="mx-auto w-full px-4 sm:px-6 pb-6 flex-1"
+        style={{
+          maxWidth: adminSection === "mailing" && mailingTab === "compose" ? "100%" : "56rem",
+          transition: "max-width 0.35s cubic-bezier(0.4,0,0.2,1)",
+        }}
+      >
 
         {/* ── Event-Management Content ── */}
         {/* ── Filter Pills ── */}
@@ -1939,6 +1939,7 @@ export default function AdminPage() {
         )}
 
       </div>
+      )}
 
       {dialog && (
         <ConfirmDialog
