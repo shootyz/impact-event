@@ -1826,31 +1826,14 @@ export default function AdminPage() {
 
             {/* ── Compose ── */}
             {mailingTab === "compose" && (
-              <div className="rounded-2xl border" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
-                {/* Header with Zielgruppe selector */}
-                <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--ig-gray2)" }}>
-                  <div>
-                    <p className="font-bold text-sm" style={{ color: "var(--ig-navy)" }}>{editingCampaign ? "Entwurf bearbeiten" : "Neue Kampagne"}</p>
-                    {editingCampaign && (
-                      <button className="text-xs underline mt-0.5 block" style={{ color: "var(--ig-gold)" }} onClick={() => { setEditingCampaign(null); setBuilderZielgruppeId(null); }}>
-                        ← Zurück zu neuer Kampagne
-                      </button>
-                    )}
+              <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+                {editingCampaign && (
+                  <div className="px-5 pt-3">
+                    <button className="text-xs underline" style={{ color: "var(--ig-gold)" }} onClick={() => { setEditingCampaign(null); setBuilderZielgruppeId(null); }}>
+                      ← Zurück zu neuer Kampagne
+                    </button>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--ig-navy)" }}>Zielgruppe</span>
-                    <select
-                      className="rounded-lg border px-3 py-1.5 text-xs outline-none transition"
-                      style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
-                      value={builderZielgruppeId ?? ""}
-                      onChange={e => setBuilderZielgruppeId(e.target.value || null)}
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
-                      <option value="">Alle Mitglieder</option>
-                      {zielgruppen.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-                    </select>
-                  </div>
-                </div>
+                )}
                 <CampaignBuilder
                   key={editingCampaign?.id ?? "new"}
                   campaignId={editingCampaign?.id}
