@@ -65,7 +65,7 @@ function buildCampaignHtml({
 <body style="margin:0;padding:0;background:#F8F9FF;font-family:Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:40px 16px 60px;">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:24px;border:1px solid #D0DDEA;overflow:hidden;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:24px;border:1px solid #D0DDEA;">
 
         ${headerImageUrl ? `
         <tr><td style="padding:0;line-height:0;">
@@ -91,7 +91,7 @@ function buildCampaignHtml({
         <tr><td style="padding:32px 40px 40px;">${bodyAfter || ''}</td></tr>
 
         <!-- Footer -->
-        <tr><td style="background:#f5f5f5;border-top:1px solid #e8e8e8;padding:20px 40px 24px;">
+        <tr><td style="background:#f5f5f5;border-top:1px solid #e8e8e8;padding:20px 40px 24px;border-radius:0 0 24px 24px;">
           <p style="color:#888888;font-size:11px;margin:0 0 8px;text-align:center;font-family:Arial,sans-serif;">
             Impact Gstaad &nbsp;·&nbsp;
             <a href="https://impactgstaad.ch" style="color:#1E3263;text-decoration:none;">impactgstaad.ch</a>
