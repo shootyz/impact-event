@@ -1540,21 +1540,6 @@ export default function AdminPage() {
         {adminSection === "mailing" && (
           <div className="space-y-4">
 
-            {/* Sub-tabs */}
-            <div className="flex gap-2 mb-2">
-              {(["members", "compose", "drafts", "campaigns"] as const).map(t => (
-                <button key={t} onClick={() => setMailingTab(t)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition capitalize"
-                  style={{
-                    background: mailingTab === t ? "var(--ig-navy)" : "white",
-                    color: mailingTab === t ? "white" : "var(--ig-navy)",
-                    border: "1.5px solid var(--ig-gray2)",
-                  }}>
-                  {t === "members" ? "Mitglieder" : t === "compose" ? "Neue Kampagne" : t === "drafts" ? "Entwürfe" : "Archiv"}
-                </button>
-              ))}
-            </div>
-
             {/* ── Members / Zielgruppen ── */}
             {mailingTab === "members" && (
               <div className="space-y-4">
