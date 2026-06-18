@@ -35,6 +35,7 @@ export async function GET(_req: NextRequest, props: any) {
     `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`
 
   const location = [detailsBlock.venue_name, detailsBlock.venue_address].filter(Boolean).join(', ')
+  const icsTitle = [(detailsBlock as EventDetailsBlock & { category?: string; event_title?: string }).category, (detailsBlock as EventDetailsBlock & { category?: string; event_title?: string }).event_title].filter(Boolean).join(': ') || campaign.subject
 
   const ics = [
     'BEGIN:VCALENDAR',
@@ -44,7 +45,7 @@ export async function GET(_req: NextRequest, props: any) {
     `UID:${id}@impactgstaad.ch`,
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
-    `SUMMARY:${campaign.subject}`,
+    `SUMMARY:${icsTitle}`,
     location ? `LOCATION:${location}` : '',
     'END:VEVENT',
     'END:VCALENDAR',

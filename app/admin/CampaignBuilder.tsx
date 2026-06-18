@@ -12,6 +12,8 @@ export type IntroBlock = {
 
 export type EventDetailsBlock = {
   type: "event_details";
+  category: string;
+  event_title: string;
   date: string;
   time: string;
   venue_name: string;
@@ -121,6 +123,14 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
 
     case "event_details": {
       const rows = [];
+      if (block.category)
+        rows.push(`<tr><td style="padding:16px 0 4px;">
+  <p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0;font-family:Arial,sans-serif;">${block.category}</p>
+</td></tr>`);
+      if (block.event_title)
+        rows.push(`<tr><td style="padding:${block.category ? "0" : "16px"} 0 16px;">
+  <p style="color:${D.navy};font-size:20px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${block.event_title}</p>
+</td></tr>`);
       if (block.date)
         rows.push(`<tr><td style="padding:16px 0;">
   <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">Date</p>
@@ -140,7 +150,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
   ${block.moderation_title ? `<p style="color:${D.gray};font-size:14px;margin:0;font-family:Arial,sans-serif;">${block.moderation_title}</p>` : ""}
 </td></tr>`);
       const icsLink = ctx?.campaignId && ctx?.appUrl && block.date
-        ? `<tr><td style="padding:12px 0 16px;"><a href="${ctx.appUrl}/api/campaigns/${ctx.campaignId}/ics" style="color:${D.gold};font-size:13px;font-weight:600;text-decoration:none;font-family:Arial,sans-serif;">📅 Zum Kalender hinzufügen</a></td></tr>`
+        ? `<tr><td style="padding:12px 0 16px;"><a href="${ctx.appUrl}/api/campaigns/${ctx.campaignId}/ics" style="color:${D.gold};font-size:13px;font-weight:600;text-decoration:none;font-family:Arial,sans-serif;">&#128197; Zum Kalender hinzufügen</a></td></tr>`
         : "";
       return `${dividerHtml()}
 ${sectionHeadHtml(block.label || "Event Details")}
@@ -311,8 +321,42 @@ function EventDetailsEditor({ block, onChange, subject }: { block: EventDetailsB
     const d = new Date(iso + "T12:00:00");
     return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   }
+  const CATEGORIES = ["IMPACT CIRCLE EVENT", "IMPACT WORKSHOP", "IMPACT EXPERIENCE"];
+  const isCustom = block.category !== "" && !CATEGORIES.includes(block.category);
+
   return (
     <div className="space-y-3">
+      <div>
+        <label className={labelCls} style={labelSty}>Kategorie</label>
+        <select
+          value={isCustom ? "__custom__" : block.category}
+          onChange={e => onChange({ ...block, category: e.target.value === "__custom__" ? "" : e.target.value })}
+          className="w-full rounded-lg border px-3 py-2 text-sm"
+          style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}>
+          <option value="">— Wählen —</option>
+          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          <option value="__custom__">Eigene Kategorie…</option>
+        </select>
+        {(isCustom || block.category === "") && (block.category !== undefined) && (
+          <input
+            value={isCustom ? block.category : ""}
+            onChange={e => onChange({ ...block, category: e.target.value })}
+            placeholder="Eigene Kategorie eingeben"
+            className="w-full rounded-lg border px-3 py-2 text-sm mt-2"
+            style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
+          />
+        )}
+      </div>
+      <div>
+        <label className={labelCls} style={labelSty}>Event-Titel</label>
+        <input
+          value={block.event_title}
+          onChange={e => onChange({ ...block, event_title: e.target.value })}
+          placeholder="z.B. The Future of Alpine Business"
+          className="w-full rounded-lg border px-3 py-2 text-sm"
+          style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
+        />
+      </div>
       <div>
         <label className={labelCls} style={labelSty}>Datum</label>
         <input
@@ -716,7 +760,7 @@ const ADDABLE_BLOCKS: { type: CampaignBlock["type"]; label: string; icon: string
 function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
   switch (type) {
     case "intro": return { type, text: "" };
-    case "event_details": return { type, date: "", time: "13:00", venue_name: "", venue_address: "", venue_maps_url: "", moderation_name: "", moderation_title: "" };
+    case "event_details": return { type, category: "", event_title: "", date: "", time: "13:00", venue_name: "", venue_address: "", venue_maps_url: "", moderation_name: "", moderation_title: "" };
     case "program": return { type, slots: [{ id: uid(), time: "", title: "", sub_items: [], note: "" }] };
     case "finalists": return { type, title: "Green Business Award", intro: "", items: [{ id: uid(), name: "", category: "", description: "" }], video_url: "", website_url: "", website_label: "" };
     case "speaker": return { type, photo_url: "", name: "", title: "", bio: "", book: "" };

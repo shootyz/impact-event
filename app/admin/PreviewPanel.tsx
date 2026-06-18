@@ -96,9 +96,10 @@ function EventDetailsPreview({ block, onChange, subject }: { block: EventDetails
     const pad = (n: number) => String(n).padStart(2, "0");
     const fmt = (dt: Date) => `${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
     const location = [block.venue_name, block.venue_address].filter(Boolean).join(", ");
+    const icsTitle = [block.category, block.event_title].filter(Boolean).join(": ") || subject || "Impact Gstaad Event";
     const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Impact Gstaad//EN","BEGIN:VEVENT",
       `UID:${isoDate}-${Date.now()}@impactgstaad.ch`,`DTSTART:${fmt(start)}`,`DTEND:${fmt(end)}`,
-      `SUMMARY:${subject || "Impact Gstaad Event"}`,location ? `LOCATION:${location}` : "",
+      `SUMMARY:${icsTitle}`,location ? `LOCATION:${location}` : "",
       "END:VEVENT","END:VCALENDAR"].filter(Boolean).join("\r\n");
     const blob = new Blob([ics], { type: "text/calendar" });
     const url = URL.createObjectURL(blob);
@@ -109,6 +110,12 @@ function EventDetailsPreview({ block, onChange, subject }: { block: EventDetails
 
   return (
     <div>
+      {block.category && (
+        <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{block.category}</p>
+      )}
+      {block.event_title && (
+        <p style={{ color: D.navy, fontSize: 20, fontWeight: 700, margin: "0 0 16px" }}>{block.event_title}</p>
+      )}
       {block.date && field("Date", block.date, "date")}
       {(block.time || true) && field("Time", block.time ?? "", "time")}
       {field("Venue", block.venue_name, "venue_name")}
