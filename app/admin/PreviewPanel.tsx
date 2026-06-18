@@ -113,13 +113,18 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
   return (
     <div>
       {block.category && (
-        <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{block.category}</p>
+        <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{block.category}</p>
       )}
       {block.event_title && (
         <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>{block.event_title}</p>
       )}
-      {block.date && field(tl.date, block.date, "date")}
-      {(block.time || true) && field(tl.time, block.time ?? "", "time")}
+      {block.date && field(tl.date, (() => {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(block.date)) {
+          try { return new Date(block.date + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang ?? "en"], { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { return block.date; }
+        }
+        return block.date;
+      })() + (block.time ? `, ${block.time}` : ""), "date")}
+      {!block.date && block.time && field(tl.time, block.time, "time")}
       {field(tl.venue, block.venue_name, "venue_name")}
       {block.venue_address !== undefined && (
         <div style={{ padding: "14px 0", borderBottom: `1px solid ${D.gray2}` }}>

@@ -133,7 +133,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
       const rows = [];
       if (block.category)
         rows.push(`<tr><td style="padding:16px 0 4px;">
-  <p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0;font-family:Arial,sans-serif;">${block.category}</p>
+  <p style="color:${D.gold};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0;font-family:Arial,sans-serif;">${block.category}</p>
 </td></tr>`);
       if (block.event_title)
         rows.push(`<tr><td style="padding:${block.category ? "0" : "16px"} 0 16px;">
@@ -382,7 +382,7 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
         <input
           type="date"
           value={toInputDate(block.date)}
-          onChange={e => onChange({ ...block, date: toDisplayDate(e.target.value) })}
+          onChange={e => onChange({ ...block, date: e.target.value })}
           className="w-full rounded-lg border px-3 py-2 text-sm"
           style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
         />
