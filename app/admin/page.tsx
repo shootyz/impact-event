@@ -545,6 +545,7 @@ export default function AdminPage() {
   const [newMemberError, setNewMemberError] = useState("");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(false);
+  const [activeEvents, setActiveEvents] = useState<{ id: string; name: string; date: string }[]>([]);
   const [campaignSubject, setCampaignSubject] = useState("");
   const [campaignBody, setCampaignBody] = useState("");
   const [campaignEventUrl, setCampaignEventUrl] = useState("");
@@ -602,6 +603,9 @@ export default function AdminPage() {
       fetch("/api/campaigns").then(r => r.json()).then(d => {
         if (Array.isArray(d)) setCampaigns(d);
         setCampaignsLoading(false);
+      });
+      fetch("/api/events").then(r => r.json()).then(d => {
+        if (Array.isArray(d)) setActiveEvents(d);
       });
     }
     if (activeTab === "tools") {
@@ -1829,6 +1833,7 @@ export default function AdminPage() {
                   zielgruppeId={builderZielgruppeId}
                   onZielgruppeChange={setBuilderZielgruppeId}
                   zielgruppen={zielgruppen}
+                  events={activeEvents}
                   onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId, isAutoSave, lang) => {
                     const blocksJson = { lang: lang ?? "en", blocks };
                     const existingId = autoId ?? editingCampaign?.id;

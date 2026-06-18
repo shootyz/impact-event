@@ -17,6 +17,7 @@ function RegistrationPageInner() {
   const searchParams = useSearchParams();
   const lang = getLang(searchParams);
   const t = T[lang];
+  const eventId = searchParams.get("event") ?? "";
 
   const [event, setEvent] = useState<Event | null>(null);
   const [eventLoading, setEventLoading] = useState(true);
@@ -35,7 +36,8 @@ function RegistrationPageInner() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/event")
+    const url = eventId ? `/api/event?id=${encodeURIComponent(eventId)}` : "/api/event";
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (!data.error) {
@@ -44,7 +46,7 @@ function RegistrationPageInner() {
         }
         setEventLoading(false);
       });
-  }, []);
+  }, [eventId]);
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +56,7 @@ function RegistrationPageInner() {
     const authRes = await fetch("/api/event-auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: gateCode }),
+      body: JSON.stringify({ password: gateCode, ...(eventId ? { eventId } : {}) }),
     });
     const authData = await authRes.json();
     setGateLoading(false);
@@ -73,12 +75,24 @@ function RegistrationPageInner() {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: `${vorname.trim()} ${nachname.trim()}`, email, invite_code_id: inviteCodeId }),
+      body: JSON.stringify({
+        name: `${vorname.trim()} ${nachname.trim()}`,
+        email,
+        invite_code_id: inviteCodeId,
+        ...(eventId ? { event_id: eventId } : {}),
+      }),
     });
     const data = await res.json();
     setLoading(false);
-    if (!res.ok) { setError(data.error || t.errorGeneric); return; }
-    router.push(`/success/${data.token}?lang=${lang}`);
+    if (!res.ok) {
+      if (res.status === 409 && data.token) {
+        router.push(`/success/${data.token}?lang=${lang}${eventId ? `&event=${eventId}` : ""}&already=1`);
+        return;
+      }
+      setError(data.error || t.errorGeneric);
+      return;
+    }
+    router.push(`/success/${data.token}?lang=${lang}${eventId ? `&event=${eventId}` : ""}`);
   };
 
   const eventDate = event

@@ -4,7 +4,7 @@ import { sendConfirmationEmail } from '@/lib/email'
 import { randomUUID } from 'crypto'
 
 export async function POST(req: NextRequest) {
-  const { name, email, invite_code_id } = await req.json()
+  const { name, email, invite_code_id, event_id } = await req.json()
 
   if (!name?.trim() || !email?.trim()) {
     return NextResponse.json({ error: 'Name und E-Mail sind erforderlich.' }, { status: 400 })
@@ -12,11 +12,8 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin()
 
-  const { data: event, error: eventError } = await db
-    .from('events')
-    .select('*')
-    .eq('active', true)
-    .single()
+  const base = db.from('events').select('*')
+  const { data: event, error: eventError } = await (event_id ? base.eq('id', event_id) : base.eq('active', true)).single()
 
   if (eventError || !event) {
     return NextResponse.json({ error: 'Kein aktiver Event gefunden.' }, { status: 404 })
@@ -24,13 +21,16 @@ export async function POST(req: NextRequest) {
 
   const { data: existing } = await db
     .from('registrations')
-    .select('id')
+    .select('id, qr_token')
     .eq('email', email.toLowerCase().trim())
     .eq('event_id', event.id)
     .single()
 
   if (existing) {
-    return NextResponse.json({ error: 'Diese E-Mail-Adresse ist bereits angemeldet.' }, { status: 409 })
+    return NextResponse.json(
+      { error: 'Diese E-Mail-Adresse ist bereits angemeldet.', token: existing.qr_token },
+      { status: 409 }
+    )
   }
 
   const qrToken = randomUUID()
@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
   }
 
-  // Mark invite code as used
   if (invite_code_id) {
     await db.from('invite_codes').update({ used: true }).eq('id', invite_code_id)
   }

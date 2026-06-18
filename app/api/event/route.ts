@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-export async function GET() {
-  const { data: event, error } = await supabase()
+export async function GET(req: NextRequest) {
+  const id = req.nextUrl.searchParams.get('id')
+  const base = supabase()
     .from('events')
     .select('id, name, date, location, description, registration_password')
-    .eq('active', true)
-    .single()
+  const { data: event, error } = await (id ? base.eq('id', id) : base.eq('active', true)).single()
 
   if (error || !event) {
     return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })

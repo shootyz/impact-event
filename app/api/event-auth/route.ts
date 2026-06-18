@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
-  const { password } = await req.json()
+  const { password, eventId } = await req.json()
 
-  const { data: event } = await supabase()
+  const base = supabase()
     .from('events')
     .select('id, registration_password')
-    .eq('active', true)
-    .single()
+  const { data: event } = await (eventId ? base.eq('id', eventId) : base.eq('active', true)).single()
 
   if (!event) {
     return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
