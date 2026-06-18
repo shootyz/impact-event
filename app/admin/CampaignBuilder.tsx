@@ -107,7 +107,7 @@ function renderCustomFields(block: CampaignBlock): string {
   return `\n<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">${rows}</table>`;
 }
 
-function renderBlock(block: CampaignBlock): string {
+function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?: string }): string {
   const extra = renderCustomFields(block);
   switch (block.type) {
     case "intro":
@@ -139,10 +139,14 @@ function renderBlock(block: CampaignBlock): string {
   <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 2px;font-family:Arial,sans-serif;">${block.moderation_name}</p>
   ${block.moderation_title ? `<p style="color:${D.gray};font-size:14px;margin:0;font-family:Arial,sans-serif;">${block.moderation_title}</p>` : ""}
 </td></tr>`);
+      const icsLink = ctx?.campaignId && ctx?.appUrl && block.date
+        ? `<tr><td style="padding:12px 0 16px;"><a href="${ctx.appUrl}/api/campaigns/${ctx.campaignId}/ics" style="color:${D.gold};font-size:13px;font-weight:600;text-decoration:none;font-family:Arial,sans-serif;">📅 Zum Kalender hinzufügen</a></td></tr>`
+        : "";
       return `${dividerHtml()}
 ${sectionHeadHtml(block.label || "Event Details")}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
 ${rows.join("\n")}
+${icsLink}
 </table>${extra}`;
     }
 
@@ -223,13 +227,13 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
   }
 }
 
-export function renderBlocksToHtml(blocks: CampaignBlock[]): string {
-  // Find intro block — everything before it goes before CTA marker
+export function renderBlocksToHtml(blocks: CampaignBlock[], ctx?: { campaignId?: string; appUrl?: string }): string {
+  const r = (b: CampaignBlock) => renderBlock(b, ctx);
   const introIdx = blocks.findIndex(b => b.type === "intro");
-  if (introIdx === -1) return blocks.map(renderBlock).join("\n\n");
+  if (introIdx === -1) return blocks.map(r).join("\n\n");
 
-  const before = blocks.slice(0, introIdx + 1).map(renderBlock).join("\n\n");
-  const after = blocks.slice(introIdx + 1).map(renderBlock).join("\n\n");
+  const before = blocks.slice(0, introIdx + 1).map(r).join("\n\n");
+  const after = blocks.slice(introIdx + 1).map(r).join("\n\n");
   return `${before}\n\n<!-- CTA -->\n\n${after}`;
 }
 

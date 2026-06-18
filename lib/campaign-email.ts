@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase'
 import type { Member } from './supabase'
+import { renderBlocksToHtml } from '@/app/admin/CampaignBuilder'
+import type { CampaignBlock } from '@/app/admin/CampaignBuilder'
 
 function plainTextToHtml(text: string): string {
   return text
@@ -133,6 +135,7 @@ export async function sendCampaign({
   subject,
   headerImageUrl,
   bodyHtml,
+  blocksJson,
   eventUrl,
   appUrl,
   zielgruppeId,
@@ -141,10 +144,20 @@ export async function sendCampaign({
   subject: string
   headerImageUrl: string | null
   bodyHtml: string
+  blocksJson?: string | null
   eventUrl: string | null
   appUrl: string
   zielgruppeId?: string | null
 }) {
+  // Re-render body HTML from blocks with ICS link context if blocks available
+  const finalBodyHtml = (() => {
+    if (!blocksJson) return bodyHtml
+    try {
+      const blocks = JSON.parse(blocksJson) as CampaignBlock[]
+      return renderBlocksToHtml(blocks, { campaignId, appUrl })
+    } catch { return bodyHtml }
+  })()
+
   const db = supabaseAdmin()
 
   let query = db.from('members').select('*').eq('unsubscribed', false)
@@ -174,7 +187,7 @@ export async function sendCampaign({
       member,
       subject,
       headerImageUrl,
-      bodyHtml,
+      bodyHtml: finalBodyHtml,
       eventUrl,
       inviteCode,
     })

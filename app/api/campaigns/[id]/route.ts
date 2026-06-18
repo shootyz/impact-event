@@ -22,6 +22,7 @@ export async function POST(req: NextRequest, props: any) {
       subject: campaign.subject,
       headerImageUrl: campaign.header_image_url,
       bodyHtml: campaign.body_html,
+      blocksJson: campaign.blocks_json,
       eventUrl: campaign.event_url,
       appUrl,
       zielgruppeId: campaign.zielgruppe_id ?? null,
