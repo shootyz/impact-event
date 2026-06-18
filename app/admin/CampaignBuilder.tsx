@@ -683,7 +683,7 @@ const ADDABLE_BLOCKS: { type: CampaignBlock["type"]; label: string; icon: string
 function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
   switch (type) {
     case "intro": return { type, text: "" };
-    case "event_details": return { type, date: "", time: "", venue_name: "", venue_address: "", venue_maps_url: "", moderation_name: "", moderation_title: "" };
+    case "event_details": return { type, date: "", time: "13:00", venue_name: "", venue_address: "", venue_maps_url: "", moderation_name: "", moderation_title: "" };
     case "program": return { type, slots: [{ id: uid(), time: "", title: "", sub_items: [], note: "" }] };
     case "finalists": return { type, title: "Green Business Award", intro: "", items: [{ id: uid(), name: "", category: "", description: "" }], video_url: "", website_url: "", website_label: "" };
     case "speaker": return { type, photo_url: "", name: "", title: "", bio: "", book: "" };
