@@ -383,23 +383,14 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
             k === "venue_name" ? "Venue Name" : k === "venue_address" ? "Adresse" :
             k === "venue_maps_url" ? "Google Maps URL" : k === "moderation_name" ? "Moderation Name" : "Moderation Titel"
           }</label>
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <FocusInput value={block[k]} onChange={v => onChange({ ...block, [k]: v })}
-                placeholder={
-                  k === "venue_name" ? "Kirchgemeindehaus Gstaad" :
-                  k === "venue_address" ? "Untergstaadstrasse 8, 3780 Gstaad" :
-                  k === "venue_maps_url" ? "https://maps.google.com/?q=…" :
-                  k === "moderation_name" ? "Carolin Roth" : "Business Moderator & Journalist"
-                } />
-            </div>
+          <div className="flex flex-col gap-1">
             {k === "venue_address" && block.venue_address && (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 title="In Google Maps öffnen"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition self-start"
                 style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", whiteSpace: "nowrap", textDecoration: "none" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
@@ -408,6 +399,13 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
                 Maps
               </a>
             )}
+            <FocusInput value={block[k]} onChange={v => onChange({ ...block, [k]: v })}
+              placeholder={
+                k === "venue_name" ? "Kirchgemeindehaus Gstaad" :
+                k === "venue_address" ? "Untergstaadstrasse 8, 3780 Gstaad" :
+                k === "venue_maps_url" ? "https://maps.google.com/?q=…" :
+                k === "moderation_name" ? "Carolin Roth" : "Business Moderator & Journalist"
+              } />
           </div>
         </div>
       ))}
