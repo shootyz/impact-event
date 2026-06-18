@@ -717,7 +717,7 @@ export default function CampaignBuilder({
   zielgruppen?: ZielgruppeOption[];
 }) {
   const [subject, setSubject] = useState(initialSubject ?? "");
-  const [eventUrl, setEventUrl] = useState(initialEventUrl ?? "");
+  const [eventUrl, setEventUrl] = useState(initialEventUrl ?? (typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? "")));
   const setZielgruppeId = onZielgruppeChange;
   const [blocks, setBlocks] = useState<CampaignBlock[]>(
     initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
