@@ -6,16 +6,16 @@ export async function GET(req: NextRequest) {
   if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
   }
-  const { data: event } = await supabaseAdmin()
+  const { data: events } = await supabaseAdmin()
     .from('events')
-    .select('registration_password')
+    .select('id, name, date, registration_password')
     .eq('active', true)
-    .single()
-  return NextResponse.json({ registration_password: event?.registration_password || null })
+    .order('date', { ascending: true })
+  return NextResponse.json({ events: events ?? [] })
 }
 
 export async function PATCH(req: NextRequest) {
-  const { adminPassword, registration_password } = await req.json()
+  const { adminPassword, eventId, registration_password } = await req.json()
 
   if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
@@ -23,20 +23,17 @@ export async function PATCH(req: NextRequest) {
 
   const db = supabaseAdmin()
 
-  const { data: event } = await db
-    .from('events')
-    .select('id')
-    .eq('active', true)
-    .single()
-
-  if (!event) {
-    return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
+  if (eventId) {
+    await db
+      .from('events')
+      .update({ registration_password: registration_password || null })
+      .eq('id', eventId)
+  } else {
+    // fallback: update the single active event
+    const { data: ev } = await db.from('events').select('id').eq('active', true).single()
+    if (!ev) return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
+    await db.from('events').update({ registration_password: registration_password || null }).eq('id', ev.id)
   }
-
-  await db
-    .from('events')
-    .update({ registration_password: registration_password || null })
-    .eq('id', event.id)
 
   return NextResponse.json({ ok: true })
 }

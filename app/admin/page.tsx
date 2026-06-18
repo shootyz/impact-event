@@ -508,10 +508,10 @@ export default function AdminPage() {
   const [csvSendResult, setCsvSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
 
-  const [eventPassword, setEventPassword] = useState("");
-  const [pwStatus, setPwStatus] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [pwLoading, setPwLoading] = useState(false);
-  const [currentEventPassword, setCurrentEventPassword] = useState<string | null>(undefined as unknown as null);
+  const [activeEventsWithPw, setActiveEventsWithPw] = useState<{ id: string; name: string; date: string; registration_password: string | null }[]>([]);
+  const [eventPwInputs, setEventPwInputs] = useState<Record<string, string>>({});
+  const [eventPwResults, setEventPwResults] = useState<Record<string, { ok: boolean; msg: string } | null>>({});
+  const [eventPwLoading, setEventPwLoading] = useState<Record<string, boolean>>({});
 
   const [archivedEvents, setArchivedEvents] = useState<ArchivedEvent[]>([]);
   const [archiveLoading, setArchiveLoading] = useState(false);
@@ -610,7 +610,9 @@ export default function AdminPage() {
     }
     if (activeTab === "tools") {
       fetch(`/api/admin/event?password=${encodeURIComponent(savedPassword.current)}`)
-        .then(r => r.json()).then(d => setCurrentEventPassword(d.registration_password ?? null));
+        .then(r => r.json()).then(d => {
+          if (Array.isArray(d.events)) setActiveEventsWithPw(d.events);
+        });
     }
   }, [activeTab, adminSection, loadArchive]);
 
@@ -826,19 +828,21 @@ export default function AdminPage() {
     setCsvSendResult({ ok: failed === 0, msg: `${sent} QR-Codes gesendet${failed > 0 ? `, ${failed} fehlgeschlagen` : ""}.` });
   };
 
-  const handleSetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPwStatus(null); setPwLoading(true);
+  const handleSetPassword = async (eventId: string) => {
+    const pw = eventPwInputs[eventId] ?? "";
+    setEventPwResults(prev => ({ ...prev, [eventId]: null }));
+    setEventPwLoading(prev => ({ ...prev, [eventId]: true }));
     const res = await fetch("/api/admin/event", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminPassword: savedPassword.current, registration_password: eventPassword || null }),
+      body: JSON.stringify({ adminPassword: savedPassword.current, eventId, registration_password: pw || null }),
     });
-    setPwLoading(false);
-    if (!res.ok) { setPwStatus({ ok: false, msg: "Fehler beim Speichern." }); }
-    else {
-      setCurrentEventPassword(eventPassword || null);
-      setPwStatus({ ok: true, msg: eventPassword ? `Passwort gesetzt: „${eventPassword}"` : "Passwortschutz entfernt." });
-      setEventPassword("");
+    setEventPwLoading(prev => ({ ...prev, [eventId]: false }));
+    if (!res.ok) {
+      setEventPwResults(prev => ({ ...prev, [eventId]: { ok: false, msg: "Fehler beim Speichern." } }));
+    } else {
+      setActiveEventsWithPw(prev => prev.map(ev => ev.id === eventId ? { ...ev, registration_password: pw || null } : ev));
+      setEventPwInputs(prev => ({ ...prev, [eventId]: "" }));
+      setEventPwResults(prev => ({ ...prev, [eventId]: { ok: true, msg: pw ? `Code gesetzt: „${pw}"` : "Schutz entfernt." } }));
     }
   };
 
@@ -1356,36 +1360,44 @@ export default function AdminPage() {
         {adminSection === "events" && activeTab === "tools" && (
           <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 items-start">
 
-            {/* Anmeldeseite sperren */}
-            <Card>
-              <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
-              <CardHeader title="Anmeldeseite sperren" subtitle="Mitglieder brauchen diesen Code um sich anzumelden." />
-              <div className="p-5">
-                {currentEventPassword !== (undefined as unknown as null) && (
+            {/* Anmeldeseite sperren – pro Event */}
+            {activeEventsWithPw.map(ev => (
+              <Card key={ev.id}>
+                <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+                <CardHeader
+                  title="Anmeldeseite sperren"
+                  subtitle={`${ev.name} · ${new Date(ev.date).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}`}
+                />
+                <div className="p-5">
                   <div className="mb-4 px-4 py-3 rounded-xl flex items-center gap-3"
-                    style={{ background: currentEventPassword ? "rgba(210,141,40,0.08)" : "var(--ig-light)", border: `1px solid ${currentEventPassword ? "rgba(210,141,40,0.2)" : "var(--ig-gray2)"}` }}>
-                    <IconLock className="w-4 h-4 flex-shrink-0" style={{ color: currentEventPassword ? "var(--ig-gold)" : "var(--ig-gray3)" } } />
+                    style={{ background: ev.registration_password ? "rgba(210,141,40,0.08)" : "var(--ig-light)", border: `1px solid ${ev.registration_password ? "rgba(210,141,40,0.2)" : "var(--ig-gray2)"}` }}>
+                    <IconLock className="w-4 h-4 flex-shrink-0" style={{ color: ev.registration_password ? "var(--ig-gold)" : "var(--ig-gray3)" }} />
                     <div>
                       <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Aktueller Code</p>
-                      <p className="text-sm font-semibold font-mono" style={{ color: currentEventPassword ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
-                        {currentEventPassword ?? "Kein Schutz aktiv"}
+                      <p className="text-sm font-semibold font-mono" style={{ color: ev.registration_password ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
+                        {ev.registration_password ?? "Kein Schutz aktiv"}
                       </p>
                     </div>
                   </div>
-                )}
-                <form onSubmit={handleSetPassword} className="space-y-3">
-                  <input type="text" value={eventPassword} onChange={e => setEventPassword(e.target.value)}
-                    placeholder="Neuer Einladungscode (leer = kein Schutz)"
-                    className={inputClass} style={inputStyle}
-                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                  {pwStatus && (
-                    <p className={`text-xs ${pwStatus.ok ? "text-green-600" : "text-red-500"}`}>{pwStatus.msg}</p>
-                  )}
-                  <div className="flex justify-end"><BtnPrimary type="submit" disabled={pwLoading}>{pwLoading ? "Speichert…" : "Speichern"}</BtnPrimary></div>
-                </form>
-              </div>
-            </Card>
+                  <div className="space-y-3">
+                    <input type="text" value={eventPwInputs[ev.id] ?? ""} onChange={e => setEventPwInputs(prev => ({ ...prev, [ev.id]: e.target.value }))}
+                      placeholder="Neuer Code (leer = kein Schutz)"
+                      className={inputClass} style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                      onKeyDown={e => e.key === "Enter" && handleSetPassword(ev.id)} />
+                    {eventPwResults[ev.id] && (
+                      <p className={`text-xs ${eventPwResults[ev.id]!.ok ? "text-green-600" : "text-red-500"}`}>{eventPwResults[ev.id]!.msg}</p>
+                    )}
+                    <div className="flex justify-end">
+                      <BtnPrimary onClick={() => handleSetPassword(ev.id)} disabled={!!eventPwLoading[ev.id]}>
+                        {eventPwLoading[ev.id] ? "Speichert…" : "Speichern"}
+                      </BtnPrimary>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
 
             {/* CSV Import */}
             <Card>
