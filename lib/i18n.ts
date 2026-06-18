@@ -10,8 +10,8 @@ export const T = {
   en: {
     eventRegistration: "Event Registration",
     noActiveEvent: "No active event.",
-    enterCode: "Please enter your personal invite code or the general event code to continue.",
-    codePlaceholder: "Invite code or event code",
+    enterCode: "Please enter the event code to continue.",
+    codePlaceholder: "Event code",
     checking: "Checking…",
     continue: "Continue",
     invalidCode: "Invalid code.",
@@ -44,8 +44,8 @@ export const T = {
   de: {
     eventRegistration: "Event-Anmeldung",
     noActiveEvent: "Kein aktives Event.",
-    enterCode: "Bitte gib deinen persönlichen Einladungscode oder den allgemeinen Event-Code ein.",
-    codePlaceholder: "Einladungscode oder Event-Code",
+    enterCode: "Bitte gib den Event-Code ein, um fortzufahren.",
+    codePlaceholder: "Event-Code",
     checking: "Prüfen…",
     continue: "Weiter",
     invalidCode: "Ungültiger Code.",
@@ -78,8 +78,8 @@ export const T = {
   fr: {
     eventRegistration: "Inscription à l'événement",
     noActiveEvent: "Aucun événement actif.",
-    enterCode: "Veuillez entrer votre code d'invitation personnel ou le code général de l'événement.",
-    codePlaceholder: "Code d'invitation ou code événement",
+    enterCode: "Veuillez entrer le code de l'événement pour continuer.",
+    codePlaceholder: "Code de l'événement",
     checking: "Vérification…",
     continue: "Continuer",
     invalidCode: "Code invalide.",

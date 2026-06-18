@@ -136,7 +136,7 @@ function RegistrationPageInner() {
             </p>
             <form onSubmit={handleUnlock} className="space-y-4">
               <input
-                type="text"
+                type="password"
                 value={gateCode}
                 onChange={(e) => setGateCode(e.target.value)}
                 placeholder={t.codePlaceholder}
