@@ -94,8 +94,8 @@ function buildCampaignHtml({
         <!-- Body: intro (before CTA marker) -->
         ${bodyBefore ? `<tr><td style="padding:24px 40px 0;">${bodyBefore}</td></tr>` : ''}
 
-        <!-- Invite code + Register button -->
-        ${ctaBlock}
+        <!-- Invite code + Register button (only when CTA marker was in body) -->
+        ${ctaIdx >= 0 ? ctaBlock : ''}
 
         <!-- Body: rest (after CTA marker) -->
         <tr><td style="padding:32px 40px 40px;">${bodyAfter || ''}</td></tr>
