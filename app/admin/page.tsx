@@ -509,9 +509,18 @@ export default function AdminPage() {
   const csvInputRef = useRef<HTMLInputElement>(null);
 
   const [activeEventsWithPw, setActiveEventsWithPw] = useState<{ id: string; name: string; date: string; registration_password: string | null }[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPwInputs, setEventPwInputs] = useState<Record<string, string>>({});
   const [eventPwResults, setEventPwResults] = useState<Record<string, { ok: boolean; msg: string } | null>>({});
   const [eventPwLoading, setEventPwLoading] = useState<Record<string, boolean>>({});
+  // Event creation form
+  const [newEventName, setNewEventName] = useState("");
+  const [newEventDate, setNewEventDate] = useState("");
+  const [newEventLocation, setNewEventLocation] = useState("");
+  const [newEventDesc, setNewEventDesc] = useState("");
+  const [newEventPw, setNewEventPw] = useState("");
+  const [newEventLoading, setNewEventLoading] = useState(false);
+  const [newEventResult, setNewEventResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const [archivedEvents, setArchivedEvents] = useState<ArchivedEvent[]>([]);
   const [archiveLoading, setArchiveLoading] = useState(false);
@@ -569,9 +578,10 @@ export default function AdminPage() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const soundBuffers = useRef<Record<string, AudioBuffer>>({});
 
-  const loadRegistrations = useCallback(async (pw: string) => {
+  const loadRegistrations = useCallback(async (pw: string, evId?: string | null) => {
     setLoading(true);
-    const res = await fetch(`/api/registrations?password=${encodeURIComponent(pw)}`);
+    const url = `/api/registrations?password=${encodeURIComponent(pw)}${evId ? `&eventId=${evId}` : ''}`;
+    const res = await fetch(url);
     const data = await res.json();
     if (data.registrations) { setRegistrations(data.registrations); setEvent(data.event); }
     setLoading(false);
@@ -608,10 +618,14 @@ export default function AdminPage() {
         if (Array.isArray(d)) setActiveEvents(d);
       });
     }
-    if (activeTab === "tools") {
+    if (adminSection === "events" && savedPassword.current) {
       fetch(`/api/admin/event?password=${encodeURIComponent(savedPassword.current)}`)
         .then(r => r.json()).then(d => {
-          if (Array.isArray(d.events)) setActiveEventsWithPw(d.events);
+          if (Array.isArray(d.events)) {
+            setActiveEventsWithPw(d.events);
+            // Auto-select first event if none selected yet
+            setSelectedEventId(prev => prev ?? d.events[0]?.id ?? null);
+          }
         });
     }
   }, [activeTab, adminSection, loadArchive]);
@@ -788,7 +802,7 @@ export default function AdminPage() {
     setManualLoading(true);
     const res = await fetch("/api/admin/register", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminPassword: savedPassword.current, name: `${manualVorname.trim()} ${manualNachname.trim()}`, email: manualEmail }),
+      body: JSON.stringify({ adminPassword: savedPassword.current, name: `${manualVorname.trim()} ${manualNachname.trim()}`, email: manualEmail, eventId: selectedEventId }),
     });
     const data = await res.json();
     setManualLoading(false);
@@ -946,7 +960,7 @@ export default function AdminPage() {
                     setCampaignsLoading(true);
                     fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
                   } else {
-                    loadRegistrations(savedPassword.current);
+                    loadRegistrations(savedPassword.current, selectedEventId);
                   }
                 }}
                 disabled={adminSection === "mailing" && mailingTab === "compose"}
@@ -1062,16 +1076,39 @@ export default function AdminPage() {
       {adminSection !== "home" && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6">
           {adminSection === "events" && (
-            <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
-              {eventTabs.map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
-                  style={{ color: activeTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
-                  {tab.label}
-                  {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
-                </button>
-              ))}
-            </div>
+            <>
+              {activeEventsWithPw.length > 1 && (
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="text-xs font-semibold tracking-wide" style={{ color: "var(--ig-gray3)" }}>EVENT</span>
+                  <select
+                    value={selectedEventId ?? ""}
+                    onChange={e => {
+                      const id = e.target.value;
+                      setSelectedEventId(id);
+                      loadRegistrations(savedPassword.current, id);
+                    }}
+                    className="flex-1 px-3 py-1.5 rounded-lg text-sm font-medium outline-none"
+                    style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+                  >
+                    {activeEventsWithPw.map(ev => (
+                      <option key={ev.id} value={ev.id}>
+                        {ev.name} · {new Date(ev.date).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
+                {eventTabs.map(tab => (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                    className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
+                    style={{ color: activeTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
+                    {tab.label}
+                    {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
           {adminSection === "mailing" && (
             <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
@@ -1389,7 +1426,34 @@ export default function AdminPage() {
                     {eventPwResults[ev.id] && (
                       <p className={`text-xs ${eventPwResults[ev.id]!.ok ? "text-green-600" : "text-red-500"}`}>{eventPwResults[ev.id]!.msg}</p>
                     )}
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => showConfirm(
+                          "Event deaktivieren",
+                          `„${ev.name}" deaktivieren? Der Event wird ins Archiv verschoben.`,
+                          false,
+                          async () => {
+                            await fetch(`/api/admin/events/${ev.id}`, {
+                              method: "PATCH", headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ adminPassword: savedPassword.current, active: false }),
+                            });
+                            setActiveEventsWithPw(prev => prev.filter(e => e.id !== ev.id));
+                            if (selectedEventId === ev.id) {
+                              const remaining = activeEventsWithPw.filter(e => e.id !== ev.id);
+                              const nextId = remaining[0]?.id ?? null;
+                              setSelectedEventId(nextId);
+                              loadRegistrations(savedPassword.current, nextId);
+                            }
+                            setDialog(null);
+                          }
+                        )}
+                        className="text-xs px-3 py-1.5 rounded-lg transition"
+                        style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)" }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#dc2626"; (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
+                      >
+                        Deaktivieren
+                      </button>
                       <BtnPrimary onClick={() => handleSetPassword(ev.id)} disabled={!!eventPwLoading[ev.id]}>
                         {eventPwLoading[ev.id] ? "Speichert…" : "Speichern"}
                       </BtnPrimary>
@@ -1398,6 +1462,57 @@ export default function AdminPage() {
                 </div>
               </Card>
             ))}
+
+            {/* Neuen Event erstellen */}
+            <Card>
+              <div className="h-0.5" style={{ background: "var(--ig-navy)" }} />
+              <CardHeader title="Neuen Event erstellen" subtitle="Wird sofort aktiv und erscheint im Builder" />
+              <div className="p-5 space-y-3">
+                <input type="text" value={newEventName} onChange={e => setNewEventName(e.target.value)}
+                  placeholder="Event-Name *" className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <input type="datetime-local" value={newEventDate} onChange={e => setNewEventDate(e.target.value)}
+                  className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <input type="text" value={newEventLocation} onChange={e => setNewEventLocation(e.target.value)}
+                  placeholder="Ort *" className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <input type="text" value={newEventDesc} onChange={e => setNewEventDesc(e.target.value)}
+                  placeholder="Beschreibung (optional)" className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <input type="text" value={newEventPw} onChange={e => setNewEventPw(e.target.value)}
+                  placeholder="Zugangscode (optional)" className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                {newEventResult && (
+                  <p className={`text-xs ${newEventResult.ok ? "text-green-600" : "text-red-500"}`}>{newEventResult.msg}</p>
+                )}
+                <div className="flex justify-end">
+                  <BtnPrimary
+                    disabled={newEventLoading || !newEventName.trim() || !newEventDate || !newEventLocation.trim()}
+                    onClick={async () => {
+                      setNewEventLoading(true); setNewEventResult(null);
+                      const res = await fetch("/api/admin/events", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ adminPassword: savedPassword.current, name: newEventName, date: newEventDate, location: newEventLocation, description: newEventDesc, registration_password: newEventPw }),
+                      });
+                      const d = await res.json();
+                      setNewEventLoading(false);
+                      if (!res.ok) { setNewEventResult({ ok: false, msg: d.error || "Fehler." }); return; }
+                      setNewEventResult({ ok: true, msg: `„${d.name}" erstellt!` });
+                      setNewEventName(""); setNewEventDate(""); setNewEventLocation(""); setNewEventDesc(""); setNewEventPw("");
+                      setActiveEventsWithPw(prev => [...prev, { id: d.id, name: d.name, date: d.date, registration_password: d.registration_password ?? null }]);
+                    }}
+                  >
+                    {newEventLoading ? "Erstellt…" : "Event erstellen"}
+                  </BtnPrimary>
+                </div>
+              </div>
+            </Card>
 
             {/* CSV Import */}
             <Card>
@@ -1445,7 +1560,7 @@ export default function AdminPage() {
                   { type: "noshows", label: "No-Shows", count: registrations.length - checkedInCount },
                 ].map(({ type, label, count }) => (
                   <a key={type}
-                    href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}`}
+                    href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}${selectedEventId ? `&eventId=${selectedEventId}` : ''}`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-between px-4 py-3 rounded-xl border transition group"
                     style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-black)", background: "white" }}
@@ -1479,11 +1594,11 @@ export default function AdminPage() {
                       async () => {
                         const res = await fetch("/api/admin/clear", {
                           method: "DELETE", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ adminPassword: savedPassword.current }),
+                          body: JSON.stringify({ adminPassword: savedPassword.current, eventId: selectedEventId }),
                         });
                         await res.json();
                         setDialog(null);
-                        if (res.ok) loadRegistrations(savedPassword.current);
+                        if (res.ok) loadRegistrations(savedPassword.current, selectedEventId);
                       }
                     )}
                     className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition"

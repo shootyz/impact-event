@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
 
 export async function POST(req: NextRequest) {
-  const { adminPassword, name, email } = await req.json()
+  const { adminPassword, name, email, eventId } = await req.json()
 
   if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin()
 
-  const { data: event } = await db.from('events').select('id').eq('active', true).single()
+  const base = db.from('events').select('id')
+  const { data: event } = await (eventId ? base.eq('id', eventId) : base.eq('active', true).order('date', { ascending: true }).limit(1)).single()
   if (!event) return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
 
   const { data: existing } = await db

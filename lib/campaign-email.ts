@@ -44,8 +44,12 @@ function buildCampaignHtml({
   const bodyAfter  = ctaIdx >= 0 ? fullBody.slice(ctaIdx + CTA_MARKER.length) : ''
 
   const langSuffix = lang !== 'en' ? `${(eventUrl ?? '').includes('?') ? '&' : '?'}lang=${lang}` : ''
+  const eventIdMatch = eventUrl?.match(/[?&]event=([^&]+)/)
+  const qrParams: string[] = []
+  if (lang !== 'en') qrParams.push(`lang=${lang}`)
+  if (eventIdMatch) qrParams.push(`event=${eventIdMatch[1]}`)
   const registerUrl = inviteCode
-    ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}${lang !== 'en' ? `?lang=${lang}` : ''}`
+    ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
     : eventUrl ? `${eventUrl}${langSuffix}` : null
 
   const ctaBlock = registerUrl ? `
