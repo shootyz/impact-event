@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { T, getLang } from "@/lib/i18n";
 
 type TicketInfo = {
   name: string;
@@ -13,6 +14,8 @@ function SuccessPageInner() {
   const { token } = useParams<{ token: string }>();
   const searchParams = useSearchParams();
   const already = searchParams.get("already") === "1";
+  const lang = getLang(searchParams);
+  const t = T[lang];
   const [info, setInfo] = useState<TicketInfo | null>(null);
   const [resending, setResending] = useState(false);
   const [resendDone, setResendDone] = useState(false);
@@ -42,7 +45,7 @@ function SuccessPageInner() {
         {/* Already registered banner */}
         {already && (
           <div className="rounded-xl px-4 py-3 mb-4 text-sm text-center font-medium" style={{ background: "#fdf8f0", border: "1px solid #D28D28", color: "#D28D28" }}>
-            You are already registered for this event.
+            {lang === "de" ? "Du bist bereits für dieses Event angemeldet." : lang === "fr" ? "Vous êtes déjà inscrit(e) à cet événement." : "You are already registered for this event."}
           </div>
         )}
 
@@ -57,7 +60,9 @@ function SuccessPageInner() {
           </div>
 
           <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--ig-gold)" }}>
-            {already ? "Registration on file" : "Registration Confirmed"}
+            {already
+              ? (lang === "de" ? "Anmeldung vorhanden" : lang === "fr" ? "Inscription enregistrée" : "Registration on file")
+              : t.registrationConfirmed}
           </p>
 
           <h1 className="text-xl font-bold mb-6" style={{ color: "var(--ig-navy)" }}>
@@ -66,16 +71,16 @@ function SuccessPageInner() {
 
           <div className="rounded-xl px-5 py-4 mb-6 text-left" style={{ background: "var(--ig-light)", border: "1px solid var(--ig-gray2)" }}>
             <p className="text-sm mb-1" style={{ color: "var(--ig-navy)" }}>
-              Your ticket has been sent to:
+              {t.ticketSentTo}
             </p>
             <p className="text-sm font-semibold" style={{ color: "var(--ig-navy)" }}>
               {info?.email ?? "…"}
             </p>
           </div>
 
-          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Didn't receive the email? Check your spam folder.</p>
-          <p className="text-xs mt-2" style={{ color: "var(--ig-gray3)" }}>
-            Questions? <a href="mailto:info@impactgstaad.ch" style={{ color: "var(--ig-navy)", textDecoration: "underline" }}>info@impactgstaad.ch</a>
+          <p className="text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>{t.checkSpam}</p>
+          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
+            {t.questions} <a href="mailto:info@impactgstaad.ch" style={{ color: "var(--ig-navy)", textDecoration: "underline" }}>info@impactgstaad.ch</a>
           </p>
         </div>
 
@@ -91,23 +96,29 @@ function SuccessPageInner() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
-          Save Ticket as PDF
+          {t.saveTicketPdf}
         </a>
 
-        {/* Email ticket button — only shown for already-registered users */}
-        {already && <button
-          onClick={resendEmail}
-          disabled={resending || resendDone}
-          className="mt-3 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition disabled:opacity-50"
-          style={{ background: "transparent", color: "var(--ig-navy)", border: "1.5px solid var(--ig-navy)", cursor: resendDone ? "default" : "pointer" }}
-          onMouseEnter={e => { if (!resendDone) (e.currentTarget as HTMLElement).style.background = "rgba(30,50,99,0.06)"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          {resendDone ? "Ticket sent — check your inbox" : resending ? "Sending…" : "Email my ticket"}
-        </button>}
+        {/* Resend email button — only for already-registered users */}
+        {already && (
+          <button
+            onClick={resendEmail}
+            disabled={resending || resendDone}
+            className="mt-3 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition disabled:opacity-50"
+            style={{ background: "transparent", color: "var(--ig-navy)", border: "1.5px solid var(--ig-navy)", cursor: resendDone ? "default" : "pointer" }}
+            onMouseEnter={e => { if (!resendDone) (e.currentTarget as HTMLElement).style.background = "rgba(30,50,99,0.06)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            {resendDone
+              ? (lang === "de" ? "Ticket gesendet – prüfe dein Postfach" : lang === "fr" ? "Billet envoyé – vérifiez votre boîte" : "Ticket sent — check your inbox")
+              : resending
+              ? (lang === "de" ? "Senden…" : lang === "fr" ? "Envoi…" : "Sending…")
+              : (lang === "de" ? "Ticket per E-Mail senden" : lang === "fr" ? "Envoyer mon billet" : "Email my ticket")}
+          </button>
+        )}
 
       </div>
     </main>

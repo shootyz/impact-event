@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { T, getLang } from "@/lib/i18n";
 
 type Event = {
   id: string;
@@ -14,6 +15,9 @@ type Event = {
 function RegistrationPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const lang = getLang(searchParams);
+  const t = T[lang];
+
   const [event, setEvent] = useState<Event | null>(null);
   const [eventLoading, setEventLoading] = useState(true);
   const [unlocked, setUnlocked] = useState(false);
@@ -54,17 +58,17 @@ function RegistrationPageInner() {
     });
     const authData = await authRes.json();
     setGateLoading(false);
-    if (!authRes.ok) { setGateError(authData.error || "Invalid code."); return; }
+    if (!authRes.ok) { setGateError(authData.error || t.invalidCode); return; }
     setUnlocked(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!vorname.trim() || !nachname.trim()) { setError("Please enter your first and last name."); return; }
+    if (!vorname.trim() || !nachname.trim()) { setError(t.errorName); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-    if (!emailRegex.test(email)) { setError("Please enter a valid email address."); return; }
-    if (email.toLowerCase() !== emailConfirm.toLowerCase()) { setError("Email addresses do not match."); return; }
+    if (!emailRegex.test(email)) { setError(t.errorEmail); return; }
+    if (email.toLowerCase() !== emailConfirm.toLowerCase()) { setError(t.errorEmailMatch); return; }
     setLoading(true);
     const res = await fetch("/api/register", {
       method: "POST",
@@ -73,12 +77,12 @@ function RegistrationPageInner() {
     });
     const data = await res.json();
     setLoading(false);
-    if (!res.ok) { setError(data.error || "Something went wrong."); return; }
-    router.push(`/success/${data.token}`);
+    if (!res.ok) { setError(data.error || t.errorGeneric); return; }
+    router.push(`/success/${data.token}?lang=${lang}`);
   };
 
   const eventDate = event
-    ? new Date(event.date).toLocaleDateString("en-GB", {
+    ? new Date(event.date).toLocaleDateString(t.dateLocale, {
         weekday: "long", year: "numeric", month: "long", day: "numeric",
       })
     : null;
@@ -94,7 +98,7 @@ function RegistrationPageInner() {
           <img src="/logo.png" alt="Impact Gstaad" className="h-12 mx-auto mb-8 object-contain" />
           <div className="h-px mb-8" style={{ background: "var(--ig-gray2)" }} />
           <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--ig-gold)" }}>
-            Event Registration
+            {t.eventRegistration}
           </p>
           {eventLoading ? (
             <div className="h-6 rounded animate-pulse w-48 mx-auto" style={{ background: "var(--ig-gray2)" }} />
@@ -106,7 +110,7 @@ function RegistrationPageInner() {
               )}
             </>
           ) : (
-            <p className="text-red-500 text-sm">No active event.</p>
+            <p className="text-red-500 text-sm">{t.noActiveEvent}</p>
           )}
         </div>
 
@@ -114,14 +118,14 @@ function RegistrationPageInner() {
         {event && !unlocked && (
           <div className="rounded-2xl border p-8 shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
             <p className="text-sm text-center mb-6" style={{ color: "var(--ig-gray3)" }}>
-              Please enter the event code to continue.
+              {t.enterCode}
             </p>
             <form onSubmit={handleUnlock} className="space-y-4">
               <input
                 type="text"
                 value={gateCode}
                 onChange={(e) => setGateCode(e.target.value)}
-                placeholder="Event code"
+                placeholder={t.codePlaceholder}
                 autoFocus
                 className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition text-center tracking-widest uppercase font-semibold"
                 style={inputStyle}
@@ -137,7 +141,7 @@ function RegistrationPageInner() {
                 onMouseEnter={e => !gateLoading && (e.currentTarget.style.background = "#B8791F")}
                 onMouseLeave={e => e.currentTarget.style.background = "var(--ig-gold)"}
               >
-                {gateLoading ? "Checking…" : "Continue"}
+                {gateLoading ? t.checking : t.continue}
               </button>
             </form>
           </div>
@@ -151,12 +155,12 @@ function RegistrationPageInner() {
               <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, var(--ig-navy), var(--ig-gold))` }} />
               <div className="px-6 py-5 flex gap-6">
                 <div className="flex-1">
-                  <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1.5" style={{ color: "var(--ig-gray3)" }}>Date</p>
+                  <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1.5" style={{ color: "var(--ig-gray3)" }}>{t.date}</p>
                   <p className="text-sm font-medium" style={{ color: "var(--ig-navy)" }}>{eventDate}</p>
                 </div>
                 <div className="w-px" style={{ background: "var(--ig-gray2)" }} />
                 <div className="flex-1">
-                  <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1.5" style={{ color: "var(--ig-gray3)" }}>Location</p>
+                  <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1.5" style={{ color: "var(--ig-gray3)" }}>{t.location}</p>
                   <p className="text-sm font-medium" style={{ color: "var(--ig-navy)" }}>{event.location}</p>
                 </div>
               </div>
@@ -166,14 +170,14 @@ function RegistrationPageInner() {
             <div className="rounded-2xl border p-6 shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
               {inviteCodeId && (
                 <div className="rounded-xl px-4 py-3 mb-4 text-sm font-medium" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}>
-                  Welcome, {vorname}! Your details are pre-filled from your invitation.
+                  {t.welcome(vorname)}
                 </div>
               )}
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: "First name", value: vorname, set: setVorname, placeholder: "Maria", locked: nameLocked },
-                    { label: "Last name", value: nachname, set: setNachname, placeholder: "Muster", locked: nameLocked },
+                    { label: t.firstName, value: vorname, set: setVorname, placeholder: t.firstNamePlaceholder, locked: nameLocked },
+                    { label: t.lastName, value: nachname, set: setNachname, placeholder: t.lastNamePlaceholder, locked: nameLocked },
                   ].map(({ label, value, set, placeholder, locked }) => (
                     <div key={label}>
                       <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
@@ -194,8 +198,8 @@ function RegistrationPageInner() {
                   ))}
                 </div>
                 {[
-                  { label: "Email", value: email, set: setEmail, placeholder: "name@example.com", locked: emailLocked, confirm: false },
-                  { label: "Confirm email", value: emailConfirm, set: setEmailConfirm, placeholder: "name@example.com", locked: emailLocked, confirm: true },
+                  { label: t.email, value: email, set: setEmail, placeholder: "name@example.com", locked: emailLocked, confirm: false },
+                  { label: t.confirmEmail, value: emailConfirm, set: setEmailConfirm, placeholder: "name@example.com", locked: emailLocked, confirm: true },
                 ].map(({ label, value, set, placeholder, locked, confirm }) => (
                   <div key={label}>
                     <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
@@ -230,13 +234,13 @@ function RegistrationPageInner() {
                   onMouseEnter={e => !loading && (e.currentTarget.style.background = "#B8791F")}
                   onMouseLeave={e => e.currentTarget.style.background = "var(--ig-gold)"}
                 >
-                  {loading ? "Registering…" : "Register Now"}
+                  {loading ? t.registering : t.registerNow}
                 </button>
               </form>
             </div>
 
             <p className="text-center text-xs tracking-wide" style={{ color: "var(--ig-navy)" }}>
-              You will receive your ticket by email.
+              {t.ticketByEmail}
             </p>
           </div>
         )}

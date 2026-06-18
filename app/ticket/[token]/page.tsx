@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
+import { T, getLang } from "@/lib/i18n";
 
 type TicketInfo = {
   name: string;
   event: { name: string; date: string; location: string };
 };
 
-export default function TicketPage() {
+function TicketContent() {
   const { token } = useParams<{ token: string }>();
+  const searchParams = useSearchParams();
+  const lang = getLang(searchParams);
+  const t = T[lang];
   const [qrUrl, setQrUrl] = useState("");
   const [info, setInfo] = useState<TicketInfo | null>(null);
 
@@ -22,7 +26,7 @@ export default function TicketPage() {
   }, [token]);
 
   const eventDate = info?.event?.date
-    ? new Date(info.event.date).toLocaleDateString("en-GB", {
+    ? new Date(info.event.date).toLocaleDateString(t.dateLocale, {
         weekday: "long", day: "numeric", month: "long", year: "numeric",
       })
     : null;
@@ -43,7 +47,6 @@ export default function TicketPage() {
         className="min-h-screen flex flex-col items-center justify-center px-4 py-12 no-print-bg"
         style={{ background: "var(--ig-light)" }}
       >
-        {/* ── Mobile: max-w-xs portrait / Desktop: max-w-2xl landscape ── */}
         <div className="w-full max-w-xs sm:max-w-2xl">
 
           {/* Ticket card */}
@@ -76,7 +79,7 @@ export default function TicketPage() {
 
                 {info && (
                   <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>
-                    Ticket for
+                    {t.ticketFor}
                   </p>
                 )}
                 {info && (
@@ -84,7 +87,7 @@ export default function TicketPage() {
                 )}
 
                 <div className="mt-auto pt-6">
-                  <p className="text-xs" style={{ color: "var(--ig-navy)" }}>Show this QR code at the entrance</p>
+                  <p className="text-xs" style={{ color: "var(--ig-navy)" }}>{t.showQr}</p>
                 </div>
               </div>
 
@@ -124,7 +127,7 @@ export default function TicketPage() {
               <div className="px-6 py-6">
                 {info && (
                   <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-1" style={{ color: "var(--ig-gray3)" }}>
-                    Ticket for
+                    {t.ticketFor}
                   </p>
                 )}
                 {info && (
@@ -143,7 +146,7 @@ export default function TicketPage() {
               {/* Footer */}
               <div className="px-6 pb-5 pt-1 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
                 <p className="text-xs text-center" style={{ color: "var(--ig-navy)" }}>
-                  Show this QR code at the entrance
+                  {t.showQr}
                 </p>
               </div>
             </div>
@@ -161,10 +164,18 @@ export default function TicketPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
             </svg>
-            Save as PDF
+            {t.savePdf}
           </a>
         </div>
       </main>
     </>
+  );
+}
+
+export default function TicketPage() {
+  return (
+    <Suspense>
+      <TicketContent />
+    </Suspense>
   );
 }
