@@ -1028,37 +1028,36 @@ export default function CampaignBuilder({
           </div>
         </div>
 
-        {/* Event selector + URL */}
-        <div className="space-y-2">
-          {events && events.length > 0 && (
-            <div>
-              <label className={labelCls2} style={labelSty2}>Event</label>
-              <select
-                className={inputCls2}
-                style={{ ...inputSty, borderColor: "#d1d5db" }}
-                value={(() => {
-                  const m = eventUrl.match(/[?&]event=([^&]+)/);
-                  return m ? decodeURIComponent(m[1]) : "";
-                })()}
-                onChange={e => {
-                  const id = e.target.value;
-                  const base = "https://impactgstaad.vercel.app";
-                  const newUrl = id ? `${base}?event=${id}` : base;
-                  setEventUrl(newUrl);
-                  setBlocks(prev => prev.map(b =>
-                    b.type === "register_button" ? { ...b, url: newUrl } : b
-                  ));
-                }}
-              >
-                <option value="">— Event auswählen —</option>
-                {events.map(ev => (
-                  <option key={ev.id} value={ev.id}>
-                    {ev.name} ({new Date(ev.date).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+        {/* Event selector */}
+        {events && events.length > 0 ? (
+          <div>
+            <label className={labelCls2} style={labelSty2}>Event</label>
+            <select
+              className={inputCls2}
+              style={{ ...inputSty, borderColor: "#d1d5db" }}
+              value={(() => {
+                const m = eventUrl.match(/[?&]event=([^&]+)/);
+                return m ? decodeURIComponent(m[1]) : "";
+              })()}
+              onChange={e => {
+                const id = e.target.value;
+                const base = "https://impactgstaad.vercel.app";
+                const newUrl = id ? `${base}?event=${id}` : base;
+                setEventUrl(newUrl);
+                setBlocks(prev => prev.map(b =>
+                  b.type === "register_button" ? { ...b, url: newUrl } : b
+                ));
+              }}
+            >
+              <option value="">— Event auswählen —</option>
+              {events.map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.name} ({new Date(ev.date).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })})
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
           <div>
             <label className={labelCls2} style={labelSty2}>Register-Button URL <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
             <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={eventUrl}
@@ -1066,7 +1065,7 @@ export default function CampaignBuilder({
               onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
               onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
           </div>
-        </div>
+        )}
 
         {/* Result */}
         {/* Auto-save status */}
