@@ -71,6 +71,8 @@ export type DeadlineBlock = {
 
 export type DividerBlock = { type: "divider" };
 
+export type CustomField = { id: string; label: string; value: string };
+
 export type CampaignBlock = (
   | IntroBlock
   | EventDetailsBlock
@@ -80,7 +82,7 @@ export type CampaignBlock = (
   | TextBlock
   | DeadlineBlock
   | DividerBlock
-) & { label?: string };
+) & { label?: string; custom_fields?: CustomField[] };
 
 // ── HTML renderer ─────────────────────────────────────────────────────────────
 
@@ -94,7 +96,18 @@ function sectionHeadHtml(label: string) {
   return `<p style="color:${D.gold};font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 16px;font-family:Arial,sans-serif;">${label}</p>`;
 }
 
+function renderCustomFields(block: CampaignBlock): string {
+  const fields = (block.custom_fields ?? []).filter(f => f.label || f.value);
+  if (!fields.length) return "";
+  const rows = fields.map(f => `<tr><td style="padding:16px 0;">
+  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">${f.label}</p>
+  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0;font-family:Arial,sans-serif;">${f.value}</p>
+</td></tr>`).join("\n");
+  return `\n<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">${rows}</table>`;
+}
+
 function renderBlock(block: CampaignBlock): string {
+  const extra = renderCustomFields(block);
   switch (block.type) {
     case "intro":
       return block.text
@@ -126,10 +139,10 @@ function renderBlock(block: CampaignBlock): string {
   ${block.moderation_title ? `<p style="color:${D.gray};font-size:14px;margin:0;font-family:Arial,sans-serif;">${block.moderation_title}</p>` : ""}
 </td></tr>`);
       return `${dividerHtml()}
-${sectionHeadHtml("Event Details")}
+${sectionHeadHtml(block.label || "Event Details")}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
 ${rows.join("\n")}
-</table>`;
+</table>${extra}`;
     }
 
     case "program": {
@@ -151,10 +164,10 @@ ${rows.join("\n")}
 </td></tr>`;
       });
       return `${dividerHtml()}
-${sectionHeadHtml("Program")}
+${sectionHeadHtml(block.label || "Program")}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
 ${slotHtmls.join("\n")}
-</table>`;
+</table>${extra}`;
     }
 
     case "finalists": {
@@ -179,12 +192,12 @@ ${block.website_url ? `<table width="100%" cellpadding="0" cellspacing="0" style
     }
 
     case "speaker":
-      return `${sectionHeadHtml("Keynote Speaker")}
+      return `${sectionHeadHtml(block.label || "Keynote Speaker")}
 ${block.photo_url ? `<img src="${block.photo_url}" alt="${block.name}" width="100" style="display:block;width:100px;height:100px;object-fit:cover;border-radius:50%;border:3px solid ${D.gold};margin:0 0 16px;" />` : ""}
 <p style="color:${D.black};font-size:16px;font-weight:700;margin:0 0 3px;font-family:Arial,sans-serif;">${block.name}</p>
 ${block.title ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 14px;font-family:Arial,sans-serif;">${block.title}</p>` : ""}
 ${block.book ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${block.book}</p>` : ""}
-${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${block.bio}</p>` : ""}`;
+${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${block.bio}</p>` : ""}${extra}`;
 
     case "text":
       return block.content
@@ -620,6 +633,37 @@ function DeadlineEditor({ block, onChange }: { block: DeadlineBlock; onChange: (
 
 // ── Block card ────────────────────────────────────────────────────────────────
 
+function CustomFieldsEditor({ block, onChange }: { block: CampaignBlock; onChange: (b: CampaignBlock) => void }) {
+  const fields = block.custom_fields ?? [];
+  const update = (id: string, patch: Partial<CustomField>) =>
+    onChange({ ...block, custom_fields: fields.map(f => f.id === id ? { ...f, ...patch } : f) });
+  const add = () =>
+    onChange({ ...block, custom_fields: [...fields, { id: uid(), label: "", value: "" }] });
+  const remove = (id: string) =>
+    onChange({ ...block, custom_fields: fields.filter(f => f.id !== id) });
+
+  return (
+    <div className="mt-4 pt-4 space-y-2" style={{ borderTop: "1px dashed #e5e7eb" }}>
+      {fields.map(f => (
+        <div key={f.id} className="flex gap-2 items-center">
+          <input value={f.label} onChange={e => update(f.id, { label: e.target.value })}
+            placeholder="Bezeichnung" className="rounded-lg border px-2 py-1.5 text-xs w-32 flex-shrink-0"
+            style={{ borderColor: "#d1d5db", color: "#1E3263", outline: "none" }} />
+          <input value={f.value} onChange={e => update(f.id, { value: e.target.value })}
+            placeholder="Wert" className="flex-1 rounded-lg border px-2 py-1.5 text-xs"
+            style={{ borderColor: "#d1d5db", color: "#1E3263", outline: "none" }} />
+          <button onClick={() => remove(f.id)}
+            className="w-6 h-6 rounded border text-xs font-bold flex-shrink-0"
+            style={{ borderColor: "#fecaca", color: "#dc2626" }}>✕</button>
+        </div>
+      ))}
+      <button onClick={add}
+        className="px-3 py-1.5 rounded-lg border text-xs font-medium transition"
+        style={{ borderColor: "#d1d5db", color: "#6b7280" }}>+ Feld hinzufügen</button>
+    </div>
+  );
+}
+
 function BlockCard({ block, index, total, onChange, onRemove, onMove, subject }: {
   block: CampaignBlock;
   index: number;
@@ -689,6 +733,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject }:
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
           {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
+          {block.type !== "divider" && <CustomFieldsEditor block={block} onChange={onChange} />}
         </div>
       )}
     </div>
