@@ -359,7 +359,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                                 const res = await fetch("/api/campaigns/test", {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, recipients: testSelected }),
+                                  body: JSON.stringify({ campaign_id: c.id, subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, recipients: testSelected }),
                                 });
                                 const d = await res.json();
                                 setTestSending(false);
