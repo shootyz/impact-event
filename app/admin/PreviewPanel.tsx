@@ -38,7 +38,8 @@ function Editable({ value, onChange, placeholder, style, className, multiline = 
         onChange(e.currentTarget.textContent || "");
       }}
       onKeyDown={e => {
-        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); (e.target as HTMLElement).blur(); }
+        if (e.key === "Enter" && !multiline) { e.preventDefault(); (e.target as HTMLElement).blur(); }
+        if (e.key === "Enter" && e.altKey) { e.preventDefault(); (e.target as HTMLElement).blur(); }
       }}
       data-placeholder={placeholder}
       className={className}
