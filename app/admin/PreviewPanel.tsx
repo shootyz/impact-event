@@ -264,13 +264,16 @@ export default function PreviewPanel({
   subject,
   onBlocks,
   lang = "en",
+  eventUrl,
 }: {
   blocks: CampaignBlock[];
   subject: string;
   onBlocks: (blocks: CampaignBlock[]) => void;
   lang?: Lang;
+  eventUrl?: string;
 }) {
   const t = T[lang];
+  const hasRegisterBlock = blocks.some(b => b.type === "register_button");
   const updateBlock = (i: number, b: CampaignBlock) => {
     const next = blocks.slice();
     next[i] = b;
@@ -329,6 +332,13 @@ export default function PreviewPanel({
               {block.type !== "register_button" && <CustomFieldsPreview block={block} />}
             </div>
           ))}
+
+          {/* Fallback register button when no register_button block exists */}
+          {!hasRegisterBlock && (
+            <div style={{ marginTop: 28, background: D.gold, color: "#fff", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
+              {t.registerBtn}
+            </div>
+          )}
         </div>
 
         {/* Footer */}

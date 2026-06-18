@@ -940,7 +940,7 @@ export default function CampaignBuilder({
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "#e5e7eb" }}>
           <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#1E3263" }}>Vorschau</p>
         </div>
-        <PreviewPanel blocks={blocks} subject={subject} onBlocks={setBlocks} lang={lang} />
+        <PreviewPanel blocks={blocks} subject={subject} onBlocks={setBlocks} lang={lang} eventUrl={eventUrl} />
       </div>
 
       {/* Right: editor */}
