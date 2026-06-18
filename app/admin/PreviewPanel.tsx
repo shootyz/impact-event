@@ -79,7 +79,7 @@ function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: strin
 function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
   const tl = T[lang];
   const field = (label: string, value: string, key: keyof EventDetailsBlock) => (
-    <div style={{ padding: "14px 0", borderBottom: `1px solid ${D.gray2}` }}>
+    <div style={{ padding: "10px 0" }}>
       <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{label}</p>
       <Editable value={value} onChange={v => onChange({ ...block, [key]: v })}
         placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} />
@@ -127,7 +127,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
       {!block.date && block.time && field(tl.time, block.time, "time")}
       {field(tl.venue, block.venue_name, "venue_name")}
       {block.venue_address !== undefined && (
-        <div style={{ padding: "14px 0", borderBottom: `1px solid ${D.gray2}` }}>
+        <div style={{ padding: "10px 0" }}>
           <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{tl.address}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {(block.venue_maps_url || block.venue_address) && (
@@ -321,7 +321,7 @@ export default function PreviewPanel({
         <div style={{ padding: "0 32px 32px" }}>
           {blocks.map((block, i) => (
             <div key={i} style={{ marginTop: 24 }}>
-              {block.type !== "intro" && block.type !== "text" && block.type !== "divider" && block.type !== "register_button" && (
+              {block.type !== "intro" && block.type !== "text" && block.type !== "divider" && block.type !== "register_button" && block.type !== "deadline" && (
                 <>
                   <div style={{ height: 1, background: D.gray2, marginBottom: 20 }} />
                   <SectionHead label={block.label || labelFor(block.type)} />
