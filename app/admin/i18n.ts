@@ -9,7 +9,7 @@ export const LANGUAGES: { code: Lang; label: string }[] = [
 export const CATEGORIES: Record<Lang, string[]> = {
   en: ["IMPACT CIRCLE EVENT", "IMPACT WORKSHOP", "IMPACT EXPERIENCE"],
   de: ["IMPACT CIRCLE EVENT", "IMPACT WORKSHOP", "IMPACT EXPERIENCE"],
-  fr: ["IMPACT CIRCLE ÉVÉNEMENT", "ATELIER IMPACT", "EXPÉRIENCE IMPACT"],
+  fr: ["IMPACT CIRCLE EVENT", "IMPACT WORKSHOP", "IMPACT EXPERIENCE"],
 };
 
 export const DATE_LOCALE: Record<Lang, string> = {
