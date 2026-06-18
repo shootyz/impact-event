@@ -912,7 +912,7 @@ export default function AdminPage() {
   ] as const;
 
   return (
-    <div className="min-h-screen flex flex-col items-center" style={{ background: "var(--ig-light)" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--ig-light)" }}>
 
       {/* ── Header ── */}
       <header className="sticky top-0 z-20 border-b w-full" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
