@@ -157,17 +157,18 @@ export async function sendCampaign({
   appUrl: string
   zielgruppeId?: string | null
 }) {
-  // Re-render body HTML from blocks with ICS link context if blocks available
   let hasRegisterBlock = false
   let campaignLang: Lang = 'en'
-  const finalBodyHtml = (() => {
+  let parsedBlocks: CampaignBlock[] | null = null
+  const staticBodyHtml = (() => {
     if (!blocksJson) return bodyHtml
     try {
       const parsed = JSON.parse(blocksJson)
-      const blocks: CampaignBlock[] = Array.isArray(parsed) ? parsed : parsed.blocks ?? []
+      parsedBlocks = Array.isArray(parsed) ? parsed : parsed.blocks ?? []
       campaignLang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
-      hasRegisterBlock = blocks.some(b => b.type === 'register_button')
-      return renderBlocksToHtml(blocks, { campaignId, appUrl, lang: campaignLang })
+      hasRegisterBlock = parsedBlocks.some(b => b.type === 'register_button')
+      // For hasRegisterBlock, we render per-member below; here render without registerUrl as fallback
+      return renderBlocksToHtml(parsedBlocks, { campaignId, appUrl, lang: campaignLang })
     } catch { return bodyHtml }
   })()
 
@@ -195,6 +196,21 @@ export async function sendCampaign({
 
   for (const member of members as Member[]) {
     const inviteCode = codeMap.get(member.id) ?? null
+
+    // Compute per-member register URL
+    const eventIdMatch = eventUrl?.match(/[?&]event=([^&]+)/)
+    const qrParams: string[] = []
+    if (campaignLang !== 'en') qrParams.push(`lang=${campaignLang}`)
+    if (eventIdMatch) qrParams.push(`event=${eventIdMatch[1]}`)
+    const memberRegisterUrl = inviteCode
+      ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
+      : eventUrl ?? null
+
+    // When blocks contain a register_button, render per-member with personalized URL
+    const finalBodyHtml = hasRegisterBlock && parsedBlocks
+      ? renderBlocksToHtml(parsedBlocks, { campaignId, appUrl, lang: campaignLang, registerUrl: memberRegisterUrl ?? undefined })
+      : staticBodyHtml
+
     const html = buildCampaignHtml({
       appUrl,
       member,

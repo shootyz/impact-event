@@ -248,7 +248,7 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
       return dividerHtml();
 
     case "register_button": {
-      const url = block.url || "#";
+      const url = ctx?.registerUrl || block.url || "#";
       return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
   <tr><td>
     <a href="${url}" style="display:block;background:${D.gold};color:#ffffff;text-decoration:none;padding:17px 32px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
@@ -260,7 +260,7 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
   }
 }
 
-export function renderBlocksToHtml(blocks: CampaignBlock[], ctx?: { campaignId?: string; appUrl?: string; lang?: Lang }): string {
+export function renderBlocksToHtml(blocks: CampaignBlock[], ctx?: { campaignId?: string; appUrl?: string; lang?: Lang; registerUrl?: string }): string {
   const r = (b: CampaignBlock) => renderBlock(b, ctx);
   const hasRegisterBlock = blocks.some(b => b.type === "register_button");
   if (hasRegisterBlock) return blocks.map(r).join("\n\n");
