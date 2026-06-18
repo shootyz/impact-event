@@ -131,7 +131,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
 </td></tr>`);
       if (block.event_title)
         rows.push(`<tr><td style="padding:${block.category ? "0" : "16px"} 0 16px;">
-  <p style="color:${D.navy};font-size:20px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${block.event_title}</p>
+  <p style="color:${D.navy};font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${block.event_title}</p>
 </td></tr>`);
       const locale = DATE_LOCALE[ctx?.lang ?? "en"];
       const formattedDate = block.date
