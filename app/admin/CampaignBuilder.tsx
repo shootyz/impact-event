@@ -798,7 +798,7 @@ export default function CampaignBuilder({
 }) {
   const [lang, setLang] = useState<Lang>(initialLang ?? "en");
   const [subject, setSubject] = useState(initialSubject ?? "");
-  const [eventUrl, setEventUrl] = useState(initialEventUrl ?? (typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? "")));
+  const [eventUrl, setEventUrl] = useState(initialEventUrl ?? "https://impactgstaad.vercel.app");
   const setZielgruppeId = onZielgruppeChange;
   const [blocks, setBlocks] = useState<CampaignBlock[]>(
     initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
