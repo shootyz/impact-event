@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import PreviewPanel from "./PreviewPanel";
-import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T } from "./i18n";
+import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATIONS } from "./i18n";
 
 // ── Block type definitions ────────────────────────────────────────────────────
 
@@ -259,16 +259,9 @@ function uid() {
   return Math.random().toString(36).slice(2, 9);
 }
 
-const BLOCK_LABELS: Record<CampaignBlock["type"], string> = {
-  intro: "Intro-Text",
-  event_details: "Event Details",
-  program: "Programm",
-  finalists: "Finalists / Award",
-  speaker: "Keynote Speaker",
-  text: "Text-Block",
-  deadline: "Deadline",
-  divider: "Trennlinie",
-};
+function getBlockLabel(type: CampaignBlock["type"], lang: Lang): string {
+  return BLOCK_LABEL_TRANSLATIONS[lang][type] ?? type;
+}
 
 // ── Sub-editors ───────────────────────────────────────────────────────────────
 
@@ -692,13 +685,13 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
 
   function startRename(e: React.MouseEvent) {
     e.stopPropagation();
-    setRenameVal(block.label || BLOCK_LABELS[block.type]);
+    setRenameVal(block.label || getBlockLabel(block.type, lang ?? "en"));
     setRenaming(true);
     setTimeout(() => renameRef.current?.select(), 0);
   }
   function commitRename() {
     const trimmed = renameVal.trim();
-    onChange({ ...block, label: trimmed && trimmed !== BLOCK_LABELS[block.type] ? trimmed : undefined });
+    onChange({ ...block, label: trimmed && trimmed !== getBlockLabel(block.type, lang ?? "en") ? trimmed : undefined });
     setRenaming(false);
   }
 
@@ -719,7 +712,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
         ) : (
           <span className="font-semibold text-sm flex-1" style={{ color: "#1E3263" }}
             onDoubleClick={startRename} title="Doppelklick zum Umbenennen">
-            {block.label || BLOCK_LABELS[block.type]}
+            {block.label || getBlockLabel(block.type, lang ?? "en")}
           </span>
         )}
         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
@@ -744,7 +737,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
           {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} />}
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
-          {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
+          {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>{lang === "fr" ? "Ligne de séparation horizontale" : lang === "de" ? "Horizontale Trennlinie" : "Horizontal divider line"}</p>}
           {block.type !== "divider" && <CustomFieldsEditor block={block} onChange={onChange} />}
         </div>
       )}
@@ -754,15 +747,15 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
 
 // ── Add block menu ────────────────────────────────────────────────────────────
 
-const ADDABLE_BLOCKS: { type: CampaignBlock["type"]; label: string; icon: string }[] = [
-  { type: "intro", label: "Intro-Text", icon: "✍️" },
-  { type: "event_details", label: "Event Details", icon: "📅" },
-  { type: "program", label: "Programm", icon: "📋" },
-  { type: "finalists", label: "Finalists / Award", icon: "🏆" },
-  { type: "speaker", label: "Keynote Speaker", icon: "🎤" },
-  { type: "text", label: "Text-Block", icon: "📝" },
-  { type: "deadline", label: "Deadline", icon: "⏰" },
-  { type: "divider", label: "Trennlinie", icon: "—" },
+const ADDABLE_BLOCK_TYPES: { type: CampaignBlock["type"]; icon: string }[] = [
+  { type: "intro", icon: "✍️" },
+  { type: "event_details", icon: "📅" },
+  { type: "program", icon: "📋" },
+  { type: "finalists", icon: "🏆" },
+  { type: "speaker", icon: "🎤" },
+  { type: "text", icon: "📝" },
+  { type: "deadline", icon: "⏰" },
+  { type: "divider", icon: "—" },
 ];
 
 function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
@@ -960,18 +953,18 @@ export default function CampaignBuilder({
               <button onClick={() => setAddMenuOpen(o => !o)}
                 className="px-3 py-1.5 rounded-lg border text-xs font-medium transition"
                 style={{ borderColor: addMenuOpen ? "#1E3263" : "#d1d5db", color: addMenuOpen ? "#1E3263" : "#6b7280" }}>
-                {addMenuOpen ? "▴ Schliessen" : "+ Block hinzufügen"}
+                {addMenuOpen ? (lang === "fr" ? "▴ Fermer" : lang === "de" ? "▴ Schliessen" : "▴ Close") : (lang === "fr" ? "+ Ajouter un bloc" : lang === "de" ? "+ Block hinzufügen" : "+ Add block")}
               </button>
               {addMenuOpen && (
                 <div className="mt-2 rounded-xl border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
-                  {ADDABLE_BLOCKS.map(ab => (
+                  {ADDABLE_BLOCK_TYPES.map(ab => (
                     <button key={ab.type} onClick={() => addBlock(ab.type)}
                       className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition"
                       style={{ color: "#111", borderBottom: "1px solid #f3f4f6" }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#f9fafb"}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}>
                       <span>{ab.icon}</span>
-                      <span>{ab.label}</span>
+                      <span>{getBlockLabel(ab.type, lang)}</span>
                     </button>
                   ))}
                 </div>

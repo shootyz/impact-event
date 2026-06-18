@@ -18,6 +18,39 @@ export const DATE_LOCALE: Record<Lang, string> = {
   fr: "fr-FR",
 };
 
+export const BLOCK_LABEL_TRANSLATIONS: Record<Lang, Record<string, string>> = {
+  en: {
+    intro: "Intro Text",
+    event_details: "Event Details",
+    program: "Program",
+    finalists: "Finalists / Award",
+    speaker: "Keynote Speaker",
+    text: "Text Block",
+    deadline: "Deadline",
+    divider: "Divider",
+  },
+  de: {
+    intro: "Intro-Text",
+    event_details: "Event Details",
+    program: "Programm",
+    finalists: "Finalisten / Award",
+    speaker: "Keynote Speaker",
+    text: "Text-Block",
+    deadline: "Deadline",
+    divider: "Trennlinie",
+  },
+  fr: {
+    intro: "Texte d'intro",
+    event_details: "Détails de l'événement",
+    program: "Programme",
+    finalists: "Finalistes / Prix",
+    speaker: "Conférencier principal",
+    text: "Bloc de texte",
+    deadline: "Date limite",
+    divider: "Séparateur",
+  },
+};
+
 export const T = {
   en: {
     greeting: "Dear [name],",
