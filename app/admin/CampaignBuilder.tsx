@@ -311,62 +311,17 @@ function EventDetailsEditor({ block, onChange, subject }: { block: EventDetailsB
     const d = new Date(iso + "T12:00:00");
     return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   }
-  function downloadIcs() {
-    const iso = toInputDate(block.date);
-    if (!iso) return;
-    const timeStr = block.time || "18:00";
-    const d = new Date(iso + "T" + timeStr + ":00");
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const fmt = (dt: Date) =>
-      `${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
-    const end = new Date(d.getTime() + 2 * 60 * 60 * 1000);
-    const location = [block.venue_name, block.venue_address].filter(Boolean).join(", ");
-    const ics = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//Impact Gstaad//EN",
-      "BEGIN:VEVENT",
-      `UID:${iso}-${Date.now()}@impactgstaad.ch`,
-      `DTSTART:${fmt(d)}`,
-      `DTEND:${fmt(end)}`,
-      `SUMMARY:${subject || "Impact Gstaad Event"}`,
-      location ? `LOCATION:${location}` : "",
-      "END:VEVENT",
-      "END:VCALENDAR",
-    ].filter(Boolean).join("\r\n");
-    const blob = new Blob([ics], { type: "text/calendar" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(subject || "event").replace(/\s+/g, "-").toLowerCase()}.ics`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   return (
     <div className="space-y-3">
       <div>
         <label className={labelCls} style={labelSty}>Datum</label>
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={toInputDate(block.date)}
-            onChange={e => onChange({ ...block, date: toDisplayDate(e.target.value) })}
-            className="flex-1 rounded-lg border px-3 py-2 text-sm"
-            style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
-          />
-          {block.date && (
-            <button onClick={downloadIcs}
-              title="ICS herunterladen"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold transition"
-              style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", whiteSpace: "nowrap" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              .ics
-            </button>
-          )}
-        </div>
+        <input
+          type="date"
+          value={toInputDate(block.date)}
+          onChange={e => onChange({ ...block, date: toDisplayDate(e.target.value) })}
+          className="w-full rounded-lg border px-3 py-2 text-sm"
+          style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
+        />
       </div>
       <div>
         <label className={labelCls} style={labelSty}>Uhrzeit</label>

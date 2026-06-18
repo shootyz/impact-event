@@ -75,7 +75,7 @@ function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: strin
   );
 }
 
-function EventDetailsPreview({ block, onChange }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+function EventDetailsPreview({ block, onChange, subject }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void; subject?: string }) {
   const field = (label: string, value: string, key: keyof EventDetailsBlock) => (
     <div style={{ padding: "14px 0", borderBottom: `1px solid ${D.gray2}` }}>
       <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{label}</p>
@@ -83,6 +83,30 @@ function EventDetailsPreview({ block, onChange }: { block: EventDetailsBlock & {
         placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} />
     </div>
   );
+
+  function downloadIcs() {
+    if (!block.date) return;
+    const isoDate = /^\d{4}-\d{2}-\d{2}$/.test(block.date)
+      ? block.date
+      : (() => { const d = new Date(block.date); return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10); })();
+    if (!isoDate) return;
+    const timeStr = block.time || "13:00";
+    const start = new Date(`${isoDate}T${timeStr}:00`);
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const fmt = (dt: Date) => `${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+    const location = [block.venue_name, block.venue_address].filter(Boolean).join(", ");
+    const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Impact Gstaad//EN","BEGIN:VEVENT",
+      `UID:${isoDate}-${Date.now()}@impactgstaad.ch`,`DTSTART:${fmt(start)}`,`DTEND:${fmt(end)}`,
+      `SUMMARY:${subject || "Impact Gstaad Event"}`,location ? `LOCATION:${location}` : "",
+      "END:VEVENT","END:VCALENDAR"].filter(Boolean).join("\r\n");
+    const blob = new Blob([ics], { type: "text/calendar" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${(subject || "event").replace(/\s+/g, "-").toLowerCase()}.ics`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div>
       {block.date && field("Date", block.date, "date")}
@@ -91,6 +115,17 @@ function EventDetailsPreview({ block, onChange }: { block: EventDetailsBlock & {
       {field("Address", block.venue_address, "venue_address")}
       {block.moderation_name && field("Moderation", block.moderation_name, "moderation_name")}
       {block.moderation_title && field("Moderation Title", block.moderation_title, "moderation_title")}
+      {block.date && (
+        <div style={{ paddingTop: 14 }}>
+          <button onClick={downloadIcs}
+            style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Zum Kalender hinzufügen
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -256,7 +291,7 @@ export default function PreviewPanel({
                 <IntroPreview block={block} onChange={b => updateBlock(i, b)} />
               )}
               {block.type === "event_details" && (
-                <EventDetailsPreview block={block} onChange={b => updateBlock(i, b)} />
+                <EventDetailsPreview block={block} onChange={b => updateBlock(i, b)} subject={subject} />
               )}
               {block.type === "program" && (
                 <ProgramPreview block={block} onChange={b => updateBlock(i, b)} />
