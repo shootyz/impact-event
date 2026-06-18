@@ -685,13 +685,13 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
 
   function startRename(e: React.MouseEvent) {
     e.stopPropagation();
-    setRenameVal(block.label || getBlockLabel(block.type, lang ?? "en"));
+    setRenameVal(block.label || getBlockLabel(block.type, "de"));
     setRenaming(true);
     setTimeout(() => renameRef.current?.select(), 0);
   }
   function commitRename() {
     const trimmed = renameVal.trim();
-    onChange({ ...block, label: trimmed && trimmed !== getBlockLabel(block.type, lang ?? "en") ? trimmed : undefined });
+    onChange({ ...block, label: trimmed && trimmed !== getBlockLabel(block.type, "de") ? trimmed : undefined });
     setRenaming(false);
   }
 
@@ -712,7 +712,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
         ) : (
           <span className="font-semibold text-sm flex-1" style={{ color: "#1E3263" }}
             onDoubleClick={startRename} title="Doppelklick zum Umbenennen">
-            {block.label || getBlockLabel(block.type, lang ?? "en")}
+            {block.label || getBlockLabel(block.type, "de")}
           </span>
         )}
         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
@@ -737,7 +737,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
           {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} />}
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
-          {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>{lang === "fr" ? "Ligne de séparation horizontale" : lang === "de" ? "Horizontale Trennlinie" : "Horizontal divider line"}</p>}
+          {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
           {block.type !== "divider" && <CustomFieldsEditor block={block} onChange={onChange} />}
         </div>
       )}
@@ -953,7 +953,7 @@ export default function CampaignBuilder({
               <button onClick={() => setAddMenuOpen(o => !o)}
                 className="px-3 py-1.5 rounded-lg border text-xs font-medium transition"
                 style={{ borderColor: addMenuOpen ? "#1E3263" : "#d1d5db", color: addMenuOpen ? "#1E3263" : "#6b7280" }}>
-                {addMenuOpen ? (lang === "fr" ? "▴ Fermer" : lang === "de" ? "▴ Schliessen" : "▴ Close") : (lang === "fr" ? "+ Ajouter un bloc" : lang === "de" ? "+ Block hinzufügen" : "+ Add block")}
+                {addMenuOpen ? "▴ Schliessen" : "+ Block hinzufügen"}
               </button>
               {addMenuOpen && (
                 <div className="mt-2 rounded-xl border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
@@ -964,7 +964,7 @@ export default function CampaignBuilder({
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#f9fafb"}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}>
                       <span>{ab.icon}</span>
-                      <span>{getBlockLabel(ab.type, lang)}</span>
+                      <span>{getBlockLabel(ab.type, "de")}</span>
                     </button>
                   ))}
                 </div>
