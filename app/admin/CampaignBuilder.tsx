@@ -651,10 +651,10 @@ function CustomFieldsEditor({ block, onChange }: { block: CampaignBlock; onChang
       {fields.map(f => (
         <div key={f.id} className="flex gap-2 items-center">
           <input value={f.label} onChange={e => update(f.id, { label: e.target.value })}
-            placeholder="Bezeichnung" className="rounded-lg border px-2 py-1.5 text-xs w-32 flex-shrink-0"
+            placeholder="Titel" className="rounded-lg border px-2 py-1.5 text-xs w-32 flex-shrink-0"
             style={{ borderColor: "#d1d5db", color: "#1E3263", outline: "none" }} />
           <input value={f.value} onChange={e => update(f.id, { value: e.target.value })}
-            placeholder="Wert" className="flex-1 rounded-lg border px-2 py-1.5 text-xs"
+            placeholder="Inhalt" className="flex-1 rounded-lg border px-2 py-1.5 text-xs"
             style={{ borderColor: "#d1d5db", color: "#1E3263", outline: "none" }} />
           <button onClick={() => remove(f.id)}
             className="w-6 h-6 rounded border text-xs font-bold flex-shrink-0"
