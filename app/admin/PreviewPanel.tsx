@@ -121,7 +121,27 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
       {block.date && field(tl.date, block.date, "date")}
       {(block.time || true) && field(tl.time, block.time ?? "", "time")}
       {field(tl.venue, block.venue_name, "venue_name")}
-      {field(tl.address, block.venue_address, "venue_address")}
+      {block.venue_address !== undefined && (
+        <div style={{ padding: "14px 0", borderBottom: `1px solid ${D.gray2}` }}>
+          <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{tl.address}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {(block.venue_maps_url || block.venue_address) && (
+              <a
+                href={block.venue_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
+                target="_blank" rel="noopener noreferrer"
+                style={{ display: "flex", alignItems: "center", gap: 4, color: D.gold, fontSize: 12, fontWeight: 700, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                Maps
+              </a>
+            )}
+            <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })}
+              placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} />
+          </div>
+        </div>
+      )}
       {block.moderation_name && field(tl.moderation, block.moderation_name, "moderation_name")}
       {block.moderation_title && field(tl.moderation + " Title", block.moderation_title, "moderation_title")}
       {block.date && (
