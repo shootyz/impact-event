@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import PreviewPanel from "./PreviewPanel";
 
 // ── Block type definitions ────────────────────────────────────────────────────
 
@@ -795,7 +796,6 @@ export default function CampaignBuilder({
   const [blocks, setBlocks] = useState<CampaignBlock[]>(
     initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
   );
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -873,18 +873,6 @@ export default function CampaignBuilder({
     return () => clearInterval(interval);
   }, [onSaveDraft]);
 
-  // Preview debounce
-  useEffect(() => {
-    const t = setTimeout(async () => {
-      const res = await fetch("/api/campaigns/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject: subject || "Vorschau", body_html: bodyHtml, event_url: eventUrl || null }),
-      });
-      setPreviewHtml(await res.text());
-    }, 300);
-    return () => clearTimeout(t);
-  }, [subject, bodyHtml, eventUrl]);
 
   const labelCls2 = "block text-xs font-semibold tracking-wide uppercase mb-2";
   const labelSty2 = { color: "#1E3263" };
@@ -892,24 +880,12 @@ export default function CampaignBuilder({
 
   return (
     <div className="flex gap-0" style={{ minHeight: 600 }}>
-      {/* Left: live preview */}
-      <div className="hidden lg:flex flex-col" style={{ width: "50%", borderRight: "1px solid #e5e7eb" }}>
+      {/* Left: live editable preview */}
+      <div className="hidden lg:flex flex-col" style={{ width: "50%", borderRight: "1px solid #e5e7eb", overflowY: "auto", maxHeight: "80vh" }}>
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "#e5e7eb" }}>
           <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#1E3263" }}>Vorschau</p>
         </div>
-        <div>
-          {previewHtml
-            ? <iframe
-                srcDoc={previewHtml}
-                style={{ width: "100%", border: "none", display: "block", minHeight: 600 }}
-                onLoad={e => {
-                  const f = e.currentTarget;
-                  try { f.style.height = (f.contentWindow?.document.body.scrollHeight ?? 600) + "px"; } catch {}
-                }}
-              />
-            : <div className="flex items-center justify-center py-20 text-xs" style={{ color: "#9ca3af" }}>Wird geladen…</div>
-          }
-        </div>
+        <PreviewPanel blocks={blocks} subject={subject} onBlocks={setBlocks} />
       </div>
 
       {/* Right: editor */}
