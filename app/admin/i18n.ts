@@ -1,0 +1,76 @@
+export type Lang = "en" | "de" | "fr";
+
+export const LANGUAGES: { code: Lang; label: string }[] = [
+  { code: "en", label: "EN" },
+  { code: "de", label: "DE" },
+  { code: "fr", label: "FR" },
+];
+
+export const CATEGORIES: Record<Lang, string[]> = {
+  en: ["IMPACT CIRCLE EVENT", "IMPACT WORKSHOP", "IMPACT EXPERIENCE"],
+  de: ["IMPACT CIRCLE EVENT", "IMPACT WORKSHOP", "IMPACT EXPERIENCE"],
+  fr: ["IMPACT CIRCLE ÉVÉNEMENT", "ATELIER IMPACT", "EXPÉRIENCE IMPACT"],
+};
+
+export const DATE_LOCALE: Record<Lang, string> = {
+  en: "en-GB",
+  de: "de-DE",
+  fr: "fr-FR",
+};
+
+export const T = {
+  en: {
+    greeting: "Dear [name],",
+    date: "Date",
+    time: "Time",
+    venue: "Venue",
+    address: "Address",
+    moderation: "Moderation",
+    program: "Program",
+    finalists: "Finalists / Award",
+    speaker: "Keynote Speaker",
+    deadline: "Registration deadline",
+    registerBtn: "Register Now",
+    addToCalendar: "Add to Calendar",
+    unsubscribe: "Unsubscribe",
+    openInMaps: "Open in Maps →",
+    customCategory: "Custom category…",
+    selectCategory: "— Select —",
+  },
+  de: {
+    greeting: "Sehr geehrte/r [name],",
+    date: "Datum",
+    time: "Uhrzeit",
+    venue: "Veranstaltungsort",
+    address: "Adresse",
+    moderation: "Moderation",
+    program: "Programm",
+    finalists: "Finalisten / Award",
+    speaker: "Keynote Speaker",
+    deadline: "Anmeldeschluss",
+    registerBtn: "Jetzt anmelden",
+    addToCalendar: "Zum Kalender hinzufügen",
+    unsubscribe: "Abmelden",
+    openInMaps: "In Maps öffnen →",
+    customCategory: "Eigene Kategorie…",
+    selectCategory: "— Wählen —",
+  },
+  fr: {
+    greeting: "Cher/Chère [name],",
+    date: "Date",
+    time: "Heure",
+    venue: "Lieu",
+    address: "Adresse",
+    moderation: "Modération",
+    program: "Programme",
+    finalists: "Finalistes / Prix",
+    speaker: "Conférencier principal",
+    deadline: "Date limite d'inscription",
+    registerBtn: "S'inscrire maintenant",
+    addToCalendar: "Ajouter au calendrier",
+    unsubscribe: "Se désabonner",
+    openInMaps: "Ouvrir dans Maps →",
+    customCategory: "Catégorie personnalisée…",
+    selectCategory: "— Choisir —",
+  },
+} as const;

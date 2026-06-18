@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import PreviewPanel from "./PreviewPanel";
+import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T } from "./i18n";
 
 // ── Block type definitions ────────────────────────────────────────────────────
 
@@ -109,7 +110,8 @@ function renderCustomFields(block: CampaignBlock): string {
   return `\n<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">${rows}</table>`;
 }
 
-function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?: string }): string {
+function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?: string; lang?: Lang }): string {
+  const t = T[ctx?.lang ?? "en"];
   const extra = renderCustomFields(block);
   switch (block.type) {
     case "intro":
@@ -131,26 +133,30 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
         rows.push(`<tr><td style="padding:${block.category ? "0" : "16px"} 0 16px;">
   <p style="color:${D.navy};font-size:20px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${block.event_title}</p>
 </td></tr>`);
+      const locale = DATE_LOCALE[ctx?.lang ?? "en"];
+      const formattedDate = block.date
+        ? (() => { try { return new Date(block.date + "T12:00:00").toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { return block.date; } })()
+        : "";
       if (block.date)
         rows.push(`<tr><td style="padding:16px 0;">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">Date</p>
-  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0;font-family:Arial,sans-serif;">${block.date}</p>
+  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">${t.date}</p>
+  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0;font-family:Arial,sans-serif;">${formattedDate}${block.time ? `, ${block.time}` : ""}</p>
 </td></tr>`);
       if (block.venue_name)
         rows.push(`<tr><td style="padding:16px 0;">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">Venue</p>
+  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">${t.venue}</p>
   <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 2px;font-family:Arial,sans-serif;">${block.venue_name}</p>
   ${block.venue_address ? `<p style="color:${D.gray};font-size:14px;margin:0 0 4px;font-family:Arial,sans-serif;">${block.venue_address}</p>` : ""}
-  ${block.venue_maps_url ? `<a href="${block.venue_maps_url}" style="color:${D.gold};font-size:13px;text-decoration:none;font-family:Arial,sans-serif;">Open in Maps →</a>` : ""}
+  ${block.venue_maps_url ? `<a href="${block.venue_maps_url}" style="color:${D.gold};font-size:13px;text-decoration:none;font-family:Arial,sans-serif;">${t.openInMaps}</a>` : ""}
 </td></tr>`);
       if (block.moderation_name)
         rows.push(`<tr><td style="padding:16px 0;">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">Moderation</p>
+  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">${t.moderation}</p>
   <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 2px;font-family:Arial,sans-serif;">${block.moderation_name}</p>
   ${block.moderation_title ? `<p style="color:${D.gray};font-size:14px;margin:0;font-family:Arial,sans-serif;">${block.moderation_title}</p>` : ""}
 </td></tr>`);
       const icsLink = ctx?.campaignId && ctx?.appUrl && block.date
-        ? `<tr><td style="padding:12px 0 16px;"><a href="${ctx.appUrl}/api/campaigns/${ctx.campaignId}/ics" style="color:${D.gold};font-size:13px;font-weight:600;text-decoration:none;font-family:Arial,sans-serif;">&#128197; Zum Kalender hinzufügen</a></td></tr>`
+        ? `<tr><td style="padding:12px 0 16px;"><a href="${ctx.appUrl}/api/campaigns/${ctx.campaignId}/ics" style="color:${D.gold};font-size:13px;font-weight:600;text-decoration:none;font-family:Arial,sans-serif;">&#128197; ${t.addToCalendar}</a></td></tr>`
         : "";
       return `${dividerHtml()}
 ${sectionHeadHtml(block.label || "Event Details")}
@@ -179,7 +185,7 @@ ${icsLink}
 </td></tr>`;
       });
       return `${dividerHtml()}
-${sectionHeadHtml(block.label || "Program")}
+${sectionHeadHtml(block.label || t.program)}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
 ${slotHtmls.join("\n")}
 </table>${extra}`;
@@ -207,7 +213,7 @@ ${block.website_url ? `<table width="100%" cellpadding="0" cellspacing="0" style
     }
 
     case "speaker":
-      return `${sectionHeadHtml(block.label || "Keynote Speaker")}
+      return `${sectionHeadHtml(block.label || t.speaker)}
 ${block.photo_url ? `<img src="${block.photo_url}" alt="${block.name}" width="100" style="display:block;width:100px;height:100px;object-fit:cover;border-radius:50%;border:3px solid ${D.gold};margin:0 0 16px;" />` : ""}
 <p style="color:${D.black};font-size:16px;font-weight:700;margin:0 0 3px;font-family:Arial,sans-serif;">${block.name}</p>
 ${block.title ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 14px;font-family:Arial,sans-serif;">${block.title}</p>` : ""}
@@ -223,11 +229,11 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
 
     case "deadline": {
       const formatted = block.date
-        ? new Date(block.date + 'T12:00:00').toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        ? new Date(block.date + 'T12:00:00').toLocaleDateString(DATE_LOCALE[ctx?.lang ?? "en"], { day: "numeric", month: "long", year: "numeric" })
         : "–";
       return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
   <tr><td style="padding:12px 0 12px 16px;border-left:3px solid ${D.gold};">
-    <p style="color:${D.black};font-size:15px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Registration deadline: ${formatted}</p>
+    <p style="color:${D.black};font-size:15px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${t.deadline}: ${formatted}</p>
   </td></tr>
 </table>`;
     }
@@ -237,7 +243,7 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
   }
 }
 
-export function renderBlocksToHtml(blocks: CampaignBlock[], ctx?: { campaignId?: string; appUrl?: string }): string {
+export function renderBlocksToHtml(blocks: CampaignBlock[], ctx?: { campaignId?: string; appUrl?: string; lang?: Lang }): string {
   const r = (b: CampaignBlock) => renderBlock(b, ctx);
   const introIdx = blocks.findIndex(b => b.type === "intro");
   if (introIdx === -1) return blocks.map(r).join("\n\n");
@@ -308,7 +314,9 @@ function IntroEditor({ block, onChange }: { block: IntroBlock; onChange: (b: Int
   );
 }
 
-function EventDetailsEditor({ block, onChange, subject }: { block: EventDetailsBlock; onChange: (b: EventDetailsBlock) => void; subject?: string }) {
+function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock; onChange: (b: EventDetailsBlock) => void; subject?: string; lang?: Lang }) {
+  const t = T[lang];
+  const cats = CATEGORIES[lang];
   function toInputDate(display: string): string {
     if (!display) return "";
     if (/^\d{4}-\d{2}-\d{2}$/.test(display)) return display;
@@ -319,10 +327,9 @@ function EventDetailsEditor({ block, onChange, subject }: { block: EventDetailsB
   function toDisplayDate(iso: string): string {
     if (!iso) return "";
     const d = new Date(iso + "T12:00:00");
-    return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    return d.toLocaleDateString(DATE_LOCALE[lang], { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   }
-  const CATEGORIES = ["IMPACT CIRCLE EVENT", "IMPACT WORKSHOP", "IMPACT EXPERIENCE"];
-  const isCustom = block.category !== "" && !CATEGORIES.includes(block.category);
+  const isCustom = block.category !== "" && !cats.includes(block.category);
 
   return (
     <div className="space-y-3">
@@ -333,15 +340,15 @@ function EventDetailsEditor({ block, onChange, subject }: { block: EventDetailsB
           onChange={e => onChange({ ...block, category: e.target.value === "__custom__" ? "" : e.target.value })}
           className="w-full rounded-lg border px-3 py-2 text-sm"
           style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}>
-          <option value="">— Wählen —</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-          <option value="__custom__">Eigene Kategorie…</option>
+          <option value="">{t.selectCategory}</option>
+          {cats.map(c => <option key={c} value={c}>{c}</option>)}
+          <option value="__custom__">{t.customCategory}</option>
         </select>
         {(isCustom || block.category === "") && (block.category !== undefined) && (
           <input
             value={isCustom ? block.category : ""}
             onChange={e => onChange({ ...block, category: e.target.value })}
-            placeholder="Eigene Kategorie eingeben"
+            placeholder={t.customCategory}
             className="w-full rounded-lg border px-3 py-2 text-sm mt-2"
             style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
           />
@@ -668,7 +675,7 @@ function CustomFieldsEditor({ block, onChange }: { block: CampaignBlock; onChang
   );
 }
 
-function BlockCard({ block, index, total, onChange, onRemove, onMove, subject }: {
+function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, lang }: {
   block: CampaignBlock;
   index: number;
   total: number;
@@ -676,6 +683,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject }:
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
   subject?: string;
+  lang?: Lang;
 }) {
   const [open, setOpen] = useState(true);
   const [renaming, setRenaming] = useState(false);
@@ -730,7 +738,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject }:
       {open && (
         <div className="p-4">
           {block.type === "intro" && <IntroEditor block={block} onChange={onChange as (b: IntroBlock) => void} />}
-          {block.type === "event_details" && <EventDetailsEditor block={block} onChange={onChange as (b: EventDetailsBlock) => void} subject={subject} />}
+          {block.type === "event_details" && <EventDetailsEditor block={block} onChange={onChange as (b: EventDetailsBlock) => void} subject={subject} lang={lang} />}
           {block.type === "program" && <ProgramEditor block={block} onChange={onChange as (b: ProgramBlock) => void} />}
           {block.type === "finalists" && <FinalistsEditor block={block} onChange={onChange as (b: FinalistsBlock) => void} />}
           {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} />}
@@ -780,19 +788,22 @@ export default function CampaignBuilder({
   initialSubject,
   initialBlocks,
   initialEventUrl,
+  initialLang,
   zielgruppeId,
   onZielgruppeChange,
   zielgruppen,
 }: {
-  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string, isAutoSave?: boolean) => Promise<string>;
+  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string, isAutoSave?: boolean, lang?: Lang) => Promise<string>;
   campaignId?: string;
   initialSubject?: string;
   initialBlocks?: CampaignBlock[];
   initialEventUrl?: string;
+  initialLang?: Lang;
   zielgruppeId: string | null;
   onZielgruppeChange: (id: string | null) => void;
   zielgruppen?: ZielgruppeOption[];
 }) {
+  const [lang, setLang] = useState<Lang>(initialLang ?? "en");
   const [subject, setSubject] = useState(initialSubject ?? "");
   const [eventUrl, setEventUrl] = useState(initialEventUrl ?? (typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL ?? "")));
   const setZielgruppeId = onZielgruppeChange;
@@ -827,7 +838,7 @@ export default function CampaignBuilder({
     setAddMenuOpen(false);
   };
 
-  const bodyHtml = renderBlocksToHtml(blocks);
+  const bodyHtml = renderBlocksToHtml(blocks, { lang });
   const canSave = subject.trim() && blocks.length > 0;
 
   // Keep refs in sync so the interval always reads latest values
@@ -846,7 +857,7 @@ export default function CampaignBuilder({
       isDirtyRef.current = false;
       setAutoSaveStatus("Wird gespeichert…");
       try {
-        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true);
+        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true, lang);
         autoIdRef.current = id;
         const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
         setAutoSaveStatus(`Automatisch gespeichert · ${time}`);
@@ -865,7 +876,7 @@ export default function CampaignBuilder({
       isDirtyRef.current = false;
       setAutoSaveStatus("Wird gespeichert…");
       try {
-        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true);
+        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true, lang);
         autoIdRef.current = id;
         const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
         setAutoSaveStatus(`Automatisch gespeichert · ${time}`);
@@ -888,11 +899,25 @@ export default function CampaignBuilder({
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "#e5e7eb" }}>
           <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#1E3263" }}>Vorschau</p>
         </div>
-        <PreviewPanel blocks={blocks} subject={subject} onBlocks={setBlocks} />
+        <PreviewPanel blocks={blocks} subject={subject} onBlocks={setBlocks} lang={lang} />
       </div>
 
       {/* Right: editor */}
       <div className="flex-1 p-5 space-y-5" style={{ minWidth: 0 }}>
+
+        {/* Language toggle */}
+        <div className="flex items-center gap-1">
+          {LANGUAGES.map(l => (
+            <button key={l.code} onClick={() => setLang(l.code)}
+              className="px-3 py-1 rounded-lg text-xs font-bold tracking-widest transition"
+              style={{
+                background: lang === l.code ? "var(--ig-navy)" : "var(--ig-gray2)",
+                color: lang === l.code ? "white" : "var(--ig-navy)",
+              }}>
+              {l.label}
+            </button>
+          ))}
+        </div>
 
         {/* Subject + Zielgruppe */}
         <div className="flex items-end gap-3">
@@ -927,7 +952,7 @@ export default function CampaignBuilder({
                 onChange={b => updateBlock(i, b)}
                 onRemove={() => removeBlock(i)}
                 onMove={dir => moveBlock(i, dir)}
-                subject={subject} />
+                subject={subject} lang={lang} />
             ))}
 
             {/* Add block */}
@@ -988,7 +1013,7 @@ export default function CampaignBuilder({
             onClick={async () => {
               setSaving(true); setResult(null);
               isDirtyRef.current = false;
-              const id = await onSaveDraft(subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoIdRef.current);
+              const id = await onSaveDraft(subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoIdRef.current, false, lang);
               autoIdRef.current = id;
               setSaving(false);
               const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });

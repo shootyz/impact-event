@@ -5,6 +5,7 @@ import type {
   CampaignBlock, IntroBlock, EventDetailsBlock, ProgramBlock,
   FinalistsBlock, SpeakerBlock, TextBlock, DeadlineBlock,
 } from "./CampaignBuilder";
+import { type Lang, T, DATE_LOCALE } from "./i18n";
 
 const D = { navy: "#1E3263", gold: "#D28D28", black: "#1a1a1a", gray: "#6b7280", gray2: "#e8e8e8" };
 
@@ -75,7 +76,8 @@ function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: strin
   );
 }
 
-function EventDetailsPreview({ block, onChange, subject }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void; subject?: string }) {
+function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
+  const tl = T[lang];
   const field = (label: string, value: string, key: keyof EventDetailsBlock) => (
     <div style={{ padding: "14px 0", borderBottom: `1px solid ${D.gray2}` }}>
       <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{label}</p>
@@ -116,12 +118,12 @@ function EventDetailsPreview({ block, onChange, subject }: { block: EventDetails
       {block.event_title && (
         <p style={{ color: D.navy, fontSize: 20, fontWeight: 700, margin: "0 0 16px" }}>{block.event_title}</p>
       )}
-      {block.date && field("Date", block.date, "date")}
-      {(block.time || true) && field("Time", block.time ?? "", "time")}
-      {field("Venue", block.venue_name, "venue_name")}
-      {field("Address", block.venue_address, "venue_address")}
-      {block.moderation_name && field("Moderation", block.moderation_name, "moderation_name")}
-      {block.moderation_title && field("Moderation Title", block.moderation_title, "moderation_title")}
+      {block.date && field(tl.date, block.date, "date")}
+      {(block.time || true) && field(tl.time, block.time ?? "", "time")}
+      {field(tl.venue, block.venue_name, "venue_name")}
+      {field(tl.address, block.venue_address, "venue_address")}
+      {block.moderation_name && field(tl.moderation, block.moderation_name, "moderation_name")}
+      {block.moderation_title && field(tl.moderation + " Title", block.moderation_title, "moderation_title")}
       {block.date && (
         <div style={{ paddingTop: 14 }}>
           <button onClick={downloadIcs}
@@ -129,7 +131,7 @@ function EventDetailsPreview({ block, onChange, subject }: { block: EventDetails
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            Zum Kalender hinzufügen
+            {tl.addToCalendar}
           </button>
         </div>
       )}
@@ -219,14 +221,14 @@ function TextPreview({ block, onChange }: { block: TextBlock & { label?: string;
   );
 }
 
-function DeadlinePreview({ block }: { block: DeadlineBlock & { label?: string } }) {
+function DeadlinePreview({ block, lang = "en" }: { block: DeadlineBlock & { label?: string }; lang?: Lang }) {
   const formatted = block.date
-    ? new Date(block.date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    ? new Date(block.date + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang], { day: "numeric", month: "long", year: "numeric" })
     : "–";
   return (
     <div style={{ padding: "10px 0 10px 14px", borderLeft: `3px solid ${D.gold}` }}>
       <p style={{ color: D.black, fontSize: 15, fontWeight: 700, margin: 0 }}>
-        Registration deadline: {formatted}
+        {T[lang].deadline}: {formatted}
       </p>
     </div>
   );
@@ -261,11 +263,14 @@ export default function PreviewPanel({
   blocks,
   subject,
   onBlocks,
+  lang = "en",
 }: {
   blocks: CampaignBlock[];
   subject: string;
   onBlocks: (blocks: CampaignBlock[]) => void;
+  lang?: Lang;
 }) {
+  const t = T[lang];
   const updateBlock = (i: number, b: CampaignBlock) => {
     const next = blocks.slice();
     next[i] = b;
@@ -281,7 +286,7 @@ export default function PreviewPanel({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Impact Gstaad" style={{ height: 24, marginBottom: 20 }} />
           <div style={{ height: 1, background: D.gray2, marginBottom: 20 }} />
-          <p style={{ color: D.navy, fontSize: 15, fontWeight: 700, margin: "0 0 4px" }}>Dear [name],</p>
+          <p style={{ color: D.navy, fontSize: 15, fontWeight: 700, margin: "0 0 4px" }}>{t.greeting}</p>
         </div>
 
         {/* Blocks */}
@@ -298,7 +303,7 @@ export default function PreviewPanel({
                 <IntroPreview block={block} onChange={b => updateBlock(i, b)} />
               )}
               {block.type === "event_details" && (
-                <EventDetailsPreview block={block} onChange={b => updateBlock(i, b)} subject={subject} />
+                <EventDetailsPreview block={block} onChange={b => updateBlock(i, b)} subject={subject} lang={lang} />
               )}
               {block.type === "program" && (
                 <ProgramPreview block={block} onChange={b => updateBlock(i, b)} />
@@ -313,7 +318,7 @@ export default function PreviewPanel({
                 <TextPreview block={block} onChange={b => updateBlock(i, b)} />
               )}
               {block.type === "deadline" && (
-                <DeadlinePreview block={block} />
+                <DeadlinePreview block={block} lang={lang} />
               )}
               {block.type === "divider" && (
                 <div style={{ height: 1, background: D.gray2, margin: "8px 0" }} />
@@ -324,7 +329,7 @@ export default function PreviewPanel({
 
           {/* Register button placeholder */}
           <div style={{ marginTop: 28, background: D.gold, color: "#fff", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
-            Register Now
+            {t.registerBtn}
           </div>
         </div>
 
@@ -333,7 +338,7 @@ export default function PreviewPanel({
           <p style={{ color: "#888", fontSize: 11, margin: "0 0 6px" }}>
             Impact Gstaad · <span style={{ color: D.navy }}>impactgstaad.ch</span>
           </p>
-          <p style={{ color: "#888", fontSize: 11, margin: 0, textDecoration: "underline" }}>Unsubscribe</p>
+          <p style={{ color: "#888", fontSize: 11, margin: 0, textDecoration: "underline" }}>{t.unsubscribe}</p>
         </div>
       </div>
 

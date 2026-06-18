@@ -1823,18 +1823,20 @@ export default function AdminPage() {
                   key={editingCampaign?.id ?? "new"}
                   campaignId={editingCampaign?.id}
                   initialSubject={editingCampaign?.subject}
-                  initialBlocks={editingCampaign?.blocks_json as import("./CampaignBuilder").CampaignBlock[] | undefined}
+                  initialBlocks={(() => { const bj = editingCampaign?.blocks_json; if (!bj) return undefined; if (Array.isArray(bj)) return bj as import("./CampaignBuilder").CampaignBlock[]; return (bj as { blocks?: import("./CampaignBuilder").CampaignBlock[] }).blocks; })()}
+                  initialLang={(() => { const bj = editingCampaign?.blocks_json; if (!bj || Array.isArray(bj)) return undefined; return (bj as { lang?: import("./i18n").Lang }).lang; })()}
                   initialEventUrl={editingCampaign?.event_url ?? undefined}
                   zielgruppeId={builderZielgruppeId}
                   onZielgruppeChange={setBuilderZielgruppeId}
                   zielgruppen={zielgruppen}
-                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId, isAutoSave) => {
+                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId, isAutoSave, lang) => {
+                    const blocksJson = { lang: lang ?? "en", blocks };
                     const existingId = autoId ?? editingCampaign?.id;
                     if (existingId) {
                       const res = await fetch(`/api/campaigns/${existingId}`, {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocks, zielgruppe_id: zielgruppeId }),
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocksJson, zielgruppe_id: zielgruppeId }),
                       });
                       const d = await res.json();
                       if (res.ok) setCampaigns(prev => prev.map(c => c.id === existingId ? d : c).concat(prev.find(c => c.id === existingId) ? [] : [d]));
@@ -1844,7 +1846,7 @@ export default function AdminPage() {
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocks, zielgruppe_id: zielgruppeId }),
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocksJson, zielgruppe_id: zielgruppeId }),
                       });
                       const d = await res.json();
                       if (res.ok) {

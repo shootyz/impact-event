@@ -15,7 +15,10 @@ export async function GET(_req: NextRequest, props: any) {
   if (error || !campaign) return new NextResponse('Not found', { status: 404 })
 
   let blocks: CampaignBlock[] = []
-  try { blocks = JSON.parse(campaign.blocks_json || '[]') } catch { /* empty */ }
+  try {
+    const parsed = JSON.parse(campaign.blocks_json || '[]')
+    blocks = Array.isArray(parsed) ? parsed : (parsed.blocks ?? [])
+  } catch { /* empty */ }
 
   const detailsBlock = blocks.find(b => b.type === 'event_details') as (EventDetailsBlock & { time?: string }) | undefined
 

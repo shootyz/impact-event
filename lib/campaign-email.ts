@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase'
 import type { Member } from './supabase'
 import { renderBlocksToHtml } from '@/app/admin/CampaignBuilder'
 import type { CampaignBlock } from '@/app/admin/CampaignBuilder'
+import type { Lang } from '@/app/admin/i18n'
 
 function plainTextToHtml(text: string): string {
   return text
@@ -153,8 +154,10 @@ export async function sendCampaign({
   const finalBodyHtml = (() => {
     if (!blocksJson) return bodyHtml
     try {
-      const blocks = JSON.parse(blocksJson) as CampaignBlock[]
-      return renderBlocksToHtml(blocks, { campaignId, appUrl })
+      const parsed = JSON.parse(blocksJson)
+      const blocks: CampaignBlock[] = Array.isArray(parsed) ? parsed : parsed.blocks ?? []
+      const lang: Lang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
+      return renderBlocksToHtml(blocks, { campaignId, appUrl, lang })
     } catch { return bodyHtml }
   })()
 
