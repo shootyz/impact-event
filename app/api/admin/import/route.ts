@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData()
   const adminPassword = formData.get('adminPassword') as string
   const file = formData.get('file') as File | null
+  const eventId = formData.get('eventId') as string | null
 
   if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
@@ -47,7 +48,8 @@ export async function POST(req: NextRequest) {
   }
 
   const db = supabaseAdmin()
-  const { data: event } = await db.from('events').select('id').eq('active', true).single()
+  const base = db.from('events').select('id')
+  const { data: event } = await (eventId ? base.eq('id', eventId) : base.eq('active', true).order('date', { ascending: true }).limit(1)).single()
   if (!event) return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
 
   const { data: existing } = await db
@@ -60,8 +62,6 @@ export async function POST(req: NextRequest) {
   const imported: string[] = []
   const duplicates: string[] = []
   const errors: string[] = []
-
-  // Also track emails within this import to avoid intra-batch duplicates
   const batchEmails = new Set<string>()
 
   for (const row of rows) {

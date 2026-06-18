@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { sendConfirmationEmail } from '@/lib/email'
 import { randomUUID } from 'crypto'
 
 export async function POST(req: NextRequest) {
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin()
 
-  const base = db.from('events').select('id')
+  const base = db.from('events').select('*')
   const { data: event } = await (eventId ? base.eq('id', eventId) : base.eq('active', true).order('date', { ascending: true }).limit(1)).single()
   if (!event) return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   if (existing) return NextResponse.json({ error: 'E-Mail bereits registriert.' }, { status: 409 })
 
-  const { data, error } = await db
+  const { data: registration, error } = await db
     .from('registrations')
     .insert({
       name: name.trim(),
@@ -40,7 +41,13 @@ export async function POST(req: NextRequest) {
     .select()
     .single()
 
-  if (error || !data) return NextResponse.json({ error: 'Fehler beim Speichern.' }, { status: 500 })
+  if (error || !registration) return NextResponse.json({ error: 'Fehler beim Speichern.' }, { status: 500 })
+
+  try {
+    await sendConfirmationEmail(registration, event, 'en')
+  } catch (e) {
+    console.error('E-Mail-Fehler:', e)
+  }
 
   return NextResponse.json({ ok: true })
 }

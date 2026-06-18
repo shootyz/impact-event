@@ -69,10 +69,11 @@ export async function GET(
     return NextResponse.redirect(`${appUrl}/${langSuffix}`)
   }
 
+  const emailLang = lang === 'de' ? 'de' : lang === 'fr' ? 'fr' : 'en'
   after(async () => {
     await db.from('invite_codes').update({ used: true }).eq('id', invite.id)
     try {
-      await sendConfirmationEmail(registration, event)
+      await sendConfirmationEmail(registration, event, emailLang)
     } catch (e) {
       console.error('Ticket email failed:', e)
     }

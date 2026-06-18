@@ -79,6 +79,7 @@ function RegistrationPageInner() {
         name: `${vorname.trim()} ${nachname.trim()}`,
         email,
         invite_code_id: inviteCodeId,
+        lang,
         ...(eventId ? { event_id: eventId } : {}),
       }),
     });

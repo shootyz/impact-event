@@ -816,11 +816,12 @@ export default function AdminPage() {
     const fd = new FormData();
     fd.append("adminPassword", savedPassword.current);
     fd.append("file", csvFile);
+    if (selectedEventId) fd.append("eventId", selectedEventId);
     const res = await fetch("/api/admin/import", { method: "POST", body: fd });
     const data = await res.json();
     setCsvImporting(false);
     if (!res.ok) { setCsvResult({ imported: 0, duplicates: [], errors: [data.error] }); }
-    else { setCsvResult(data); if (data.imported > 0) loadRegistrations(savedPassword.current); }
+    else { setCsvResult(data); if (data.imported > 0) loadRegistrations(savedPassword.current, selectedEventId); }
     if (csvInputRef.current) csvInputRef.current.value = "";
     setCsvFile(null);
   };
@@ -1517,8 +1518,19 @@ export default function AdminPage() {
             {/* CSV Import */}
             <Card>
               <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
-              <CardHeader title="CSV-Import" subtitle="Spalten: Name, Vorname, E-Mail" />
+              <CardHeader title="CSV-Import" subtitle={`Spalten: Name, Vorname, E-Mail${event ? ` · ${event.name}` : ''}`} />
               <div className="p-5 space-y-3">
+                {activeEventsWithPw.length > 1 && (
+                  <select
+                    value={selectedEventId ?? ""}
+                    onChange={e => { setSelectedEventId(e.target.value); loadRegistrations(savedPassword.current, e.target.value); }}
+                    className={inputClass} style={inputStyle}
+                  >
+                    {activeEventsWithPw.map(ev => (
+                      <option key={ev.id} value={ev.id}>{ev.name} · {new Date(ev.date).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}</option>
+                    ))}
+                  </select>
+                )}
                 <input ref={csvInputRef} type="file" accept=".csv,text/csv"
                   onChange={e => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
                   className="hidden" />
@@ -1552,7 +1564,7 @@ export default function AdminPage() {
             {/* CSV Export */}
             <Card>
               <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
-              <CardHeader title="CSV-Export" subtitle="Aktueller Event" />
+              <CardHeader title="CSV-Export" subtitle={event?.name ?? "Aktueller Event"} />
               <div className="p-5 space-y-2">
                 {[
                   { type: "all", label: "Alle Registrierten", count: registrations.length },

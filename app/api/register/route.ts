@@ -4,7 +4,7 @@ import { sendConfirmationEmail } from '@/lib/email'
 import { randomUUID } from 'crypto'
 
 export async function POST(req: NextRequest) {
-  const { name, email, invite_code_id, event_id } = await req.json()
+  const { name, email, invite_code_id, event_id, lang } = await req.json()
 
   if (!name?.trim() || !email?.trim()) {
     return NextResponse.json({ error: 'Name und E-Mail sind erforderlich.' }, { status: 400 })
@@ -58,7 +58,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await sendConfirmationEmail(registration, event)
+    const emailLang = lang === 'de' ? 'de' : lang === 'fr' ? 'fr' : 'en'
+    await sendConfirmationEmail(registration, event, emailLang)
   } catch (emailError) {
     console.error('E-Mail-Fehler:', emailError)
   }
