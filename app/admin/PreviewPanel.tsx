@@ -333,12 +333,6 @@ export default function PreviewPanel({
             </div>
           ))}
 
-          {/* Fallback register button when no register_button block exists */}
-          {!hasRegisterBlock && (
-            <div style={{ marginTop: 28, background: D.gold, color: "#fff", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
-              {t.registerBtn}
-            </div>
-          )}
         </div>
 
         {/* Footer */}
