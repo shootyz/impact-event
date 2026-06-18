@@ -12,6 +12,7 @@ export type IntroBlock = {
 export type EventDetailsBlock = {
   type: "event_details";
   date: string;
+  time: string;
   venue_name: string;
   venue_address: string;
   venue_maps_url: string;
@@ -294,7 +295,8 @@ function EventDetailsEditor({ block, onChange, subject }: { block: EventDetailsB
   function downloadIcs() {
     const iso = toInputDate(block.date);
     if (!iso) return;
-    const d = new Date(iso + "T18:00:00");
+    const timeStr = block.time || "18:00";
+    const d = new Date(iso + "T" + timeStr + ":00");
     const pad = (n: number) => String(n).padStart(2, "0");
     const fmt = (dt: Date) =>
       `${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
@@ -346,6 +348,16 @@ function EventDetailsEditor({ block, onChange, subject }: { block: EventDetailsB
             </button>
           )}
         </div>
+      </div>
+      <div>
+        <label className={labelCls} style={labelSty}>Uhrzeit</label>
+        <input
+          type="time"
+          value={block.time ?? ""}
+          onChange={e => onChange({ ...block, time: e.target.value })}
+          className="rounded-lg border px-3 py-2 text-sm"
+          style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
+        />
       </div>
       {(["venue_name", "venue_address", "venue_maps_url", "moderation_name", "moderation_title"] as const).map(k => (
         <div key={k}>
@@ -671,7 +683,7 @@ const ADDABLE_BLOCKS: { type: CampaignBlock["type"]; label: string; icon: string
 function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
   switch (type) {
     case "intro": return { type, text: "" };
-    case "event_details": return { type, date: "", venue_name: "", venue_address: "", venue_maps_url: "", moderation_name: "", moderation_title: "" };
+    case "event_details": return { type, date: "", time: "", venue_name: "", venue_address: "", venue_maps_url: "", moderation_name: "", moderation_title: "" };
     case "program": return { type, slots: [{ id: uid(), time: "", title: "", sub_items: [], note: "" }] };
     case "finalists": return { type, title: "Green Business Award", intro: "", items: [{ id: uid(), name: "", category: "", description: "" }], video_url: "", website_url: "", website_label: "" };
     case "speaker": return { type, photo_url: "", name: "", title: "", bio: "", book: "" };
