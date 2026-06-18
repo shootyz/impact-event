@@ -116,7 +116,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
         <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{block.category}</p>
       )}
       {block.event_title && (
-        <p style={{ color: D.navy, fontSize: 20, fontWeight: 700, margin: "0 0 16px" }}>{block.event_title}</p>
+        <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>{block.event_title}</p>
       )}
       {block.date && field(tl.date, block.date, "date")}
       {(block.time || true) && field(tl.time, block.time ?? "", "time")}
