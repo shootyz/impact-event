@@ -149,16 +149,16 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
   <p style="color:${D.black};font-size:16px;font-weight:600;margin:0;font-family:Arial,sans-serif;">${formattedDate}${block.time ? `, ${block.time}` : ""}</p>
 </td></tr>`);
       if (block.venue_name)
-        rows.push(`<tr><td style="padding:16px 0;">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">${t.venue}</p>
-  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 2px;font-family:Arial,sans-serif;">${block.venue_name}</p>
-  ${block.venue_address ? `<p style="color:${D.gray};font-size:14px;margin:0 0 4px;font-family:Arial,sans-serif;">${block.venue_address}</p>` : ""}
+        rows.push(`<tr><td style="padding:20px 0;">
+  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">${t.venue}</p>
+  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 0 4px;font-family:Arial,sans-serif;">${block.venue_name}</p>
+  ${block.venue_address ? `<p style="color:${D.gray};font-size:14px;margin:0 0 8px;font-family:Arial,sans-serif;">${block.venue_address}</p>` : ""}
   ${block.venue_maps_url ? `<a href="${block.venue_maps_url}" style="color:${D.gold};font-size:13px;text-decoration:none;font-family:Arial,sans-serif;">${t.openInMaps}</a>` : ""}
 </td></tr>`);
       if (block.moderation_name)
-        rows.push(`<tr><td style="padding:16px 0;">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">${t.moderation}</p>
-  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 2px;font-family:Arial,sans-serif;">${block.moderation_name}</p>
+        rows.push(`<tr><td style="padding:20px 0;">
+  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">${t.moderation}</p>
+  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 0 4px;font-family:Arial,sans-serif;">${block.moderation_name}</p>
   ${block.moderation_title ? `<p style="color:${D.gray};font-size:14px;margin:0;font-family:Arial,sans-serif;">${block.moderation_title}</p>` : ""}
 </td></tr>`);
       const icsLink = ctx?.campaignId && ctx?.appUrl && block.date
