@@ -23,6 +23,7 @@ function buildCampaignHtml({
   bodyHtml,
   eventUrl,
   inviteCode,
+  lang = 'en',
 }: {
   appUrl: string
   member: Member
@@ -31,6 +32,7 @@ function buildCampaignHtml({
   bodyHtml: string
   eventUrl: string | null
   inviteCode: string | null
+  lang?: Lang
 }) {
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${member.unsubscribe_token}`
   const fullBody = bodyHtml.trimStart().startsWith('<') ? bodyHtml : plainTextToHtml(bodyHtml)
@@ -41,9 +43,10 @@ function buildCampaignHtml({
   const bodyBefore = ctaIdx >= 0 ? fullBody.slice(0, ctaIdx) : fullBody
   const bodyAfter  = ctaIdx >= 0 ? fullBody.slice(ctaIdx + CTA_MARKER.length) : ''
 
+  const langSuffix = lang !== 'en' ? `${(eventUrl ?? '').includes('?') ? '&' : '?'}lang=${lang}` : ''
   const registerUrl = inviteCode
-    ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}`
-    : eventUrl
+    ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}${lang !== 'en' ? `?lang=${lang}` : ''}`
+    : eventUrl ? `${eventUrl}${langSuffix}` : null
 
   const ctaBlock = registerUrl ? `
         <tr><td style="padding:24px 40px 0;">
@@ -152,14 +155,15 @@ export async function sendCampaign({
 }) {
   // Re-render body HTML from blocks with ICS link context if blocks available
   let hasRegisterBlock = false
+  let campaignLang: Lang = 'en'
   const finalBodyHtml = (() => {
     if (!blocksJson) return bodyHtml
     try {
       const parsed = JSON.parse(blocksJson)
       const blocks: CampaignBlock[] = Array.isArray(parsed) ? parsed : parsed.blocks ?? []
-      const lang: Lang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
+      campaignLang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
       hasRegisterBlock = blocks.some(b => b.type === 'register_button')
-      return renderBlocksToHtml(blocks, { campaignId, appUrl, lang })
+      return renderBlocksToHtml(blocks, { campaignId, appUrl, lang: campaignLang })
     } catch { return bodyHtml }
   })()
 
@@ -195,6 +199,7 @@ export async function sendCampaign({
       bodyHtml: finalBodyHtml,
       eventUrl: hasRegisterBlock ? null : eventUrl,
       inviteCode: hasRegisterBlock ? null : inviteCode,
+      lang: campaignLang,
     })
 
     try {
