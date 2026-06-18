@@ -279,17 +279,43 @@ function IntroEditor({ block, onChange }: { block: IntroBlock; onChange: (b: Int
 }
 
 function EventDetailsEditor({ block, onChange }: { block: EventDetailsBlock; onChange: (b: EventDetailsBlock) => void }) {
+  // Convert display string "Friday, 14 February 2025" → "2025-02-14" for the date input
+  function toInputDate(display: string): string {
+    if (!display) return "";
+    // Already ISO format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(display)) return display;
+    const d = new Date(display);
+    if (isNaN(d.getTime())) return "";
+    return d.toISOString().slice(0, 10);
+  }
+  // Convert "2025-02-14" → "Friday, 14 February 2025"
+  function toDisplayDate(iso: string): string {
+    if (!iso) return "";
+    const d = new Date(iso + "T12:00:00");
+    return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  }
+
   return (
     <div className="space-y-3">
-      {(["date", "venue_name", "venue_address", "venue_maps_url", "moderation_name", "moderation_title"] as const).map(k => (
+      <div>
+        <label className={labelCls} style={labelSty}>Datum</label>
+        <input
+          type="date"
+          value={toInputDate(block.date)}
+          onChange={e => onChange({ ...block, date: toDisplayDate(e.target.value) })}
+          className="w-full rounded-lg border px-3 py-2 text-sm"
+          style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
+        />
+      </div>
+      {(["venue_name", "venue_address", "venue_maps_url", "moderation_name", "moderation_title"] as const).map(k => (
         <div key={k}>
           <label className={labelCls} style={labelSty}>{
-            k === "date" ? "Datum" : k === "venue_name" ? "Venue Name" : k === "venue_address" ? "Adresse" :
+            k === "venue_name" ? "Venue Name" : k === "venue_address" ? "Adresse" :
             k === "venue_maps_url" ? "Google Maps URL" : k === "moderation_name" ? "Moderation Name" : "Moderation Titel"
           }</label>
           <FocusInput value={block[k]} onChange={v => onChange({ ...block, [k]: v })}
             placeholder={
-              k === "date" ? "Friday, 14 February 2025" : k === "venue_name" ? "Kirchgemeindehaus Gstaad" :
+              k === "venue_name" ? "Kirchgemeindehaus Gstaad" :
               k === "venue_address" ? "Untergstaadstrasse 8, 3780 Gstaad" :
               k === "venue_maps_url" ? "https://maps.google.com/?q=…" :
               k === "moderation_name" ? "Carolin Roth" : "Business Moderator & Journalist"
