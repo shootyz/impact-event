@@ -404,21 +404,6 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
             k === "venue_maps_url" ? "Google Maps URL" : k === "moderation_name" ? "Moderation Name" : "Moderation Titel"
           }</label>
           <div className="flex flex-col gap-1">
-            {k === "venue_address" && block.venue_address && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="In Google Maps öffnen"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition self-start"
-                style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", whiteSpace: "nowrap", textDecoration: "none" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                  <circle cx="12" cy="9" r="2.5"/>
-                </svg>
-                Maps
-              </a>
-            )}
             <FocusInput value={block[k]} onChange={v => onChange({ ...block, [k]: v })}
               placeholder={
                 k === "venue_name" ? "Kirchgemeindehaus Gstaad" :
@@ -765,10 +750,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
           {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
           {block.type === "register_button" && (
-            <div>
-              <label className={labelCls} style={labelSty}>URL</label>
-              <FocusInput value={block.url} onChange={v => onChange({ ...block, url: v })} placeholder="https://impactgstaad.vercel.app" />
-            </div>
+            <p className="text-xs" style={{ color: "#9ca3af" }}>URL wird automatisch durch den gewählten Event gesetzt.</p>
           )}
           {block.type !== "divider" && block.type !== "register_button" && <CustomFieldsEditor block={block} onChange={onChange} />}
         </div>
