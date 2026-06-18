@@ -686,7 +686,7 @@ function CustomFieldsEditor({ block, onChange }: { block: CampaignBlock; onChang
   );
 }
 
-function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, lang }: {
+function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStart, onDragOver, onDrop, isDragOver, subject, lang }: {
   block: CampaignBlock;
   index: number;
   total: number;
