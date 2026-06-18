@@ -71,7 +71,7 @@ export type DeadlineBlock = {
 
 export type DividerBlock = { type: "divider" };
 
-export type CampaignBlock =
+export type CampaignBlock = (
   | IntroBlock
   | EventDetailsBlock
   | ProgramBlock
@@ -79,7 +79,8 @@ export type CampaignBlock =
   | SpeakerBlock
   | TextBlock
   | DeadlineBlock
-  | DividerBlock;
+  | DividerBlock
+) & { label?: string };
 
 // ── HTML renderer ─────────────────────────────────────────────────────────────
 
@@ -629,15 +630,42 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject }:
   subject?: string;
 }) {
   const [open, setOpen] = useState(true);
+  const [renaming, setRenaming] = useState(false);
+  const [renameVal, setRenameVal] = useState("");
+  const renameRef = useRef<HTMLInputElement>(null);
+
+  function startRename(e: React.MouseEvent) {
+    e.stopPropagation();
+    setRenameVal(block.label || BLOCK_LABELS[block.type]);
+    setRenaming(true);
+    setTimeout(() => renameRef.current?.select(), 0);
+  }
+  function commitRename() {
+    const trimmed = renameVal.trim();
+    onChange({ ...block, label: trimmed && trimmed !== BLOCK_LABELS[block.type] ? trimmed : undefined });
+    setRenaming(false);
+  }
 
   return (
     <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
         style={{ background: "#f9fafb", borderBottom: open ? "1px solid #e5e7eb" : "none" }}
-        onClick={() => setOpen(o => !o)}>
+        onClick={() => !renaming && setOpen(o => !o)}>
         <span className="text-lg">{open ? "▾" : "▸"}</span>
-        <span className="font-semibold text-sm flex-1" style={{ color: "#1E3263" }}>{BLOCK_LABELS[block.type]}</span>
+        {renaming ? (
+          <input ref={renameRef} value={renameVal} onChange={e => setRenameVal(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={e => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") setRenaming(false); }}
+            onClick={e => e.stopPropagation()}
+            className="flex-1 text-sm font-semibold rounded px-1 border"
+            style={{ color: "#1E3263", borderColor: "#d1d5db", outline: "none" }} />
+        ) : (
+          <span className="font-semibold text-sm flex-1" style={{ color: "#1E3263" }}
+            onDoubleClick={startRename} title="Doppelklick zum Umbenennen">
+            {block.label || BLOCK_LABELS[block.type]}
+          </span>
+        )}
         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
           <button disabled={index === 0} onClick={() => onMove(-1)}
             className="w-7 h-7 rounded-lg border text-xs font-bold transition disabled:opacity-30"
