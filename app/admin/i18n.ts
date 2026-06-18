@@ -28,6 +28,7 @@ export const BLOCK_LABEL_TRANSLATIONS: Record<Lang, Record<string, string>> = {
     text: "Text Block",
     deadline: "Deadline",
     divider: "Divider",
+    register_button: "Register Button",
   },
   de: {
     intro: "Intro-Text",
@@ -38,6 +39,7 @@ export const BLOCK_LABEL_TRANSLATIONS: Record<Lang, Record<string, string>> = {
     text: "Text-Block",
     deadline: "Deadline",
     divider: "Trennlinie",
+    register_button: "Register-Button",
   },
   fr: {
     intro: "Texte d'intro",
@@ -48,6 +50,7 @@ export const BLOCK_LABEL_TRANSLATIONS: Record<Lang, Record<string, string>> = {
     text: "Bloc de texte",
     deadline: "Date limite",
     divider: "Séparateur",
+    register_button: "Bouton d'inscription",
   },
 };
 

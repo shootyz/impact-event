@@ -3,7 +3,7 @@
 import { useRef, useEffect } from "react";
 import type {
   CampaignBlock, IntroBlock, EventDetailsBlock, ProgramBlock,
-  FinalistsBlock, SpeakerBlock, TextBlock, DeadlineBlock,
+  FinalistsBlock, SpeakerBlock, TextBlock, DeadlineBlock, RegisterButtonBlock,
 } from "./CampaignBuilder";
 import { type Lang, T, DATE_LOCALE } from "./i18n";
 
@@ -293,7 +293,7 @@ export default function PreviewPanel({
         <div style={{ padding: "0 32px 32px" }}>
           {blocks.map((block, i) => (
             <div key={i} style={{ marginTop: 24 }}>
-              {block.type !== "intro" && block.type !== "text" && block.type !== "divider" && (
+              {block.type !== "intro" && block.type !== "text" && block.type !== "divider" && block.type !== "register_button" && (
                 <>
                   <div style={{ height: 1, background: D.gray2, marginBottom: 20 }} />
                   <SectionHead label={block.label || labelFor(block.type)} />
@@ -323,14 +323,12 @@ export default function PreviewPanel({
               {block.type === "divider" && (
                 <div style={{ height: 1, background: D.gray2, margin: "8px 0" }} />
               )}
-              <CustomFieldsPreview block={block} />
+              {block.type === "register_button" && (
+                <RegisterButtonPreview block={block as RegisterButtonBlock} lang={lang} />
+              )}
+              {block.type !== "register_button" && <CustomFieldsPreview block={block} />}
             </div>
           ))}
-
-          {/* Register button placeholder */}
-          <div style={{ marginTop: 28, background: D.gold, color: "#fff", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
-            {t.registerBtn}
-          </div>
         </div>
 
         {/* Footer */}
@@ -358,4 +356,13 @@ function labelFor(type: CampaignBlock["type"]): string {
     deadline: "Deadline",
   };
   return m[type] ?? type;
+}
+
+function RegisterButtonPreview({ block, lang }: { block: RegisterButtonBlock; lang: Lang }) {
+  const t = T[lang];
+  return (
+    <div style={{ margin: "16px 0", background: D.gold, color: "#fff", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
+      {t.registerBtn}
+    </div>
+  );
 }

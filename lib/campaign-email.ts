@@ -151,12 +151,14 @@ export async function sendCampaign({
   zielgruppeId?: string | null
 }) {
   // Re-render body HTML from blocks with ICS link context if blocks available
+  let hasRegisterBlock = false
   const finalBodyHtml = (() => {
     if (!blocksJson) return bodyHtml
     try {
       const parsed = JSON.parse(blocksJson)
       const blocks: CampaignBlock[] = Array.isArray(parsed) ? parsed : parsed.blocks ?? []
       const lang: Lang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
+      hasRegisterBlock = blocks.some(b => b.type === 'register_button')
       return renderBlocksToHtml(blocks, { campaignId, appUrl, lang })
     } catch { return bodyHtml }
   })()
@@ -191,8 +193,8 @@ export async function sendCampaign({
       subject,
       headerImageUrl,
       bodyHtml: finalBodyHtml,
-      eventUrl,
-      inviteCode,
+      eventUrl: hasRegisterBlock ? null : eventUrl,
+      inviteCode: hasRegisterBlock ? null : inviteCode,
     })
 
     try {

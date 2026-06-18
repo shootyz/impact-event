@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import PreviewPanel from "./PreviewPanel";
 import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATIONS } from "./i18n";
 
@@ -75,6 +75,11 @@ export type DeadlineBlock = {
 
 export type DividerBlock = { type: "divider" };
 
+export type RegisterButtonBlock = {
+  type: "register_button";
+  url: string;
+};
+
 export type CustomField = { id: string; label: string; value: string };
 
 export type CampaignBlock = (
@@ -86,6 +91,7 @@ export type CampaignBlock = (
   | TextBlock
   | DeadlineBlock
   | DividerBlock
+  | RegisterButtonBlock
 ) & { label?: string; custom_fields?: CustomField[] };
 
 // ── HTML renderer ─────────────────────────────────────────────────────────────
@@ -240,11 +246,25 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
 
     case "divider":
       return dividerHtml();
+
+    case "register_button": {
+      const url = block.url || "#";
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+  <tr><td>
+    <a href="${url}" style="display:block;background:${D.gold};color:#ffffff;text-decoration:none;padding:17px 32px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
+      ${t.registerBtn}
+    </a>
+  </td></tr>
+</table>`;
+    }
   }
 }
 
 export function renderBlocksToHtml(blocks: CampaignBlock[], ctx?: { campaignId?: string; appUrl?: string; lang?: Lang }): string {
   const r = (b: CampaignBlock) => renderBlock(b, ctx);
+  const hasRegisterBlock = blocks.some(b => b.type === "register_button");
+  if (hasRegisterBlock) return blocks.map(r).join("\n\n");
+
   const introIdx = blocks.findIndex(b => b.type === "intro");
   if (introIdx === -1) return blocks.map(r).join("\n\n");
 
@@ -673,6 +693,10 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
   onChange: (b: CampaignBlock) => void;
   onRemove: () => void;
   onMove: (dir: -1 | 1) => void;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: () => void;
+  isDragOver: boolean;
   subject?: string;
   lang?: Lang;
 }) {
@@ -694,11 +718,15 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
   }
 
   return (
-    <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
+    <div draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
+      className="rounded-2xl border overflow-hidden transition-all"
+      style={{ borderColor: isDragOver ? "#1E3263" : "#e5e7eb", opacity: 1 }}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
         style={{ background: "#f9fafb", borderBottom: open ? "1px solid #e5e7eb" : "none" }}
         onClick={() => !renaming && setOpen(o => !o)}>
+        <span style={{ cursor: "grab", color: "#9ca3af", fontSize: 16, lineHeight: 1 }} title="Ziehen zum Verschieben"
+          onClick={e => e.stopPropagation()}>⠿</span>
         <span className="text-lg">{open ? "▾" : "▸"}</span>
         {renaming ? (
           <input ref={renameRef} value={renameVal} onChange={e => setRenameVal(e.target.value)}
@@ -736,7 +764,13 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, subject, l
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
           {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
-          {block.type !== "divider" && <CustomFieldsEditor block={block} onChange={onChange} />}
+          {block.type === "register_button" && (
+            <div>
+              <label className={labelCls} style={labelSty}>URL</label>
+              <FocusInput value={block.url} onChange={v => onChange({ ...block, url: v })} placeholder="https://impactgstaad.vercel.app" />
+            </div>
+          )}
+          {block.type !== "divider" && block.type !== "register_button" && <CustomFieldsEditor block={block} onChange={onChange} />}
         </div>
       )}
     </div>
@@ -753,6 +787,7 @@ const ADDABLE_BLOCK_TYPES: { type: CampaignBlock["type"]; icon: string }[] = [
   { type: "speaker", icon: "🎤" },
   { type: "text", icon: "📝" },
   { type: "deadline", icon: "⏰" },
+  { type: "register_button", icon: "🔗" },
   { type: "divider", icon: "—" },
 ];
 
@@ -766,6 +801,7 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
     case "text": return { type, content: "" };
     case "deadline": return { type, date: "" };
     case "divider": return { type: "divider" };
+    case "register_button": return { type: "register_button", url: "https://impactgstaad.vercel.app" };
   }
 }
 
@@ -802,6 +838,8 @@ export default function CampaignBuilder({
     initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
   );
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<string | null>(null);
@@ -828,6 +866,18 @@ export default function CampaignBuilder({
     setBlocks(prev => [...prev, defaultBlock(type)]);
     setAddMenuOpen(false);
   };
+  const dropBlock = useCallback(() => {
+    if (dragIdx === null || overIdx === null || dragIdx === overIdx) {
+      setDragIdx(null); setOverIdx(null); return;
+    }
+    setBlocks(prev => {
+      const next = [...prev];
+      const [item] = next.splice(dragIdx, 1);
+      next.splice(overIdx, 0, item);
+      return next;
+    });
+    setDragIdx(null); setOverIdx(null);
+  }, [dragIdx, overIdx]);
 
   const bodyHtml = renderBlocksToHtml(blocks, { lang });
   const canSave = subject.trim() && blocks.length > 0;
@@ -943,6 +993,10 @@ export default function CampaignBuilder({
                 onChange={b => updateBlock(i, b)}
                 onRemove={() => removeBlock(i)}
                 onMove={dir => moveBlock(i, dir)}
+                onDragStart={() => setDragIdx(i)}
+                onDragOver={e => { e.preventDefault(); setOverIdx(i); }}
+                onDrop={dropBlock}
+                isDragOver={overIdx === i && dragIdx !== i}
                 subject={subject} lang={lang} />
             ))}
 
