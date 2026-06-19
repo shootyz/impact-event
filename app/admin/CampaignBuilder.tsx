@@ -134,7 +134,7 @@ export function textToHtml(text: string, color: string, trailingMargin: boolean)
   }).join("\n");
 }
 
-function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?: string; lang?: Lang }): string {
+function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?: string; lang?: Lang; registerUrl?: string }): string {
   const t = T[ctx?.lang ?? "en"];
   const extra = renderCustomFields(block);
   switch (block.type) {
