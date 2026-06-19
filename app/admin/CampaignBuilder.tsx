@@ -792,7 +792,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
   subject?: string;
   lang?: Lang;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameVal, setRenameVal] = useState("");
   const renameRef = useRef<HTMLInputElement>(null);
