@@ -177,32 +177,42 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
     </div>
   ) });
 
-  // Split rows into pairs for two-column layout (exclude buttons row)
-  const dataRows = rows.filter(r => r.label);
-  const buttonsRow = rows.find(r => !r.label);
-  const pairs: typeof rows[] = [];
-  for (let i = 0; i < dataRows.length; i += 2) pairs.push(dataRows.slice(i, i + 2));
-
   return (
     <div>
       {block.category && (
         <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{block.category}</p>
       )}
       {block.event_title && (
-        <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>{block.event_title}</p>
+        <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 14px" }}>{block.event_title}</p>
       )}
-      {pairs.map((pair, pi) => (
-        <div key={pi} style={{ display: "grid", gridTemplateColumns: pair.length > 1 ? "1fr 1fr" : "1fr", gap: 0, borderBottom: `1px solid ${D.gray2}` }}>
-          {pair.map((row, ri) => (
-            <div key={ri} style={{ padding: "12px 0", paddingRight: ri === 0 && pair.length > 1 ? 16 : 0 }}>
-              <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 3px" }}>{row.label}</p>
-              {row.content}
-            </div>
-          ))}
+      <div style={{ borderTop: `1px solid ${D.gray2}`, paddingTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
+        {formattedDate && <span style={{ color: D.black, fontSize: 14 }}>{formattedDate}</span>}
+        {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 14 }} />}
+        {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.black, fontSize: 14 }} />}
+        {block.venue_address !== undefined && <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })} placeholder="Adresse" style={{ color: D.gray, fontSize: 13 }} />}
+        {block.moderation_name && <Editable value={block.moderation_name} onChange={v => onChange({ ...block, moderation_name: v })} placeholder="Moderation" style={{ color: D.black, fontSize: 14 }} />}
+        {block.moderation_title && <Editable value={block.moderation_title} onChange={v => onChange({ ...block, moderation_title: v })} placeholder="Titel" style={{ color: D.gray, fontSize: 13 }} />}
+      </div>
+      {block.date && (
+        <div style={{ borderTop: `1px solid ${D.gray2}`, marginTop: 14, paddingTop: 14, display: "flex", alignItems: "center", gap: 16 }}>
+          <button onClick={downloadIcs}
+            style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 400, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            {tl.addToCalendar}
+          </button>
+          {block.venue_address && (
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none" }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              Maps
+            </a>
+          )}
         </div>
-      ))}
-      {buttonsRow && (
-        <div style={{ paddingTop: 14 }}>{buttonsRow.content}</div>
       )}
     </div>
   );
@@ -293,7 +303,7 @@ function TextPreview({ block, onChange }: { block: TextBlock & { label?: string;
 
 function InfoPreview({ block, onChange }: { block: InfoBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
   return (
-    <div style={{ background: "#f8f6f1", borderLeft: `3px solid ${D.gold}`, padding: "16px 18px", borderRadius: "0 4px 4px 0" }}>
+    <div style={{ background: "#f5f5f5", padding: "16px 18px", borderRadius: 6 }}>
       {(block.title !== undefined) && (
         <div style={{ marginBottom: block.title ? 10 : 0 }}>
           <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}

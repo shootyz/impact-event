@@ -251,7 +251,7 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
       const body = richHtmlToEmail(block.content, D.black);
       if (!body && !block.title) return "";
       return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-collapse:collapse;">
-<tr><td style="padding:20px 24px;background:#f8f6f1;border-left:3px solid ${D.gold};">
+<tr><td style="padding:20px 24px;background:#f5f5f5;border-radius:6px;">
 ${block.title ? `<p style="color:${D.navy};font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;font-family:Arial,sans-serif;">${block.title}</p>` : ""}
 ${body}
 </td></tr></table>`;
