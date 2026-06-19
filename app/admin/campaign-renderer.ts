@@ -112,46 +112,44 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
       return richHtmlToEmail(block.text, D.black);
 
     case "event_details": {
-      const rows = [];
-      if (block.category)
-        rows.push(`<tr><td style="padding:16px 0 4px;">
-  <p style="color:${D.gold};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0;font-family:Arial,sans-serif;">${block.category}</p>
-</td></tr>`);
-      if (block.event_title)
-        rows.push(`<tr><td style="padding:${block.category ? "0" : "16px"} 0 16px;">
-  <p style="color:${D.navy};font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${block.event_title}</p>
-</td></tr>`);
       const locale = DATE_LOCALE[ctx?.lang ?? "en"];
       const formattedDate = block.date
         ? (() => { try { const d = new Date(block.date + "T12:00:00"); if (isNaN(d.getTime())) return block.date; return d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { return block.date; } })()
         : "";
-      if (block.date)
-        rows.push(`<tr><td style="padding:16px 0;">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">${t.date}</p>
-  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0;font-family:Arial,sans-serif;">${formattedDate}${block.time ? `, ${block.time}` : ""}</p>
-</td></tr>`);
+      const dateStr = formattedDate + (block.time ? `, ${block.time}` : "");
+
+      const lines: string[] = [];
+      if (block.category)
+        lines.push(`<p style="color:${D.gold};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">${block.category}</p>`);
+      if (block.event_title)
+        lines.push(`<p style="color:${D.navy};font-size:16px;font-weight:700;margin:0 0 14px;font-family:Arial,sans-serif;">${block.event_title}</p>`);
+
+      const details: string[] = [];
+      if (dateStr)
+        details.push(`<p style="color:${D.black};font-size:14px;margin:0 0 6px;font-family:Arial,sans-serif;">${dateStr}</p>`);
       if (block.venue_name)
-        rows.push(`<tr><td style="padding:20px 0;">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">${t.venue}</p>
-  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 0 4px;font-family:Arial,sans-serif;">${block.venue_name}</p>
-  ${block.venue_address ? `<p style="color:${D.gray};font-size:14px;margin:0 0 8px;font-family:Arial,sans-serif;">${block.venue_address}</p>` : ""}
-  ${block.venue_address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}" style="color:${D.gold};font-size:13px;text-decoration:none;font-family:Arial,sans-serif;">${t.openInMaps}</a>` : ""}
-</td></tr>`);
+        details.push(`<p style="color:${D.black};font-size:14px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.venue_name}</p>`);
+      if (block.venue_address)
+        details.push(`<p style="color:${D.gray};font-size:13px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.venue_address}</p>`);
       if (block.moderation_name)
-        rows.push(`<tr><td style="padding:20px 0;">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">${t.moderation}</p>
-  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 0 4px;font-family:Arial,sans-serif;">${block.moderation_name}</p>
-  ${block.moderation_title ? `<p style="color:${D.gray};font-size:14px;margin:0;font-family:Arial,sans-serif;">${block.moderation_title}</p>` : ""}
-</td></tr>`);
-      const icsLink = ctx?.campaignId && ctx?.appUrl && block.date
-        ? `<tr><td style="padding:12px 0 16px;"><a href="${ctx.appUrl}/api/campaigns/${ctx.campaignId}/ics" style="color:${D.gold};font-size:13px;font-weight:600;text-decoration:none;font-family:Arial,sans-serif;">&#128197; ${t.addToCalendar}</a></td></tr>`
-        : "";
+        details.push(`<p style="color:${D.black};font-size:14px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.moderation_name}</p>`);
+      if (block.moderation_title)
+        details.push(`<p style="color:${D.gray};font-size:13px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.moderation_title}</p>`);
+
+      const calMapsLinks: string[] = [];
+      if (block.date && ctx?.campaignId && ctx?.appUrl)
+        calMapsLinks.push(`<a href="${ctx.appUrl}/api/campaigns/${ctx.campaignId}/ics" style="color:${D.gold};font-size:13px;font-weight:400;text-decoration:none;font-family:Arial,sans-serif;">&#128197; ${t.addToCalendar}</a>`);
+      if (block.venue_address)
+        calMapsLinks.push(`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}" style="color:${D.gold};font-size:13px;font-weight:400;text-decoration:none;font-family:Arial,sans-serif;">&#128205; Maps</a>`);
+
       return `${dividerHtml()}
 ${sectionHeadHtml(block.label || "Event Details")}
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
-${rows.join("\n")}
-${icsLink}
-</table>${extra}`;
+${lines.join("\n")}
+<div style="border-top:1px solid ${D.gray2};padding-top:14px;margin-bottom:14px;">
+${details.join("\n")}
+</div>
+${calMapsLinks.length ? `<div style="display:flex;gap:16px;margin-bottom:24px;">${calMapsLinks.map(l => `<span>${l}</span>`).join(" &nbsp; ")}</div>` : ""}
+${extra}`;
     }
 
     case "program": {
