@@ -321,9 +321,9 @@ function DeadlinePreview({ block, lang = "en" }: { block: DeadlineBlock & { labe
     ? new Date(block.date + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang], { day: "numeric", month: "long", year: "numeric" })
     : "–";
   return (
-    <div style={{ padding: "10px 0 10px 14px", borderLeft: `3px solid ${D.gold}` }}>
-      <p style={{ color: D.black, fontSize: 15, fontWeight: 700, margin: 0 }}>
-        {T[lang].deadline}: {formatted}
+    <div style={{ padding: "10px 0" }}>
+      <p style={{ color: D.gray, fontSize: 13, margin: 0 }}>
+        {T[lang].deadline}: <span style={{ color: D.black, fontWeight: 500 }}>{formatted}</span>
       </p>
     </div>
   );
