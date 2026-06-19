@@ -335,7 +335,7 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
   // Sync external value changes (e.g. block load)
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || "", false);
+      editor.commands.setContent(value || "");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -855,6 +855,7 @@ export default function CampaignBuilder({
   onSaveDraft,
   campaignId,
   initialSubject,
+  initialTitle,
   initialBlocks,
   initialEventUrl,
   initialLang,
@@ -863,9 +864,10 @@ export default function CampaignBuilder({
   zielgruppen,
   events,
 }: {
-  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string, isAutoSave?: boolean, lang?: Lang) => Promise<string>;
+  onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string, isAutoSave?: boolean, lang?: Lang, title?: string) => Promise<string>;
   campaignId?: string;
   initialSubject?: string;
+  initialTitle?: string;
   initialBlocks?: CampaignBlock[];
   initialEventUrl?: string;
   initialLang?: Lang;
@@ -875,6 +877,7 @@ export default function CampaignBuilder({
   events?: EventOption[];
 }) {
   const [lang, setLang] = useState<Lang>(initialLang ?? "en");
+  const [title, setTitle] = useState(initialTitle ?? "");
   const [subject, setSubject] = useState(initialSubject ?? "");
   const [eventUrl, setEventUrl] = useState(initialEventUrl ?? "https://impactgstaad.vercel.app");
   const setZielgruppeId = onZielgruppeChange;
@@ -890,6 +893,7 @@ export default function CampaignBuilder({
   const autoIdRef = useRef<string | undefined>(campaignId);
   const isDirtyRef = useRef(false);
   const firstSaveDoneRef = useRef(!!campaignId);
+  const titleRef = useRef(title);
   const subjectRef = useRef(subject);
   const bodyHtmlRef = useRef("");
   const eventUrlRef = useRef(eventUrl);
@@ -927,6 +931,7 @@ export default function CampaignBuilder({
   const canSave = subject.trim() && blocks.length > 0;
 
   // Keep refs in sync so the interval always reads latest values
+  useEffect(() => { titleRef.current = title; isDirtyRef.current = true; }, [title]);
   useEffect(() => { subjectRef.current = subject; isDirtyRef.current = true; }, [subject]);
   useEffect(() => { eventUrlRef.current = eventUrl; isDirtyRef.current = true; }, [eventUrl]);
   useEffect(() => { blocksRef.current = blocks; isDirtyRef.current = true; }, [blocks]);
@@ -942,7 +947,7 @@ export default function CampaignBuilder({
       isDirtyRef.current = false;
       setAutoSaveStatus("Wird gespeichert…");
       try {
-        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true, lang);
+        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true, lang, titleRef.current);
         autoIdRef.current = id;
         const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
         setAutoSaveStatus(`Automatisch gespeichert · ${time}`);
@@ -961,7 +966,7 @@ export default function CampaignBuilder({
       isDirtyRef.current = false;
       setAutoSaveStatus("Wird gespeichert…");
       try {
-        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true, lang);
+        const id = await onSaveDraft(subjectRef.current, bodyHtmlRef.current, eventUrlRef.current, blocksRef.current, zielgruppeIdRef.current, autoIdRef.current, true, lang, titleRef.current);
         autoIdRef.current = id;
         const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
         setAutoSaveStatus(`Automatisch gespeichert · ${time}`);
@@ -1002,6 +1007,15 @@ export default function CampaignBuilder({
               {l.label}
             </button>
           ))}
+        </div>
+
+        {/* Campaign title */}
+        <div>
+          <label className={labelCls2} style={labelSty2}>Kampagnen-Titel <span style={{ color: "#9ca3af", fontWeight: 400 }}>(intern, nur für dich)</span></label>
+          <input className={inputCls2} style={{ ...inputSty, borderColor: "#d1d5db" }} value={title}
+            onChange={e => setTitle(e.target.value)} placeholder="z.B. Einladung Impact Circle Event Februar 2026"
+            onFocus={e => e.currentTarget.style.borderColor = "#1E3263"}
+            onBlur={e => e.currentTarget.style.borderColor = "#d1d5db"} />
         </div>
 
         {/* Subject + Zielgruppe */}
@@ -1132,7 +1146,7 @@ export default function CampaignBuilder({
             onClick={async () => {
               setSaving(true); setResult(null);
               isDirtyRef.current = false;
-              const id = await onSaveDraft(subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoIdRef.current, false, lang);
+              const id = await onSaveDraft(subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoIdRef.current, false, lang, title);
               autoIdRef.current = id;
               setSaving(false);
               const time = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });

@@ -161,7 +161,7 @@ type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: s
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
 // ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
-type CampaignType = { id: string; subject: string; body_html: string; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; };
+type CampaignType = { id: string; subject: string; body_html: string; blocks_json?: { title?: string } | unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; };
 const TEST_EMAILS = [
   "nik.thomi@impactgstaad.ch",
   "andreas.wandfluh@impactgstaad.ch",
@@ -212,7 +212,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
       <div className="p-5">
         <div className="flex items-start justify-between gap-4 mb-2">
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{c.subject}</p>
+            <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{(c.blocks_json as { title?: string } | null)?.title || c.subject}</p>
             <p className="text-xs mt-0.5" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
               {statusText}{zielgruppeName ? ` · ${zielgruppeName}` : ""}
               {c.sent_at && c.recipient_count != null && (
@@ -1968,13 +1968,14 @@ export default function AdminPage() {
                   initialSubject={editingCampaign?.subject}
                   initialBlocks={(() => { const bj = editingCampaign?.blocks_json; if (!bj) return undefined; if (Array.isArray(bj)) return bj as import("./CampaignBuilder").CampaignBlock[]; return (bj as { blocks?: import("./CampaignBuilder").CampaignBlock[] }).blocks; })()}
                   initialLang={(() => { const bj = editingCampaign?.blocks_json; if (!bj || Array.isArray(bj)) return undefined; return (bj as { lang?: import("./i18n").Lang }).lang; })()}
+                  initialTitle={(() => { const bj = editingCampaign?.blocks_json; if (!bj || Array.isArray(bj)) return undefined; return (bj as { title?: string }).title; })()}
                   initialEventUrl={editingCampaign?.event_url ?? undefined}
                   zielgruppeId={builderZielgruppeId}
                   onZielgruppeChange={setBuilderZielgruppeId}
                   zielgruppen={zielgruppen}
                   events={activeEvents}
-                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId, isAutoSave, lang) => {
-                    const blocksJson = { lang: lang ?? "en", blocks };
+                  onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId, isAutoSave, lang, title) => {
+                    const blocksJson = { lang: lang ?? "en", title: title || "", blocks };
                     const existingId = autoId ?? editingCampaign?.id;
                     if (existingId) {
                       const res = await fetch(`/api/campaigns/${existingId}`, {
@@ -1990,7 +1991,7 @@ export default function AdminPage() {
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocksJson, zielgruppe_id: zielgruppeId }),
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocksJson, zielgruppe_id: zielgruppeId ?? null }),
                       });
                       const d = await res.json();
                       if (res.ok) {
