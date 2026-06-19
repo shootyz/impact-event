@@ -1062,9 +1062,9 @@ export default function CampaignBuilder({
   const inputCls2 = "w-full rounded-lg border px-3 py-2 text-sm outline-none transition";
 
   return (
-    <div className="flex gap-0" style={{ minHeight: 600 }}>
+    <div className="flex gap-0 items-stretch" style={{ minHeight: 600 }}>
       {/* Left: live editable preview */}
-      <div className="hidden lg:flex flex-col" style={{ width: "50%", borderRight: "1px solid #e5e7eb", overflowY: "auto", position: "sticky", top: 0, maxHeight: "100vh" }}>
+      <div className="hidden lg:flex flex-col" style={{ width: "50%", borderRight: "1px solid #e5e7eb", overflowY: "auto", position: "sticky", top: 0, maxHeight: "100vh", alignSelf: "stretch" }}>
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "#e5e7eb" }}>
           <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#1E3263" }}>Vorschau</p>
         </div>

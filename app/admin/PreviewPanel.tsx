@@ -197,8 +197,8 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
 
   return (
     <div>
-      {block.slots.map(slot => (
-        <div key={slot.id} style={{ padding: "14px 0", borderBottom: `1px solid ${D.gray2}` }}>
+      {block.slots.map((slot, si) => (
+        <div key={slot.id} style={{ padding: "14px 0", borderBottom: si < block.slots.length - 1 ? `1px solid ${D.gray2}` : "none" }}>
           <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
             placeholder="Zeit" style={{ color: D.navy, fontSize: 12, fontWeight: 700, marginBottom: 4 }} />
           <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
