@@ -170,6 +170,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
     case "speaker":
       return (
         <div>
+          <Divider />
           <SectionHead label={block.label || t.speaker} />
           {block.photo_url && (
             <img src={block.photo_url} alt={block.name} width={80} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 12, display: "block" }} />
