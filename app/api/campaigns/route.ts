@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ campaign, sent: result.sent })
     } catch (e) {
       console.error(e)
-      return NextResponse.json({ error: 'Send failed', campaign }, { status: 500 })
+      return NextResponse.json({ error: 'Send failed', detail: String(e), campaign }, { status: 500 })
     }
   }
 
