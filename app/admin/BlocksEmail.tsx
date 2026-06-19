@@ -244,7 +244,9 @@ export default function BlocksEmail({ blocks, lang = "en", campaignId, appUrl, r
   const introIdx = blocks.findIndex(b => b.type === "intro");
 
   const rendered = blocks.map((block, i) => (
-    <BlockRenderer key={i} block={block} lang={lang} campaignId={campaignId} appUrl={appUrl} registerUrl={registerUrl} />
+    <div key={i} style={{ marginTop: i === 0 ? 0 : 24 }}>
+      <BlockRenderer block={block} lang={lang} campaignId={campaignId} appUrl={appUrl} registerUrl={registerUrl} />
+    </div>
   ));
 
   if (hasRegisterBlock || introIdx === -1) {
