@@ -101,7 +101,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           {(block.date || block.venue_address) && (
             <div style={{ borderTop: `1px solid ${D.gray2}`, marginTop: 14, paddingTop: 14 }}>
               {block.date && campaignId && appUrl && (
-                <a href={`${appUrl}/api/campaigns/${campaignId}/ics`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "underline", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
+                <a href={`${appUrl}/api/campaigns/${campaignId}/ics`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
                   {t.addToCalendar}
                 </a>
               )}
@@ -109,7 +109,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
                 <span style={{ color: D.gray2, fontSize: 13, margin: "0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>·</span>
               )}
               {block.venue_address && (
-                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "underline", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
+                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
                   Maps
                 </a>
               )}

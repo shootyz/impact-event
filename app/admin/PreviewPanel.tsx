@@ -202,7 +202,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
         <div style={{ borderTop: `1px solid ${D.gray2}`, marginTop: 14, paddingTop: 14, display: "flex", alignItems: "center", gap: 4 }}>
           {block.date && (
             <button onClick={downloadIcs}
-              style={{ color: D.gold, fontSize: 13, fontWeight: 400, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", letterSpacing: 0.2 }}>
+              style={{ color: D.gold, fontSize: 13, fontWeight: 400, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "none", letterSpacing: 0.2 }}>
               {tl.addToCalendar}
             </button>
           )}
