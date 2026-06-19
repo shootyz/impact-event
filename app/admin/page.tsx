@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import CampaignBuilder from "./CampaignBuilder";
+import PreviewPanel from "./PreviewPanel";
+import type { CampaignBlock } from "./campaign-renderer";
+import type { Lang } from "./i18n";
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 type IconProps = { className?: string; style?: React.CSSProperties };
@@ -441,14 +444,27 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
           </div>
         )}
         {sendResult && <p className="text-xs mt-1 mb-2 font-medium" style={{ color: sendResult.startsWith("✓") ? "var(--ig-navy)" : "#dc2626" }}>{sendResult}</p>}
-        {expanded && (
-          <div style={{ border: "1.5px solid var(--ig-gray2)", borderRadius: 12, overflow: "hidden", marginTop: 8 }}>
-            {previewLoading
-              ? <div className="p-8 text-center text-xs" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
-              : <iframe srcDoc={previewHtml ?? ""} style={{ width: "100%", height: 600, border: "none", display: "block" }} title={c.subject} />
-            }
-          </div>
-        )}
+        {expanded && (() => {
+          const bj = c.blocks_json;
+          if (bj) {
+            const parsed = typeof bj === "string" ? JSON.parse(bj) : bj;
+            const blocks: CampaignBlock[] = (Array.isArray(parsed) ? parsed : parsed.blocks ?? []) as CampaignBlock[];
+            const lang: Lang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : "en";
+            return (
+              <div style={{ border: "1.5px solid var(--ig-gray2)", borderRadius: 12, padding: "24px", marginTop: 8 }}>
+                <PreviewPanel blocks={blocks} subject={c.subject} lang={lang} onBlocks={() => {}} eventUrl={c.event_url ?? undefined} />
+              </div>
+            );
+          }
+          return (
+            <div style={{ border: "1.5px solid var(--ig-gray2)", borderRadius: 12, overflow: "hidden", marginTop: 8 }}>
+              {previewLoading
+                ? <div className="p-8 text-center text-xs" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
+                : <iframe srcDoc={previewHtml ?? ""} style={{ width: "100%", height: 600, border: "none", display: "block" }} title={c.subject} />
+              }
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
