@@ -29,6 +29,7 @@ function buildCampaignHtml({
   eventUrl,
   inviteCode,
   lang = 'en',
+  campaignId,
 }: {
   appUrl: string
   member: Member
@@ -38,8 +39,10 @@ function buildCampaignHtml({
   eventUrl: string | null
   inviteCode: string | null
   lang?: Lang
+  campaignId?: string
 }) {
   const unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${member.unsubscribe_token}`
+  const viewInBrowserUrl = campaignId ? `${appUrl}/api/campaigns/${campaignId}/view?token=${member.unsubscribe_token}` : null
   const fullBody = bodyHtml.trimStart().startsWith('<') ? bodyHtml : plainTextToHtml(bodyHtml)
 
   // Split body at <!-- CTA --> marker so invite code + button appear inline
@@ -79,6 +82,7 @@ function buildCampaignHtml({
 </head>
 <body style="margin:0;padding:0;background:#F8F9FF;font-family:Arial,sans-serif;min-height:100%;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:40px 16px 60px;min-height:100%;">
+    ${viewInBrowserUrl ? `<tr><td align="center" style="padding:0 0 12px;"><a href="${viewInBrowserUrl}" style="color:#888;font-size:11px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;text-decoration:underline;">Im Browser ansehen</a></td></tr>` : ''}
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:24px;border:1px solid #D0DDEA;">
 
@@ -140,6 +144,54 @@ export function buildCampaignHtmlForTest({ appUrl, email, subject, bodyHtml, eve
     bodyHtml,
     eventUrl,
     inviteCode: null,
+  })
+}
+
+export async function buildCampaignHtmlForMember({
+  campaign,
+  member,
+  appUrl,
+  inviteCode,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  campaign: any
+  member: Member
+  appUrl: string
+  inviteCode: string | null
+}): Promise<string> {
+  let bodyHtml = campaign.body_html ?? ''
+  let campaignLang: Lang = 'en'
+  let hasRegisterBlock = false
+
+  if (campaign.blocks_json) {
+    try {
+      const parsed = typeof campaign.blocks_json === 'string' ? JSON.parse(campaign.blocks_json) : campaign.blocks_json
+      const blocks = (Array.isArray(parsed) ? parsed : parsed.blocks ?? []) as CampaignBlock[]
+      campaignLang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
+      hasRegisterBlock = blocks.some((b: CampaignBlock) => b.type === 'register_button')
+
+      const eventIdMatch = campaign.event_url?.match(/[?&]event=([^&]+)/)
+      const qrParams: string[] = []
+      if (campaignLang !== 'en') qrParams.push(`lang=${campaignLang}`)
+      if (eventIdMatch) qrParams.push(`event=${eventIdMatch[1]}`)
+      const registerUrl = inviteCode
+        ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
+        : campaign.event_url ?? null
+
+      bodyHtml = renderToStaticMarkup(React.createElement(BlocksEmail, { blocks, lang: campaignLang, campaignId: campaign.id, appUrl, registerUrl: registerUrl ?? undefined }))
+    } catch { /* use body_html fallback */ }
+  }
+
+  return buildCampaignHtml({
+    appUrl,
+    member,
+    subject: campaign.subject,
+    headerImageUrl: campaign.header_image_url ?? null,
+    bodyHtml,
+    eventUrl: hasRegisterBlock ? null : (campaign.event_url ?? null),
+    inviteCode: hasRegisterBlock ? null : inviteCode,
+    lang: campaignLang,
+    campaignId: campaign.id,
   })
 }
 
@@ -228,6 +280,7 @@ export async function sendCampaign({
       eventUrl: hasRegisterBlock ? null : eventUrl,
       inviteCode: hasRegisterBlock ? null : inviteCode,
       lang: campaignLang,
+      campaignId,
     })
 
     try {
