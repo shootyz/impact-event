@@ -156,7 +156,7 @@ type Registration = {
   checked_in: boolean; checked_in_at: string | null; created_at: string;
 };
 type Event = { id: string; name: string; date: string; location: string; };
-type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; };
+type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; };
 type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: string; message?: string; };
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
@@ -515,6 +515,9 @@ export default function AdminPage() {
   const [eventPwInputs, setEventPwInputs] = useState<Record<string, string>>({});
   const [eventPwResults, setEventPwResults] = useState<Record<string, { ok: boolean; msg: string } | null>>({});
   const [eventPwLoading, setEventPwLoading] = useState<Record<string, boolean>>({});
+  const [slugInput, setSlugInput] = useState("");
+  const [slugStatus, setSlugStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [slugSaving, setSlugSaving] = useState(false);
   // Event creation form
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [newEventName, setNewEventName] = useState("");
@@ -1151,7 +1154,7 @@ export default function AdminPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               {allEventCards.map(ev => {
                 const appUrl = typeof window !== "undefined" ? window.location.origin : "";
-                const portalUrl = `${appUrl}/?event=${ev.id}`;
+                const portalUrl = ev.slug ? `${appUrl}/${ev.slug}` : `${appUrl}/?event=${ev.id}`;
                 const evDate = new Date(ev.date);
                 const isPast = evDate < new Date();
                 return (
@@ -1172,6 +1175,8 @@ export default function AdminPage() {
                       onClick={() => {
                         setSelectedEventId(ev.id);
                         setActiveTab("list");
+                        setSlugInput(ev.slug ?? "");
+                        setSlugStatus(null);
                         loadRegistrations(savedPassword.current, ev.id);
                       }}
                     >
@@ -1196,6 +1201,9 @@ export default function AdminPage() {
                             {evDate.toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
                             {ev.location && ` · ${ev.location}`}
                           </p>
+                          {ev.slug && (
+                            <p className="text-xs mt-1 font-mono" style={{ color: "var(--ig-gold)" }}>/{ev.slug}</p>
+                          )}
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="text-2xl font-bold leading-none" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}</p>
@@ -1601,6 +1609,51 @@ export default function AdminPage() {
                 </div>
               </Card>
             ); })()}
+
+            {/* Portal-URL */}
+            <Card>
+              <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+              <CardHeader title="Portal-URL" subtitle="Eigene URL für das Registrationsportal" />
+              <div className="p-5 space-y-3">
+                <div className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-mono" style={{ background: "var(--ig-light)", border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)" }}>
+                  <span>impactgstaad.vercel.app/</span>
+                  <span style={{ color: slugInput ? "var(--ig-navy)" : "var(--ig-gray3)", fontWeight: slugInput ? 600 : 400 }}>{slugInput || "event-name"}</span>
+                </div>
+                <input
+                  type="text"
+                  value={slugInput}
+                  onChange={e => {
+                    setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-'));
+                    setSlugStatus(null);
+                  }}
+                  placeholder="z.B. sustainable-alpine-2026"
+                  className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                />
+                {slugStatus && <p className={`text-xs ${slugStatus.ok ? "text-green-600" : "text-red-500"}`}>{slugStatus.msg}</p>}
+                <div className="flex justify-end">
+                  <BtnPrimary
+                    disabled={slugSaving || !selectedEventId}
+                    onClick={async () => {
+                      if (!selectedEventId) return;
+                      setSlugSaving(true); setSlugStatus(null);
+                      const res = await fetch(`/api/admin/events/${selectedEventId}`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ adminPassword: savedPassword.current, slug: slugInput || null }),
+                      });
+                      setSlugSaving(false);
+                      if (!res.ok) { setSlugStatus({ ok: false, msg: "Fehler – URL bereits vergeben?" }); return; }
+                      const cleanSlug = slugInput.replace(/^-|-$/g, '') || null;
+                      setAllEventCards(prev => prev.map(e => e.id === selectedEventId ? { ...e, slug: cleanSlug } : e));
+                      setSlugStatus({ ok: true, msg: cleanSlug ? `URL gesetzt: /${cleanSlug}` : "URL entfernt." });
+                    }}
+                  >
+                    {slugSaving ? "Speichert…" : "Speichern"}
+                  </BtnPrimary>
+                </div>
+              </div>
+            </Card>
 
             {/* CSV Import */}
             <Card>

@@ -3,10 +3,15 @@ import { supabase } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id')
+  const slug = req.nextUrl.searchParams.get('slug')
   const base = supabase()
     .from('events')
     .select('id, name, date, location, description, registration_password')
-  const { data: event, error } = await (id ? base.eq('id', id) : base.eq('active', true)).single()
+  const { data: event, error } = await (
+    id ? base.eq('id', id) :
+    slug ? base.eq('slug', slug) :
+    base.eq('active', true)
+  ).single()
 
   if (error || !event) {
     return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })

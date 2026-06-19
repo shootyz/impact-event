@@ -6,7 +6,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const { adminPassword, active, name, date, location, description } = await req.json()
+  const { adminPassword, active, name, date, location, description, slug } = await req.json()
 
   if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
@@ -18,6 +18,7 @@ export async function PATCH(
   if (date !== undefined) updates.date = date
   if (location !== undefined) updates.location = location.trim()
   if (description !== undefined) updates.description = description?.trim() || null
+  if (slug !== undefined) updates.slug = slug?.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || null
 
   const { error } = await supabaseAdmin()
     .from('events')
