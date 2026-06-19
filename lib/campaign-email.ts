@@ -165,7 +165,7 @@ export async function sendCampaign({
   const staticBodyHtml = (() => {
     if (!blocksJson) return bodyHtml
     try {
-      const parsed = JSON.parse(blocksJson)
+      const parsed = typeof blocksJson === 'string' ? JSON.parse(blocksJson) : blocksJson
       parsedBlocks = (Array.isArray(parsed) ? parsed : parsed.blocks ?? []) as CampaignBlock[]
       campaignLang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
       hasRegisterBlock = (parsedBlocks as CampaignBlock[]).some(b => b.type === 'register_button')
