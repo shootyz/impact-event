@@ -76,7 +76,7 @@ function RichPreview({ value, onChange, placeholder }: { value: string; onChange
   useEffect(() => {
     if (editor && value !== editor.getHTML()) editor.commands.setContent(value || "");
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [value]);
   if (!editor) return null;
   const isEmpty = !value || value === "<p></p>";
   return (
