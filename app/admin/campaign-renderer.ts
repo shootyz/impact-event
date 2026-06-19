@@ -79,7 +79,7 @@ function dividerHtml() {
 }
 
 function sectionHeadHtml(label: string) {
-  return `<p style="color:${D.gold};font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:0 0 16px;font-family:Arial,sans-serif;">${label}</p>`;
+  return `<p style="color:#6b7280;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 16px;font-family:Arial,sans-serif;">${label}</p>`;
 }
 
 function renderCustomFields(block: CampaignBlock): string {
