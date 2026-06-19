@@ -1,9 +1,7 @@
 import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase'
 import type { Member } from './supabase'
-import { renderToStaticMarkup } from 'react-dom/server'
-import React from 'react'
-import { EmailBlocksRenderer } from '@/app/admin/email-blocks-renderer'
+import { renderBlocksToHtml } from '@/app/admin/campaign-renderer'
 import type { CampaignBlock } from '@/app/admin/campaign-renderer'
 import type { Lang } from '@/app/admin/i18n'
 
@@ -172,7 +170,7 @@ export async function sendCampaign({
       campaignLang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
       hasRegisterBlock = (parsedBlocks as CampaignBlock[]).some(b => b.type === 'register_button')
       // For hasRegisterBlock, we render per-member below; here render without registerUrl as fallback
-      return renderToStaticMarkup(React.createElement(EmailBlocksRenderer, { blocks: parsedBlocks, lang: campaignLang }))
+      return renderBlocksToHtml(parsedBlocks, { campaignId, appUrl, lang: campaignLang })
     } catch { return bodyHtml }
   })()
 
@@ -213,7 +211,7 @@ export async function sendCampaign({
 
     // When blocks contain a register_button, render per-member with personalized URL
     const finalBodyHtml = hasRegisterBlock && parsedBlocks
-      ? renderToStaticMarkup(React.createElement(EmailBlocksRenderer, { blocks: parsedBlocks, lang: campaignLang, registerUrl: memberRegisterUrl ?? undefined }))
+      ? renderBlocksToHtml(parsedBlocks, { campaignId, appUrl, lang: campaignLang, registerUrl: memberRegisterUrl ?? undefined })
       : staticBodyHtml
 
     const html = buildCampaignHtml({
