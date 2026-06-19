@@ -322,7 +322,7 @@ function FocusInput({ value, onChange, placeholder, multiline, rows }: {
     onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} />;
 }
 
-function insertBullet(ref: React.RefObject<HTMLTextAreaElement>, value: string, onChange: (v: string) => void) {
+function insertBullet(ref: React.RefObject<HTMLTextAreaElement | null>, value: string, onChange: (v: string) => void) {
   const el = ref.current;
   if (!el) return;
   const start = el.selectionStart ?? value.length;
