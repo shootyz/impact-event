@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
 import PreviewPanel from "./PreviewPanel";
 import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATIONS } from "./i18n";
 
@@ -127,7 +128,8 @@ export function richHtmlToEmail(html: string, color: string): string {
     .replace(/<ol>/g, `<ol style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;font-family:Arial,sans-serif;">`)
     .replace(/<li>/g, `<li style="margin-bottom:4px;">`)
     .replace(/<strong>/g, `<strong style="font-weight:700;">`)
-    .replace(/<em>/g, `<em style="font-style:italic;">`);
+    .replace(/<em>/g, `<em style="font-style:italic;">`)
+    .replace(/<a href="([^"]+)"[^>]*>/g, `<a href="$1" style="color:#D28D28;text-decoration:underline;">`);
 }
 
 function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?: string; lang?: Lang; registerUrl?: string }): string {
@@ -322,7 +324,7 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
   value: string; onChange: (v: string) => void; minHeight?: number;
 }) {
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, Link.configure({ openOnClick: false, autolink: true })],
     content: value || "",
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
@@ -358,6 +360,15 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
           style={editor.isActive("bulletList") ? btnActive : btnBase}>• Liste</button>
         <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleOrderedList().run(); }}
           style={editor.isActive("orderedList") ? btnActive : btnBase}>1. Liste</button>
+        <div style={{ width: 1, background: "#d1d5db", margin: "0 2px" }} />
+        <button type="button" onMouseDown={e => {
+          e.preventDefault();
+          if (editor.isActive("link")) { editor.chain().focus().unsetLink().run(); return; }
+          const url = window.prompt("URL oder E-Mail eingeben:", "https://");
+          if (!url) return;
+          const href = url.includes("@") && !url.startsWith("http") ? `mailto:${url}` : url;
+          editor.chain().focus().setLink({ href }).run();
+        }} style={editor.isActive("link") ? btnActive : btnBase}>🔗 Link</button>
       </div>
       {/* Editor */}
       <div style={{ padding: "10px 12px", background: "white" }}>
@@ -367,6 +378,7 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
           .tiptap ul { list-style-type: disc; padding-left: 20px; margin: 0 0 10px; }
           .tiptap ol { list-style-type: decimal; padding-left: 20px; margin: 0 0 10px; }
           .tiptap li { margin-bottom: 3px; }
+          .tiptap a { color: #D28D28; text-decoration: underline; cursor: pointer; }
         `}</style>
         <EditorContent editor={editor} />
       </div>

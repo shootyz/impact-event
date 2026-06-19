@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
 import type {
   CampaignBlock, IntroBlock, EventDetailsBlock, ProgramBlock,
   FinalistsBlock, SpeakerBlock, TextBlock, DeadlineBlock, RegisterButtonBlock,
@@ -68,7 +69,7 @@ function Editable({ value, onChange, placeholder, style, className, multiline = 
 
 function RichPreview({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, Link.configure({ openOnClick: true, autolink: true })],
     content: value || "",
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
   });
@@ -87,6 +88,7 @@ function RichPreview({ value, onChange, placeholder }: { value: string; onChange
         .rp-wrap .tiptap ul{list-style-type:disc;padding-left:20px;margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}
         .rp-wrap .tiptap ol{list-style-type:decimal;padding-left:20px;margin:0 0 10px;font-size:15px;}
         .rp-wrap .tiptap li{margin-bottom:3px;}
+        .rp-wrap .tiptap a{color:#D28D28;text-decoration:underline;}
         .rp-wrap .tiptap p.is-editor-empty:first-child::before{content:attr(data-placeholder);color:#9ca3af;pointer-events:none;float:left;height:0;}
       `}</style>
       <div className="rp-wrap" style={{ borderRadius: 4, transition: "background 0.15s" }}
