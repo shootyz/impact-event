@@ -175,8 +175,8 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
             </svg>
             {tl.addToCalendar}
           </button>
-          {(block.venue_maps_url || block.venue_address) && (
-            <a href={block.venue_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
+          {block.venue_address && (
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
               target="_blank" rel="noopener noreferrer"
               style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

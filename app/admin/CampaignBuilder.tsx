@@ -163,7 +163,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
   <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">${t.venue}</p>
   <p style="color:${D.black};font-size:16px;font-weight:600;margin:0 0 4px;font-family:Arial,sans-serif;">${block.venue_name}</p>
   ${block.venue_address ? `<p style="color:${D.gray};font-size:14px;margin:0 0 8px;font-family:Arial,sans-serif;">${block.venue_address}</p>` : ""}
-  ${block.venue_maps_url ? `<a href="${block.venue_maps_url}" style="color:${D.gold};font-size:13px;text-decoration:none;font-family:Arial,sans-serif;">${t.openInMaps}</a>` : ""}
+  ${block.venue_address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}" style="color:${D.gold};font-size:13px;text-decoration:none;font-family:Arial,sans-serif;">${t.openInMaps}</a>` : ""}
 </td></tr>`);
       if (block.moderation_name)
         rows.push(`<tr><td style="padding:20px 0;">
@@ -468,18 +468,17 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
           style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
         />
       </div>
-      {(["venue_name", "venue_address", "venue_maps_url", "moderation_name", "moderation_title"] as const).map(k => (
+      {(["venue_name", "venue_address", "moderation_name", "moderation_title"] as const).map(k => (
         <div key={k}>
           <label className={labelCls} style={labelSty}>{
             k === "venue_name" ? "Venue Name" : k === "venue_address" ? "Adresse" :
-            k === "venue_maps_url" ? "Google Maps URL" : k === "moderation_name" ? "Moderation Name" : "Moderation Titel"
+            k === "moderation_name" ? "Moderation Name" : "Moderation Titel"
           }</label>
           <div className="flex flex-col gap-1">
             <FocusInput value={block[k]} onChange={v => onChange({ ...block, [k]: v })}
               placeholder={
                 k === "venue_name" ? "Kirchgemeindehaus Gstaad" :
                 k === "venue_address" ? "Untergstaadstrasse 8, 3780 Gstaad" :
-                k === "venue_maps_url" ? "https://maps.google.com/?q=…" :
                 k === "moderation_name" ? "Carolin Roth" : "Business Moderator & Journalist"
               } />
           </div>
