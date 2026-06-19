@@ -488,6 +488,7 @@ export default function AdminPage() {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
   const [eventSection, setEventSection] = useState<null | "mailing" | "management">(null);
+  const [showScannerPicker, setShowScannerPicker] = useState(false);
   const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools">("list");
 
   const [dialog, setDialog] = useState<{ title: string; message: string; danger?: boolean; onConfirm: () => void } | null>(null);
@@ -966,6 +967,59 @@ export default function AdminPage() {
           </div>
           {(selectedEventId || !selectedEventId) && (
             <div className="flex items-center gap-2">
+              {/* Global scanner button */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowScannerPicker(v => !v)}
+                  title="Scanner öffnen"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition"
+                  style={{ background: showScannerPicker ? "var(--ig-navy)" : "var(--ig-light)", color: showScannerPicker ? "white" : "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
+                  onMouseLeave={e => { if (!showScannerPicker) { (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; } }}
+                >
+                  <IconCamera className="w-4 h-4" />
+                </button>
+                {showScannerPicker && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowScannerPicker(false)} />
+                    <div className="absolute right-0 top-10 z-20 rounded-2xl border shadow-xl overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)", minWidth: 220 }}>
+                      <div className="px-4 py-3 border-b" style={{ borderColor: "var(--ig-gray2)" }}>
+                        <p className="text-xs font-semibold tracking-[0.15em] uppercase" style={{ color: "var(--ig-gray3)" }}>Event wählen</p>
+                      </div>
+                      {allEventCards.filter(ev => ev.active && new Date(ev.date) >= new Date()).length === 0 ? (
+                        <p className="px-4 py-3 text-sm" style={{ color: "var(--ig-gray3)" }}>Keine aktiven Events</p>
+                      ) : allEventCards
+                        .filter(ev => ev.active && new Date(ev.date) >= new Date())
+                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                        .map(ev => (
+                          <button key={ev.id}
+                            onClick={() => {
+                              setShowScannerPicker(false);
+                              setSelectedEventId(ev.id);
+                              setEventSection("management");
+                              setActiveTab("scanner");
+                              setSlugInput(ev.slug ?? "");
+                              setSlugStatus(null);
+                              setMembersLoaded(false);
+                              loadRegistrations(savedPassword.current, ev.id);
+                            }}
+                            className="w-full text-left px-4 py-3 border-b transition"
+                            style={{ borderColor: "var(--ig-gray2)" }}
+                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"}
+                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}
+                          >
+                            <p className="text-sm font-medium" style={{ color: "var(--ig-navy)" }}>{ev.name}</p>
+                            <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
+                              {new Date(ev.date).toLocaleDateString("de-CH", { day: "numeric", month: "short" })}
+                              {ev.location ? ` · ${ev.location}` : ""}
+                            </p>
+                          </button>
+                        ))
+                      }
+                    </div>
+                  </>
+                )}
+              </div>
               <button
                 onClick={() => {
                   if (eventSection === "mailing" && selectedEventId) {
@@ -2297,6 +2351,91 @@ export default function AdminPage() {
           onConfirm={dialog.onConfirm}
           onCancel={() => setDialog(null)}
         />
+      )}
+
+      {/* ── Scanner event picker (bottom sheet) ── */}
+      {showScannerModal && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40"
+            style={{ background: "rgba(0,0,0,0.45)" }}
+            onClick={() => setShowScannerModal(false)}
+          />
+          {/* Sheet */}
+          <div
+            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl"
+            style={{ background: "white", maxHeight: "85svh", display: "flex", flexDirection: "column" }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full" style={{ background: "var(--ig-gray2)" }} />
+            </div>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pb-4 pt-2">
+              <div>
+                <p className="font-bold text-base" style={{ color: "var(--ig-navy)" }}>Scanner öffnen</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>Event auswählen</p>
+              </div>
+              <button
+                onClick={() => setShowScannerModal(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: "var(--ig-light)", color: "var(--ig-gray3)" }}
+              >
+                <IconX className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Event list */}
+            <div className="overflow-y-auto px-4 pb-8" style={{ flex: 1 }}>
+              {(() => {
+                const now = new Date();
+                const scannerEvents = allEventCards
+                  .filter(ev => ev.active && new Date(ev.date) >= now)
+                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                const pastActive = allEventCards
+                  .filter(ev => ev.active && new Date(ev.date) < now)
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                const displayEvents = [...scannerEvents, ...pastActive];
+                if (!displayEvents.length) return (
+                  <p className="text-center py-8 text-sm" style={{ color: "var(--ig-gray3)" }}>Keine aktiven Events</p>
+                );
+                return displayEvents.map(ev => {
+                  const isPast = new Date(ev.date) < now;
+                  return (
+                    <button
+                      key={ev.id}
+                      className="w-full text-left rounded-2xl mb-3 px-4 py-4 flex items-center gap-4 transition active:scale-[0.98]"
+                      style={{ background: "var(--ig-light)", border: "1.5px solid var(--ig-gray2)" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"}
+                      onClick={() => {
+                        setSelectedEventId(ev.id);
+                        setEventSection("management");
+                        setActiveTab("scanner");
+                        loadRegistrations(savedPassword.current, ev.id);
+                        setShowScannerModal(false);
+                      }}
+                    >
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "white", border: "1.5px solid var(--ig-gray2)" }}>
+                        <IconCamera className="w-5 h-5" style={{ color: isPast ? "var(--ig-gray3)" : "var(--ig-navy)" }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{ev.name}</p>
+                        <p className="text-xs mt-0.5" style={{ color: isPast ? "var(--ig-gray3)" : "var(--ig-gold)" }}>
+                          {new Date(ev.date).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
+                          {isPast && " · vergangen"}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "var(--ig-navy)" }}>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
