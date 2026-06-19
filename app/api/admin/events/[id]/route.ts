@@ -30,3 +30,23 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const { adminPassword } = await req.json()
+
+  if (adminPassword !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
+  }
+
+  const { error } = await supabaseAdmin()
+    .from('events')
+    .delete()
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}

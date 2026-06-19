@@ -609,8 +609,8 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedEventId && savedPassword.current) loadAllEvents();
-  }, [loadAllEvents]);
+    if (authenticated && savedPassword.current) loadAllEvents();
+  }, [authenticated, loadAllEvents]);
 
   useEffect(() => {
     if (eventSection === "mailing" && selectedEventId && !membersLoaded) {
@@ -1096,23 +1096,33 @@ export default function AdminPage() {
                 {newEventResult && (
                   <p className={`text-xs ${newEventResult.ok ? "text-green-600" : "text-red-500"}`}>{newEventResult.msg}</p>
                 )}
-                <div className="flex justify-end gap-2">
-                  <BtnOutline onClick={() => { setShowCreateEvent(false); setNewEventResult(null); }}>Abbrechen</BtnOutline>
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => { setShowCreateEvent(false); setNewEventResult(null); }}
+                    className="text-sm transition"
+                    style={{ color: "var(--ig-gray3)" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}
+                  >Abbrechen</button>
                   <BtnPrimary
                     disabled={newEventLoading || !newEventName.trim() || !newEventDate || !newEventLocation.trim()}
                     onClick={async () => {
                       setNewEventLoading(true); setNewEventResult(null);
-                      const res = await fetch("/api/admin/events", {
-                        method: "POST", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ adminPassword: savedPassword.current, name: newEventName, date: newEventDate, location: newEventLocation, description: newEventDesc, registration_password: newEventPw, category: newEventCategory || null }),
-                      });
-                      const d = await res.json();
-                      setNewEventLoading(false);
-                      if (!res.ok) { setNewEventResult({ ok: false, msg: d.error || "Fehler." }); return; }
-                      setNewEventResult({ ok: true, msg: `„${d.name}" erstellt!` });
-                      setNewEventName(""); setNewEventDate(""); setNewEventLocation(""); setNewEventDesc(""); setNewEventPw(""); setNewEventCategory("");
-                      setShowCreateEvent(false);
-                      loadAllEvents();
+                      try {
+                        const res = await fetch("/api/admin/events", {
+                          method: "POST", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ adminPassword: savedPassword.current, name: newEventName, date: newEventDate, location: newEventLocation, description: newEventDesc, registration_password: newEventPw, category: newEventCategory || null }),
+                        });
+                        const d = await res.json();
+                        if (!res.ok) { setNewEventResult({ ok: false, msg: d.error || "Fehler beim Erstellen." }); return; }
+                        setNewEventName(""); setNewEventDate(""); setNewEventLocation(""); setNewEventDesc(""); setNewEventPw(""); setNewEventCategory("");
+                        setShowCreateEvent(false);
+                        loadAllEvents();
+                      } catch {
+                        setNewEventResult({ ok: false, msg: "Netzwerkfehler." });
+                      } finally {
+                        setNewEventLoading(false);
+                      }
                     }}
                   >
                     {newEventLoading ? "Erstellt…" : "Erstellen"}
@@ -1193,7 +1203,7 @@ export default function AdminPage() {
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
                           <button title="Duplizieren" disabled={duplicatingId === ev.id}
                             onClick={e => { e.stopPropagation(); duplicateEvent(ev); }}
-                            className="p-1.5 rounded-lg transition text-xs" style={{ color: "var(--ig-gray3)" }}
+                            className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
                             onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
                             onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
@@ -1202,19 +1212,26 @@ export default function AdminPage() {
                             <button title="Archivieren"
                               onClick={e => { e.stopPropagation(); showConfirm("Event archivieren", `„${ev.name}" archivieren?`, false, async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: false }) }); setDialog(null); loadAllEvents(); }); }}
                               className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
-                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
+                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"}
                               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
                             </button>
                           ) : (
                             <button title="Reaktivieren"
                               onClick={e => { e.stopPropagation(); fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: true }) }).then(() => loadAllEvents()); }}
-                              className="p-1.5 rounded-lg transition text-xs font-medium" style={{ color: "var(--ig-gray3)" }}
+                              className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
                               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#16a34a"}
                               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             </button>
                           )}
+                          <button title="Löschen"
+                            onClick={e => { e.stopPropagation(); showConfirm("Event löschen", `„${ev.name}" und alle zugehörigen Daten löschen? Nicht rückgängig zu machen.`, true, async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setDialog(null); loadAllEvents(); }); }}
+                            className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
+                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
+                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1292,18 +1309,27 @@ export default function AdminPage() {
                           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                           {duplicatingId === ev.id ? "…" : "Kopie"}
                         </button>
-                        <button onClick={e => { e.stopPropagation(); showConfirm(
-                          ev.active ? "Event archivieren" : "Event reaktivieren",
-                          ev.active ? `„${ev.name}" archivieren?` : `„${ev.name}" reaktivieren?`,
-                          false,
-                          async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: !ev.active }) }); setDialog(null); loadAllEvents(); }
-                        ); }}
-                          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition ml-auto"
-                          style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = ev.active ? "#fecaca" : "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = ev.active ? "#dc2626" : "var(--ig-navy)"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
-                          {ev.active ? "Archivieren" : "Reaktivieren"}
-                        </button>
+                        <div className="flex items-center gap-1 ml-auto">
+                          <button onClick={e => { e.stopPropagation(); showConfirm(
+                            ev.active ? "Event archivieren" : "Event reaktivieren",
+                            ev.active ? `„${ev.name}" archivieren?` : `„${ev.name}" reaktivieren?`,
+                            false,
+                            async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: !ev.active }) }); setDialog(null); loadAllEvents(); }
+                          ); }}
+                            className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                            style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = ev.active ? "var(--ig-gold)" : "#16a34a"; (e.currentTarget as HTMLElement).style.color = ev.active ? "var(--ig-gold)" : "#16a34a"; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
+                            {ev.active ? "Archivieren" : "Reaktivieren"}
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); showConfirm("Event löschen", `„${ev.name}" und alle Daten löschen? Nicht rückgängig zu machen.`, true, async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setDialog(null); loadAllEvents(); }); }}
+                            className="p-1.5 rounded-lg transition"
+                            style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; (e.currentTarget as HTMLElement).style.color = "#dc2626"; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
