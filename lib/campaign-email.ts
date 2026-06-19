@@ -1,8 +1,8 @@
 import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase'
 import type { Member } from './supabase'
-import { renderBlocksToHtml } from '@/app/admin/CampaignBuilder'
-import type { CampaignBlock } from '@/app/admin/CampaignBuilder'
+import { renderBlocksToHtml } from '@/app/admin/campaign-renderer'
+import type { CampaignBlock } from '@/app/admin/campaign-renderer'
 import type { Lang } from '@/app/admin/i18n'
 
 function plainTextToHtml(text: string): string {

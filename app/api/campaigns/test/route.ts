@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildCampaignHtmlForTest } from '@/lib/campaign-email'
-import { renderBlocksToHtml } from '@/app/admin/CampaignBuilder'
-import type { CampaignBlock } from '@/app/admin/CampaignBuilder'
+import { renderBlocksToHtml } from '@/app/admin/campaign-renderer'
+import type { CampaignBlock } from '@/app/admin/campaign-renderer'
 import type { Lang } from '@/app/admin/i18n'
 import { supabaseAdmin } from '@/lib/supabase'
 

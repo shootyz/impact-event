@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import type { CampaignBlock, EventDetailsBlock } from '@/app/admin/CampaignBuilder'
+import type { CampaignBlock, EventDetailsBlock } from '@/app/admin/campaign-renderer'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function GET(_req: NextRequest, props: any) {
