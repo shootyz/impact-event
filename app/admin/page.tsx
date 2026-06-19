@@ -214,7 +214,8 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{(c.blocks_json as { title?: string } | null)?.title || c.subject}</p>
             <p className="text-xs mt-0.5" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
-              {statusText}{zielgruppeName ? ` · ${zielgruppeName}` : ""}
+              {statusText}
+              {!c.sent_at && <span style={{ color: "var(--ig-gray3)" }}> · {zielgruppeName ?? <span style={{ fontStyle: "italic" }}>Keine Zielgruppe</span>}</span>}
               {c.sent_at && c.recipient_count != null && (
                 <> · <button ref={recipientsBtnRef}
                   className="underline"
