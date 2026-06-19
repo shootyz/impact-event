@@ -72,7 +72,7 @@ export type CampaignBlock = (
 
 // ── HTML renderer ─────────────────────────────────────────────────────────────
 
-const D = { navy: "#1E3263", gold: "#D28D28", black: "#000000", gray: "#555555", gray2: "#e8e8e8" };
+const D = { navy: "#1E3263", gold: "#D28D28", black: "#1a1a1a", gray: "#6b7280", gray2: "#e8e8e8" };
 
 function dividerHtml() {
   return `<div style="height:1px;background:${D.gray2};margin:20px 0;"></div>`;
@@ -159,11 +159,11 @@ ${extra}`;
         const pad = isFirst ? "0 0 16px" : isLast ? "16px 0 0" : "16px 0";
         const subItems = slot.sub_items.filter(s => s.title);
         return `<tr><td style="padding:${pad};">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;margin:0 0 8px;font-family:Arial,sans-serif;">${slot.time}</p>
-  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${slot.title}</p>
+  <p style="color:${D.navy};font-size:12px;font-weight:700;margin:0 0 4px;font-family:Arial,sans-serif;">${slot.time}</p>
+  <p style="color:${D.black};font-size:15px;font-weight:400;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${slot.title}</p>
   ${subItems.length ? `<table width="100%" cellpadding="0" cellspacing="0">
     ${subItems.map(s => `<tr><td style="padding:10px 0 10px 16px;border-left:3px solid ${D.gold};">
-      <p style="color:${D.black};font-size:15px;font-weight:600;margin:0 0 3px;font-family:Arial,sans-serif;">${s.title}</p>
+      <p style="color:${D.black};font-size:14px;font-weight:600;margin:0 0 2px;font-family:Arial,sans-serif;">${s.title}</p>
       ${s.speaker ? `<p style="color:${D.gray};font-size:13px;margin:0;font-family:Arial,sans-serif;">${s.speaker}</p>` : ""}
     </td></tr>`).join("\n")}
   </table>` : ""}
@@ -180,7 +180,8 @@ ${slotHtmls.join("\n")}
     case "finalists": {
       const items = block.items.filter(f => f.name);
       return `${dividerHtml()}
-${sectionHeadHtml(block.title || "Green Business Award")}
+${sectionHeadHtml(block.label || "Award")}
+${block.title ? `<p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;font-family:Arial,sans-serif;">${block.title}</p>` : ""}
 ${block.intro ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 24px;font-family:Arial,sans-serif;">${block.intro}</p>` : ""}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
 ${items.map(f => `  <tr><td style="padding:12px 0 12px 16px;border-left:3px solid ${D.gold};">
@@ -222,7 +223,7 @@ ${body}
       const formatted = block.date
         ? new Date(block.date + 'T12:00:00').toLocaleDateString(DATE_LOCALE[ctx?.lang ?? "en"], { day: "numeric", month: "long", year: "numeric" })
         : "–";
-      return `<p style="color:${D.gray};font-size:13px;margin:0 0 20px;font-family:Arial,sans-serif;">${t.deadline}: ${formatted}</p>`;
+      return `<p style="color:${D.gray};font-size:13px;margin:0 0 20px;font-family:Arial,sans-serif;">${t.deadline}: <span style="color:${D.black};font-weight:500;">${formatted}</span></p>`;
     }
 
     case "divider":
@@ -239,7 +240,7 @@ ${body}
       ${t.registerBtn}
     </a>
   </td></tr>
-  ${deadlineFormatted ? `<tr><td style="padding-top:10px;text-align:center;"><p style="color:${D.gray};font-size:13px;margin:0;font-family:Arial,sans-serif;">${t.deadline}: <span style="color:${D.black};font-weight:500;">${deadlineFormatted}</span></p></td></tr>` : ""}
+  ${deadlineFormatted ? `<tr><td style="padding-top:10px;text-align:center;"><p style="color:${D.gray};font-size:13px;margin:0;font-family:Arial,sans-serif;">${t.deadline}: ${deadlineFormatted}</p></td></tr>` : ""}
 </table>`;
     }
   }
