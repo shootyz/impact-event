@@ -485,8 +485,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [adminSection, setAdminSection] = useState<"home" | "events" | "mailing">("home");
-  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "archiv" | "mailing">("list");
+  const [eventSection, setEventSection] = useState<null | "mailing" | "management">(null);
+  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools">("list");
 
   const [dialog, setDialog] = useState<{ title: string; message: string; danger?: boolean; onConfirm: () => void } | null>(null);
   const showConfirm = (title: string, message: string, danger: boolean, onConfirm: () => void) =>
@@ -600,27 +600,27 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (adminSection === "events" && savedPassword.current) loadAllEvents();
-    if (adminSection === "mailing" && !membersLoaded) {
+    if (!selectedEventId && savedPassword.current) loadAllEvents();
+  }, [loadAllEvents]);
+
+  useEffect(() => {
+    if (eventSection === "mailing" && selectedEventId && !membersLoaded) {
       setMembersLoading(true);
-      fetch("/api/members").then(r => r.json()).then(d => {
+      fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => {
         if (Array.isArray(d)) setMembers(d);
         setMembersLoading(false);
         setMembersLoaded(true);
       });
-      fetch("/api/zielgruppen").then(r => r.json()).then(d => {
+      fetch(`/api/zielgruppen?eventId=${selectedEventId}`).then(r => r.json()).then(d => {
         if (Array.isArray(d)) setZielgruppen(d);
       });
       setCampaignsLoading(true);
-      fetch("/api/campaigns").then(r => r.json()).then(d => {
+      fetch(`/api/campaigns?eventId=${selectedEventId}`).then(r => r.json()).then(d => {
         if (Array.isArray(d)) setCampaigns(d);
         setCampaignsLoading(false);
       });
-      fetch("/api/events").then(r => r.json()).then(d => {
-        if (Array.isArray(d)) setActiveEvents(d);
-      });
     }
-  }, [activeTab, adminSection, loadAllEvents, membersLoaded]);
+  }, [eventSection, selectedEventId, membersLoaded]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("adminPw");
@@ -933,10 +933,12 @@ export default function AdminPage() {
       <header className="sticky top-0 z-20 border-b w-full" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            {/* Back arrow when drilled into an event */}
-            {adminSection === "events" && selectedEventId ? (
+            {selectedEventId ? (
               <button
-                onClick={() => { setSelectedEventId(null); stopScanner(); }}
+                onClick={() => {
+                  if (eventSection !== null) { setEventSection(null); stopScanner(); }
+                  else { setSelectedEventId(null); setEventSection(null); }
+                }}
                 className="flex items-center gap-2 text-sm font-medium transition"
                 style={{ color: "var(--ig-navy)" }}
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"}
@@ -945,30 +947,32 @@ export default function AdminPage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 12H5M12 5l-7 7 7 7"/>
                 </svg>
-                <span className="hidden sm:inline truncate max-w-xs">{selectedEvent?.name ?? "Events"}</span>
+                <span className="hidden sm:inline truncate max-w-xs">
+                  {eventSection ? selectedEvent?.name ?? "Event" : "Events"}
+                </span>
               </button>
             ) : (
-              <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain cursor-pointer" onClick={() => { setAdminSection("home"); setSelectedEventId(null); }} />
+              <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
             )}
           </div>
-          {adminSection !== "home" && (
+          {(selectedEventId || !selectedEventId) && (
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
-                  if (adminSection === "mailing") {
+                  if (eventSection === "mailing" && selectedEventId) {
                     if (mailingTab === "compose") return;
                     setMembersLoaded(false);
                     setMembersLoading(true);
-                    fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
+                    fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
                     setCampaignsLoading(true);
-                    fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
-                  } else if (selectedEventId) {
+                    fetch(`/api/campaigns?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
+                  } else if (eventSection === "management" && selectedEventId) {
                     loadRegistrations(savedPassword.current, selectedEventId);
                   } else {
                     loadAllEvents();
                   }
                 }}
-                disabled={adminSection === "mailing" && mailingTab === "compose"}
+                disabled={eventSection === "mailing" && mailingTab === "compose"}
                 className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition"
                 style={{ color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; }}
@@ -977,106 +981,13 @@ export default function AdminPage() {
                 <IconRefresh className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Aktualisieren</span>
               </button>
-              <button
-                onClick={() => {
-                  const target = adminSection === "events" ? "mailing" : "events";
-                  setAdminSection(target);
-                  setSelectedEventId(null);
-                  if (target === "mailing" && !membersLoaded) {
-                    setMembersLoading(true);
-                    fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
-                    fetch("/api/zielgruppen").then(r => r.json()).then(d => { if (Array.isArray(d)) setZielgruppen(d); });
-                    setCampaignsLoading(true);
-                    fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
-                  }
-                }}
-                title={adminSection === "events" ? "Zu Mailings" : "Zu Event-Management"}
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition"
-                style={{ background: "var(--ig-gray2)", color: "var(--ig-navy)" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
-              >
-                {adminSection === "events" ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 7l10 7 10-7"/>
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-                    <circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/>
-                    <circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/>
-                    <circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/>
-                  </svg>
-                )}
-              </button>
             </div>
           )}
         </div>
       </header>
 
-      {/* ── Landing ── */}
-      {adminSection === "home" && (
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
-          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
-            <img src="/logo.png" alt="Impact Gstaad" className="h-10 object-contain mb-2" />
-            <div className="flex gap-5 w-full max-w-lg">
-              {([
-                {
-                  section: "events" as const,
-                  label: "Event-Management",
-                  sub: "Events, Scanner, Gäste",
-                  svg: (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="16" rx="2"/>
-                      <path d="M16 2v4M8 2v4M3 10h18"/>
-                      <circle cx="8" cy="15" r="1" fill="white" stroke="none"/>
-                      <circle cx="12" cy="15" r="1" fill="white" stroke="none"/>
-                      <circle cx="16" cy="15" r="1" fill="white" stroke="none"/>
-                    </svg>
-                  ),
-                },
-                {
-                  section: "mailing" as const,
-                  label: "Mailings",
-                  sub: "Mitglieder, Kampagnen, Entwürfe",
-                  svg: (
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="5" width="20" height="14" rx="2"/>
-                      <path d="M2 7l10 7 10-7"/>
-                    </svg>
-                  ),
-                },
-              ] as { section: "events" | "mailing"; label: string; sub: string; svg: React.ReactNode }[]).map(({ section, label, svg }) => (
-                <button
-                  key={section}
-                  onClick={() => {
-                    setAdminSection(section);
-                    if (section === "mailing" && !membersLoaded) {
-                      setMembersLoading(true);
-                      fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
-                      fetch("/api/zielgruppen").then(r => r.json()).then(d => { if (Array.isArray(d)) setZielgruppen(d); });
-                      setCampaignsLoading(true);
-                      fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
-                    }
-                  }}
-                  className="flex-1 rounded-2xl border p-8 text-left transition"
-                  style={{ background: "white", borderColor: "var(--ig-gray2)" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(210,141,40,0.10)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
-                >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: "var(--ig-navy)" }}>
-                    {svg}
-                  </div>
-                  <p className="font-bold text-base" style={{ color: "var(--ig-navy)" }}>{label}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Event Overview (cards) — shown when in events section but no event selected ── */}
-      {adminSection === "events" && !selectedEventId && (
+      {/* ── Event Overview (cards) — shown when no event selected ── */}
+      {!selectedEventId && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
           {/* Header row */}
           <div className="flex items-center justify-between mb-6">
@@ -1174,9 +1085,11 @@ export default function AdminPage() {
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
                       onClick={() => {
                         setSelectedEventId(ev.id);
+                        setEventSection(null);
                         setActiveTab("list");
                         setSlugInput(ev.slug ?? "");
                         setSlugStatus(null);
+                        setMembersLoaded(false);
                         loadRegistrations(savedPassword.current, ev.id);
                       }}
                     >
@@ -1271,8 +1184,58 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── Tabs — shown only when drilled into an event ── */}
-      {adminSection === "events" && selectedEventId && (
+      {/* ── Event section picker (Mailing | Event-Management) ── */}
+      {selectedEventId && eventSection === null && (
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+          <p className="text-xs font-semibold tracking-[0.15em] uppercase mb-2" style={{ color: "var(--ig-gray3)" }}>{selectedEvent?.name}</p>
+          <p className="text-xs mb-6" style={{ color: "var(--ig-gray3)" }}>
+            {selectedEvent?.date ? new Date(selectedEvent.date).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" }) : ""}
+            {selectedEvent?.location ? ` · ${selectedEvent.location}` : ""}
+          </p>
+          <div className="flex gap-5">
+            {([
+              {
+                key: "mailing" as const,
+                label: "Mailing",
+                sub: "Mitglieder, Kampagnen, Entwürfe",
+                svg: (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 7l10 7 10-7"/>
+                  </svg>
+                ),
+              },
+              {
+                key: "management" as const,
+                label: "Event-Management",
+                sub: "Scanner, Gäste, Tools",
+                svg: (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                    <circle cx="8" cy="15" r="1" fill="white" stroke="none"/>
+                    <circle cx="12" cy="15" r="1" fill="white" stroke="none"/>
+                    <circle cx="16" cy="15" r="1" fill="white" stroke="none"/>
+                  </svg>
+                ),
+              },
+            ]).map(({ key, label, svg }) => (
+              <button
+                key={key}
+                onClick={() => setEventSection(key)}
+                className="flex-1 rounded-2xl border p-8 text-left transition"
+                style={{ background: "white", borderColor: "var(--ig-gray2)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(210,141,40,0.10)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+              >
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: "var(--ig-navy)" }}>{svg}</div>
+                <p className="font-bold text-base" style={{ color: "var(--ig-navy)" }}>{label}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Management tabs ── */}
+      {selectedEventId && eventSection === "management" && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6">
           <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
             {eventTabs.map(tab => (
@@ -1288,7 +1251,7 @@ export default function AdminPage() {
       )}
 
       {/* ── Mailing tabs ── */}
-      {adminSection === "mailing" && (
+      {selectedEventId && eventSection === "mailing" && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6">
           <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
             {mailingTabs.map(tab => (
@@ -1304,17 +1267,17 @@ export default function AdminPage() {
       )}
 
       {/* ── Content (event detail + mailing) ── */}
-      {(adminSection === "mailing" || (adminSection === "events" && selectedEventId)) && (
+      {selectedEventId && eventSection !== null && (
       <div
         className="mx-auto w-full px-4 sm:px-6 pb-6 flex-1"
         style={{
-          maxWidth: adminSection === "mailing" && mailingTab === "compose" ? "100%" : "56rem",
+          maxWidth: eventSection === "mailing" && mailingTab === "compose" ? "100%" : "56rem",
           transition: "max-width 0.35s cubic-bezier(0.4,0,0.2,1)",
         }}
       >
 
         {/* ── Filter Pills ── */}
-        {adminSection === "events" && activeTab === "list" && (
+        {eventSection === "management" && activeTab === "list" && (
           <div className="flex gap-2 mb-5 flex-wrap justify-center">
             {([
               { label: "Alle", value: registrations.length, filter: "all" as const },
@@ -1345,7 +1308,7 @@ export default function AdminPage() {
         )}
 
         {/* ═══════════ SCANNER TAB ═══════════ */}
-        {adminSection === "events" && activeTab === "scanner" && (
+        {eventSection === "management" && activeTab === "scanner" && (
           <div className="sm:max-w-sm sm:mx-auto">
 
             {/* Camera card */}
@@ -1444,7 +1407,7 @@ export default function AdminPage() {
         )}
 
         {/* ═══════════ GÄSTE TAB ═══════════ */}
-        {adminSection === "events" && activeTab === "list" && (
+        {eventSection === "management" && activeTab === "list" && (
           <div className="space-y-4">
             {/* Manual add */}
             <Card>
@@ -1571,7 +1534,7 @@ export default function AdminPage() {
         )}
 
         {/* ═══════════ TOOLS TAB ═══════════ */}
-        {adminSection === "events" && activeTab === "tools" && selectedEvent && (
+        {eventSection === "management" && activeTab === "tools" && selectedEvent && (
           <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 items-start">
 
             {/* Anmeldeseite sperren */}
@@ -1758,7 +1721,7 @@ export default function AdminPage() {
 
 
         {/* ═══════════ MAILING TAB ═══════════ */}
-        {adminSection === "mailing" && (
+        {eventSection === "mailing" && (
           <div className="space-y-4">
 
             {/* ── Members / Zielgruppen ── */}
@@ -1837,7 +1800,7 @@ export default function AdminPage() {
                       const doCreate = async () => {
                         if (!newZielgruppeName.trim() || zielgruppeLoading) return;
                         setZielgruppeLoading(true);
-                        const res = await fetch("/api/zielgruppen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newZielgruppeName.trim() }) });
+                        const res = await fetch("/api/zielgruppen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newZielgruppeName.trim(), event_id: selectedEventId }) });
                         const d = await res.json();
                         if (res.ok) { setZielgruppen(prev => [...prev, d].sort((a, b) => a.name.localeCompare(b.name))); setNewZielgruppeName(""); }
                         setZielgruppeLoading(false);
@@ -1901,13 +1864,13 @@ export default function AdminPage() {
                         const res = await fetch("/api/members", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ members: [{ first_name: newMemberFirst, last_name: newMemberLast, email: newMemberEmail }], zielgruppe_id: newMemberZielgruppe || null }),
+                          body: JSON.stringify({ members: [{ first_name: newMemberFirst, last_name: newMemberLast, email: newMemberEmail }], zielgruppe_id: newMemberZielgruppe || null, event_id: selectedEventId }),
                         });
                         const d = await res.json();
                         setNewMemberLoading(false);
                         if (!res.ok) { setNewMemberError(d.error || "Fehler"); return; }
                         setNewMemberFirst(""); setNewMemberLast(""); setNewMemberEmail(""); setNewMemberZielgruppe("");
-                        fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); });
+                        fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); });
                       }}>
                       {newMemberLoading ? "Wird hinzugefügt…" : "Mitglied hinzufügen"}
                     </BtnPrimary></div>
@@ -1956,12 +1919,12 @@ export default function AdminPage() {
                           const res = await fetch("/api/members", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ members: rows, zielgruppe_id: memberCsvZielgruppe || null }),
+                            body: JSON.stringify({ members: rows, zielgruppe_id: memberCsvZielgruppe || null, event_id: selectedEventId }),
                           });
                           const d = await res.json();
                           setMemberCsvResult(d);
                           setMemberCsvImporting(false);
-                          fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) { setMembers(d); setMembersLoaded(true); } });
+                          fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) { setMembers(d); setMembersLoaded(true); } });
                         }}>
                         {memberCsvImporting ? "Importiert…" : "Importieren"}
                       </BtnPrimary>
@@ -2051,7 +2014,7 @@ export default function AdminPage() {
                   zielgruppeId={builderZielgruppeId}
                   onZielgruppeChange={setBuilderZielgruppeId}
                   zielgruppen={zielgruppen}
-                  events={activeEvents}
+                  events={selectedEvent ? [{ id: selectedEvent.id, name: selectedEvent.name, date: selectedEvent.date }] : []}
                   onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId, isAutoSave, lang, title) => {
                     const blocksJson = { lang: lang ?? "en", title: title || "", blocks };
                     const existingId = autoId ?? editingCampaign?.id;
@@ -2069,7 +2032,7 @@ export default function AdminPage() {
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocksJson, zielgruppe_id: zielgruppeId ?? null }),
+                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocksJson, zielgruppe_id: zielgruppeId ?? null, event_id: selectedEventId }),
                       });
                       const d = await res.json();
                       if (res.ok) {

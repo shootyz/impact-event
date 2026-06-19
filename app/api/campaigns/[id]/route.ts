@@ -26,6 +26,7 @@ export async function POST(req: NextRequest, props: any) {
       eventUrl: campaign.event_url,
       appUrl,
       zielgruppeId: campaign.zielgruppe_id ?? null,
+      eventId: campaign.event_id ?? null,
     })
     return NextResponse.json({ sent: result.sent })
   } catch (e) {

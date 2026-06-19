@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendCampaign } from '@/lib/campaign-email'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const eventId = req.nextUrl.searchParams.get('eventId')
+  if (!eventId) return NextResponse.json({ error: 'eventId required' }, { status: 400 })
+
   const db = supabaseAdmin()
   const { data, error } = await db
     .from('campaigns')
     .select('*')
+    .eq('event_id', eventId)
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -14,8 +18,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { subject, header_image_url, body_html, event_url, send_now, blocks_json, zielgruppe_id } = await req.json()
+  const { subject, header_image_url, body_html, event_url, send_now, blocks_json, zielgruppe_id, event_id } = await req.json()
 
+  if (!event_id) return NextResponse.json({ error: 'event_id required' }, { status: 400 })
   if (!subject?.trim() || !body_html?.trim()) {
     return NextResponse.json({ error: 'Subject and body are required' }, { status: 400 })
   }
@@ -24,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const { data: campaign, error } = await db
     .from('campaigns')
-    .insert({ subject, header_image_url: header_image_url || null, body_html, event_url: event_url || null, blocks_json: blocks_json ?? null, zielgruppe_id: zielgruppe_id ?? null })
+    .insert({ subject, header_image_url: header_image_url || null, body_html, event_url: event_url || null, blocks_json: blocks_json ?? null, zielgruppe_id: zielgruppe_id ?? null, event_id })
     .select()
     .single()
 
@@ -40,6 +45,7 @@ export async function POST(req: NextRequest) {
         bodyHtml: body_html,
         eventUrl: event_url || null,
         appUrl,
+        eventId: event_id,
       })
       return NextResponse.json({ campaign, sent: result.sent })
     } catch (e) {

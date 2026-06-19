@@ -147,6 +147,7 @@ export async function sendCampaign({
   eventUrl,
   appUrl,
   zielgruppeId,
+  eventId,
 }: {
   campaignId: string
   subject: string
@@ -156,6 +157,7 @@ export async function sendCampaign({
   eventUrl: string | null
   appUrl: string
   zielgruppeId?: string | null
+  eventId?: string | null
 }) {
   let hasRegisterBlock = false
   let campaignLang: Lang = 'en'
@@ -175,6 +177,7 @@ export async function sendCampaign({
   const db = supabaseAdmin()
 
   let query = db.from('members').select('*').eq('unsubscribed', false)
+  if (eventId) query = query.eq('event_id', eventId)
   if (zielgruppeId) query = query.eq('zielgruppe_id', zielgruppeId)
   const { data: members, error } = await query
 
