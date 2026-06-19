@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import PreviewPanel from "./PreviewPanel";
 import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATIONS } from "./i18n";
 
@@ -116,22 +118,16 @@ function renderCustomFields(block: CampaignBlock): string {
   return `\n<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">${rows}</table>`;
 }
 
-export function textToHtml(text: string, color: string, trailingMargin: boolean): string {
-  const pStyle = `color:${color};font-size:15px;line-height:1.75;font-family:Arial,sans-serif;`;
-  const ulStyle = `margin:0 0 14px;padding-left:20px;list-style-type:disc;`;
-  const liStyle = `color:${color};font-size:15px;line-height:1.75;font-family:Arial,sans-serif;margin-bottom:4px;`;
-  const paragraphs = text.trim().split(/\n\s*\n/);
-  return paragraphs.map((p, i) => {
-    const last = i === paragraphs.length - 1;
-    const lines = p.trim().split("\n");
-    const isBulletPara = lines.every(l => /^[-•]\s/.test(l.trim()));
-    if (isBulletPara) {
-      const items = lines.map(l => `<li style="${liStyle}">${l.trim().replace(/^[-•]\s*/, "")}</li>`).join("\n");
-      return `<ul style="${ulStyle}${last && !trailingMargin ? "margin-bottom:0;" : ""}">\n${items}\n</ul>`;
-    }
-    const margin = last && !trailingMargin ? "0" : "0 0 14px";
-    return `<p style="${pStyle}margin:${margin};">${p.trim().replace(/\n/g, "<br/>")}</p>`;
-  }).join("\n");
+// Convert Tiptap HTML to email-safe inline-styled HTML
+export function richHtmlToEmail(html: string, color: string): string {
+  if (!html || html === "<p></p>") return "";
+  return html
+    .replace(/<p>/g, `<p style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
+    .replace(/<ul>/g, `<ul style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;list-style-type:disc;font-family:Arial,sans-serif;">`)
+    .replace(/<ol>/g, `<ol style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;font-family:Arial,sans-serif;">`)
+    .replace(/<li>/g, `<li style="margin-bottom:4px;">`)
+    .replace(/<strong>/g, `<strong style="font-weight:700;">`)
+    .replace(/<em>/g, `<em style="font-style:italic;">`);
 }
 
 function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?: string; lang?: Lang; registerUrl?: string }): string {
@@ -139,7 +135,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
   const extra = renderCustomFields(block);
   switch (block.type) {
     case "intro":
-      return textToHtml(block.text, D.black, false);
+      return richHtmlToEmail(block.text, D.black);
 
     case "event_details": {
       const rows = [];
@@ -239,7 +235,7 @@ ${block.book ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margi
 ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${block.bio}</p>` : ""}${extra}`;
 
     case "text":
-      return textToHtml(block.content, D.black, true);
+      return richHtmlToEmail(block.content, D.black);
 
     case "deadline": {
       const formatted = block.date
@@ -322,48 +318,58 @@ function FocusInput({ value, onChange, placeholder, multiline, rows }: {
     onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} />;
 }
 
-function insertBullet(ref: React.RefObject<HTMLTextAreaElement | null>, value: string, onChange: (v: string) => void) {
-  const el = ref.current;
-  if (!el) return;
-  const start = el.selectionStart ?? value.length;
-  const end = el.selectionEnd ?? start;
-  const before = value.slice(0, start);
-  const selected = value.slice(start, end);
-  const after = value.slice(end);
-  const lineStart = before.lastIndexOf("\n") + 1;
-  const linePrefix = before.slice(lineStart);
-  if (start === end) {
-    // No selection: insert "- " at start of current line
-    const newVal = value.slice(0, lineStart) + "- " + linePrefix + after;
-    onChange(newVal);
-    requestAnimationFrame(() => { el.selectionStart = el.selectionEnd = start + 2; });
-  } else {
-    // Selection: prefix each selected line with "- "
-    const lines = selected.split("\n").map(l => "- " + l);
-    const newVal = before + lines.join("\n") + after;
-    onChange(newVal);
-  }
-  el.focus();
-}
-
-function BulletTextarea({ value, onChange, placeholder, rows }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; rows?: number;
+function RichTextEditor({ value, onChange, minHeight = 120 }: {
+  value: string; onChange: (v: string) => void; minHeight?: number;
 }) {
-  const [focus, setFocus] = useState(false);
-  const ref = useRef<HTMLTextAreaElement>(null);
-  const style = { ...inputSty, borderColor: focus ? "#1E3263" : "#d1d5db", resize: "none" as const, minHeight: rows ? rows * 24 : 80, overflow: "hidden" };
-  const autoResize = () => { const el = ref.current; if (!el) return; el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; };
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: value || "",
+    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    editorProps: {
+      attributes: {
+        style: `min-height:${minHeight}px;outline:none;font-size:15px;line-height:1.75;color:#1a1a1a;`,
+      },
+    },
+  });
+
+  // Sync external value changes (e.g. block load)
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value || "", false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!editor) return null;
+
+  const btnBase: React.CSSProperties = { padding: "2px 8px", borderRadius: 4, fontSize: 12, fontWeight: 600, border: "1px solid #d1d5db", background: "white", cursor: "pointer", color: "#374151" };
+  const btnActive: React.CSSProperties = { ...btnBase, background: "#1E3263", color: "white", borderColor: "#1E3263" };
+
   return (
-    <div>
-      <button type="button" onMouseDown={e => { e.preventDefault(); insertBullet(ref, value, onChange); }}
-        className="mb-1 px-2 py-0.5 rounded text-xs font-semibold border"
-        style={{ borderColor: "#d1d5db", color: "#6b7280", background: "white" }}>
-        • Bullet
-      </button>
-      <textarea ref={ref} className={inputCls} style={style} value={value}
-        onChange={e => { onChange(e.target.value); autoResize(); }}
-        placeholder={placeholder} onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}
-        onInput={autoResize} />
+    <div style={{ border: "1px solid #d1d5db", borderRadius: 8, overflow: "hidden" }}>
+      {/* Toolbar */}
+      <div style={{ display: "flex", gap: 4, padding: "6px 8px", borderBottom: "1px solid #e5e7eb", background: "#f9fafb", flexWrap: "wrap" }}>
+        <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleBold().run(); }}
+          style={editor.isActive("bold") ? btnActive : btnBase}>B</button>
+        <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleItalic().run(); }}
+          style={editor.isActive("italic") ? { ...btnActive, fontStyle: "italic" } : { ...btnBase, fontStyle: "italic" }}>I</button>
+        <div style={{ width: 1, background: "#d1d5db", margin: "0 2px" }} />
+        <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleBulletList().run(); }}
+          style={editor.isActive("bulletList") ? btnActive : btnBase}>• Liste</button>
+        <button type="button" onMouseDown={e => { e.preventDefault(); editor.chain().focus().toggleOrderedList().run(); }}
+          style={editor.isActive("orderedList") ? btnActive : btnBase}>1. Liste</button>
+      </div>
+      {/* Editor */}
+      <div style={{ padding: "10px 12px", background: "white" }}>
+        <style>{`
+          .tiptap p { margin: 0 0 10px; }
+          .tiptap p:last-child { margin-bottom: 0; }
+          .tiptap ul { list-style-type: disc; padding-left: 20px; margin: 0 0 10px; }
+          .tiptap ol { list-style-type: decimal; padding-left: 20px; margin: 0 0 10px; }
+          .tiptap li { margin-bottom: 3px; }
+        `}</style>
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }
@@ -373,9 +379,8 @@ function IntroEditor({ block, onChange }: { block: IntroBlock; onChange: (b: Int
     <div className="space-y-3">
       <div>
         <label className={labelCls} style={labelSty}>Text</label>
-        <BulletTextarea rows={5} value={block.text} onChange={v => onChange({ ...block, text: v })}
-          placeholder={"We are pleased to invite you to the Impact Circle Event…\n\nWe are particularly honoured to welcome…"} />
-        <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Leerzeile = neuer Absatz · «- Text» für Bullet-Points.</p>
+        <RichTextEditor value={block.text} onChange={v => onChange({ ...block, text: v })} minHeight={120} />
+        <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Register Now Button wird automatisch darunter eingefügt.</p>
       </div>
     </div>
   );
@@ -661,7 +666,7 @@ function TextEditor({ block, onChange }: { block: TextBlock; onChange: (b: TextB
   return (
     <div>
       <label className={labelCls} style={labelSty}>Text</label>
-      <BulletTextarea rows={4} value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Fliesstext… · «- Text» für Bullet-Points" />
+      <RichTextEditor value={block.content} onChange={v => onChange({ ...block, content: v })} minHeight={96} />
     </div>
   );
 }

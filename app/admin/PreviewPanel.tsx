@@ -5,7 +5,6 @@ import type {
   CampaignBlock, IntroBlock, EventDetailsBlock, ProgramBlock,
   FinalistsBlock, SpeakerBlock, TextBlock, DeadlineBlock, RegisterButtonBlock,
 } from "./CampaignBuilder";
-import { textToHtml } from "./CampaignBuilder";
 import { type Lang, T, DATE_LOCALE } from "./i18n";
 
 const D = { navy: "#1E3263", gold: "#D28D28", black: "#1a1a1a", gray: "#6b7280", gray2: "#e8e8e8" };
@@ -65,9 +64,14 @@ function Editable({ value, onChange, placeholder, style, className, multiline = 
 
 // ── Block preview renderers ───────────────────────────────────────────────────
 
-function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
-  if (!block.text) return <Editable value="" onChange={v => onChange({ ...block, text: v })} placeholder="Intro-Text eingeben…" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75 }} />;
-  return <div dangerouslySetInnerHTML={{ __html: textToHtml(block.text, D.black, false) }} style={{ fontSize: 15, lineHeight: 1.75 }} />;
+function IntroPreview({ block }: { block: IntroBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+  if (!block.text || block.text === "<p></p>") return <p style={{ color: "#9ca3af", fontSize: 14 }}>Intro-Text eingeben…</p>;
+  return (
+    <>
+      <style>{`.preview-rich p{margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}.preview-rich p:last-child{margin-bottom:0;}.preview-rich ul{list-style-type:disc;padding-left:20px;margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}.preview-rich ol{list-style-type:decimal;padding-left:20px;margin:0 0 10px;font-size:15px;}.preview-rich li{margin-bottom:3px;}`}</style>
+      <div className="preview-rich" dangerouslySetInnerHTML={{ __html: block.text }} />
+    </>
+  );
 }
 
 function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
@@ -232,9 +236,14 @@ function SpeakerPreview({ block, onChange }: { block: SpeakerBlock & { label?: s
   );
 }
 
-function TextPreview({ block, onChange }: { block: TextBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
-  if (!block.content) return <Editable value="" onChange={v => onChange({ ...block, content: v })} placeholder="Text eingeben…" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75 }} />;
-  return <div dangerouslySetInnerHTML={{ __html: textToHtml(block.content, D.black, true) }} style={{ fontSize: 15, lineHeight: 1.75 }} />;
+function TextPreview({ block }: { block: TextBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+  if (!block.content || block.content === "<p></p>") return <p style={{ color: "#9ca3af", fontSize: 14 }}>Text eingeben…</p>;
+  return (
+    <>
+      <style>{`.preview-rich p{margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}.preview-rich p:last-child{margin-bottom:0;}.preview-rich ul{list-style-type:disc;padding-left:20px;margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}.preview-rich ol{list-style-type:decimal;padding-left:20px;margin:0 0 10px;font-size:15px;}.preview-rich li{margin-bottom:3px;}`}</style>
+      <div className="preview-rich" dangerouslySetInnerHTML={{ __html: block.content }} />
+    </>
+  );
 }
 
 function DeadlinePreview({ block, lang = "en" }: { block: DeadlineBlock & { label?: string }; lang?: Lang }) {
