@@ -283,7 +283,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                   const res = await fetch("/api/campaigns/preview", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ subject: c.subject, body_html: c.body_html, event_url: c.event_url || null }),
+                    body: JSON.stringify({ subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null }),
                   });
                   setPreviewHtml(await res.text());
                   setPreviewLoading(false);
