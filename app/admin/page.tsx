@@ -580,6 +580,7 @@ export default function AdminPage() {
   const [guestSearch, setGuestSearch] = useState("");
   const [guestFilter, setGuestFilter] = useState<"all" | "checkedin" | "pending">("all");
   const [guestSort, setGuestSort] = useState<"name" | "checkin">("name");
+  const [showScannerModal, setShowScannerModal] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
