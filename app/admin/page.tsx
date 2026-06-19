@@ -1138,7 +1138,10 @@ export default function AdminPage() {
           ) : (() => {
             const now = new Date();
             const filtered = allEventCards
-              .filter(ev => eventsStatusTab === "aktiv" ? ev.active : !ev.active)
+              .filter(ev => {
+                const isPast = new Date(ev.date) < now;
+                return eventsStatusTab === "aktiv" ? (ev.active && !isPast) : (!ev.active || isPast);
+              })
               .filter(ev => eventsCategory === null || ev.category === eventsCategory)
               .sort((a, b) => {
                 if (eventsSort === "date-asc") return new Date(a.date).getTime() - new Date(b.date).getTime();
