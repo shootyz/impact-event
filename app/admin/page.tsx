@@ -1071,36 +1071,36 @@ export default function AdminPage() {
             </BtnPrimary>
           </div>
 
-          {/* ── Toolbar: sort / view / category filter ── */}
-          <div className="flex flex-wrap items-center gap-2 mb-5">
-            {/* Category pills */}
+          {/* ── Toolbar: category filter (scrollable) + sort/view ── */}
+          {/* Category pills — single scrollable row */}
+          <div className="flex gap-2 mb-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             <button
               onClick={() => setEventsCategory(null)}
-              className="text-xs px-3 py-1.5 rounded-full font-semibold transition border"
+              className="text-xs px-3 py-1.5 rounded-full font-semibold transition border flex-shrink-0"
               style={{ background: eventsCategory === null ? "var(--ig-navy)" : "white", color: eventsCategory === null ? "white" : "var(--ig-navy)", borderColor: eventsCategory === null ? "var(--ig-navy)" : "var(--ig-gray2)" }}>
               Alle
             </button>
             {EVENT_CATEGORIES.map(cat => (
               <button key={cat} onClick={() => setEventsCategory(eventsCategory === cat ? null : cat)}
-                className="text-xs px-3 py-1.5 rounded-full font-semibold transition border"
+                className="text-xs px-3 py-1.5 rounded-full font-semibold transition border flex-shrink-0"
                 style={{ background: eventsCategory === cat ? "var(--ig-navy)" : "white", color: eventsCategory === cat ? "white" : "var(--ig-navy)", borderColor: eventsCategory === cat ? "var(--ig-navy)" : "var(--ig-gray2)" }}>
                 {cat}
               </button>
             ))}
-            <div className="flex-1" />
-            {/* Sort select */}
+          </div>
+          {/* Sort + view toggle */}
+          <div className="flex items-center gap-2 mb-5">
             <select
               value={eventsSort}
               onChange={e => setEventsSort(e.target.value as typeof eventsSort)}
-              className="text-xs px-3 py-1.5 rounded-lg border outline-none"
+              className="text-xs px-3 py-1.5 rounded-lg border outline-none flex-1"
               style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}>
               <option value="date-desc">Datum ↓</option>
               <option value="date-asc">Datum ↑</option>
               <option value="name-asc">Name A–Z</option>
               <option value="created-desc">Neu zuerst</option>
             </select>
-            {/* View toggle */}
-            <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: "var(--ig-gray2)" }}>
+            <div className="flex rounded-lg border overflow-hidden flex-shrink-0" style={{ borderColor: "var(--ig-gray2)" }}>
               {(["grid", "list"] as const).map(v => (
                 <button key={v} onClick={() => setEventsView(v)}
                   className="px-2.5 py-1.5 transition"
@@ -1341,53 +1341,61 @@ export default function AdminPage() {
                           <div className="h-full rounded-full transition-all" style={{ background: "var(--ig-gold)", width: ev.total > 0 ? `${Math.round((ev.checked_in / ev.total) * 100)}%` : "0%" }} />
                         </div>
                       </button>
-                      <div className="px-5 pb-4 flex items-center gap-2 flex-wrap border-t" style={{ borderColor: "var(--ig-gray2)", paddingTop: 10 }}>
+                      <div className="px-4 pb-3 pt-2.5 flex items-center gap-1.5 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
+                        {/* Portal */}
                         <a href={portalUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                          title="Portal öffnen"
+                          className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
-                          Portal
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
                         </a>
+                        {/* CSV */}
                         <a href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=all&eventId=${ev.id}`}
                           target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                          title="CSV exportieren"
+                          className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}>
-                          <IconDownload className="w-3 h-3" />CSV
+                          <IconDownload className="w-3.5 h-3.5" />
                         </a>
+                        {/* Kopie */}
                         <button title="Duplizieren" disabled={duplicatingId === ev.id}
                           onClick={e => { e.stopPropagation(); duplicateEvent(ev); }}
-                          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                          className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                          {duplicatingId === ev.id ? "…" : "Kopie"}
+                          {duplicatingId === ev.id ? <span className="text-xs px-0.5">…</span> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>}
                         </button>
-                        <div className="flex items-center gap-1 ml-auto">
-                          <button onClick={e => { e.stopPropagation(); showConfirm(
+                        <div className="flex-1" />
+                        {/* Archivieren / Reaktivieren */}
+                        <button onClick={e => { e.stopPropagation(); showConfirm(
                             ev.active ? "Event archivieren" : "Event reaktivieren",
                             ev.active ? `„${ev.name}" archivieren?` : `„${ev.name}" reaktivieren?`,
                             false,
                             async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: !ev.active }) }); setDialog(null); loadAllEvents(); }
                           ); }}
-                            className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
-                            style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = ev.active ? "var(--ig-gold)" : "#16a34a"; (e.currentTarget as HTMLElement).style.color = ev.active ? "var(--ig-gold)" : "#16a34a"; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
-                            {ev.active ? "Archivieren" : "Reaktivieren"}
-                          </button>
-                          <button onClick={e => { e.stopPropagation(); showConfirm("Event löschen", `„${ev.name}" und alle Daten löschen? Nicht rückgängig zu machen.`, true, async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setDialog(null); loadAllEvents(); }); }}
-                            className="p-1.5 rounded-lg transition"
-                            style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; (e.currentTarget as HTMLElement).style.color = "#dc2626"; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
-                            <IconTrash className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                          title={ev.active ? "Archivieren" : "Reaktivieren"}
+                          className="p-2 rounded-lg transition flex items-center justify-center"
+                          style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = ev.active ? "var(--ig-gold)" : "#16a34a"; (e.currentTarget as HTMLElement).style.color = ev.active ? "var(--ig-gold)" : "#16a34a"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
+                          {ev.active
+                            ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>}
+                        </button>
+                        {/* Löschen */}
+                        <button onClick={e => { e.stopPropagation(); showConfirm("Event löschen", `„${ev.name}" und alle Daten löschen? Nicht rückgängig zu machen.`, true, async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setDialog(null); loadAllEvents(); }); }}
+                          title="Löschen"
+                          className="p-2 rounded-lg transition flex items-center justify-center"
+                          style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; (e.currentTarget as HTMLElement).style.color = "#dc2626"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
+                          <IconTrash className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   );
