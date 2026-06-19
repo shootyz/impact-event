@@ -350,7 +350,7 @@ export default function PreviewPanel({
         {/* Logo + greeting */}
         <div style={{ padding: "32px 32px 0" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Impact Gstaad" style={{ height: 24, marginBottom: 20 }} />
+          <img src="/logo.png" alt="Impact Gstaad" style={{ height: 48, marginBottom: 20 }} />
           <div style={{ height: 1, background: D.gray2, marginBottom: 20 }} />
           <p style={{ color: D.navy, fontSize: 15, fontWeight: 700, margin: "0 0 4px" }}>{t.greeting}</p>
         </div>
