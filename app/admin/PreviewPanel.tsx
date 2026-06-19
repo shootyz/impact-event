@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import type {
   CampaignBlock, IntroBlock, EventDetailsBlock, ProgramBlock,
   FinalistsBlock, SpeakerBlock, TextBlock, DeadlineBlock, RegisterButtonBlock,
@@ -64,14 +66,43 @@ function Editable({ value, onChange, placeholder, style, className, multiline = 
 
 // ── Block preview renderers ───────────────────────────────────────────────────
 
-function IntroPreview({ block }: { block: IntroBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
-  if (!block.text || block.text === "<p></p>") return <p style={{ color: "#9ca3af", fontSize: 14 }}>Intro-Text eingeben…</p>;
+function RichPreview({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: value || "",
+    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+  });
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) editor.commands.setContent(value || "");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  if (!editor) return null;
+  const isEmpty = !value || value === "<p></p>";
   return (
     <>
-      <style>{`.preview-rich p{margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}.preview-rich p:last-child{margin-bottom:0;}.preview-rich ul{list-style-type:disc;padding-left:20px;margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}.preview-rich ol{list-style-type:decimal;padding-left:20px;margin:0 0 10px;font-size:15px;}.preview-rich li{margin-bottom:3px;}`}</style>
-      <div className="preview-rich" dangerouslySetInnerHTML={{ __html: block.text }} />
+      <style>{`
+        .rp-wrap .tiptap{outline:none;cursor:text;}
+        .rp-wrap .tiptap p{margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}
+        .rp-wrap .tiptap p:last-child{margin-bottom:0;}
+        .rp-wrap .tiptap ul{list-style-type:disc;padding-left:20px;margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}
+        .rp-wrap .tiptap ol{list-style-type:decimal;padding-left:20px;margin:0 0 10px;font-size:15px;}
+        .rp-wrap .tiptap li{margin-bottom:3px;}
+        .rp-wrap .tiptap p.is-editor-empty:first-child::before{content:attr(data-placeholder);color:#9ca3af;pointer-events:none;float:left;height:0;}
+      `}</style>
+      <div className="rp-wrap" style={{ borderRadius: 4, transition: "background 0.15s" }}
+        onMouseEnter={e => (e.currentTarget.style.background = "rgba(210,141,40,0.06)")}
+        onMouseLeave={e => (e.currentTarget.style.background = "")}>
+        {isEmpty && !editor.isFocused && (
+          <p style={{ color: "#9ca3af", fontSize: 14, margin: 0, cursor: "text" }} onClick={() => editor.commands.focus()}>{placeholder}</p>
+        )}
+        <EditorContent editor={editor} />
+      </div>
     </>
   );
+}
+
+function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+  return <RichPreview value={block.text} onChange={v => onChange({ ...block, text: v })} placeholder="Intro-Text eingeben…" />;
 }
 
 function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
@@ -236,14 +267,8 @@ function SpeakerPreview({ block, onChange }: { block: SpeakerBlock & { label?: s
   );
 }
 
-function TextPreview({ block }: { block: TextBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
-  if (!block.content || block.content === "<p></p>") return <p style={{ color: "#9ca3af", fontSize: 14 }}>Text eingeben…</p>;
-  return (
-    <>
-      <style>{`.preview-rich p{margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}.preview-rich p:last-child{margin-bottom:0;}.preview-rich ul{list-style-type:disc;padding-left:20px;margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}.preview-rich ol{list-style-type:decimal;padding-left:20px;margin:0 0 10px;font-size:15px;}.preview-rich li{margin-bottom:3px;}`}</style>
-      <div className="preview-rich" dangerouslySetInnerHTML={{ __html: block.content }} />
-    </>
-  );
+function TextPreview({ block, onChange }: { block: TextBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+  return <RichPreview value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Text eingeben…" />;
 }
 
 function DeadlinePreview({ block, lang = "en" }: { block: DeadlineBlock & { label?: string }; lang?: Lang }) {
