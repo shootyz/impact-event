@@ -164,9 +164,9 @@ export async function sendCampaign({
     if (!blocksJson) return bodyHtml
     try {
       const parsed = JSON.parse(blocksJson)
-      parsedBlocks = Array.isArray(parsed) ? parsed : parsed.blocks ?? []
+      parsedBlocks = (Array.isArray(parsed) ? parsed : parsed.blocks ?? []) as CampaignBlock[]
       campaignLang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
-      hasRegisterBlock = parsedBlocks.some(b => b.type === 'register_button')
+      hasRegisterBlock = (parsedBlocks as CampaignBlock[]).some(b => b.type === 'register_button')
       // For hasRegisterBlock, we render per-member below; here render without registerUrl as fallback
       return renderBlocksToHtml(parsedBlocks, { campaignId, appUrl, lang: campaignLang })
     } catch { return bodyHtml }
