@@ -118,7 +118,7 @@ function renderCustomFields(block: CampaignBlock): string {
 
 export function textToHtml(text: string, color: string, trailingMargin: boolean): string {
   const pStyle = `color:${color};font-size:15px;line-height:1.75;font-family:Arial,sans-serif;`;
-  const ulStyle = `margin:0 0 14px;padding-left:20px;`;
+  const ulStyle = `margin:0 0 14px;padding-left:20px;list-style-type:disc;`;
   const liStyle = `color:${color};font-size:15px;line-height:1.75;font-family:Arial,sans-serif;margin-bottom:4px;`;
   const paragraphs = text.trim().split(/\n\s*\n/);
   return paragraphs.map((p, i) => {
