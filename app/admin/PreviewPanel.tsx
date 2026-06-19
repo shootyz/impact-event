@@ -113,7 +113,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
     <div style={{ padding: "10px 0" }}>
       <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{label}</p>
       <Editable value={value} onChange={v => onChange({ ...block, [key]: v })}
-        placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} />
+        placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} />
     </div>
   );
 
@@ -149,12 +149,12 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
   })() + (block.time ? `, ${block.time}` : "") : null;
 
   const rows: { label: string; content: React.ReactNode }[] = [];
-  if (formattedDate) rows.push({ label: tl.date, content: <span style={{ color: D.black, fontSize: 15, fontWeight: 600 }}>{formattedDate}</span> });
-  else if (block.time) rows.push({ label: tl.time, content: <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
-  if (block.venue_name !== undefined) rows.push({ label: tl.venue, content: <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
-  if (block.venue_address !== undefined) rows.push({ label: tl.address, content: <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
-  if (block.moderation_name) rows.push({ label: tl.moderation, content: <Editable value={block.moderation_name} onChange={v => onChange({ ...block, moderation_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
-  if (block.moderation_title) rows.push({ label: tl.moderation + " Title", content: <Editable value={block.moderation_title} onChange={v => onChange({ ...block, moderation_title: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
+  if (formattedDate) rows.push({ label: tl.date, content: <span style={{ color: D.black, fontSize: 15, fontWeight: 400 }}>{formattedDate}</span> });
+  else if (block.time) rows.push({ label: tl.time, content: <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
+  if (block.venue_name !== undefined) rows.push({ label: tl.venue, content: <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
+  if (block.venue_address !== undefined) rows.push({ label: tl.address, content: <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
+  if (block.moderation_name) rows.push({ label: tl.moderation, content: <Editable value={block.moderation_name} onChange={v => onChange({ ...block, moderation_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
+  if (block.moderation_title) rows.push({ label: tl.moderation + " Title", content: <Editable value={block.moderation_title} onChange={v => onChange({ ...block, moderation_title: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
   if (block.date) rows.push({ label: "", content: (
     <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
       <button onClick={downloadIcs}
@@ -206,7 +206,7 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
           <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
             placeholder="Zeit" style={{ color: D.navy, fontSize: 12, fontWeight: 700, marginBottom: 4 }} />
           <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
-            placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} />
+            placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} />
           {slot.sub_items.map((sub, i) => (
             <div key={sub.id} style={{ marginTop: 8, paddingLeft: 12, borderLeft: `3px solid ${D.gold}` }}>
               <Editable value={sub.title} onChange={v => {
