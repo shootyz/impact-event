@@ -280,16 +280,14 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
             <button onClick={async () => {
                 if (expanded) { setExpanded(false); return; }
                 setExpanded(true);
-                if (!previewHtml) {
-                  setPreviewLoading(true);
-                  const res = await fetch("/api/campaigns/preview", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null }),
-                  });
-                  setPreviewHtml(await res.text());
-                  setPreviewLoading(false);
-                }
+                setPreviewLoading(true);
+                const res = await fetch("/api/campaigns/preview", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null }),
+                });
+                setPreviewHtml(await res.text());
+                setPreviewLoading(false);
               }}
               className="text-xs px-3 py-1.5 rounded-lg font-medium"
               style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
