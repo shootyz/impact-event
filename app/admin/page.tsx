@@ -156,7 +156,7 @@ type Registration = {
   checked_in: boolean; checked_in_at: string | null; created_at: string;
 };
 type Event = { id: string; name: string; date: string; location: string; };
-type ArchivedEvent = { id: string; name: string; date: string; location: string; total: number; checked_in: number; };
+type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; };
 type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: string; message?: string; };
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
@@ -509,12 +509,14 @@ export default function AdminPage() {
   const [csvSendResult, setCsvSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeEventsWithPw, setActiveEventsWithPw] = useState<{ id: string; name: string; date: string; registration_password: string | null }[]>([]);
+  const [allEventCards, setAllEventCards] = useState<EventCard[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventPwInputs, setEventPwInputs] = useState<Record<string, string>>({});
   const [eventPwResults, setEventPwResults] = useState<Record<string, { ok: boolean; msg: string } | null>>({});
   const [eventPwLoading, setEventPwLoading] = useState<Record<string, boolean>>({});
   // Event creation form
+  const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [newEventName, setNewEventName] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
   const [newEventLocation, setNewEventLocation] = useState("");
@@ -522,10 +524,6 @@ export default function AdminPage() {
   const [newEventPw, setNewEventPw] = useState("");
   const [newEventLoading, setNewEventLoading] = useState(false);
   const [newEventResult, setNewEventResult] = useState<{ ok: boolean; msg: string } | null>(null);
-
-  const [archivedEvents, setArchivedEvents] = useState<ArchivedEvent[]>([]);
-  const [archiveLoading, setArchiveLoading] = useState(false);
-  const [archiveLoaded, setArchiveLoaded] = useState(false);
 
   // Mailing state
   type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; zielgruppe_id: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
@@ -589,18 +587,17 @@ export default function AdminPage() {
     setLoading(false);
   }, []);
 
-  const loadArchive = useCallback(async () => {
-    if (archiveLoaded) return;
-    setArchiveLoading(true);
-    const res = await fetch(`/api/archive?password=${encodeURIComponent(savedPassword.current)}`);
+  const loadAllEvents = useCallback(async () => {
+    if (!savedPassword.current) return;
+    setEventsLoading(true);
+    const res = await fetch(`/api/admin/events?password=${encodeURIComponent(savedPassword.current)}`);
     const data = await res.json();
-    if (data.events) setArchivedEvents(data.events);
-    setArchiveLoading(false);
-    setArchiveLoaded(true);
-  }, [archiveLoaded]);
+    if (Array.isArray(data)) setAllEventCards(data);
+    setEventsLoading(false);
+  }, []);
 
   useEffect(() => {
-    if (activeTab === "archiv") loadArchive();
+    if (adminSection === "events" && savedPassword.current) loadAllEvents();
     if (adminSection === "mailing" && !membersLoaded) {
       setMembersLoading(true);
       fetch("/api/members").then(r => r.json()).then(d => {
@@ -620,17 +617,7 @@ export default function AdminPage() {
         if (Array.isArray(d)) setActiveEvents(d);
       });
     }
-    if (adminSection === "events" && savedPassword.current) {
-      fetch(`/api/admin/event?password=${encodeURIComponent(savedPassword.current)}`)
-        .then(r => r.json()).then(d => {
-          if (Array.isArray(d.events)) {
-            setActiveEventsWithPw(d.events);
-            // Auto-select first event if none selected yet
-            setSelectedEventId(prev => prev ?? d.events[0]?.id ?? null);
-          }
-        });
-    }
-  }, [activeTab, adminSection, loadArchive]);
+  }, [activeTab, adminSection, loadAllEvents, membersLoaded]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("adminPw");
@@ -857,7 +844,7 @@ export default function AdminPage() {
     if (!res.ok) {
       setEventPwResults(prev => ({ ...prev, [eventId]: { ok: false, msg: "Fehler beim Speichern." } }));
     } else {
-      setActiveEventsWithPw(prev => prev.map(ev => ev.id === eventId ? { ...ev, registration_password: pw || null } : ev));
+      setAllEventCards(prev => prev.map(ev => ev.id === eventId ? { ...ev, registration_password: pw || null } : ev));
       setEventPwInputs(prev => ({ ...prev, [eventId]: "" }));
       setEventPwResults(prev => ({ ...prev, [eventId]: { ok: true, msg: pw ? `Code gesetzt: „${pw}"` : "Schutz entfernt." } }));
     }
@@ -923,11 +910,11 @@ export default function AdminPage() {
   }
 
   // ─── MAIN ADMIN ──────────────────────────────────────────────────────────────
+  const selectedEvent = allEventCards.find(e => e.id === selectedEventId) ?? null;
   const eventTabs = [
     { id: "scanner", label: "Scanner" },
     { id: "list", label: "Gäste" },
     { id: "tools", label: "Tools" },
-    { id: "archiv", label: "Archiv" },
   ] as const;
   const mailingTabs = [
     { id: "members", label: "Mitglieder" },
@@ -943,12 +930,22 @@ export default function AdminPage() {
       <header className="sticky top-0 z-20 border-b w-full" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain cursor-pointer" onClick={() => setAdminSection("home")} />
-            {adminSection === "events" && event && (
-              <>
-                <div className="w-px h-5 hidden sm:block" style={{ background: "var(--ig-gray2)" }} />
-                <span className="text-sm font-medium hidden sm:block truncate max-w-xs" style={{ color: "var(--ig-gray3)" }}>{event.name}</span>
-              </>
+            {/* Back arrow when drilled into an event */}
+            {adminSection === "events" && selectedEventId ? (
+              <button
+                onClick={() => { setSelectedEventId(null); stopScanner(); }}
+                className="flex items-center gap-2 text-sm font-medium transition"
+                style={{ color: "var(--ig-navy)" }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 5l-7 7 7 7"/>
+                </svg>
+                <span className="hidden sm:inline truncate max-w-xs">{selectedEvent?.name ?? "Events"}</span>
+              </button>
+            ) : (
+              <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain cursor-pointer" onClick={() => { setAdminSection("home"); setSelectedEventId(null); }} />
             )}
           </div>
           {adminSection !== "home" && (
@@ -962,8 +959,10 @@ export default function AdminPage() {
                     fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
                     setCampaignsLoading(true);
                     fetch("/api/campaigns").then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
-                  } else {
+                  } else if (selectedEventId) {
                     loadRegistrations(savedPassword.current, selectedEventId);
+                  } else {
+                    loadAllEvents();
                   }
                 }}
                 disabled={adminSection === "mailing" && mailingTab === "compose"}
@@ -979,6 +978,7 @@ export default function AdminPage() {
                 onClick={() => {
                   const target = adminSection === "events" ? "mailing" : "events";
                   setAdminSection(target);
+                  setSelectedEventId(null);
                   if (target === "mailing" && !membersLoaded) {
                     setMembersLoading(true);
                     fetch("/api/members").then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
@@ -995,13 +995,11 @@ export default function AdminPage() {
               >
                 {adminSection === "events" ? (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="5" width="20" height="14" rx="2"/>
-                    <path d="M2 7l10 7 10-7"/>
+                    <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 7l10 7 10-7"/>
                   </svg>
                 ) : (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="16" rx="2"/>
-                    <path d="M16 2v4M8 2v4M3 10h18"/>
+                    <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
                     <circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/>
                     <circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/>
                     <circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/>
@@ -1023,7 +1021,7 @@ export default function AdminPage() {
                 {
                   section: "events" as const,
                   label: "Event-Management",
-                  sub: "Scanner, Gäste, Tools, Archiv",
+                  sub: "Events, Scanner, Gäste",
                   svg: (
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="4" width="18" height="16" rx="2"/>
@@ -1070,66 +1068,235 @@ export default function AdminPage() {
                 </button>
               ))}
             </div>
-            {event && <p className="text-xs mt-2" style={{ color: "var(--ig-gray3)" }}>{event.name}</p>}
           </div>
         </div>
       )}
 
-      {/* ── Tabs (fixed width, never expand) ── */}
-      {adminSection !== "home" && (
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6">
-          {adminSection === "events" && (
-            <>
-              {activeEventsWithPw.length > 1 && (
-                <div className="mb-4 flex items-center gap-2">
-                  <span className="text-xs font-semibold tracking-wide" style={{ color: "var(--ig-gray3)" }}>EVENT</span>
-                  <select
-                    value={selectedEventId ?? ""}
-                    onChange={e => {
-                      const id = e.target.value;
-                      setSelectedEventId(id);
-                      loadRegistrations(savedPassword.current, id);
+      {/* ── Event Overview (cards) — shown when in events section but no event selected ── */}
+      {adminSection === "events" && !selectedEventId && (
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+          {/* Header row */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-base font-bold" style={{ color: "var(--ig-navy)" }}>Events</h2>
+            <BtnPrimary onClick={() => { setShowCreateEvent(v => !v); setNewEventResult(null); }}>
+              <IconPlus className="w-3.5 h-3.5" />
+              Neuer Event
+            </BtnPrimary>
+          </div>
+
+          {/* Create event form */}
+          {showCreateEvent && (
+            <Card>
+              <div className="h-0.5" style={{ background: "var(--ig-navy)" }} />
+              <div className="p-5 space-y-3">
+                <p className="text-xs font-semibold tracking-wide" style={{ color: "var(--ig-gray3)" }}>NEUER EVENT</p>
+                <input type="text" value={newEventName} onChange={e => setNewEventName(e.target.value)}
+                  placeholder="Event-Name *" className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <input type="datetime-local" value={newEventDate} onChange={e => setNewEventDate(e.target.value)}
+                  className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <input type="text" value={newEventLocation} onChange={e => setNewEventLocation(e.target.value)}
+                  placeholder="Ort *" className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <input type="text" value={newEventDesc} onChange={e => setNewEventDesc(e.target.value)}
+                  placeholder="Beschreibung (optional)" className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <input type="text" value={newEventPw} onChange={e => setNewEventPw(e.target.value)}
+                  placeholder="Zugangscode für Portal (optional)" className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                {newEventResult && (
+                  <p className={`text-xs ${newEventResult.ok ? "text-green-600" : "text-red-500"}`}>{newEventResult.msg}</p>
+                )}
+                <div className="flex justify-end gap-2">
+                  <BtnOutline onClick={() => { setShowCreateEvent(false); setNewEventResult(null); }}>Abbrechen</BtnOutline>
+                  <BtnPrimary
+                    disabled={newEventLoading || !newEventName.trim() || !newEventDate || !newEventLocation.trim()}
+                    onClick={async () => {
+                      setNewEventLoading(true); setNewEventResult(null);
+                      const res = await fetch("/api/admin/events", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ adminPassword: savedPassword.current, name: newEventName, date: newEventDate, location: newEventLocation, description: newEventDesc, registration_password: newEventPw }),
+                      });
+                      const d = await res.json();
+                      setNewEventLoading(false);
+                      if (!res.ok) { setNewEventResult({ ok: false, msg: d.error || "Fehler." }); return; }
+                      setNewEventResult({ ok: true, msg: `„${d.name}" erstellt!` });
+                      setNewEventName(""); setNewEventDate(""); setNewEventLocation(""); setNewEventDesc(""); setNewEventPw("");
+                      setShowCreateEvent(false);
+                      loadAllEvents();
                     }}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-sm font-medium outline-none"
-                    style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
                   >
-                    {activeEventsWithPw.map(ev => (
-                      <option key={ev.id} value={ev.id}>
-                        {ev.name} · {new Date(ev.date).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                      </option>
-                    ))}
-                  </select>
+                    {newEventLoading ? "Erstellt…" : "Erstellen"}
+                  </BtnPrimary>
                 </div>
-              )}
-              <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
-                {eventTabs.map(tab => (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                    className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
-                    style={{ color: activeTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
-                    {tab.label}
-                    {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
-                  </button>
-                ))}
               </div>
-            </>
+            </Card>
           )}
-          {adminSection === "mailing" && (
-            <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
-              {mailingTabs.map(tab => (
-                <button key={tab.id} onClick={() => setMailingTab(tab.id as typeof mailingTab)}
-                  className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
-                  style={{ color: mailingTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
-                  {tab.label}
-                  {mailingTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
-                </button>
-              ))}
+
+          {/* Event cards */}
+          {eventsLoading ? (
+            <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div>
+          ) : allEventCards.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-sm mb-4" style={{ color: "var(--ig-gray3)" }}>Noch keine Events.</p>
+              <BtnPrimary onClick={() => setShowCreateEvent(true)}><IconPlus className="w-3.5 h-3.5" />Ersten Event erstellen</BtnPrimary>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {allEventCards.map(ev => {
+                const appUrl = typeof window !== "undefined" ? window.location.origin : "";
+                const portalUrl = `${appUrl}/?event=${ev.id}`;
+                const evDate = new Date(ev.date);
+                const isPast = evDate < new Date();
+                return (
+                  <div
+                    key={ev.id}
+                    className="rounded-2xl border overflow-hidden"
+                    style={{ background: "white", borderColor: "var(--ig-gray2)", opacity: ev.active ? 1 : 0.7 }}
+                  >
+                    {/* Top accent */}
+                    <div className="h-0.5" style={{ background: ev.active ? `linear-gradient(90deg, var(--ig-navy), var(--ig-gold))` : "var(--ig-gray2)" }} />
+
+                    {/* Card body — clickable */}
+                    <button
+                      className="w-full text-left p-5 transition"
+                      style={{ background: "transparent" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+                      onClick={() => {
+                        setSelectedEventId(ev.id);
+                        setActiveTab("list");
+                        loadRegistrations(savedPassword.current, ev.id);
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span
+                              className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                              style={{
+                                background: ev.active ? (isPast ? "rgba(210,141,40,0.10)" : "#dcfce7") : "var(--ig-light)",
+                                color: ev.active ? (isPast ? "var(--ig-gold)" : "#16a34a") : "var(--ig-gray3)",
+                              }}
+                            >
+                              {ev.active ? (isPast ? "Vergangen" : "Aktiv") : "Archiviert"}
+                            </span>
+                            {ev.registration_password && (
+                              <IconLock className="w-3 h-3" style={{ color: "var(--ig-gray3)" }} />
+                            )}
+                          </div>
+                          <p className="font-semibold text-sm leading-snug" style={{ color: "var(--ig-navy)" }}>{ev.name}</p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
+                            {evDate.toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
+                            {ev.location && ` · ${ev.location}`}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-2xl font-bold leading-none" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}</p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>/ {ev.total}</p>
+                        </div>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--ig-light)" }}>
+                        <div className="h-full rounded-full transition-all" style={{ background: "var(--ig-gold)", width: ev.total > 0 ? `${Math.round((ev.checked_in / ev.total) * 100)}%` : "0%" }} />
+                      </div>
+                    </button>
+
+                    {/* Quick actions */}
+                    <div className="px-5 pb-4 flex items-center gap-2 flex-wrap border-t" style={{ borderColor: "var(--ig-gray2)", paddingTop: 10 }}>
+                      <a
+                        href={portalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                        style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
+                        </svg>
+                        Portal
+                      </a>
+                      <a
+                        href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=all&eventId=${ev.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                        style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
+                      >
+                        <IconDownload className="w-3 h-3" />
+                        CSV
+                      </a>
+                      {ev.active && (
+                        <button
+                          onClick={e => { e.stopPropagation(); showConfirm("Event archivieren", `„${ev.name}" archivieren?`, false, async () => {
+                            await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: false }) });
+                            setDialog(null);
+                            loadAllEvents();
+                          }); }}
+                          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition ml-auto"
+                          style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; (e.currentTarget as HTMLElement).style.color = "#dc2626"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
+                        >
+                          Archivieren
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* ── Content (animates to full width for builder) ── */}
-      {adminSection !== "home" && (
+      {/* ── Tabs — shown only when drilled into an event ── */}
+      {adminSection === "events" && selectedEventId && (
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6">
+          <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
+            {eventTabs.map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
+                style={{ color: activeTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
+                {tab.label}
+                {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Mailing tabs ── */}
+      {adminSection === "mailing" && (
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6">
+          <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
+            {mailingTabs.map(tab => (
+              <button key={tab.id} onClick={() => setMailingTab(tab.id as typeof mailingTab)}
+                className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
+                style={{ color: mailingTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
+                {tab.label}
+                {mailingTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Content (event detail + mailing) ── */}
+      {(adminSection === "mailing" || (adminSection === "events" && selectedEventId)) && (
       <div
         className="mx-auto w-full px-4 sm:px-6 pb-6 flex-1"
         style={{
@@ -1138,7 +1305,6 @@ export default function AdminPage() {
         }}
       >
 
-        {/* ── Event-Management Content ── */}
         {/* ── Filter Pills ── */}
         {adminSection === "events" && activeTab === "list" && (
           <div className="flex gap-2 mb-5 flex-wrap justify-center">
@@ -1397,17 +1563,14 @@ export default function AdminPage() {
         )}
 
         {/* ═══════════ TOOLS TAB ═══════════ */}
-        {adminSection === "events" && activeTab === "tools" && (
+        {adminSection === "events" && activeTab === "tools" && selectedEvent && (
           <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 items-start">
 
-            {/* Anmeldeseite sperren – pro Event */}
-            {activeEventsWithPw.map(ev => (
+            {/* Anmeldeseite sperren */}
+            {(() => { const ev = selectedEvent; return (
               <Card key={ev.id}>
                 <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
-                <CardHeader
-                  title="Anmeldeseite sperren"
-                  subtitle={`${ev.name} · ${new Date(ev.date).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}`}
-                />
+                <CardHeader title="Anmeldeseite sperren" />
                 <div className="p-5">
                   <div className="mb-4 px-4 py-3 rounded-xl flex items-center gap-3"
                     style={{ background: ev.registration_password ? "rgba(210,141,40,0.08)" : "var(--ig-light)", border: `1px solid ${ev.registration_password ? "rgba(210,141,40,0.2)" : "var(--ig-gray2)"}` }}>
@@ -1429,34 +1592,7 @@ export default function AdminPage() {
                     {eventPwResults[ev.id] && (
                       <p className={`text-xs ${eventPwResults[ev.id]!.ok ? "text-green-600" : "text-red-500"}`}>{eventPwResults[ev.id]!.msg}</p>
                     )}
-                    <div className="flex items-center justify-between gap-2">
-                      <button
-                        onClick={() => showConfirm(
-                          "Event deaktivieren",
-                          `„${ev.name}" deaktivieren? Der Event wird ins Archiv verschoben.`,
-                          false,
-                          async () => {
-                            await fetch(`/api/admin/events/${ev.id}`, {
-                              method: "PATCH", headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ adminPassword: savedPassword.current, active: false }),
-                            });
-                            setActiveEventsWithPw(prev => prev.filter(e => e.id !== ev.id));
-                            if (selectedEventId === ev.id) {
-                              const remaining = activeEventsWithPw.filter(e => e.id !== ev.id);
-                              const nextId = remaining[0]?.id ?? null;
-                              setSelectedEventId(nextId);
-                              loadRegistrations(savedPassword.current, nextId);
-                            }
-                            setDialog(null);
-                          }
-                        )}
-                        className="text-xs px-3 py-1.5 rounded-lg transition"
-                        style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#dc2626"; (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; }}
-                      >
-                        Deaktivieren
-                      </button>
+                    <div className="flex justify-end">
                       <BtnPrimary onClick={() => handleSetPassword(ev.id)} disabled={!!eventPwLoading[ev.id]}>
                         {eventPwLoading[ev.id] ? "Speichert…" : "Speichern"}
                       </BtnPrimary>
@@ -1464,75 +1600,13 @@ export default function AdminPage() {
                   </div>
                 </div>
               </Card>
-            ))}
-
-            {/* Neuen Event erstellen */}
-            <Card>
-              <div className="h-0.5" style={{ background: "var(--ig-navy)" }} />
-              <CardHeader title="Neuen Event erstellen" subtitle="Wird sofort aktiv und erscheint im Builder" />
-              <div className="p-5 space-y-3">
-                <input type="text" value={newEventName} onChange={e => setNewEventName(e.target.value)}
-                  placeholder="Event-Name *" className={inputClass} style={inputStyle}
-                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                <input type="datetime-local" value={newEventDate} onChange={e => setNewEventDate(e.target.value)}
-                  className={inputClass} style={inputStyle}
-                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                <input type="text" value={newEventLocation} onChange={e => setNewEventLocation(e.target.value)}
-                  placeholder="Ort *" className={inputClass} style={inputStyle}
-                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                <input type="text" value={newEventDesc} onChange={e => setNewEventDesc(e.target.value)}
-                  placeholder="Beschreibung (optional)" className={inputClass} style={inputStyle}
-                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                <input type="text" value={newEventPw} onChange={e => setNewEventPw(e.target.value)}
-                  placeholder="Zugangscode (optional)" className={inputClass} style={inputStyle}
-                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                {newEventResult && (
-                  <p className={`text-xs ${newEventResult.ok ? "text-green-600" : "text-red-500"}`}>{newEventResult.msg}</p>
-                )}
-                <div className="flex justify-end">
-                  <BtnPrimary
-                    disabled={newEventLoading || !newEventName.trim() || !newEventDate || !newEventLocation.trim()}
-                    onClick={async () => {
-                      setNewEventLoading(true); setNewEventResult(null);
-                      const res = await fetch("/api/admin/events", {
-                        method: "POST", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ adminPassword: savedPassword.current, name: newEventName, date: newEventDate, location: newEventLocation, description: newEventDesc, registration_password: newEventPw }),
-                      });
-                      const d = await res.json();
-                      setNewEventLoading(false);
-                      if (!res.ok) { setNewEventResult({ ok: false, msg: d.error || "Fehler." }); return; }
-                      setNewEventResult({ ok: true, msg: `„${d.name}" erstellt!` });
-                      setNewEventName(""); setNewEventDate(""); setNewEventLocation(""); setNewEventDesc(""); setNewEventPw("");
-                      setActiveEventsWithPw(prev => [...prev, { id: d.id, name: d.name, date: d.date, registration_password: d.registration_password ?? null }]);
-                    }}
-                  >
-                    {newEventLoading ? "Erstellt…" : "Event erstellen"}
-                  </BtnPrimary>
-                </div>
-              </div>
-            </Card>
+            ); })()}
 
             {/* CSV Import */}
             <Card>
               <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
-              <CardHeader title="CSV-Import" subtitle={`Spalten: Name, Vorname, E-Mail${event ? ` · ${event.name}` : ''}`} />
+              <CardHeader title="CSV-Import" subtitle={`Spalten: Name, Vorname, E-Mail${selectedEvent ? ` · ${selectedEvent.name}` : ''}`} />
               <div className="p-5 space-y-3">
-                {activeEventsWithPw.length > 1 && (
-                  <select
-                    value={selectedEventId ?? ""}
-                    onChange={e => { setSelectedEventId(e.target.value); loadRegistrations(savedPassword.current, e.target.value); }}
-                    className={inputClass} style={inputStyle}
-                  >
-                    {activeEventsWithPw.map(ev => (
-                      <option key={ev.id} value={ev.id}>{ev.name} · {new Date(ev.date).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}</option>
-                    ))}
-                  </select>
-                )}
                 <input ref={csvInputRef} type="file" accept=".csv,text/csv"
                   onChange={e => { setCsvFile(e.target.files?.[0] || null); setCsvResult(null); setCsvSendResult(null); }}
                   className="hidden" />
@@ -1629,57 +1703,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ═══════════ ARCHIV TAB ═══════════ */}
-        {adminSection === "events" && activeTab === "archiv" && (
-          <div className="space-y-4">
-            {archiveLoading ? (
-              <Card><div className="p-10 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div></Card>
-            ) : archivedEvents.length === 0 ? (
-              <Card><div className="p-10 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Noch keine archivierten Events.</div></Card>
-            ) : (
-              <div className="sm:grid sm:grid-cols-2 sm:gap-4 space-y-4 sm:space-y-0">
-                {archivedEvents.map(ev => (
-                  <Card key={ev.id}>
-                    <div className="h-0.5" style={{ background: `linear-gradient(90deg, var(--ig-navy), var(--ig-gold))` }} />
-                    <div className="p-5">
-                      <div className="flex items-start justify-between gap-2 mb-4">
-                        <div>
-                          <p className="font-semibold text-sm" style={{ color: "var(--ig-navy)" }}>{ev.name}</p>
-                          <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
-                            {new Date(ev.date).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
-                          </p>
-                          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{ev.location}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="font-bold text-lg" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}</p>
-                          <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>von {ev.total}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {[
-                          { type: "all", label: "Alle" },
-                          { type: "checkedin", label: "Eingecheckt" },
-                          { type: "noshows", label: "No-Shows" },
-                        ].map(({ type, label }) => (
-                          <a key={type}
-                            href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}&eventId=${ev.id}`}
-                            target="_blank" rel="noopener noreferrer"
-                            className="flex-1 text-center py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1"
-                            style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "var(--ig-light)" }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
-                          >
-                            <IconDownload className="w-3 h-3" />{label}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* ═══════════ MAILING TAB ═══════════ */}
         {adminSection === "mailing" && (
