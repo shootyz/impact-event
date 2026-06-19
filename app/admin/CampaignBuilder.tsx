@@ -37,6 +37,7 @@ export type ProgramSlot = {
 
 export type ProgramBlock = {
   type: "program";
+  title?: string;
   slots: ProgramSlot[];
 };
 
@@ -208,7 +209,7 @@ ${icsLink}
 </td></tr>`;
       });
       return `${dividerHtml()}
-${sectionHeadHtml(block.label || t.program)}
+${sectionHeadHtml(block.title || block.label || t.program)}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
 ${slotHtmls.join("\n")}
 </table>${extra}`;
@@ -506,6 +507,7 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
 }
 
 function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b: ProgramBlock) => void }) {
+  const [titleFocus, setTitleFocus] = useState(false);
   const updateSlot = (id: string, patch: Partial<ProgramSlot>) =>
     onChange({ ...block, slots: block.slots.map(s => s.id === id ? { ...s, ...patch } : s) });
   const addSlot = () => onChange({ ...block, slots: [...block.slots, { id: uid(), time: "", title: "", sub_items: [], note: "" }] });
@@ -525,6 +527,14 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
 
   return (
     <div className="space-y-4">
+      <div>
+        <label className={labelCls} style={labelSty}>Titel des Blocks</label>
+        <input className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition"
+          style={{ ...inputSty, borderColor: titleFocus ? "#1E3263" : "#d1d5db" }}
+          value={block.title ?? ""} onChange={e => onChange({ ...block, title: e.target.value })}
+          placeholder="ZEITPLAN"
+          onFocus={() => setTitleFocus(true)} onBlur={() => setTitleFocus(false)} />
+      </div>
       {block.slots.map((slot, i) => (
         <div key={slot.id} className="rounded-xl border p-4 space-y-3" style={{ borderColor: "#e5e7eb", background: "#fafafa" }}>
           <div className="flex items-center justify-between">

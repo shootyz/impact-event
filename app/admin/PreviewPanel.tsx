@@ -362,7 +362,16 @@ export default function PreviewPanel({
               {block.type !== "intro" && block.type !== "text" && block.type !== "info" && block.type !== "divider" && block.type !== "register_button" && block.type !== "deadline" && (
                 <>
                   <div style={{ height: 1, background: D.gray2, marginBottom: 20 }} />
-                  <SectionHead label={block.label || labelFor(block.type)} />
+                  {block.type === "program" ? (
+                    <Editable
+                      value={(block as ProgramBlock).title || block.label || labelFor(block.type)}
+                      onChange={v => updateBlock(i, { ...block, title: v } as ProgramBlock)}
+                      placeholder="ZEITPLAN"
+                      style={{ color: D.navy, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 16 }}
+                    />
+                  ) : (
+                    <SectionHead label={block.label || labelFor(block.type)} />
+                  )}
                 </>
               )}
               {block.type === "intro" && (
@@ -420,7 +429,7 @@ export default function PreviewPanel({
 function labelFor(type: CampaignBlock["type"]): string {
   const m: Partial<Record<CampaignBlock["type"], string>> = {
     event_details: "Event Details",
-    program: "Programm",
+    program: "Zeitplan",
     finalists: "Finalists / Award",
     speaker: "Keynote Speaker",
     deadline: "Deadline",
