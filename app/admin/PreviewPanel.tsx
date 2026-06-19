@@ -291,7 +291,7 @@ function SpeakerPreview({ block, onChange }: { block: SpeakerBlock & { label?: s
           style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 12 }} />
       )}
       <Editable value={block.name} onChange={v => onChange({ ...block, name: v })}
-        placeholder="Name" style={{ color: D.black, fontSize: 16, fontWeight: 700, marginBottom: 2 }} />
+        placeholder="Name" style={{ color: D.navy, fontSize: 16, fontWeight: 700, marginBottom: 2 }} />
       <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
         placeholder="Titel" style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }} />
       <Editable value={block.book} onChange={v => onChange({ ...block, book: v })}
