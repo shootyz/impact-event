@@ -156,7 +156,9 @@ type Registration = {
   checked_in: boolean; checked_in_at: string | null; created_at: string;
 };
 type Event = { id: string; name: string; date: string; location: string; };
-type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; };
+type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; };
+
+const EVENT_CATEGORIES = ["Impact Circle Event", "Impact Workshop", "Impact Experience", "Young Impact Day"] as const;
 type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: string; message?: string; };
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
@@ -518,6 +520,12 @@ export default function AdminPage() {
   const [slugInput, setSlugInput] = useState("");
   const [slugStatus, setSlugStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [slugSaving, setSlugSaving] = useState(false);
+  // Event list UI state
+  const [eventsView, setEventsView] = useState<"grid" | "list">("grid");
+  const [eventsSort, setEventsSort] = useState<"date-desc" | "date-asc" | "name-asc" | "created-desc">("date-desc");
+  const [eventsCategory, setEventsCategory] = useState<string | null>(null);
+  const [eventsStatusTab, setEventsStatusTab] = useState<"aktiv" | "archiv">("aktiv");
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   // Event creation form
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [newEventName, setNewEventName] = useState("");
@@ -525,6 +533,7 @@ export default function AdminPage() {
   const [newEventLocation, setNewEventLocation] = useState("");
   const [newEventDesc, setNewEventDesc] = useState("");
   const [newEventPw, setNewEventPw] = useState("");
+  const [newEventCategory, setNewEventCategory] = useState<string>("");
   const [newEventLoading, setNewEventLoading] = useState(false);
   const [newEventResult, setNewEventResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
@@ -989,13 +998,66 @@ export default function AdminPage() {
       {/* ── Event Overview (cards) — shown when no event selected ── */}
       {!selectedEventId && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
-          {/* Header row */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-base font-bold" style={{ color: "var(--ig-navy)" }}>Events</h2>
-            <BtnPrimary onClick={() => { setShowCreateEvent(v => !v); setNewEventResult(null); }}>
+
+          {/* ── Aktiv / Archiv tabs ── */}
+          <div className="flex items-center gap-0 mb-5 border-b" style={{ borderColor: "var(--ig-gray2)" }}>
+            {(["aktiv", "archiv"] as const).map(tab => (
+              <button key={tab} onClick={() => setEventsStatusTab(tab)}
+                className="px-5 py-3 text-sm font-semibold tracking-wide transition relative capitalize"
+                style={{ color: eventsStatusTab === tab ? "var(--ig-gold)" : "var(--ig-navy)" }}>
+                {tab === "aktiv" ? "Aktiv" : "Archiv"}
+                {eventsStatusTab === tab && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+              </button>
+            ))}
+            <div className="flex-1" />
+            <BtnPrimary onClick={() => { setShowCreateEvent(v => !v); setNewEventResult(null); }} className="mb-3">
               <IconPlus className="w-3.5 h-3.5" />
               Neuer Event
             </BtnPrimary>
+          </div>
+
+          {/* ── Toolbar: sort / view / category filter ── */}
+          <div className="flex flex-wrap items-center gap-2 mb-5">
+            {/* Category pills */}
+            <button
+              onClick={() => setEventsCategory(null)}
+              className="text-xs px-3 py-1.5 rounded-full font-semibold transition border"
+              style={{ background: eventsCategory === null ? "var(--ig-navy)" : "white", color: eventsCategory === null ? "white" : "var(--ig-navy)", borderColor: eventsCategory === null ? "var(--ig-navy)" : "var(--ig-gray2)" }}>
+              Alle
+            </button>
+            {EVENT_CATEGORIES.map(cat => (
+              <button key={cat} onClick={() => setEventsCategory(eventsCategory === cat ? null : cat)}
+                className="text-xs px-3 py-1.5 rounded-full font-semibold transition border"
+                style={{ background: eventsCategory === cat ? "var(--ig-navy)" : "white", color: eventsCategory === cat ? "white" : "var(--ig-navy)", borderColor: eventsCategory === cat ? "var(--ig-navy)" : "var(--ig-gray2)" }}>
+                {cat}
+              </button>
+            ))}
+            <div className="flex-1" />
+            {/* Sort select */}
+            <select
+              value={eventsSort}
+              onChange={e => setEventsSort(e.target.value as typeof eventsSort)}
+              className="text-xs px-3 py-1.5 rounded-lg border outline-none"
+              style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}>
+              <option value="date-desc">Datum ↓</option>
+              <option value="date-asc">Datum ↑</option>
+              <option value="name-asc">Name A–Z</option>
+              <option value="created-desc">Neu zuerst</option>
+            </select>
+            {/* View toggle */}
+            <div className="flex rounded-lg border overflow-hidden" style={{ borderColor: "var(--ig-gray2)" }}>
+              {(["grid", "list"] as const).map(v => (
+                <button key={v} onClick={() => setEventsView(v)}
+                  className="px-2.5 py-1.5 transition"
+                  style={{ background: eventsView === v ? "var(--ig-navy)" : "white", color: eventsView === v ? "white" : "var(--ig-gray3)" }}>
+                  {v === "grid" ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Create event form */}
@@ -1008,6 +1070,13 @@ export default function AdminPage() {
                   placeholder="Event-Name *" className={inputClass} style={inputStyle}
                   onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                   onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <select value={newEventCategory} onChange={e => setNewEventCategory(e.target.value)}
+                  className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
+                  <option value="">Kategorie (optional)</option>
+                  {EVENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
                 <input type="datetime-local" value={newEventDate} onChange={e => setNewEventDate(e.target.value)}
                   className={inputClass} style={inputStyle}
                   onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
@@ -1035,13 +1104,13 @@ export default function AdminPage() {
                       setNewEventLoading(true); setNewEventResult(null);
                       const res = await fetch("/api/admin/events", {
                         method: "POST", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ adminPassword: savedPassword.current, name: newEventName, date: newEventDate, location: newEventLocation, description: newEventDesc, registration_password: newEventPw }),
+                        body: JSON.stringify({ adminPassword: savedPassword.current, name: newEventName, date: newEventDate, location: newEventLocation, description: newEventDesc, registration_password: newEventPw, category: newEventCategory || null }),
                       });
                       const d = await res.json();
                       setNewEventLoading(false);
                       if (!res.ok) { setNewEventResult({ ok: false, msg: d.error || "Fehler." }); return; }
                       setNewEventResult({ ok: true, msg: `„${d.name}" erstellt!` });
-                      setNewEventName(""); setNewEventDate(""); setNewEventLocation(""); setNewEventDesc(""); setNewEventPw("");
+                      setNewEventName(""); setNewEventDate(""); setNewEventLocation(""); setNewEventDesc(""); setNewEventPw(""); setNewEventCategory("");
                       setShowCreateEvent(false);
                       loadAllEvents();
                     }}
@@ -1053,134 +1122,195 @@ export default function AdminPage() {
             </Card>
           )}
 
-          {/* Event cards */}
+          {/* Event list / grid */}
           {eventsLoading ? (
             <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div>
-          ) : allEventCards.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-sm mb-4" style={{ color: "var(--ig-gray3)" }}>Noch keine Events.</p>
-              <BtnPrimary onClick={() => setShowCreateEvent(true)}><IconPlus className="w-3.5 h-3.5" />Ersten Event erstellen</BtnPrimary>
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {allEventCards.map(ev => {
-                const appUrl = typeof window !== "undefined" ? window.location.origin : "";
-                const portalUrl = ev.slug ? `${appUrl}/${ev.slug}` : `${appUrl}/?event=${ev.id}`;
-                const evDate = new Date(ev.date);
-                const isPast = evDate < new Date();
-                return (
-                  <div
-                    key={ev.id}
-                    className="rounded-2xl border overflow-hidden"
-                    style={{ background: "white", borderColor: "var(--ig-gray2)", opacity: ev.active ? 1 : 0.7 }}
-                  >
-                    {/* Top accent */}
-                    <div className="h-0.5" style={{ background: ev.active ? `linear-gradient(90deg, var(--ig-navy), var(--ig-gold))` : "var(--ig-gray2)" }} />
+          ) : (() => {
+            const now = new Date();
+            const filtered = allEventCards
+              .filter(ev => eventsStatusTab === "aktiv" ? ev.active : !ev.active)
+              .filter(ev => eventsCategory === null || ev.category === eventsCategory)
+              .sort((a, b) => {
+                if (eventsSort === "date-asc") return new Date(a.date).getTime() - new Date(b.date).getTime();
+                if (eventsSort === "date-desc") return new Date(b.date).getTime() - new Date(a.date).getTime();
+                if (eventsSort === "name-asc") return a.name.localeCompare(b.name);
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+              });
 
-                    {/* Card body — clickable */}
-                    <button
-                      className="w-full text-left p-5 transition"
-                      style={{ background: "transparent" }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
-                      onClick={() => {
-                        setSelectedEventId(ev.id);
-                        setEventSection(null);
-                        setActiveTab("list");
-                        setSlugInput(ev.slug ?? "");
-                        setSlugStatus(null);
-                        setMembersLoaded(false);
-                        loadRegistrations(savedPassword.current, ev.id);
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span
-                              className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                              style={{
-                                background: ev.active ? (isPast ? "rgba(210,141,40,0.10)" : "#dcfce7") : "var(--ig-light)",
-                                color: ev.active ? (isPast ? "var(--ig-gold)" : "#16a34a") : "var(--ig-gray3)",
-                              }}
-                            >
-                              {ev.active ? (isPast ? "Vergangen" : "Aktiv") : "Archiviert"}
-                            </span>
-                            {ev.registration_password && (
-                              <IconLock className="w-3 h-3" style={{ color: "var(--ig-gray3)" }} />
-                            )}
+            if (filtered.length === 0) return (
+              <div className="py-12 text-center">
+                <p className="text-sm mb-4" style={{ color: "var(--ig-gray3)" }}>
+                  {allEventCards.length === 0 ? "Noch keine Events." : "Keine Events in dieser Ansicht."}
+                </p>
+                {allEventCards.length === 0 && <BtnPrimary onClick={() => setShowCreateEvent(true)}><IconPlus className="w-3.5 h-3.5" />Ersten Event erstellen</BtnPrimary>}
+              </div>
+            );
+
+            const openEvent = (ev: EventCard) => {
+              setSelectedEventId(ev.id);
+              setEventSection(null);
+              setActiveTab("list");
+              setSlugInput(ev.slug ?? "");
+              setSlugStatus(null);
+              setMembersLoaded(false);
+              loadRegistrations(savedPassword.current, ev.id);
+            };
+
+            const duplicateEvent = async (ev: EventCard) => {
+              setDuplicatingId(ev.id);
+              await fetch("/api/admin/events", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adminPassword: savedPassword.current, name: `${ev.name} (Kopie)`, date: ev.date, location: ev.location, description: ev.description, registration_password: ev.registration_password, category: ev.category }),
+              });
+              setDuplicatingId(null);
+              loadAllEvents();
+            };
+
+            if (eventsView === "list") return (
+              <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+                {filtered.map((ev, i) => {
+                  const evDate = new Date(ev.date);
+                  const isPast = evDate < now;
+                  return (
+                    <div key={ev.id} className={i > 0 ? "border-t" : ""} style={{ borderColor: "var(--ig-gray2)" }}>
+                      <div className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--ig-light)] transition group">
+                        <button className="flex-1 flex items-center gap-3 min-w-0 text-left" onClick={() => openEvent(ev)}>
+                          <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: ev.active ? (isPast ? "var(--ig-gold)" : "#16a34a") : "var(--ig-gray2)" }} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{ev.name}</p>
+                              {ev.category && <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}>{ev.category}</span>}
+                            </div>
+                            <p className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>
+                              {evDate.toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
+                              {ev.location && ` · ${ev.location}`}
+                            </p>
                           </div>
-                          <p className="font-semibold text-sm leading-snug" style={{ color: "var(--ig-navy)" }}>{ev.name}</p>
-                          <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
-                            {evDate.toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
-                            {ev.location && ` · ${ev.location}`}
-                          </p>
-                          {ev.slug && (
-                            <p className="text-xs mt-1 font-mono" style={{ color: "var(--ig-gold)" }}>/{ev.slug}</p>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-base font-bold" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}<span className="text-xs font-normal" style={{ color: "var(--ig-gray3)" }}>/{ev.total}</span></p>
+                          </div>
+                        </button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                          <button title="Duplizieren" disabled={duplicatingId === ev.id}
+                            onClick={e => { e.stopPropagation(); duplicateEvent(ev); }}
+                            className="p-1.5 rounded-lg transition text-xs" style={{ color: "var(--ig-gray3)" }}
+                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
+                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                          </button>
+                          {ev.active ? (
+                            <button title="Archivieren"
+                              onClick={e => { e.stopPropagation(); showConfirm("Event archivieren", `„${ev.name}" archivieren?`, false, async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: false }) }); setDialog(null); loadAllEvents(); }); }}
+                              className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
+                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
+                              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                            </button>
+                          ) : (
+                            <button title="Reaktivieren"
+                              onClick={e => { e.stopPropagation(); fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: true }) }).then(() => loadAllEvents()); }}
+                              className="p-1.5 rounded-lg transition text-xs font-medium" style={{ color: "var(--ig-gray3)" }}
+                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#16a34a"}
+                              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </button>
                           )}
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-2xl font-bold leading-none" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}</p>
-                          <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>/ {ev.total}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+
+            // Grid view
+            return (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {filtered.map(ev => {
+                  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
+                  const portalUrl = ev.slug ? `${appUrl}/${ev.slug}` : `${appUrl}/?event=${ev.id}`;
+                  const evDate = new Date(ev.date);
+                  const isPast = evDate < now;
+                  return (
+                    <div key={ev.id} className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+                      <div className="h-0.5" style={{ background: ev.active ? `linear-gradient(90deg, var(--ig-navy), var(--ig-gold))` : "var(--ig-gray2)" }} />
+                      <button className="w-full text-left p-5 transition" style={{ background: "transparent" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+                        onClick={() => openEvent(ev)}>
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{
+                                background: ev.active ? (isPast ? "rgba(210,141,40,0.10)" : "#dcfce7") : "var(--ig-light)",
+                                color: ev.active ? (isPast ? "var(--ig-gold)" : "#16a34a") : "var(--ig-gray3)",
+                              }}>
+                                {ev.active ? (isPast ? "Vergangen" : "Aktiv") : "Archiviert"}
+                              </span>
+                              {ev.category && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}>{ev.category}</span>}
+                              {ev.registration_password && <IconLock className="w-3 h-3" style={{ color: "var(--ig-gray3)" }} />}
+                            </div>
+                            <p className="font-semibold text-sm leading-snug" style={{ color: "var(--ig-navy)" }}>{ev.name}</p>
+                            <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
+                              {evDate.toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" })}
+                              {ev.location && ` · ${ev.location}`}
+                            </p>
+                            {ev.slug && <p className="text-xs mt-1 font-mono" style={{ color: "var(--ig-gold)" }}>/{ev.slug}</p>}
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-2xl font-bold leading-none" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}</p>
+                            <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>/ {ev.total}</p>
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Progress bar */}
-                      <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--ig-light)" }}>
-                        <div className="h-full rounded-full transition-all" style={{ background: "var(--ig-gold)", width: ev.total > 0 ? `${Math.round((ev.checked_in / ev.total) * 100)}%` : "0%" }} />
-                      </div>
-                    </button>
-
-                    {/* Quick actions */}
-                    <div className="px-5 pb-4 flex items-center gap-2 flex-wrap border-t" style={{ borderColor: "var(--ig-gray2)", paddingTop: 10 }}>
-                      <a
-                        href={portalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
-                        style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
-                      >
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-                        </svg>
-                        Portal
-                      </a>
-                      <a
-                        href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=all&eventId=${ev.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
-                        style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
-                      >
-                        <IconDownload className="w-3 h-3" />
-                        CSV
-                      </a>
-                      {ev.active && (
-                        <button
-                          onClick={e => { e.stopPropagation(); showConfirm("Event archivieren", `„${ev.name}" archivieren?`, false, async () => {
-                            await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: false }) });
-                            setDialog(null);
-                            loadAllEvents();
-                          }); }}
+                        <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--ig-light)" }}>
+                          <div className="h-full rounded-full transition-all" style={{ background: "var(--ig-gold)", width: ev.total > 0 ? `${Math.round((ev.checked_in / ev.total) * 100)}%` : "0%" }} />
+                        </div>
+                      </button>
+                      <div className="px-5 pb-4 flex items-center gap-2 flex-wrap border-t" style={{ borderColor: "var(--ig-gray2)", paddingTop: 10 }}>
+                        <a href={portalUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                          style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+                          Portal
+                        </a>
+                        <a href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=all&eventId=${ev.id}`}
+                          target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                          style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}>
+                          <IconDownload className="w-3 h-3" />CSV
+                        </a>
+                        <button title="Duplizieren" disabled={duplicatingId === ev.id}
+                          onClick={e => { e.stopPropagation(); duplicateEvent(ev); }}
+                          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                          style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                          {duplicatingId === ev.id ? "…" : "Kopie"}
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); showConfirm(
+                          ev.active ? "Event archivieren" : "Event reaktivieren",
+                          ev.active ? `„${ev.name}" archivieren?` : `„${ev.name}" reaktivieren?`,
+                          false,
+                          async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: !ev.active }) }); setDialog(null); loadAllEvents(); }
+                        ); }}
                           className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition ml-auto"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; (e.currentTarget as HTMLElement).style.color = "#dc2626"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
-                        >
-                          Archivieren
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = ev.active ? "#fecaca" : "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = ev.active ? "#dc2626" : "var(--ig-navy)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
+                          {ev.active ? "Archivieren" : "Reaktivieren"}
                         </button>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 

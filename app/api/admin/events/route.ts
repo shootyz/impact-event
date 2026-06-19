@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const db = supabaseAdmin()
   const { data: events } = await db
     .from('events')
-    .select('id, name, date, location, description, active, registration_password, slug')
+    .select('id, name, date, location, description, active, registration_password, slug, category, created_at')
     .order('date', { ascending: false })
 
   if (!events?.length) return NextResponse.json([])
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { adminPassword, name, date, location, description, registration_password } = await req.json()
+  const { adminPassword, name, date, location, description, registration_password, category } = await req.json()
 
   if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       description: description?.trim() || null,
       registration_password: registration_password?.trim() || null,
       active: true,
+      category: category?.trim() || null,
     })
     .select()
     .single()
