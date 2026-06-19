@@ -9,7 +9,7 @@ import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATI
 export type { IntroBlock, EventDetailsBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
 export { renderBlocksToHtml, richHtmlToEmail } from "./campaign-renderer";
 import type { IntroBlock, EventDetailsBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
-import { richHtmlToEmail } from "./campaign-renderer";
+import { richHtmlToEmail, renderBlocksToHtml } from "./campaign-renderer";
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
