@@ -308,7 +308,7 @@ function InfoPreview({ block, onChange }: { block: InfoBlock & { label?: string;
         <div style={{ marginBottom: block.title ? 10 : 0 }}>
           <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
             placeholder="TITEL EINGEBEN…"
-            style={{ color: D.navy, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }} />
+            style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase" }} />
         </div>
       )}
       <RichPreview value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Inhalt eingeben…" />
@@ -331,7 +331,7 @@ function DeadlinePreview({ block, lang = "en" }: { block: DeadlineBlock & { labe
 
 function SectionHead({ label }: { label: string }) {
   return (
-    <p style={{ color: D.navy, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 16px" }}>
+    <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 16px" }}>
       {label}
     </p>
   );
@@ -399,7 +399,7 @@ export default function PreviewPanel({
                       value={(block as ProgramBlock).title || block.label || labelFor(block.type)}
                       onChange={v => updateBlock(i, { ...block, title: v } as ProgramBlock)}
                       placeholder="ZEITPLAN"
-                      style={{ color: D.navy, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", display: "block", marginBottom: 16 }}
+                      style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 16 }}
                     />
                   ) : (
                     <SectionHead label={block.label || labelFor(block.type)} />
