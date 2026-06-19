@@ -8,7 +8,7 @@ import { D } from "./email-design";
 
 function SectionHead({ label }: { label: string }) {
   return (
-    <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 16px", fontFamily: "Arial,sans-serif" }}>
+    <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 16px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
       {label}
     </p>
   );
@@ -36,8 +36,8 @@ function CustomFields({ block }: { block: CampaignBlock }) {
     <div style={{ marginTop: 12 }}>
       {fields.map(f => (
         <div key={f.id} style={{ padding: "10px 0", borderTop: `1px solid ${D.gray2}` }}>
-          <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 3px", fontFamily: "Arial,sans-serif" }}>{f.label}</p>
-          <p style={{ color: D.black, fontSize: 15, fontWeight: 600, margin: 0, fontFamily: "Arial,sans-serif" }}>{f.value}</p>
+          <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 3px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{f.label}</p>
+          <p style={{ color: D.black, fontSize: 15, fontWeight: 600, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{f.value}</p>
         </div>
       ))}
     </div>
@@ -84,29 +84,29 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
         <div>
           <Divider />
           <SectionHead label={block.label || "Event Details"} />
-          {block.category && <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "Arial,sans-serif" }}>{block.category}</p>}
-          {block.event_title && <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 14px", fontFamily: "Arial,sans-serif" }}>{block.event_title}</p>}
+          {block.category && <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.category}</p>}
+          {block.event_title && <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 14px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.event_title}</p>}
           <div style={{ borderTop: `1px solid ${D.gray2}`, paddingTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
-            {formattedDate && <span style={{ color: D.black, fontSize: 14, fontFamily: "Arial,sans-serif" }}>{formattedDate}</span>}
-            {block.venue_name && <span style={{ color: D.black, fontSize: 14, fontFamily: "Arial,sans-serif" }}>{block.venue_name}</span>}
-            {block.venue_address && <span style={{ color: D.gray, fontSize: 13, fontFamily: "Arial,sans-serif" }}>{block.venue_address}</span>}
+            {formattedDate && <span style={{ color: D.black, fontSize: 14, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</span>}
+            {block.venue_name && <span style={{ color: D.black, fontSize: 14, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_name}</span>}
+            {block.venue_address && <span style={{ color: D.gray, fontSize: 13, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_address}</span>}
             {block.moderation_name && (
               <div style={{ marginTop: 2 }}>
-                <p style={{ color: D.gray, fontSize: 11, margin: "0 0 2px", letterSpacing: 1, fontFamily: "Arial,sans-serif" }}>{t.moderation}</p>
-                <span style={{ color: D.black, fontSize: 14, fontFamily: "Arial,sans-serif" }}>{block.moderation_name}</span>
-                {block.moderation_title && <p style={{ color: D.gray, fontSize: 13, margin: "2px 0 0", fontFamily: "Arial,sans-serif" }}>{block.moderation_title}</p>}
+                <p style={{ color: D.gray, fontSize: 11, margin: "0 0 2px", letterSpacing: 1, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{t.moderation}</p>
+                <span style={{ color: D.black, fontSize: 14, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.moderation_name}</span>
+                {block.moderation_title && <p style={{ color: D.gray, fontSize: 13, margin: "2px 0 0", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.moderation_title}</p>}
               </div>
             )}
           </div>
           {(block.date || block.venue_address) && (
             <div style={{ borderTop: `1px solid ${D.gray2}`, marginTop: 14, paddingTop: 14, display: "flex", alignItems: "center", gap: 16 }}>
               {block.date && campaignId && appUrl && (
-                <a href={`${appUrl}/api/campaigns/${campaignId}/ics`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "Arial,sans-serif" }}>
+                <a href={`${appUrl}/api/campaigns/${campaignId}/ics`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
                   &#128197; {t.addToCalendar}
                 </a>
               )}
               {block.venue_address && (
-                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "Arial,sans-serif" }}>
+                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
                   &#128205; Maps
                 </a>
               )}
@@ -124,15 +124,15 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <SectionHead label={(block as ProgramBlock).title || block.label || t.program} />
           {block.slots.map((slot, si) => (
             <div key={slot.id} style={{ padding: "14px 0", borderBottom: si < block.slots.length - 1 ? `1px solid ${D.gray2}` : "none" }}>
-              <p style={{ color: D.navy, fontSize: 12, fontWeight: 700, margin: "0 0 4px", fontFamily: "Arial,sans-serif" }}>{slot.time}</p>
-              <p style={{ color: D.black, fontSize: 15, fontWeight: 400, margin: slot.sub_items.filter(s => s.title).length ? "0 0 16px" : 0, fontFamily: "Arial,sans-serif" }}>{slot.title}</p>
+              <p style={{ color: D.navy, fontSize: 12, fontWeight: 700, margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>
+              <p style={{ color: D.black, fontSize: 15, fontWeight: 400, margin: slot.sub_items.filter(s => s.title).length ? "0 0 16px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>
               {slot.sub_items.filter(s => s.title).map(sub => (
                 <div key={sub.id} style={{ marginTop: 8, paddingLeft: 12, borderLeft: `3px solid ${D.gold}` }}>
-                  <p style={{ color: D.black, fontSize: 14, fontWeight: 600, margin: "0 0 2px", fontFamily: "Arial,sans-serif" }}>{sub.title}</p>
-                  {sub.speaker && <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "Arial,sans-serif" }}>{sub.speaker}</p>}
+                  <p style={{ color: D.black, fontSize: 14, fontWeight: 600, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.title}</p>
+                  {sub.speaker && <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.speaker}</p>}
                 </div>
               ))}
-              {slot.note && <p style={{ color: D.gray, fontSize: 13, margin: "12px 0 0", fontFamily: "Arial,sans-serif" }}>{slot.note}</p>}
+              {slot.note && <p style={{ color: D.gray, fontSize: 13, margin: "12px 0 0", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.note}</p>}
             </div>
           ))}
           <CustomFields block={block} />
@@ -144,21 +144,21 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
       return (
         <div>
           <Divider />
-          <SectionHead label={block.label || "Award"} />
-          {block.title && <p style={{ color: D.navy, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 16px", fontFamily: "Arial,sans-serif" }}>{block.title}</p>}
-          {block.intro && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 24px", fontFamily: "Arial,sans-serif" }}>{block.intro}</p>}
+          <SectionHead label={block.label || labelFor(block.type)} />
+          {block.title && <p style={{ color: D.navy, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 16px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
+          {block.intro && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 24px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.intro}</p>}
           {block.items.filter(f => f.name).map(item => (
             <div key={item.id} style={{ padding: "10px 0 10px 12px", borderLeft: `3px solid ${D.gold}`, marginBottom: 8 }}>
-              <p style={{ color: D.black, fontSize: 15, fontWeight: 700, margin: "0 0 2px", fontFamily: "Arial,sans-serif" }}>{item.name}</p>
-              {item.category && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 6px", fontFamily: "Arial,sans-serif" }}>{item.category}</p>}
-              {item.description && <p style={{ color: D.gray, fontSize: 14, lineHeight: 1.6, margin: 0, fontFamily: "Arial,sans-serif" }}>{item.description}</p>}
+              <p style={{ color: D.black, fontSize: 15, fontWeight: 700, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{item.name}</p>
+              {item.category && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{item.category}</p>}
+              {item.description && <p style={{ color: D.gray, fontSize: 14, lineHeight: 1.6, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{item.description}</p>}
             </div>
           ))}
           {block.video_url && (
-            <a href={block.video_url} style={{ display: "block", background: D.gold, color: "#fff", textDecoration: "none", padding: "15px 24px", borderRadius: 8, fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", textAlign: "center", margin: "20px 0 8px", fontFamily: "Arial,sans-serif" }}>Watch Award Video</a>
+            <a href={block.video_url} style={{ display: "block", background: D.gold, color: "#fff", textDecoration: "none", padding: "15px 24px", borderRadius: 8, fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", textAlign: "center", margin: "20px 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>Watch Award Video</a>
           )}
           {block.website_url && (
-            <a href={block.website_url} style={{ display: "block", color: D.navy, textDecoration: "none", padding: "14px 24px", borderRadius: 8, fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", textAlign: "center", border: `2px solid ${D.navy}`, margin: "0 0 32px", fontFamily: "Arial,sans-serif" }}>{block.website_label || block.website_url}</a>
+            <a href={block.website_url} style={{ display: "block", color: D.navy, textDecoration: "none", padding: "14px 24px", borderRadius: 8, fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", textAlign: "center", border: `2px solid ${D.navy}`, margin: "0 0 32px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.website_label || block.website_url}</a>
           )}
         </div>
       );
@@ -171,10 +171,10 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           {block.photo_url && (
             <img src={block.photo_url} alt={block.name} width={80} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 12, display: "block" }} />
           )}
-          <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 2px", fontFamily: "Arial,sans-serif" }}>{block.name}</p>
-          {block.title && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 10px", fontFamily: "Arial,sans-serif" }}>{block.title}</p>}
-          {block.book && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "Arial,sans-serif" }}>{block.book}</p>}
-          {block.bio && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: 0, fontFamily: "Arial,sans-serif" }}>{block.bio}</p>}
+          <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.name}</p>
+          {block.title && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 10px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
+          {block.book && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.book}</p>}
+          {block.bio && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.bio}</p>}
           <CustomFields block={block} />
         </div>
       );
@@ -187,7 +187,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
       if (!body && !block.title) return null;
       return (
         <div style={{ background: "#f5f5f5", padding: "16px 18px", borderRadius: 6, margin: "0 0 20px" }}>
-          {block.title && <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 12px", fontFamily: "Arial,sans-serif" }}>{block.title}</p>}
+          {block.title && <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 12px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
           {body && <RichContent html={body} />}
         </div>
       );
@@ -199,7 +199,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
         : "–";
       return (
         <div style={{ padding: "10px 0" }}>
-          <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "Arial,sans-serif" }}>
+          <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
             {t.deadline}: <span style={{ color: D.black, fontWeight: 500 }}>{formatted}</span>
           </p>
         </div>
@@ -216,10 +216,10 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
         : null;
       return (
         <div style={{ margin: "16px 0" }}>
-          <a href={url} style={{ display: "block", background: D.gold, color: "#fff", textDecoration: "none", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", fontFamily: "Arial,sans-serif" }}>
+          <a href={url} style={{ display: "block", background: D.gold, color: "#fff", textDecoration: "none", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
             {t.registerBtn}
           </a>
-          {formatted && <p style={{ color: D.gray, fontSize: 13, textAlign: "center", margin: "8px 0 0", fontFamily: "Arial,sans-serif" }}>{t.deadline}: {formatted}</p>}
+          {formatted && <p style={{ color: D.gray, fontSize: 13, textAlign: "center", margin: "8px 0 0", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{t.deadline}: {formatted}</p>}
         </div>
       );
     }

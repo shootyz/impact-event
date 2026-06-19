@@ -279,6 +279,12 @@ function FinalistsPreview({ block, onChange }: { block: FinalistsBlock & { label
             placeholder="Beschreibung" multiline style={{ color: D.gray, fontSize: 14, lineHeight: 1.6, whiteSpace: "pre-wrap" }} />
         </div>
       ))}
+      {block.website_url && (
+        <a href={block.website_url} target="_blank" rel="noopener noreferrer"
+          style={{ display: "block", color: D.navy, textDecoration: "none", padding: "14px 24px", borderRadius: 8, fontSize: 13, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", textAlign: "center", border: `2px solid ${D.navy}`, margin: "8px 0 0" }}>
+          {block.website_label || block.website_url}
+        </a>
+      )}
     </div>
   );
 }
