@@ -71,6 +71,12 @@ export type TextBlock = {
   content: string;
 };
 
+export type InfoBlock = {
+  type: "info";
+  title: string;
+  content: string;
+};
+
 export type DeadlineBlock = {
   type: "deadline";
   date: string; // ISO date string e.g. "2025-01-05"
@@ -92,6 +98,7 @@ export type CampaignBlock = (
   | FinalistsBlock
   | SpeakerBlock
   | TextBlock
+  | InfoBlock
   | DeadlineBlock
   | DividerBlock
   | RegisterButtonBlock
@@ -238,6 +245,16 @@ ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin
 
     case "text":
       return richHtmlToEmail(block.content, D.black);
+
+    case "info": {
+      const body = richHtmlToEmail(block.content, D.black);
+      if (!body && !block.title) return "";
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-collapse:collapse;">
+<tr><td style="padding:20px 24px;background:#f8f6f1;border-left:3px solid ${D.gold};">
+${block.title ? `<p style="color:${D.navy};font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;font-family:Arial,sans-serif;">${block.title}</p>` : ""}
+${body}
+</td></tr></table>`;
+    }
 
     case "deadline": {
       const formatted = block.date
@@ -673,6 +690,26 @@ function SpeakerEditor({ block, onChange }: { block: SpeakerBlock; onChange: (b:
   );
 }
 
+function InfoEditor({ block, onChange }: { block: InfoBlock; onChange: (b: InfoBlock) => void }) {
+  const [focus, setFocus] = useState(false);
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className={labelCls} style={labelSty}>Titel</label>
+        <input className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition"
+          style={{ ...inputSty, borderColor: focus ? "#1E3263" : "#d1d5db" }}
+          value={block.title} onChange={e => onChange({ ...block, title: e.target.value })}
+          placeholder="TRAVEL & PARKING"
+          onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} />
+      </div>
+      <div>
+        <label className={labelCls} style={labelSty}>Inhalt</label>
+        <RichTextEditor value={block.content} onChange={v => onChange({ ...block, content: v })} minHeight={100} />
+      </div>
+    </div>
+  );
+}
+
 function TextEditor({ block, onChange }: { block: TextBlock; onChange: (b: TextBlock) => void }) {
   return (
     <div>
@@ -816,6 +853,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           {block.type === "program" && <ProgramEditor block={block} onChange={onChange as (b: ProgramBlock) => void} />}
           {block.type === "finalists" && <FinalistsEditor block={block} onChange={onChange as (b: FinalistsBlock) => void} />}
           {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} />}
+          {block.type === "info" && <InfoEditor block={block} onChange={onChange as (b: InfoBlock) => void} />}
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
           {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
@@ -838,6 +876,7 @@ const ADDABLE_BLOCK_TYPES: { type: CampaignBlock["type"]; icon: string }[] = [
   { type: "finalists", icon: "🏆" },
   { type: "speaker", icon: "🎤" },
   { type: "text", icon: "📝" },
+  { type: "info", icon: "ℹ️" },
   { type: "deadline", icon: "⏰" },
   { type: "register_button", icon: "🔗" },
   { type: "divider", icon: "—" },
@@ -851,6 +890,7 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
     case "finalists": return { type, title: "Green Business Award", intro: "", items: [{ id: uid(), name: "", category: "", description: "" }], video_url: "", website_url: "", website_label: "" };
     case "speaker": return { type, photo_url: "", name: "", title: "", bio: "", book: "" };
     case "text": return { type, content: "" };
+    case "info": return { type, title: "", content: "" };
     case "deadline": return { type, date: "" };
     case "divider": return { type: "divider" };
     case "register_button": return { type: "register_button", url: "https://impactgstaad.vercel.app" };

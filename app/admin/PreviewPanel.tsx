@@ -6,7 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import type {
   CampaignBlock, IntroBlock, EventDetailsBlock, ProgramBlock,
-  FinalistsBlock, SpeakerBlock, TextBlock, DeadlineBlock, RegisterButtonBlock,
+  FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, RegisterButtonBlock,
 } from "./CampaignBuilder";
 import { type Lang, T, DATE_LOCALE } from "./i18n";
 
@@ -269,6 +269,21 @@ function TextPreview({ block, onChange }: { block: TextBlock & { label?: string;
   return <RichPreview value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Text eingeben…" />;
 }
 
+function InfoPreview({ block, onChange }: { block: InfoBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+  return (
+    <div style={{ background: "#f8f6f1", borderLeft: `3px solid ${D.gold}`, padding: "16px 18px", borderRadius: "0 4px 4px 0" }}>
+      {(block.title !== undefined) && (
+        <div style={{ marginBottom: block.title ? 10 : 0 }}>
+          <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
+            placeholder="TITEL EINGEBEN…"
+            style={{ color: D.navy, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }} />
+        </div>
+      )}
+      <RichPreview value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Inhalt eingeben…" />
+    </div>
+  );
+}
+
 function DeadlinePreview({ block, lang = "en" }: { block: DeadlineBlock & { label?: string }; lang?: Lang }) {
   const formatted = block.date
     ? new Date(block.date + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang], { day: "numeric", month: "long", year: "numeric" })
@@ -344,7 +359,7 @@ export default function PreviewPanel({
         <div style={{ padding: "0 32px 32px" }}>
           {blocks.map((block, i) => (
             <div key={i} style={{ marginTop: 24 }}>
-              {block.type !== "intro" && block.type !== "text" && block.type !== "divider" && block.type !== "register_button" && block.type !== "deadline" && (
+              {block.type !== "intro" && block.type !== "text" && block.type !== "info" && block.type !== "divider" && block.type !== "register_button" && block.type !== "deadline" && (
                 <>
                   <div style={{ height: 1, background: D.gray2, marginBottom: 20 }} />
                   <SectionHead label={block.label || labelFor(block.type)} />
@@ -367,6 +382,9 @@ export default function PreviewPanel({
               )}
               {block.type === "text" && (
                 <TextPreview block={block} onChange={b => updateBlock(i, b)} />
+              )}
+              {block.type === "info" && (
+                <InfoPreview block={block} onChange={b => updateBlock(i, b)} />
               )}
               {block.type === "deadline" && (
                 <DeadlinePreview block={block} lang={lang} />
