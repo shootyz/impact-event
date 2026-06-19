@@ -217,6 +217,11 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
               )}
             </div>
           ))}
+          {slot.note !== undefined && (
+            <Editable value={slot.note ?? ""} onChange={v => updateSlot(slot.id, { note: v })}
+              placeholder="Hinweis…" multiline
+              style={{ color: D.gray, fontSize: 13, marginTop: 8, display: "block" }} />
+          )}
         </div>
       ))}
     </div>
