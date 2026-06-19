@@ -85,7 +85,7 @@ function buildCampaignHtml({
 
         <!-- Logo + greeting -->
         <tr><td style="padding:36px 40px 0;">
-          <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="28"
+          <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="48"
             style="display:block;margin-bottom:28px;" />
           <div style="height:1px;background:#e8e8e8;margin-bottom:28px;"></div>
           <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Dear ${member.first_name},</p>
