@@ -177,6 +177,12 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
     </div>
   ) });
 
+  // Split rows into pairs for two-column layout (exclude buttons row)
+  const dataRows = rows.filter(r => r.label);
+  const buttonsRow = rows.find(r => !r.label);
+  const pairs: typeof rows[] = [];
+  for (let i = 0; i < dataRows.length; i += 2) pairs.push(dataRows.slice(i, i + 2));
+
   return (
     <div>
       {block.category && (
@@ -185,12 +191,19 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
       {block.event_title && (
         <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>{block.event_title}</p>
       )}
-      {rows.map((row, ri) => (
-        <div key={ri} style={{ padding: "14px 0", borderBottom: ri < rows.length - 1 ? `1px solid ${D.gray2}` : "none" }}>
-          {row.label && <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{row.label}</p>}
-          {row.content}
+      {pairs.map((pair, pi) => (
+        <div key={pi} style={{ display: "grid", gridTemplateColumns: pair.length > 1 ? "1fr 1fr" : "1fr", gap: 0, borderBottom: `1px solid ${D.gray2}` }}>
+          {pair.map((row, ri) => (
+            <div key={ri} style={{ padding: "12px 0", paddingRight: ri === 0 && pair.length > 1 ? 16 : 0 }}>
+              <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 3px" }}>{row.label}</p>
+              {row.content}
+            </div>
+          ))}
         </div>
       ))}
+      {buttonsRow && (
+        <div style={{ paddingTop: 14 }}>{buttonsRow.content}</div>
+      )}
     </div>
   );
 }
