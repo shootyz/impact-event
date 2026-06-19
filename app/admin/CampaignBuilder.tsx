@@ -1062,17 +1062,17 @@ export default function CampaignBuilder({
   const inputCls2 = "w-full rounded-lg border px-3 py-2 text-sm outline-none transition";
 
   return (
-    <div className="flex gap-0 items-stretch" style={{ minHeight: 600 }}>
+    <div className="flex gap-0" style={{ height: "calc(100vh - 120px)", minHeight: 600 }}>
       {/* Left: live editable preview */}
-      <div className="hidden lg:flex flex-col" style={{ width: "50%", borderRight: "1px solid #e5e7eb", overflowY: "auto", position: "sticky", top: 0, maxHeight: "100vh", alignSelf: "stretch" }}>
-        <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "#e5e7eb" }}>
+      <div className="hidden lg:flex flex-col" style={{ width: "50%", borderRight: "1px solid #e5e7eb", overflowY: "auto", height: "100%" }}>
+        <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "#e5e7eb", flexShrink: 0 }}>
           <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#1E3263" }}>Vorschau</p>
         </div>
         <PreviewPanel blocks={blocks} subject={subject} onBlocks={setBlocks} lang={lang} eventUrl={eventUrl} />
       </div>
 
       {/* Right: editor */}
-      <div className="flex-1 p-5 space-y-5" style={{ minWidth: 0 }}>
+      <div className="flex-1 p-5 space-y-5" style={{ minWidth: 0, overflowY: "auto", height: "100%" }}>
 
         {/* Language toggle */}
         <div className="flex items-center gap-1">
