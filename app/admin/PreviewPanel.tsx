@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import type {
   CampaignBlock, IntroBlock, EventDetailsBlock, ProgramBlock,
   FinalistsBlock, SpeakerBlock, TextBlock, DeadlineBlock, RegisterButtonBlock,
+  textToHtml,
 } from "./CampaignBuilder";
 import { type Lang, T, DATE_LOCALE } from "./i18n";
 
@@ -65,15 +66,8 @@ function Editable({ value, onChange, placeholder, style, className, multiline = 
 // ── Block preview renderers ───────────────────────────────────────────────────
 
 function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
-  return (
-    <Editable
-      value={block.text}
-      onChange={v => onChange({ ...block, text: v })}
-      placeholder="Intro-Text eingeben…"
-      multiline
-      style={{ color: D.black, fontSize: 15, lineHeight: 1.75, whiteSpace: "pre-wrap" }}
-    />
-  );
+  if (!block.text) return <Editable value="" onChange={v => onChange({ ...block, text: v })} placeholder="Intro-Text eingeben…" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75 }} />;
+  return <div dangerouslySetInnerHTML={{ __html: textToHtml(block.text, D.black, false) }} style={{ fontSize: 15, lineHeight: 1.75 }} />;
 }
 
 function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
@@ -239,11 +233,8 @@ function SpeakerPreview({ block, onChange }: { block: SpeakerBlock & { label?: s
 }
 
 function TextPreview({ block, onChange }: { block: TextBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
-  return (
-    <Editable value={block.content} onChange={v => onChange({ ...block, content: v })}
-      placeholder="Text eingeben…" multiline
-      style={{ color: D.black, fontSize: 15, lineHeight: 1.75, whiteSpace: "pre-wrap" }} />
-  );
+  if (!block.content) return <Editable value="" onChange={v => onChange({ ...block, content: v })} placeholder="Text eingeben…" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75 }} />;
+  return <div dangerouslySetInnerHTML={{ __html: textToHtml(block.content, D.black, true) }} style={{ fontSize: 15, lineHeight: 1.75 }} />;
 }
 
 function DeadlinePreview({ block, lang = "en" }: { block: DeadlineBlock & { label?: string }; lang?: Lang }) {
