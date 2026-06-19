@@ -471,9 +471,15 @@ function labelFor(type: CampaignBlock["type"]): string {
 
 function RegisterButtonPreview({ block, lang }: { block: RegisterButtonBlock; lang: Lang }) {
   const t = T[lang];
+  const formatted = block.deadline
+    ? new Date(block.deadline + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang], { day: "numeric", month: "long", year: "numeric" })
+    : null;
   return (
-    <div style={{ margin: "16px 0", background: D.gold, color: "#fff", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
-      {t.registerBtn}
+    <div>
+      <div style={{ margin: "16px 0", background: D.gold, color: "#fff", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
+        {t.registerBtn}
+      </div>
+      {formatted && <p style={{ color: D.gray, fontSize: 13, textAlign: "center", margin: "-8px 0 0" }}>{t.deadline}: <span style={{ color: D.black, fontWeight: 500 }}>{formatted}</span></p>}
     </div>
   );
 }

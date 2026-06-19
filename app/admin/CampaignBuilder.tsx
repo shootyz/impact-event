@@ -88,6 +88,7 @@ export type DividerBlock = { type: "divider" };
 export type RegisterButtonBlock = {
   type: "register_button";
   url: string;
+  deadline?: string;
 };
 
 export type CustomField = { id: string; label: string; value: string };
@@ -269,12 +270,16 @@ ${body}
 
     case "register_button": {
       const url = ctx?.registerUrl || block.url || "#";
+      const deadlineFormatted = block.deadline
+        ? new Date(block.deadline + 'T12:00:00').toLocaleDateString(DATE_LOCALE[ctx?.lang ?? "en"], { day: "numeric", month: "long", year: "numeric" })
+        : null;
       return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
   <tr><td>
     <a href="${url}" style="display:block;background:${D.gold};color:#ffffff;text-decoration:none;padding:17px 32px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;">
       ${t.registerBtn}
     </a>
   </td></tr>
+  ${deadlineFormatted ? `<tr><td style="padding-top:10px;text-align:center;"><p style="color:${D.gray};font-size:13px;margin:0;font-family:Arial,sans-serif;">${t.deadline}: <span style="color:${D.black};font-weight:500;">${deadlineFormatted}</span></p></td></tr>` : ""}
 </table>`;
     }
   }
@@ -882,7 +887,16 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
           {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
           {block.type === "register_button" && (
-            <p className="text-xs" style={{ color: "#9ca3af" }}>URL wird automatisch durch den gewählten Event gesetzt.</p>
+            <div className="space-y-3">
+              <p className="text-xs" style={{ color: "#9ca3af" }}>URL wird automatisch durch den gewählten Event gesetzt.</p>
+              <div>
+                <label className={labelCls} style={labelSty}>Anmeldeschluss <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
+                <input type="date" value={block.deadline ?? ""}
+                  onChange={e => onChange({ ...block, deadline: e.target.value } as RegisterButtonBlock)}
+                  className="rounded-lg border px-3 py-2 text-sm outline-none"
+                  style={{ borderColor: "#d1d5db", background: "white", color: "#111", colorScheme: "light" }} />
+              </div>
+            </div>
           )}
           {block.type !== "divider" && block.type !== "register_button" && <CustomFieldsEditor block={block} onChange={onChange} />}
         </div>
