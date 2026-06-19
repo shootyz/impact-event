@@ -141,52 +141,56 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
     URL.revokeObjectURL(url);
   }
 
+  const formattedDate = block.date ? (() => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(block.date)) {
+      try { return new Date(block.date + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang ?? "en"], { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { return block.date; }
+    }
+    return block.date;
+  })() + (block.time ? `, ${block.time}` : "") : null;
+
+  const rows: { label: string; content: React.ReactNode }[] = [];
+  if (formattedDate) rows.push({ label: tl.date, content: <span style={{ color: D.black, fontSize: 15, fontWeight: 600 }}>{formattedDate}</span> });
+  else if (block.time) rows.push({ label: tl.time, content: <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
+  if (block.venue_name !== undefined) rows.push({ label: tl.venue, content: <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
+  if (block.venue_address !== undefined) rows.push({ label: tl.address, content: <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
+  if (block.moderation_name) rows.push({ label: tl.moderation, content: <Editable value={block.moderation_name} onChange={v => onChange({ ...block, moderation_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
+  if (block.moderation_title) rows.push({ label: tl.moderation + " Title", content: <Editable value={block.moderation_title} onChange={v => onChange({ ...block, moderation_title: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} /> });
+  if (block.date) rows.push({ label: "", content: (
+    <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+      <button onClick={downloadIcs}
+        style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        {tl.addToCalendar}
+      </button>
+      {block.venue_address && (
+        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
+          target="_blank" rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          Maps
+        </a>
+      )}
+    </div>
+  ) });
+
   return (
     <div>
       {block.category && (
         <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{block.category}</p>
       )}
       {block.event_title && (
-        <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>{block.event_title}</p>
+        <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>{block.event_title}</p>
       )}
-      {block.date && field(tl.date, (() => {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(block.date)) {
-          try { return new Date(block.date + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang ?? "en"], { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { return block.date; }
-        }
-        return block.date;
-      })() + (block.time ? `, ${block.time}` : ""), "date")}
-      {!block.date && block.time && field(tl.time, block.time, "time")}
-      {field(tl.venue, block.venue_name, "venue_name")}
-      {block.venue_address !== undefined && (
-        <div style={{ padding: "10px 0" }}>
-          <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{tl.address}</p>
-          <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })}
-            placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} />
+      {rows.map((row, ri) => (
+        <div key={ri} style={{ padding: "14px 0", borderBottom: ri < rows.length - 1 ? `1px solid ${D.gray2}` : "none" }}>
+          {row.label && <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{row.label}</p>}
+          {row.content}
         </div>
-      )}
-      {block.moderation_name && field(tl.moderation, block.moderation_name, "moderation_name")}
-      {block.moderation_title && field(tl.moderation + " Title", block.moderation_title, "moderation_title")}
-      {block.date && (
-        <div style={{ paddingTop: 14, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          <button onClick={downloadIcs}
-            style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            {tl.addToCalendar}
-          </button>
-          {block.venue_address && (
-            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
-              target="_blank" rel="noopener noreferrer"
-              style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-              </svg>
-              Maps
-            </a>
-          )}
-        </div>
-      )}
+      ))}
     </div>
   );
 }
