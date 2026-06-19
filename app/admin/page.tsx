@@ -2252,9 +2252,9 @@ export default function AdminPage() {
                   key={editingCampaign?.id ?? "new"}
                   campaignId={editingCampaign?.id}
                   initialSubject={editingCampaign?.subject}
-                  initialBlocks={(() => { const bj = editingCampaign?.blocks_json; if (!bj) return undefined; if (Array.isArray(bj)) return bj as import("./CampaignBuilder").CampaignBlock[]; return (bj as { blocks?: import("./CampaignBuilder").CampaignBlock[] }).blocks; })()}
-                  initialLang={(() => { const bj = editingCampaign?.blocks_json; if (!bj || Array.isArray(bj)) return undefined; return (bj as { lang?: import("./i18n").Lang }).lang; })()}
-                  initialTitle={(() => { const bj = editingCampaign?.blocks_json; if (!bj || Array.isArray(bj)) return undefined; return (bj as { title?: string }).title; })()}
+                  initialBlocks={(() => { const bj = editingCampaign?.blocks_json; if (!bj) return undefined; const p = typeof bj === 'string' ? JSON.parse(bj) : bj; if (Array.isArray(p)) return p as import("./CampaignBuilder").CampaignBlock[]; return (p as { blocks?: import("./CampaignBuilder").CampaignBlock[] }).blocks; })()}
+                  initialLang={(() => { const bj = editingCampaign?.blocks_json; if (!bj) return undefined; const p = typeof bj === 'string' ? JSON.parse(bj) : bj; if (Array.isArray(p)) return undefined; return (p as { lang?: import("./i18n").Lang }).lang; })()}
+                  initialTitle={(() => { const bj = editingCampaign?.blocks_json; if (!bj) return undefined; const p = typeof bj === 'string' ? JSON.parse(bj) : bj; if (Array.isArray(p)) return undefined; return (p as { title?: string }).title; })()}
                   initialEventUrl={editingCampaign?.event_url ?? undefined}
                   zielgruppeId={builderZielgruppeId}
                   onZielgruppeChange={setBuilderZielgruppeId}
