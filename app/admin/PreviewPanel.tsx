@@ -387,13 +387,13 @@ export default function PreviewPanel({
   };
 
   return (
-    <div style={{ background: "#F8F9FF", padding: "24px 16px", minHeight: "100%", overflowY: "auto" }}>
+    <div style={{ background: "#F8F9FF", padding: "24px 16px", minHeight: "100%", overflowY: "auto", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
       <div style={{ maxWidth: 480, margin: "0 auto", background: "#fff", borderRadius: 20, border: `1px solid #D0DDEA`, overflow: "hidden" }}>
 
         {/* Logo + greeting */}
         <div style={{ padding: "32px 32px 0" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Impact Gstaad" style={{ height: 48, marginBottom: 20, display: "block", margin: "0 auto 20px" }} />
+          <img src="/logo.png" alt="Impact Gstaad" style={{ height: 48, display: "block", margin: "0 auto 20px" }} />
           <div style={{ height: 1, background: D.gray2, marginBottom: 20 }} />
           <p style={{ color: D.navy, fontSize: 15, fontWeight: 700, margin: "0 0 4px" }}>{t.greeting}</p>
         </div>
