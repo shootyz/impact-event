@@ -541,10 +541,28 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
             <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#1E3263" }}>Slot {i + 1}</span>
             <button onClick={() => removeSlot(slot.id)} className="text-xs px-2 py-1 rounded" style={{ color: "#dc2626" }}>Entfernen</button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-3">
             <div>
               <label className={labelCls} style={labelSty}>Zeit</label>
-              <FocusInput value={slot.time} onChange={v => updateSlot(slot.id, { time: v })} placeholder="14:00 – 15:30" />
+              <div className="flex items-center gap-2">
+                <input type="time" value={slot.time?.split(" – ")[0] ?? ""}
+                  onChange={e => {
+                    const start = e.target.value;
+                    const end = slot.time?.split(" – ")[1] ?? "";
+                    updateSlot(slot.id, { time: end ? `${start} – ${end}` : start });
+                  }}
+                  className="rounded-lg border px-2 py-2 text-sm outline-none"
+                  style={{ borderColor: "#d1d5db", background: "white", color: "#111", colorScheme: "light" }} />
+                <span style={{ color: "#9ca3af", fontSize: 13 }}>–</span>
+                <input type="time" value={slot.time?.split(" – ")[1] ?? ""}
+                  onChange={e => {
+                    const start = slot.time?.split(" – ")[0] ?? "";
+                    const end = e.target.value;
+                    updateSlot(slot.id, { time: end ? `${start} – ${end}` : start });
+                  }}
+                  className="rounded-lg border px-2 py-2 text-sm outline-none"
+                  style={{ borderColor: "#d1d5db", background: "white", color: "#111", colorScheme: "light" }} />
+              </div>
             </div>
             <div>
               <label className={labelCls} style={labelSty}>Titel</label>
