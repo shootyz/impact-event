@@ -126,13 +126,13 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
 
       const details: string[] = [];
       if (dateStr)
-        details.push(`<p style="color:${D.black};font-size:14px;margin:0 0 6px;font-family:Arial,sans-serif;">${dateStr}</p>`);
+        details.push(`<p style="color:${D.gray};font-size:13px;margin:0 0 6px;font-family:Arial,sans-serif;">${t.date}: <span style="color:${D.black};font-weight:600;">${dateStr}</span></p>`);
       if (block.venue_name)
         details.push(`<p style="color:${D.black};font-size:14px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.venue_name}</p>`);
       if (block.venue_address)
         details.push(`<p style="color:${D.gray};font-size:13px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.venue_address}</p>`);
       if (block.moderation_name)
-        details.push(`<p style="color:${D.black};font-size:14px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.moderation_name}</p>`);
+        details.push(`<p style="color:${D.gray};font-size:13px;margin:0 0 6px;font-family:Arial,sans-serif;">${t.moderation}: <span style="color:${D.black};font-weight:600;">${block.moderation_name}</span></p>`);
       if (block.moderation_title)
         details.push(`<p style="color:${D.gray};font-size:13px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.moderation_title}</p>`);
 

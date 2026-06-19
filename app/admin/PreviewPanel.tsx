@@ -186,11 +186,11 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
         <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 14px" }}>{block.event_title}</p>
       )}
       <div style={{ borderTop: `1px solid ${D.gray2}`, paddingTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
-        {formattedDate && <span style={{ color: D.black, fontSize: 14 }}>{formattedDate}</span>}
-        {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 14 }} />}
+        {formattedDate && <p style={{ color: D.gray, fontSize: 13, margin: 0 }}>{tl.date}: <span style={{ color: D.black, fontWeight: 600 }}>{formattedDate}</span></p>}
+        {!block.date && block.time && <p style={{ color: D.gray, fontSize: 13, margin: 0 }}>{tl.time}: <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontWeight: 600, display: "inline" }} /></p>}
         {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.black, fontSize: 14 }} />}
         {block.venue_address !== undefined && <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })} placeholder="Adresse" style={{ color: D.gray, fontSize: 13 }} />}
-        {block.moderation_name && <Editable value={block.moderation_name} onChange={v => onChange({ ...block, moderation_name: v })} placeholder="Moderation" style={{ color: D.black, fontSize: 14 }} />}
+        {block.moderation_name && <p style={{ color: D.gray, fontSize: 13, margin: 0 }}>{tl.moderation}: <Editable value={block.moderation_name} onChange={v => onChange({ ...block, moderation_name: v })} placeholder="Name" style={{ color: D.black, fontWeight: 600, display: "inline" }} /></p>}
         {block.moderation_title && <Editable value={block.moderation_title} onChange={v => onChange({ ...block, moderation_title: v })} placeholder="Titel" style={{ color: D.gray, fontSize: 13 }} />}
       </div>
       {block.date && (
