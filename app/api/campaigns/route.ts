@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         subject,
         headerImageUrl: header_image_url || null,
         bodyHtml: body_html,
+        blocksJson: blocks_json ?? null,
         eventUrl: event_url || null,
         appUrl,
         eventId: event_id,
