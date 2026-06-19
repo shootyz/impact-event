@@ -1,9 +1,14 @@
 import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase'
 import type { Member } from './supabase'
-import { renderBlocksToHtml } from '@/app/admin/campaign-renderer'
+import React from 'react'
+import BlocksEmail from '@/app/admin/BlocksEmail'
 import type { CampaignBlock } from '@/app/admin/campaign-renderer'
 import type { Lang } from '@/app/admin/i18n'
+
+// Dynamic require bypasses Turbopack's static analysis ban on react-dom/server in lib/
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { renderToStaticMarkup } = require('react-dom/server') as typeof import('react-dom/server')
 
 function plainTextToHtml(text: string): string {
   return text
@@ -170,7 +175,7 @@ export async function sendCampaign({
       campaignLang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
       hasRegisterBlock = (parsedBlocks as CampaignBlock[]).some(b => b.type === 'register_button')
       // For hasRegisterBlock, we render per-member below; here render without registerUrl as fallback
-      return renderBlocksToHtml(parsedBlocks, { campaignId, appUrl, lang: campaignLang })
+      return renderToStaticMarkup(React.createElement(BlocksEmail, { blocks: parsedBlocks, lang: campaignLang, campaignId, appUrl }))
     } catch { return bodyHtml }
   })()
 
@@ -211,7 +216,7 @@ export async function sendCampaign({
 
     // When blocks contain a register_button, render per-member with personalized URL
     const finalBodyHtml = hasRegisterBlock && parsedBlocks
-      ? renderBlocksToHtml(parsedBlocks, { campaignId, appUrl, lang: campaignLang, registerUrl: memberRegisterUrl ?? undefined })
+      ? renderToStaticMarkup(React.createElement(BlocksEmail, { blocks: parsedBlocks, lang: campaignLang, campaignId, appUrl, registerUrl: memberRegisterUrl ?? undefined }))
       : staticBodyHtml
 
     const html = buildCampaignHtml({
