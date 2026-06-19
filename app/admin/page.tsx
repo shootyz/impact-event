@@ -581,6 +581,7 @@ export default function AdminPage() {
   const [guestFilter, setGuestFilter] = useState<"all" | "checkedin" | "pending">("all");
   const [guestSort, setGuestSort] = useState<"name" | "checkin">("name");
   const [showScannerModal, setShowScannerModal] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1090,25 +1091,47 @@ export default function AdminPage() {
           </div>
           {/* Sort + view toggle */}
           <div className="flex items-center gap-2 mb-5">
-            <select
-              value={eventsSort}
-              onChange={e => setEventsSort(e.target.value as typeof eventsSort)}
-              className="text-xs px-3 py-1.5 rounded-lg border outline-none flex-1"
-              style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}>
-              <option value="date-desc">Datum ↓</option>
-              <option value="date-asc">Datum ↑</option>
-              <option value="name-asc">Name A–Z</option>
-              <option value="created-desc">Neu zuerst</option>
-            </select>
-            <div className="flex rounded-lg border overflow-hidden flex-shrink-0" style={{ borderColor: "var(--ig-gray2)" }}>
+            {/* Custom sort button */}
+            {(() => {
+              const sortLabels: Record<string, string> = { "date-desc": "Datum ↓", "date-asc": "Datum ↑", "name-asc": "Name A–Z", "created-desc": "Neu zuerst" };
+              const sortOptions = ["date-desc", "date-asc", "name-asc", "created-desc"] as const;
+              return (
+                <div className="relative flex-1">
+                  <button
+                    onClick={() => setShowSortMenu(v => !v)}
+                    className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition"
+                    style={{ borderColor: showSortMenu ? "var(--ig-navy)" : "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}>
+                    <span>{sortLabels[eventsSort]}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ transform: showSortMenu ? "rotate(180deg)" : "none", transition: "transform 0.15s", flexShrink: 0, color: "var(--ig-gray3)" }}><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  {showSortMenu && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+                      <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border overflow-hidden z-20 shadow-lg" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+                        {sortOptions.map((opt, i) => (
+                          <button key={opt} onClick={() => { setEventsSort(opt); setShowSortMenu(false); }}
+                            className={`w-full text-left px-4 py-3 text-sm transition flex items-center justify-between${i > 0 ? " border-t" : ""}`}
+                            style={{ borderColor: "var(--ig-gray2)", color: eventsSort === opt ? "var(--ig-gold)" : "var(--ig-navy)", background: eventsSort === opt ? "rgba(210,141,40,0.06)" : "white", fontWeight: eventsSort === opt ? 600 : 400 }}>
+                            {sortLabels[opt]}
+                            {eventsSort === opt && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+            {/* View toggle */}
+            <div className="flex rounded-xl border overflow-hidden flex-shrink-0" style={{ borderColor: "var(--ig-gray2)" }}>
               {(["grid", "list"] as const).map(v => (
                 <button key={v} onClick={() => setEventsView(v)}
-                  className="px-2.5 py-1.5 transition"
+                  className="px-3 py-2.5 transition"
                   style={{ background: eventsView === v ? "var(--ig-navy)" : "white", color: eventsView === v ? "white" : "var(--ig-gray3)" }}>
                   {v === "grid" ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
                   ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                   )}
                 </button>
               ))}
