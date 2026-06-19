@@ -533,6 +533,7 @@ export default function AdminPage() {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [builderZielgruppeId, setBuilderZielgruppeId] = useState<string | null>(null);
   const [mailingTab, setMailingTab] = useState<"members" | "compose" | "drafts" | "campaigns">("members");
+  const [draftsLang, setDraftsLang] = useState<"all" | "en" | "de" | "fr">("all");
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [membersLoaded, setMembersLoaded] = useState(false);
@@ -2008,9 +2009,25 @@ export default function AdminPage() {
 
             {/* ── Scheduled ── */}
             {mailingTab === "drafts" && (() => {
-              const drafts = campaigns.filter(c => !c.sent_at && !c.scheduled_at);
+              const allDrafts = campaigns.filter(c => !c.sent_at && !c.scheduled_at);
+              const drafts = draftsLang === "all" ? allDrafts : allDrafts.filter(c => {
+                const bj = c.blocks_json as { lang?: string } | null;
+                return bj && !Array.isArray(bj) ? bj.lang === draftsLang : draftsLang === "en";
+              });
               return (
                 <div className="space-y-3">
+                  {/* Lang filter */}
+                  {allDrafts.length > 0 && (
+                    <div className="flex gap-2">
+                      {(["all", "en", "de", "fr"] as const).map(l => (
+                        <button key={l} onClick={() => setDraftsLang(l)}
+                          className="px-3 py-1 rounded-full text-xs font-semibold transition"
+                          style={{ background: draftsLang === l ? "var(--ig-navy)" : "#e5e7eb", color: draftsLang === l ? "white" : "var(--ig-navy)" }}>
+                          {l === "all" ? "Alle" : l.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {campaignsLoading ? (
                     <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div></Card>
                   ) : drafts.length === 0 ? (
