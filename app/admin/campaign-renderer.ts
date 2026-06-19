@@ -222,7 +222,7 @@ ${body}
       const formatted = block.date
         ? new Date(block.date + 'T12:00:00').toLocaleDateString(DATE_LOCALE[ctx?.lang ?? "en"], { day: "numeric", month: "long", year: "numeric" })
         : "–";
-      return `<p style="color:${D.gray};font-size:13px;margin:0 0 20px;font-family:Arial,sans-serif;">${t.deadline}: <span style="color:${D.black};font-weight:500;">${formatted}</span></p>`;
+      return `<p style="color:${D.gray};font-size:13px;margin:0 0 20px;font-family:Arial,sans-serif;">${t.deadline}: ${formatted}</p>`;
     }
 
     case "divider":

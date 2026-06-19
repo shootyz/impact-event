@@ -484,7 +484,7 @@ function RegisterButtonPreview({ block, lang }: { block: RegisterButtonBlock; la
       <div style={{ margin: "16px 0", background: D.gold, color: "#fff", textAlign: "center", padding: "14px 24px", borderRadius: 12, fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
         {t.registerBtn}
       </div>
-      {formatted && <p style={{ color: D.gray, fontSize: 13, textAlign: "center", margin: "-8px 0 0" }}>{t.deadline}: <span style={{ color: D.black, fontWeight: 500 }}>{formatted}</span></p>}
+      {formatted && <p style={{ color: D.gray, fontSize: 13, textAlign: "center", margin: "-8px 0 0" }}>{t.deadline}: {formatted}</p>}
     </div>
   );
 }
