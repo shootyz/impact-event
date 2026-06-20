@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { randomUUID } from 'crypto'
 
 // One-time demo seed — protected by admin password
 export async function POST(req: NextRequest) {
@@ -38,30 +39,24 @@ export async function POST(req: NextRequest) {
   // ── 3. Members ──
   const memberRows = [
     // VIP DE
-    { event_id: eventId, first_name: 'Katharina', last_name: 'von Arx', email: 'k.vonarx@demo.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgVip.id },
-    { event_id: eventId, first_name: 'Thomas', last_name: 'Müller', email: 't.mueller@demo.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgVip.id },
-    { event_id: eventId, first_name: 'Sophie', last_name: 'Reuter', email: 's.reuter@demo.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgVip.id },
-    { event_id: eventId, first_name: 'Markus', last_name: 'Steinberg', email: 'm.steinberg@demo.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgVip.id },
-    { event_id: eventId, first_name: 'Elena', last_name: 'Braun', email: 'e.braun@demo.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgVip.id },
-    // VIP FR
-    { event_id: eventId, first_name: 'Claire', last_name: 'Dupont', email: 'c.dupont@demo.fr', anrede: 'Frau', sprache: 'fr', zielgruppe_id: zgVip.id },
-    { event_id: eventId, first_name: 'Pierre', last_name: 'Martin', email: 'p.martin@demo.fr', anrede: 'Herr', sprache: 'fr', zielgruppe_id: zgVip.id },
-    // VIP EN
-    { event_id: eventId, first_name: 'James', last_name: 'Whitfield', email: 'j.whitfield@demo.com', anrede: 'Herr', sprache: 'en', zielgruppe_id: zgVip.id },
-    { event_id: eventId, first_name: 'Sarah', last_name: 'Collins', email: 's.collins@demo.com', anrede: 'Frau', sprache: 'en', zielgruppe_id: zgVip.id },
-    // Partner DE
-    { event_id: eventId, first_name: 'Andreas', last_name: 'Keller', email: 'a.keller@partner.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgPartner.id },
-    { event_id: eventId, first_name: 'Monika', last_name: 'Huber', email: 'm.huber@partner.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgPartner.id },
-    { event_id: eventId, first_name: 'Christian', last_name: 'Bauer', email: 'c.bauer@partner.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgPartner.id },
-    { event_id: eventId, first_name: 'Laura', last_name: 'Fischer', email: 'l.fischer@partner.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgPartner.id },
-    // Partner EN
-    { event_id: eventId, first_name: 'Michael', last_name: 'Hart', email: 'm.hart@partner.com', anrede: 'Herr', sprache: 'en', zielgruppe_id: zgPartner.id },
-    // Media
-    { event_id: eventId, first_name: 'Julia', last_name: 'Weber', email: 'j.weber@media.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgMedia.id },
-    { event_id: eventId, first_name: 'David', last_name: 'Schmid', email: 'd.schmid@media.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgMedia.id },
-    { event_id: eventId, first_name: 'Lena', last_name: 'Koch', email: 'l.koch@media.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgMedia.id },
-    // Unsubscribed
-    { event_id: eventId, first_name: 'Hans', last_name: 'Zimmer', email: 'h.zimmer@demo.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribed: true },
+    { event_id: eventId, first_name: 'Katharina', last_name: 'von Arx', email: 'k.vonarx@demo.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Thomas', last_name: 'Müller', email: 't.mueller@demo.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Sophie', last_name: 'Reuter', email: 's.reuter@demo.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Markus', last_name: 'Steinberg', email: 'm.steinberg@demo.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Elena', last_name: 'Braun', email: 'e.braun@demo.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Claire', last_name: 'Dupont', email: 'c.dupont@demo.fr', anrede: 'Frau', sprache: 'fr', zielgruppe_id: zgVip.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Pierre', last_name: 'Martin', email: 'p.martin@demo.fr', anrede: 'Herr', sprache: 'fr', zielgruppe_id: zgVip.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'James', last_name: 'Whitfield', email: 'j.whitfield@demo.com', anrede: 'Herr', sprache: 'en', zielgruppe_id: zgVip.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Sarah', last_name: 'Collins', email: 's.collins@demo.com', anrede: 'Frau', sprache: 'en', zielgruppe_id: zgVip.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Andreas', last_name: 'Keller', email: 'a.keller@partner.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgPartner.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Monika', last_name: 'Huber', email: 'm.huber@partner.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgPartner.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Christian', last_name: 'Bauer', email: 'c.bauer@partner.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgPartner.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Laura', last_name: 'Fischer', email: 'l.fischer@partner.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgPartner.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Michael', last_name: 'Hart', email: 'm.hart@partner.com', anrede: 'Herr', sprache: 'en', zielgruppe_id: zgPartner.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Julia', last_name: 'Weber', email: 'j.weber@media.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgMedia.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'David', last_name: 'Schmid', email: 'd.schmid@media.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgMedia.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Lena', last_name: 'Koch', email: 'l.koch@media.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgMedia.id, unsubscribe_token: randomUUID() },
+    { event_id: eventId, first_name: 'Hans', last_name: 'Zimmer', email: 'h.zimmer@demo.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribed: true, unsubscribe_token: randomUUID() },
   ]
 
   const { data: members } = await db.from('members').insert(memberRows).select()
