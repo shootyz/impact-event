@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
     {
       event_id: eventId,
       subject: 'Ihre Einladung zum Impact Gstaad 2025',
+      body_html: '',
       blocks_json: { lang: 'de', title: 'Einladung Impact Gstaad 2025', blocks: [] },
       sent_at: sentAt1,
       recipient_count: deMembers.length,
@@ -124,6 +125,7 @@ export async function POST(req: NextRequest) {
     {
       event_id: eventId,
       subject: 'Your Invitation to Impact Gstaad 2025',
+      body_html: '',
       blocks_json: { lang: 'en', title: 'Invitation Impact Gstaad 2025', blocks: [] },
       sent_at: sentAt2,
       recipient_count: enMembers.length,
@@ -133,8 +135,9 @@ export async function POST(req: NextRequest) {
     {
       event_id: eventId,
       subject: 'Erinnerung: Impact Gstaad findet bald statt',
+      body_html: '',
       blocks_json: { lang: 'de', title: 'Erinnerung Impact Gstaad 2025', blocks: [] },
-      sent_at: null, // draft
+      sent_at: null,
       recipient_count: null,
       zielgruppe_id: zgVip.id,
       event_url: `https://impactgstaad.vercel.app?event=${eventId}`,
