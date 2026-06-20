@@ -166,7 +166,7 @@ type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: s
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
 // ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
-type CampaignType = { id: string; subject: string; body_html: string; blocks_json?: { title?: string } | unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; };
+type CampaignType = { id: string; subject: string; body_html: string; blocks_json?: { title?: string } | unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; };
 const TEST_EMAILS = [
   "nik.thomi@impactgstaad.ch",
   "andreas.wandfluh@impactgstaad.ch",
@@ -2372,7 +2372,7 @@ export default function AdminPage() {
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject: `${c.subject} (Kopie)`, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null, zielgruppe_id: c.zielgruppe_id || null, send_now: false }),
+                        body: JSON.stringify({ subject: `${c.subject} (Kopie)`, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null, zielgruppe_id: c.zielgruppe_id || null, event_id: c.event_id, send_now: false }),
                       });
                       const d = await res.json();
                       if (res.ok) {
