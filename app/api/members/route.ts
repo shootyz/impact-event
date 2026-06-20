@@ -42,12 +42,28 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  if (data && data.length > 0) {
-    const codes = data.map((m: { id: string }) => ({
-      member_id: m.id,
-      code: Math.random().toString(36).slice(2, 8).toUpperCase(),
-    }))
-    await db.from('invite_codes').upsert(codes, { onConflict: 'member_id', ignoreDuplicates: true })
+  // Generate invite codes for ALL members in this event that don't have one yet
+  const { data: allMembers } = await db
+    .from('members')
+    .select('id')
+    .eq('event_id', event_id)
+
+  if (allMembers && allMembers.length > 0) {
+    const { data: existingCodes } = await db
+      .from('invite_codes')
+      .select('member_id')
+      .in('member_id', allMembers.map((m: { id: string }) => m.id))
+
+    const existingIds = new Set((existingCodes ?? []).map((c: { member_id: string }) => c.member_id))
+    const missing = allMembers.filter((m: { id: string }) => !existingIds.has(m.id))
+
+    if (missing.length > 0) {
+      const codes = missing.map((m: { id: string }) => ({
+        member_id: m.id,
+        code: Math.random().toString(36).slice(2, 8).toUpperCase(),
+      }))
+      await db.from('invite_codes').insert(codes)
+    }
   }
 
   return NextResponse.json({ inserted: data?.length ?? 0 })
