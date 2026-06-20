@@ -142,5 +142,5 @@ POST /api/campaigns
 }
 ```
 
-**Typical block order for an Impact event:**
-`intro` → `event_details` → `program` → `speaker` (one per speaker) → `finalists` (if award event) → `info` (dress code, parking, etc.) → `divider` → `register_button`
+**Pflicht-Reihenfolge:**
+`intro` → `register_button` (**IMMER direkt nach intro!**) → `event_details` → `program` → `speaker` (one per speaker) → `finalists` (if award event) → `info` (dress code, parking, etc.) → `divider`
