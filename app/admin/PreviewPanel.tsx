@@ -6,7 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import type {
   CampaignBlock, IntroBlock, EventDetailsBlock, ModerationBlock, ProgramBlock,
-  FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, RegisterButtonBlock,
+  FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, RegisterButtonBlock,
 } from "./CampaignBuilder";
 import { type Lang, T, DATE_LOCALE } from "./i18n";
 
@@ -128,7 +128,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
     const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
     const pad = (n: number) => String(n).padStart(2, "0");
     const fmt = (dt: Date) => `${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
-    const location = [block.venue_name, block.venue_address].filter(Boolean).join(", ");
+    const location = block.venue_name ?? "";
     const icsTitle = [block.category, block.event_title].filter(Boolean).join(": ") || subject || "Impact Gstaad Event";
     const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Impact Gstaad//EN","BEGIN:VEVENT",
       `UID:${isoDate}-${Date.now()}@impactgstaad.ch`,`DTSTART:${fmt(start)}`,`DTEND:${fmt(end)}`,
@@ -152,7 +152,6 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
   if (formattedDate) rows.push({ label: tl.date, content: <span style={{ color: D.black, fontSize: 15, fontWeight: 400 }}>{formattedDate}</span> });
   else if (block.time) rows.push({ label: tl.time, content: <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
   if (block.venue_name !== undefined) rows.push({ label: tl.venue, content: <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
-  if (block.venue_address !== undefined) rows.push({ label: tl.address, content: <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
   if (block.date) rows.push({ label: "", content: (
     <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
       <button onClick={downloadIcs}
@@ -162,13 +161,10 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
         </svg>
         {tl.addToCalendar}
       </button>
-      {block.venue_address && (
-        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
+      {block.venue_maps_url && (
+        <a href={block.venue_maps_url}
           target="_blank" rel="noopener noreferrer"
           style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-          </svg>
           Maps
         </a>
       )}
@@ -183,26 +179,19 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
       {block.event_title && (
         <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 14px" }}>{block.event_title}</p>
       )}
-      <div style={{ borderTop: `1px solid ${D.gray2}`, paddingTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
-        {formattedDate && <span style={{ color: D.black, fontSize: 14 }}>{formattedDate}</span>}
-        {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 14 }} />}
+      <div style={{ background: "#faf8f4", borderLeft: `3px solid ${D.gold}`, padding: "12px 16px", marginBottom: 14, display: "flex", flexDirection: "column", gap: 6 }}>
+        {formattedDate && <span style={{ color: D.navy, fontSize: 14, fontWeight: 700 }}>{formattedDate}</span>}
+        {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.navy, fontSize: 14, fontWeight: 700 }} />}
         {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.black, fontSize: 14 }} />}
-        {block.venue_address !== undefined && <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })} placeholder="Adresse" style={{ color: D.gray, fontSize: 13 }} />}
       </div>
-      {(block.date || block.venue_address) && (
-        <div style={{ borderTop: `1px solid ${D.gray2}`, marginTop: 14, paddingTop: 14, display: "flex", alignItems: "center", gap: 4 }}>
-          {block.date && (
-            <button onClick={downloadIcs}
-              style={{ color: D.gold, fontSize: 13, fontWeight: 400, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "none", letterSpacing: 0.2 }}>
-              {tl.addToCalendar}
-            </button>
-          )}
-          {block.date && block.venue_address && (
-            <span style={{ color: D.gray2, fontSize: 13, margin: "0 8px" }}>·</span>
-          )}
-          {block.venue_address && (
-            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`}
-              target="_blank" rel="noopener noreferrer"
+      {block.date && (
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8 }}>
+          <button onClick={downloadIcs}
+            style={{ color: D.gold, fontSize: 13, fontWeight: 400, background: "none", border: "none", cursor: "pointer", padding: 0, letterSpacing: 0.2 }}>
+            {tl.addToCalendar}
+          </button>
+          {block.venue_maps_url && (
+            <a href={block.venue_maps_url} target="_blank" rel="noopener noreferrer"
               style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "underline", letterSpacing: 0.2 }}>
               Maps
             </a>
@@ -293,20 +282,34 @@ function ModerationPreview({ block, onChange }: { block: ModerationBlock & { lab
 }
 
 function SpeakerPreview({ block, onChange }: { block: SpeakerBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+  const updateSpeaker = (i: number, patch: Partial<Speaker>) =>
+    onChange({ ...block, speakers: block.speakers.map((s, j) => j === i ? { ...s, ...patch } : s) });
+  const addSpeaker = () => onChange({ ...block, speakers: [...block.speakers, { id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] });
+  const removeSpeaker = (i: number) => onChange({ ...block, speakers: block.speakers.filter((_, j) => j !== i) });
+
   return (
     <div>
-      {block.photo_url && (
-        <img src={block.photo_url} alt={block.name}
-          style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 12 }} />
-      )}
-      <Editable value={block.name} onChange={v => onChange({ ...block, name: v })}
-        placeholder="Name" style={{ color: D.navy, fontSize: 16, fontWeight: 700, marginBottom: 2 }} />
-      {block.title?.trim() && <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
-        placeholder="Titel" style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }} />}
-      {block.book?.trim() && <Editable value={block.book} onChange={v => onChange({ ...block, book: v })}
-        placeholder="Buch / Kurzbeschrieb" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 8, whiteSpace: "pre-wrap" }} />}
-      {block.bio?.trim() && <Editable value={block.bio} onChange={v => onChange({ ...block, bio: v })}
-        placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, whiteSpace: "pre-wrap" }} />}
+      {(block.speakers ?? []).map((sp, i) => (
+        <div key={sp.id} style={i > 0 ? { borderTop: `1px solid ${D.gray2}`, marginTop: 20, paddingTop: 20 } : {}}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+            {sp.photo_url && <img src={sp.photo_url} alt={sp.name} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}` }} />}
+            {block.speakers.length > 1 && (
+              <button onClick={() => removeSpeaker(i)} style={{ background: "none", border: "none", cursor: "pointer", color: D.gray, fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
+            )}
+          </div>
+          <Editable value={sp.name} onChange={v => updateSpeaker(i, { name: v })}
+            placeholder="Name" style={{ color: D.navy, fontSize: 16, fontWeight: 700, marginBottom: 2 }} />
+          {sp.title?.trim() && <Editable value={sp.title} onChange={v => updateSpeaker(i, { title: v })}
+            placeholder="Titel" style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }} />}
+          {sp.book?.trim() && <Editable value={sp.book} onChange={v => updateSpeaker(i, { book: v })}
+            placeholder="Buch / Kurzbeschrieb" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 8, whiteSpace: "pre-wrap" }} />}
+          {sp.bio?.trim() && <Editable value={sp.bio} onChange={v => updateSpeaker(i, { bio: v })}
+            placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, whiteSpace: "pre-wrap" }} />}
+        </div>
+      ))}
+      <button onClick={addSpeaker} style={{ marginTop: 16, color: D.gold, fontSize: 13, fontWeight: 600, background: "none", border: `1px dashed ${D.gold}`, borderRadius: 6, padding: "6px 14px", cursor: "pointer", width: "100%" }}>
+        + Speaker hinzufügen
+      </button>
     </div>
   );
 }

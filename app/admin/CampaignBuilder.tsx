@@ -6,9 +6,9 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import PreviewPanel from "./PreviewPanel";
 import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATIONS } from "./i18n";
-export type { IntroBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
+export type { IntroBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
 export { renderBlocksToHtml, richHtmlToEmail } from "./campaign-renderer";
-import type { IntroBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
+import type { IntroBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
 import { richHtmlToEmail, renderBlocksToHtml } from "./campaign-renderer";
 
 
@@ -201,13 +201,10 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
           style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
         />
       </div>
-      {(["venue_name", "venue_address"] as const).map(k => (
-        <div key={k}>
-          <label className={labelCls} style={labelSty}>{k === "venue_name" ? "Venue Name" : "Adresse"}</label>
-          <FocusInput value={block[k]} onChange={v => onChange({ ...block, [k]: v })}
-            placeholder={k === "venue_name" ? "Kirchgemeindehaus Gstaad" : "Untergstaadstrasse 8, 3780 Gstaad"} />
-        </div>
-      ))}
+      <div>
+        <label className={labelCls} style={labelSty}>Venue Name</label>
+        <FocusInput value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Kirchgemeindehaus Gstaad" />
+      </div>
     </div>
   );
 }
@@ -395,56 +392,72 @@ function ModerationEditor({ block, onChange }: { block: ModerationBlock; onChang
   );
 }
 
-function SpeakerEditor({ block, onChange }: { block: SpeakerBlock; onChange: (b: SpeakerBlock) => void }) {
+function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speaker; onChange: (s: Speaker) => void; onRemove: () => void; canRemove: boolean }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-
   return (
     <div className="space-y-3">
-      <div>
-        <label className={labelCls} style={labelSty}>Foto</label>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async e => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          setUploading(true);
-          const fd = new FormData();
-          fd.append("file", file);
-          const res = await fetch("/api/upload", { method: "POST", body: fd });
-          const d = await res.json();
-          if (d.url) onChange({ ...block, photo_url: d.url });
-          setUploading(false);
-        }} />
-        <div className="flex gap-3 items-center">
+      <div className="flex gap-3 items-center">
+        <div>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async e => {
+            const file = e.target.files?.[0]; if (!file) return;
+            setUploading(true);
+            const fd = new FormData(); fd.append("file", file);
+            const res = await fetch("/api/upload", { method: "POST", body: fd });
+            const d = await res.json(); if (d.url) onChange({ ...sp, photo_url: d.url });
+            setUploading(false);
+          }} />
           <button onClick={() => fileRef.current?.click()}
             className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
             disabled={uploading}>
-            {uploading ? "Wird hochgeladen…" : block.photo_url ? "Bild ersetzen" : "Bild hochladen"}
+            {uploading ? "Hochladen…" : sp.photo_url ? "Bild ersetzen" : "Bild hochladen"}
           </button>
-          {block.photo_url && <img src={block.photo_url} alt="" className="w-12 h-12 rounded-full object-cover" style={{ border: "2px solid #D28D28" }} />}
         </div>
+        {sp.photo_url && <img src={sp.photo_url} alt="" className="w-10 h-10 rounded-full object-cover" style={{ border: "2px solid #D28D28" }} />}
+        {canRemove && <button onClick={onRemove} className="ml-auto text-xs" style={{ color: "var(--ig-gray3)" }}>Entfernen</button>}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelCls} style={labelSty}>Name</label>
-          <FocusInput value={block.name} onChange={v => onChange({ ...block, name: v })} placeholder="André Hoffmann" />
+          <FocusInput value={sp.name} onChange={v => onChange({ ...sp, name: v })} placeholder="André Hoffmann" />
         </div>
         <div>
           <label className={labelCls} style={labelSty}>Titel</label>
-          <FocusInput value={block.title} onChange={v => onChange({ ...block, title: v })} placeholder="Vice-Chairman, Roche · Impact Advisory Board" />
+          <FocusInput value={sp.title} onChange={v => onChange({ ...sp, title: v })} placeholder="Vice-Chairman, Roche" />
         </div>
       </div>
-      {block.book ? (
+      {sp.book ? (
         <div>
           <label className={labelCls} style={labelSty}>Buch / Vortrag</label>
-          <FocusInput value={block.book} onChange={v => onChange({ ...block, book: v })} placeholder="André will present his new book…" />
+          <FocusInput value={sp.book} onChange={v => onChange({ ...sp, book: v })} placeholder="André will present his new book…" />
         </div>
       ) : (
-        <button className="text-xs" style={{ color: "var(--ig-gray3)" }} onClick={() => onChange({ ...block, book: " " })}>+ Buch / Vortrag hinzufügen</button>
+        <button className="text-xs" style={{ color: "var(--ig-gray3)" }} onClick={() => onChange({ ...sp, book: " " })}>+ Buch / Vortrag hinzufügen</button>
       )}
       <div>
         <label className={labelCls} style={labelSty}>Bio</label>
-        <FocusInput multiline rows={3} value={block.bio} onChange={v => onChange({ ...block, bio: v })} placeholder="A groundbreaking work on how business leaders…" />
+        <FocusInput multiline rows={3} value={sp.bio} onChange={v => onChange({ ...sp, bio: v })} placeholder="A groundbreaking work on how business leaders…" />
       </div>
+    </div>
+  );
+}
+
+function SpeakerEditor({ block, onChange }: { block: SpeakerBlock; onChange: (b: SpeakerBlock) => void }) {
+  const updateSp = (i: number, sp: Speaker) => onChange({ ...block, speakers: block.speakers.map((s, j) => j === i ? sp : s) });
+  const addSp = () => onChange({ ...block, speakers: [...block.speakers, { id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] });
+  const removeSp = (i: number) => onChange({ ...block, speakers: block.speakers.filter((_, j) => j !== i) });
+  return (
+    <div className="space-y-4">
+      {block.speakers.map((sp, i) => (
+        <div key={sp.id}>
+          {i > 0 && <div style={{ height: 1, background: "var(--ig-gray2)", margin: "4px 0 16px" }} />}
+          <SingleSpeakerEditor sp={sp} onChange={s => updateSp(i, s)} onRemove={() => removeSp(i)} canRemove={block.speakers.length > 1} />
+        </div>
+      ))}
+      <button onClick={addSp} className="w-full text-xs py-2 rounded-lg border border-dashed font-medium transition"
+        style={{ borderColor: "#D28D28", color: "#D28D28" }}>
+        + Speaker hinzufügen
+      </button>
     </div>
   );
 }
@@ -655,11 +668,11 @@ const ADDABLE_BLOCK_TYPES: { type: CampaignBlock["type"]; icon: string }[] = [
 function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
   switch (type) {
     case "intro": return { type, text: "" };
-    case "event_details": return { type, category: "", event_title: "", date: "", time: "13:00", venue_name: "", venue_address: "", venue_maps_url: "" };
+    case "event_details": return { type, category: "", event_title: "", date: "", time: "13:00", venue_name: "", venue_maps_url: "" };
     case "moderation": return { type, name: "", title: "" };
     case "program": return { type, slots: [{ id: uid(), time: "", title: "", sub_items: [], note: "" }] };
     case "finalists": return { type, title: "Green Business Award", intro: "", items: [{ id: uid(), name: "", category: "", description: "" }], video_url: "", website_url: "", website_label: "" };
-    case "speaker": return { type, photo_url: "", name: "", title: "", bio: "", book: "" };
+    case "speaker": return { type, speakers: [{ id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] };
     case "text": return { type, content: "" };
     case "info": return { type, title: "", content: "" };
     case "deadline": return { type, date: "" };

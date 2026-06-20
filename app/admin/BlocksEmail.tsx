@@ -86,27 +86,25 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <SectionHead label={block.label || "Event Details"} />
           {block.category && <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.category}</p>}
           {block.event_title && <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 14px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.event_title}</p>}
-          <div style={{ borderTop: `1px solid ${D.gray2}`, paddingTop: 14 }}>
-            {formattedDate && <p style={{ color: D.black, fontSize: 14, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</p>}
-            {block.venue_name && <p style={{ color: D.black, fontSize: 14, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_name}</p>}
-            {block.venue_address && <p style={{ color: D.gray, fontSize: 13, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_address}</p>}
-          </div>
-          {(block.date || block.venue_address) && (
-            <div style={{ borderTop: `1px solid ${D.gray2}`, marginTop: 14, paddingTop: 14 }}>
+          <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: 14 }}>
+            <tbody><tr><td style={{ background: "#faf8f4", padding: "12px 16px", borderLeft: `3px solid ${D.gold}` }}>
+              {formattedDate && <p style={{ color: D.navy, fontSize: 14, fontWeight: 700, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</p>}
+              {block.venue_name && <p style={{ color: D.black, fontSize: 14, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_name}</p>}
+            </td></tr></tbody>
+          </table>
+          {(block.date || block.venue_maps_url) && (
+            <table cellPadding={0} cellSpacing={0} style={{ marginBottom: 24 }}><tbody><tr>
               {block.date && campaignId && appUrl && (
-                <a href={`${appUrl}/api/campaigns/${campaignId}/ics`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
-                  <span style={{ textDecoration: "none" }}>{t.addToCalendar}</span>
-                </a>
+                <td style={{ paddingRight: 20 }}>
+                  <a href={`${appUrl}/api/campaigns/${campaignId}/ics`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{t.addToCalendar}</a>
+                </td>
               )}
-              {block.date && campaignId && appUrl && block.venue_address && (
-                <span style={{ color: D.gray2, fontSize: 13, margin: "0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>·</span>
+              {block.venue_maps_url && (
+                <td>
+                  <a href={block.venue_maps_url} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>Maps</a>
+                </td>
               )}
-              {block.venue_address && (
-                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}`} style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
-                  <span style={{ textDecoration: "none" }}>Maps</span>
-                </a>
-              )}
-            </div>
+            </tr></tbody></table>
           )}
           <CustomFields block={block} />
         </div>
@@ -165,13 +163,15 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
         <div>
           <Divider />
           <SectionHead label={block.label || t.speaker} />
-          {block.photo_url && (
-            <img src={block.photo_url} alt={block.name} width={80} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 12, display: "block" }} />
-          )}
-          <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.name}</p>
-          {block.title && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
-          {block.book?.trim() && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.book}</p>}
-          {block.bio && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.bio}</p>}
+          {(block.speakers ?? []).map((sp, i) => (
+            <div key={sp.id} style={i > 0 ? { borderTop: `1px solid ${D.gray2}`, marginTop: 20, paddingTop: 20 } : {}}>
+              {sp.photo_url && <img src={sp.photo_url} alt={sp.name} width={80} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 12, display: "block" }} />}
+              <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.name}</p>
+              {sp.title && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.title}</p>}
+              {sp.book?.trim() && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.book}</p>}
+              {sp.bio && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.bio}</p>}
+            </div>
+          ))}
           <CustomFields block={block} />
         </div>
       );

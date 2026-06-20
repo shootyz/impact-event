@@ -12,8 +12,16 @@ export type EventDetailsBlock = {
   date: string;
   time: string;
   venue_name: string;
-  venue_address: string;
   venue_maps_url: string;
+};
+
+export type Speaker = {
+  id: string;
+  photo_url: string;
+  name: string;
+  title: string;
+  bio: string;
+  book: string;
 };
 
 export type ModerationBlock = {
@@ -46,11 +54,7 @@ export type FinalistsBlock = {
 
 export type SpeakerBlock = {
   type: "speaker";
-  photo_url: string;
-  name: string;
-  title: string;
-  bio: string;
-  book: string;
+  speakers: Speaker[];
 };
 
 export type TextBlock = { type: "text"; content: string };
@@ -129,27 +133,25 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
       if (block.event_title)
         lines.push(`<p style="color:${D.navy};font-size:16px;font-weight:700;margin:0 0 14px;font-family:Arial,sans-serif;">${block.event_title}</p>`);
 
-      const details: string[] = [];
-      if (dateStr)
-        details.push(`<p style="color:${D.black};font-size:14px;margin:0 0 6px;font-family:Arial,sans-serif;">${dateStr}</p>`);
-      if (block.venue_name)
-        details.push(`<p style="color:${D.black};font-size:14px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.venue_name}</p>`);
-      if (block.venue_address)
-        details.push(`<p style="color:${D.gray};font-size:13px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.venue_address}</p>`);
-
       const calMapsLinks: string[] = [];
       if (block.date && ctx?.campaignId && ctx?.appUrl)
-        calMapsLinks.push(`<a href="${ctx.appUrl}/api/campaigns/${ctx.campaignId}/ics" style="color:${D.gold};font-size:13px;font-weight:400;text-decoration:none;font-family:Arial,sans-serif;">&#128197; ${t.addToCalendar}</a>`);
-      if (block.venue_address)
-        calMapsLinks.push(`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_address)}" style="color:${D.gold};font-size:13px;font-weight:400;text-decoration:none;font-family:Arial,sans-serif;">&#128205; Maps</a>`);
+        calMapsLinks.push(`<a href="${ctx.appUrl}/api/campaigns/${ctx.campaignId}/ics" style="color:${D.gold};font-size:13px;font-weight:400;text-decoration:none;font-family:Arial,sans-serif;">${t.addToCalendar}</a>`);
+      if (block.venue_maps_url)
+        calMapsLinks.push(`<a href="${block.venue_maps_url}" style="color:${D.gold};font-size:13px;font-weight:400;text-decoration:none;font-family:Arial,sans-serif;">Maps</a>`);
+
+      const boxLines: string[] = [];
+      if (dateStr) boxLines.push(`<p style="color:${D.navy};font-size:14px;font-weight:700;margin:0 0 6px;font-family:Arial,sans-serif;">${dateStr}</p>`);
+      if (block.venue_name) boxLines.push(`<p style="color:${D.black};font-size:14px;margin:0;font-family:Arial,sans-serif;">${block.venue_name}</p>`);
 
       return `${dividerHtml()}
 ${sectionHeadHtml(block.label || "Event Details")}
 ${lines.join("\n")}
-<div style="border-top:1px solid ${D.gray2};padding-top:14px;margin-bottom:14px;">
-${details.join("\n")}
-</div>
-${calMapsLinks.length ? `<div style="display:flex;gap:16px;margin-bottom:24px;">${calMapsLinks.map(l => `<span>${l}</span>`).join(" &nbsp; ")}</div>` : ""}
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+<tr><td style="background:#faf8f4;padding:12px 16px;border-left:3px solid ${D.gold};">
+${boxLines.join("\n")}
+</td></tr>
+</table>
+${calMapsLinks.length ? `<table cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr>${calMapsLinks.map(l => `<td style="padding-right:20px;">${l}</td>`).join("")}</tr></table>` : ""}
 ${extra}`;
     }
 
@@ -199,13 +201,16 @@ ${block.website_url ? `<table width="100%" cellpadding="0" cellspacing="0" style
 </table>` : ""}`;
     }
 
-    case "speaker":
+    case "speaker": {
+      const speakerHtmls = (block.speakers ?? []).map((sp, i) => `${i > 0 ? `<div style="height:1px;background:${D.gray2};margin:20px 0;"></div>` : ""}
+${sp.photo_url ? `<img src="${sp.photo_url}" alt="${sp.name}" width="100" style="display:block;width:100px;height:100px;object-fit:cover;border-radius:50%;border:3px solid ${D.gold};margin:0 0 16px;" />` : ""}
+<p style="color:${D.navy};font-size:16px;font-weight:700;margin:0 0 3px;font-family:Arial,sans-serif;">${sp.name}</p>
+${sp.title ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">${sp.title}</p>` : ""}
+${sp.book?.trim() ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${sp.book}</p>` : ""}
+${sp.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${sp.bio}</p>` : ""}`);
       return `${sectionHeadHtml(block.label || t.speaker)}
-${block.photo_url ? `<img src="${block.photo_url}" alt="${block.name}" width="100" style="display:block;width:100px;height:100px;object-fit:cover;border-radius:50%;border:3px solid ${D.gold};margin:0 0 16px;" />` : ""}
-<p style="color:${D.navy};font-size:16px;font-weight:700;margin:0 0 3px;font-family:Arial,sans-serif;">${block.name}</p>
-${block.title ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">${block.title}</p>` : ""}
-${block.book?.trim() ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${block.book}</p>` : ""}
-${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${block.bio}</p>` : ""}${extra}`;
+${speakerHtmls.join("\n")}${extra}`;
+    }
 
     case "moderation":
       return `${sectionHeadHtml(block.label || t.moderation)}
