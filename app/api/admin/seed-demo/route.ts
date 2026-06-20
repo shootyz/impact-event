@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
     { event_id: eventId, first_name: 'Hans', last_name: 'Zimmer', email: 'h.zimmer@demo.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribed: true, unsubscribe_token: randomUUID() },
   ]
 
-  const { data: members } = await db.from('members').insert(memberRows).select()
-  if (!members) return NextResponse.json({ error: 'members insert failed' }, { status: 500 })
+  const { data: members, error: memErr } = await db.from('members').insert(memberRows).select()
+  if (memErr || !members) return NextResponse.json({ error: 'members insert failed', detail: memErr?.message, hint: memErr?.hint, code: memErr?.code }, { status: 500 })
 
   // ── 4. Invite codes ──
   const subscribedMembers = members.filter((m: { unsubscribed: boolean }) => !m.unsubscribed)
