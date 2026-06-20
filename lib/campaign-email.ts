@@ -236,9 +236,16 @@ export async function sendCampaign({
   let query = db.from('members').select('*').eq('unsubscribed', false)
   if (eventId) query = query.eq('event_id', eventId)
   if (zielgruppeId) query = query.eq('zielgruppe_id', zielgruppeId)
-  const { data: members, error } = await query
+  const { data: allMembers, error } = await query
 
-  if (error || !members) throw new Error('Failed to load members')
+  // Filter by language: member.sprache must match campaignLang.
+  // Members with no sprache set are treated as 'de' (default).
+  const members = (allMembers ?? []).filter((m: Member) => {
+    const mLang = (m.sprache || 'de').toLowerCase()
+    return mLang === campaignLang.toLowerCase()
+  })
+
+  if (error || !allMembers) throw new Error('Failed to load members')
 
   const { data: inviteCodes } = await db
     .from('invite_codes')
