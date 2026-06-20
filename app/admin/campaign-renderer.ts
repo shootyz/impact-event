@@ -167,7 +167,7 @@ ${extra}`;
       ${s.speaker ? `<p style="color:${D.gray};font-size:13px;margin:0;font-family:Arial,sans-serif;">${s.speaker}</p>` : ""}
     </td></tr>`).join("\n")}
   </table>` : ""}
-  ${slot.note ? `<p style="color:${D.gray};font-size:13px;margin:12px 0 0;font-family:Arial,sans-serif;">${slot.note}</p>` : ""}
+  ${slot.note?.trim() ? `<p style="color:${D.gray};font-size:13px;margin:12px 0 0;font-family:Arial,sans-serif;">${slot.note}</p>` : ""}
 </td></tr>`;
       });
       return `${dividerHtml()}
@@ -203,7 +203,7 @@ ${block.website_url ? `<table width="100%" cellpadding="0" cellspacing="0" style
 ${block.photo_url ? `<img src="${block.photo_url}" alt="${block.name}" width="100" style="display:block;width:100px;height:100px;object-fit:cover;border-radius:50%;border:3px solid ${D.gold};margin:0 0 16px;" />` : ""}
 <p style="color:${D.navy};font-size:16px;font-weight:700;margin:0 0 3px;font-family:Arial,sans-serif;">${block.name}</p>
 ${block.title ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">${block.title}</p>` : ""}
-${block.book ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${block.book}</p>` : ""}
+${block.book?.trim() ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${block.book}</p>` : ""}
 ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${block.bio}</p>` : ""}${extra}`;
 
     case "text":
