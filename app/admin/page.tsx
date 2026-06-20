@@ -2036,7 +2036,7 @@ export default function AdminPage() {
 
             {/* Formular konfigurieren (nur bei form-type) */}
             {selectedEvent?.registration_type === "form" && (
-              <Card>
+              <Card className="sm:col-span-2">
                 <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
                 <CardHeader title="Formular konfigurieren" subtitle="Felder, Labels und Intro-Text" />
                 <div className="p-5 space-y-4">
