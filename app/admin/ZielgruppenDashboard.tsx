@@ -40,6 +40,7 @@ export default function ZielgruppenDashboard({
   const [newMember, setNewMember] = useState<NewMember | null>(null);
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
   const [newZGName, setNewZGName] = useState("");
   const [creatingZG, setCreatingZG] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -81,15 +82,23 @@ export default function ZielgruppenDashboard({
   async function addMember(zgId: string) {
     if (!newMember) return;
     setAdding(true);
-    const res = await fetch("/api/members", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ members: [newMember], zielgruppe_id: zgId, event_id: eventId }),
-    });
-    if (res.ok) {
-      const updated = await fetch(`/api/members?eventId=${eventId}`).then(r => r.json());
-      if (Array.isArray(updated)) onMembersChange(updated);
-      setNewMember(null);
+    setAddError(null);
+    try {
+      const res = await fetch("/api/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ members: [newMember], zielgruppe_id: zgId, event_id: eventId }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        setAddError(d.error ?? `Fehler ${res.status}`);
+      } else {
+        const updated = await fetch(`/api/members?eventId=${eventId}`).then(r => r.json());
+        if (Array.isArray(updated)) onMembersChange(updated);
+        setNewMember(null);
+      }
+    } catch (e) {
+      setAddError(String(e));
     }
     setAdding(false);
   }
@@ -342,14 +351,17 @@ export default function ZielgruppenDashboard({
                           {SPRACHE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
                       </div>
-                      <div className="flex gap-2">
-                        <button disabled={adding || !newMember.first_name || !newMember.last_name || !newMember.email}
-                          onClick={() => addMember(zg.id)}
-                          className={btnPrimary}
-                          style={{ background: "var(--ig-navy)", color: "white" }}>
-                          {adding ? "Wird hinzugefügt…" : "Hinzufügen"}
-                        </button>
-                        <button onClick={() => setNewMember(null)} className={btnSecondary} style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>Abbrechen</button>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex gap-2">
+                          <button disabled={adding || !newMember.first_name || !newMember.last_name || !newMember.email}
+                            onClick={() => addMember(zg.id)}
+                            className={btnPrimary}
+                            style={{ background: "var(--ig-navy)", color: "white" }}>
+                            {adding ? "Wird hinzugefügt…" : "Hinzufügen"}
+                          </button>
+                          <button onClick={() => { setNewMember(null); setAddError(null); }} className={btnSecondary} style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>Abbrechen</button>
+                        </div>
+                        {addError && <p className="text-xs" style={{ color: "#dc2626" }}>Fehler: {addError}</p>}
                       </div>
                     </div>
                   ) : (
