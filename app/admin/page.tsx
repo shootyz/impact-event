@@ -559,7 +559,7 @@ export default function AdminPage() {
   // Mailing state
   type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; zielgruppe_id: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
   type Zielgruppe = { id: string; name: string; created_at: string };
-  type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; };
+  type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; };
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [builderZielgruppeId, setBuilderZielgruppeId] = useState<string | null>(null);
   const [mailingTab, setMailingTab] = useState<"members" | "compose" | "drafts" | "campaigns">("members");
