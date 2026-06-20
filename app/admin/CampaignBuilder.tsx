@@ -738,8 +738,14 @@ export default function CampaignBuilder({
     return "https://impactgstaad.vercel.app";
   });
   const setZielgruppeId = onZielgruppeChange;
+  const normalizeBlocks = (bs: CampaignBlock[]): CampaignBlock[] => bs.map(b => {
+    const raw = b as Record<string, unknown>;
+    if (typeof raw.type === "string" && ["keynote_speaker", "keynote speaker", "speaker_block"].includes(raw.type))
+      return { ...b, type: "speaker" } as CampaignBlock;
+    return b;
+  });
   const [blocks, setBlocks] = useState<CampaignBlock[]>(
-    initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
+    initialBlocks && initialBlocks.length > 0 ? normalizeBlocks(initialBlocks) : [{ type: "intro", text: "" }]
   );
   const historyRef = useRef<CampaignBlock[][]>([]);
   const [canUndo, setCanUndo] = useState(false);
