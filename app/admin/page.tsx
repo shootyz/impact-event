@@ -220,10 +220,19 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
       <div className="p-5">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{(c.blocks_json as { title?: string } | null)?.title || c.subject}</p>
-            <p className="text-xs mt-0.5" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <p className="font-semibold text-sm truncate" style={{ color: "var(--ig-navy)" }}>{(c.blocks_json as { title?: string } | null)?.title || c.subject}</p>
+              {(() => {
+                const bj = c.blocks_json as { lang?: string } | null;
+                const lang = bj && !Array.isArray(bj) ? bj.lang : null;
+                if (!lang) return null;
+                return <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)", flexShrink: 0 }}>{lang.toUpperCase()}</span>;
+              })()}
+              {zielgruppeName && !c.sent_at && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(210,141,40,0.1)", color: "var(--ig-gold)", border: "1px solid rgba(210,141,40,0.2)", flexShrink: 0 }}>{zielgruppeName}</span>}
+            </div>
+            <p className="text-xs" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
               {statusText}
-              {!c.sent_at && <span style={{ color: "var(--ig-gray3)" }}> · {zielgruppeName ?? <span style={{ fontStyle: "italic" }}>Keine Zielgruppe</span>}</span>}
+              {!c.sent_at && !zielgruppeName && <span style={{ color: "var(--ig-gray3)" }}> · <span style={{ fontStyle: "italic" }}>Keine Zielgruppe</span></span>}
               {c.sent_at && c.recipient_count != null && (
                 <> · <button ref={recipientsBtnRef}
                   className="underline"
@@ -388,7 +397,14 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
               </>
             )}
             {!c.sent_at && confirmSend && (
-              <div className="flex gap-1.5">
+              <div className="flex flex-col items-end gap-1.5">
+                {(() => {
+                  const bj = c.blocks_json as { lang?: string } | null;
+                  const lang = bj && !Array.isArray(bj) ? bj.lang?.toUpperCase() : null;
+                  if (!lang) return null;
+                  return <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Wird nur an <strong style={{ color: "var(--ig-navy)" }}>{lang}</strong>-Mitglieder gesendet</p>;
+                })()}
+                <div className="flex gap-1.5">
                 <button onClick={async () => {
                   setSending(true);
                   const res = await fetch(`/api/campaigns/${c.id}`, { method: "POST" });
@@ -404,6 +420,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                   style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                   Abbrechen
                 </button>
+                </div>
               </div>
             )}
             {onDuplicate && (
@@ -1521,18 +1538,20 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── Mailing tabs ── */}
+      {/* ── Mailing tabs — sticky below header ── */}
       {selectedEventId && eventSection === "mailing" && (
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-6">
-          <div className="flex border-b mb-6" style={{ borderColor: "var(--ig-gray2)" }}>
-            {mailingTabs.map(tab => (
-              <button key={tab.id} onClick={() => setMailingTab(tab.id as typeof mailingTab)}
-                className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative"
-                style={{ color: mailingTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
-                {tab.label}
-                {mailingTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
-              </button>
-            ))}
+        <div className="sticky top-14 z-10 border-b" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+          <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
+            <div className="flex">
+              {mailingTabs.map(tab => (
+                <button key={tab.id} onClick={() => setMailingTab(tab.id as typeof mailingTab)}
+                  className="flex-1 py-3.5 text-sm font-semibold tracking-wide transition relative hover:opacity-70"
+                  style={{ color: mailingTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
+                  {tab.label}
+                  {mailingTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1540,7 +1559,7 @@ export default function AdminPage() {
       {/* ── Content (event detail + mailing) ── */}
       {selectedEventId && eventSection !== null && (
       <div
-        className="mx-auto w-full px-4 sm:px-6 pb-6 flex-1"
+        className="mx-auto w-full px-4 sm:px-6 pb-6 pt-6 flex-1"
         style={{
           maxWidth: eventSection === "mailing" && mailingTab === "compose" ? "100%" : "56rem",
           transition: "max-width 0.35s cubic-bezier(0.4,0,0.2,1)",
@@ -2094,9 +2113,12 @@ export default function AdminPage() {
                     <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div></Card>
                   ) : drafts.length === 0 ? (
                     <Card>
-                      <div className="p-8 text-center">
-                        <p className="text-sm font-medium mb-1" style={{ color: "var(--ig-navy)" }}>Keine Entwürfe</p>
-                        <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Neue Kampagne erstellen und «Als Entwurf speichern» klicken</p>
+                      <div className="p-8 text-center space-y-3">
+                        <p className="text-sm font-medium" style={{ color: "var(--ig-navy)" }}>Keine Entwürfe</p>
+                        <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Erstelle eine neue Kampagne und speichere sie als Entwurf</p>
+                        <div className="flex justify-center">
+                          <BtnPrimary onClick={() => setMailingTab("compose")}><IconPlus className="w-3.5 h-3.5" />Neue Kampagne</BtnPrimary>
+                        </div>
                       </div>
                     </Card>
                   ) : drafts.map(c => (

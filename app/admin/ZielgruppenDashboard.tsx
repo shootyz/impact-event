@@ -15,7 +15,7 @@ const inputStyle = { borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", ba
 // Reusable button classes
 const btnPrimary = "transition hover:opacity-90 active:scale-95 disabled:opacity-40 font-semibold text-xs px-3 py-1.5 rounded-lg";
 const btnSecondary = "transition hover:opacity-80 active:scale-95 text-xs px-3 py-1.5 rounded-lg";
-const btnIcon = "transition hover:opacity-100 active:scale-95 p-1.5 rounded-lg";
+const btnIcon = "transition hover:opacity-100 active:scale-95 p-2 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center";
 
 type EditingMember = {
   id: string; first_name: string; last_name: string;
@@ -288,7 +288,8 @@ export default function ZielgruppenDashboard({
                   </div>
                 </div>
                 {list.length > 0 ? (
-                  <table className="w-full text-xs" style={{ borderCollapse: "collapse" }}>
+                  <div className="overflow-x-auto">
+                  <table className="w-full text-xs" style={{ borderCollapse: "collapse", minWidth: 560 }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid var(--ig-gray2)", background: "var(--ig-light)" }}>
                         <th className="text-left px-4 py-2 font-semibold" style={{ color: "var(--ig-gray3)" }}>Anrede</th>
@@ -331,7 +332,7 @@ export default function ZielgruppenDashboard({
                               <td className="px-4 py-2.5" style={{ color: "var(--ig-gray3)" }}>{m.anrede || "—"}</td>
                               <td className="px-4 py-2.5 font-medium" style={{ color: "var(--ig-navy)" }}>{m.first_name}</td>
                               <td className="px-4 py-2.5 font-medium" style={{ color: "var(--ig-navy)" }}>{m.last_name}</td>
-                              <td className="px-4 py-2.5" style={{ color: "var(--ig-gray3)" }}>{m.email}</td>
+                              <td className="px-4 py-2.5 max-w-[160px]" style={{ color: "var(--ig-gray3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email}</td>
                               <td className="px-4 py-2.5">
                                 {m.sprache
                                   ? <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "var(--ig-light)", color: "var(--ig-navy)" }}>{m.sprache.toUpperCase()}</span>
@@ -362,6 +363,7 @@ export default function ZielgruppenDashboard({
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center py-8 gap-2">
                     <svg className="w-8 h-8 opacity-20" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" style={{ color: "var(--ig-navy)" }}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
