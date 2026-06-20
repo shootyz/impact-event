@@ -280,7 +280,7 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: slot.is_break ? "#B8973A" : "#1E3263" }}>
-                {slot.is_break ? "☕ Pause" : `Slot ${i + 1}`}
+                {slot.is_break ? "Pause" : `Slot ${i + 1}`}
               </span>
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <input type="checkbox" checked={!!slot.is_break} onChange={e => updateSlot(slot.id, { is_break: e.target.checked })} className="rounded" />
