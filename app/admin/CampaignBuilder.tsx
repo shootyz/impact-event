@@ -206,7 +206,17 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
         <FocusInput value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Kirchgemeindehaus Gstaad" />
       </div>
       <div>
-        <label className={labelCls} style={labelSty}>Google Maps URL</label>
+        <div className="flex items-center justify-between mb-1">
+          <label className={labelCls} style={{ ...labelSty, margin: 0 }}>Google Maps URL</label>
+          {block.venue_name.trim() && !block.venue_maps_url.trim() && (
+            <button
+              onClick={() => onChange({ ...block, venue_maps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_name)}` })}
+              className="text-xs font-medium transition hover:opacity-65"
+              style={{ color: "var(--ig-gold)" }}>
+              ↗ Von Venue Name übernehmen
+            </button>
+          )}
+        </div>
         <FocusInput value={block.venue_maps_url} onChange={v => onChange({ ...block, venue_maps_url: v })} placeholder="https://maps.google.com/..." />
       </div>
     </div>
