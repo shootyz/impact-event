@@ -2005,65 +2005,6 @@ export default function AdminPage() {
                   />
                 )}
 
-                {/* CSV Import */}
-                <Card>
-                  <CardHeader title="Mitglieder importieren" subtitle="CSV mit Spalten: first_name, last_name, email" />
-                  <div className="p-5 space-y-3">
-                    <input ref={memberCsvRef} type="file" accept=".csv" className="hidden"
-                      onChange={e => setMemberCsvFile(e.target.files?.[0] ?? null)} />
-                    {zielgruppen.length > 0 && (
-                      <select className={inputClass} style={inputStyle} value={memberCsvZielgruppe} onChange={e => setMemberCsvZielgruppe(e.target.value)}
-                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
-                        <option value="">Keine Zielgruppe</option>
-                        {zielgruppen.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-                      </select>
-                    )}
-                    <div className="flex gap-3">
-                      <BtnOutline onClick={() => memberCsvRef.current?.click()} className="flex-1">
-                        <IconUpload />
-                        {memberCsvFile ? memberCsvFile.name : "CSV auswählen"}
-                      </BtnOutline>
-                      <BtnPrimary className="flex-1 px-4" disabled={!memberCsvFile || memberCsvImporting}
-                        onClick={async () => {
-                          if (!memberCsvFile) return;
-                          setMemberCsvImporting(true);
-                          setMemberCsvResult(null);
-                          const text = await memberCsvFile.text();
-                          const lines = text.trim().split("\n");
-                          const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g, ""));
-                          const iFirst = headers.indexOf("first_name");
-                          const iLast = headers.indexOf("last_name");
-                          const iEmail = headers.indexOf("email");
-                          if (iFirst < 0 || iLast < 0 || iEmail < 0) {
-                            setMemberCsvResult({ inserted: -1 });
-                            setMemberCsvImporting(false);
-                            return;
-                          }
-                          const rows = lines.slice(1).map(l => {
-                            const cols = l.split(",").map(c => c.trim().replace(/"/g, ""));
-                            return { first_name: cols[iFirst], last_name: cols[iLast], email: cols[iEmail] };
-                          }).filter(r => r.email);
-                          const res = await fetch("/api/members", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ members: rows, zielgruppe_id: memberCsvZielgruppe || null, event_id: selectedEventId }),
-                          });
-                          const d = await res.json();
-                          setMemberCsvResult(d);
-                          setMemberCsvImporting(false);
-                          fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) { setMembers(d); setMembersLoaded(true); } });
-                        }}>
-                        {memberCsvImporting ? "Importiert…" : "Importieren"}
-                      </BtnPrimary>
-                    </div>
-                    {memberCsvResult && (
-                      <p className="text-sm" style={{ color: memberCsvResult.inserted < 0 ? "#dc2626" : "var(--ig-navy)" }}>
-                        {memberCsvResult.inserted < 0 ? "CSV muss Spalten haben: first_name, last_name, email" : `${memberCsvResult.inserted} Mitglieder importiert/aktualisiert.`}
-                      </p>
-                    )}
-                  </div>
-                </Card>
               </div>
             )}
 
