@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     { event_id: eventId, first_name: 'Julia', last_name: 'Weber', email: 'j.weber@media.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgMedia.id, unsubscribe_token: randomUUID(), unsubscribed: false },
     { event_id: eventId, first_name: 'David', last_name: 'Schmid', email: 'd.schmid@media.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgMedia.id, unsubscribe_token: randomUUID(), unsubscribed: false },
     { event_id: eventId, first_name: 'Lena', last_name: 'Koch', email: 'l.koch@media.ch', anrede: 'Frau', sprache: 'de', zielgruppe_id: zgMedia.id, unsubscribe_token: randomUUID(), unsubscribed: false },
-    { event_id: eventId, first_name: 'Hans', last_name: 'Zimmer', email: 'h.zimmer@demo.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribed: true, unsubscribe_token: randomUUID(), unsubscribed: false },
+    { event_id: eventId, first_name: 'Hans', last_name: 'Zimmer', email: 'h.zimmer@demo.ch', anrede: 'Herr', sprache: 'de', zielgruppe_id: zgVip.id, unsubscribed: true, unsubscribe_token: randomUUID() },
   ]
 
   const { data: members, error: memErr } = await db.from('members').insert(memberRows).select()
