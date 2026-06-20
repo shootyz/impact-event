@@ -35,20 +35,30 @@ export async function POST(req: NextRequest) {
     sprache: m.sprache ?? null,
   }))
 
+  console.log('[members POST] rows sample:', JSON.stringify(rows[0]))
+
   const { data, error } = await db
     .from('members')
     .upsert(rows, { onConflict: 'email,event_id', ignoreDuplicates: false })
     .select()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[members POST] upsert error:', error.message)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 
   // Explicitly update sprache + anrede for each imported member (upsert may not override with null)
-  await Promise.all(rows.map(m =>
+  const updateResults = await Promise.all(rows.map(m =>
     db.from('members')
       .update({ sprache: m.sprache, anrede: m.anrede })
       .eq('email', m.email)
       .eq('event_id', event_id)
   ))
+  const updateErrors = updateResults.filter(r => r.error).map(r => r.error?.message)
+  if (updateErrors.length > 0) {
+    console.error('[members POST] update errors:', updateErrors)
+    return NextResponse.json({ error: 'update failed: ' + updateErrors[0] }, { status: 500 })
+  }
 
   // Generate invite codes for ALL members in this event that don't have one yet
   const { data: allMembers } = await db
