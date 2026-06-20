@@ -6,7 +6,7 @@ export async function PATCH(req: NextRequest, props: any) {
   const { id } = await props.params
   const body = await req.json()
   const db = supabaseAdmin()
-  const allowed = ['first_name', 'last_name', 'email', 'zielgruppe_id']
+  const allowed = ['first_name', 'last_name', 'email', 'zielgruppe_id', 'anrede', 'sprache']
   const patch: Record<string, unknown> = {}
   for (const key of allowed) if (key in body) patch[key] = body[key]
   const { data, error } = await db.from('members').update(patch).eq('id', id).select().single()

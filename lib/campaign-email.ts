@@ -20,6 +20,15 @@ function plainTextToHtml(text: string): string {
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY)
 
+function wrapLinksForTracking(html: string, appUrl: string, campaignId: string, memberId: string): string {
+  // Wrap all <a href="..."> that are not unsubscribe/track links
+  return html.replace(/(<a\s[^>]*href=")([^"]+)(")/gi, (match, pre, url, post) => {
+    if (url.includes('/api/unsubscribe') || url.includes('/api/track/') || url.startsWith('mailto:')) return match
+    const tracked = `${appUrl}/api/track/click?cid=${encodeURIComponent(campaignId)}&mid=${encodeURIComponent(memberId)}&url=${encodeURIComponent(url)}`
+    return `${pre}${tracked}${post}`
+  })
+}
+
 function buildCampaignHtml({
   appUrl,
   member,
@@ -123,8 +132,14 @@ function buildCampaignHtml({
       </table>
     </td></tr>
   </table>
+  ${campaignId && member.id !== 'test' ? `<img src="${appUrl}/api/track/open?cid=${encodeURIComponent(campaignId)}&mid=${encodeURIComponent(member.id)}" width="1" height="1" style="display:block;width:1px;height:1px;border:0;" alt="" />` : ''}
 </body>
 </html>`
+
+  if (campaignId && member.id !== 'test') {
+    return wrapLinksForTracking(html, appUrl, campaignId, member.id)
+  }
+  return html
 }
 
 function buildSalutation(member: Member, lang: Lang): string {

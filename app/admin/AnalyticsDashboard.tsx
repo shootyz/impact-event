@@ -13,7 +13,7 @@ type AnalyticsData = {
   campaigns: {
     total: number;
     totalRecipients: number;
-    list: { id: string; title: string; lang: string | null; sent_at: string; recipient_count: number; zielgruppe: string | null }[];
+    list: { id: string; title: string; lang: string | null; sent_at: string; recipient_count: number; zielgruppe: string | null; opens: number; clicks: number; open_rate: number | null; click_rate: number | null }[];
   };
   registrations: {
     total: number;
@@ -156,22 +156,49 @@ export default function AnalyticsDashboard({ eventId }: { eventId: string }) {
         <Section title="Gesendete Kampagnen">
           <div className="space-y-2">
             {data.campaigns.list.map(c => (
-              <div key={c.id} className="flex items-center gap-3 py-2 border-b last:border-0" style={{ borderColor: "var(--ig-gray2)" }}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium truncate" style={{ color: "var(--ig-navy)" }}>{c.title}</p>
-                  <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
-                    {new Date(c.sent_at).toLocaleDateString("de-CH", { day: "2-digit", month: "short", year: "numeric" })}
-                    {c.zielgruppe && <> · {c.zielgruppe}</>}
-                  </p>
+              <div key={c.id} className="py-3 border-b last:border-0" style={{ borderColor: "var(--ig-gray2)" }}>
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate" style={{ color: "var(--ig-navy)" }}>{c.title}</p>
+                    <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
+                      {new Date(c.sent_at).toLocaleDateString("de-CH", { day: "2-digit", month: "short", year: "numeric" })}
+                      {c.zielgruppe && <> · {c.zielgruppe}</>}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {c.lang && (
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}>
+                        {c.lang.toUpperCase()}
+                      </span>
+                    )}
+                    <span className="text-xs font-semibold" style={{ color: "var(--ig-gold)" }}>{c.recipient_count} ✉</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {c.lang && (
-                    <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}>
-                      {c.lang.toUpperCase()}
-                    </span>
-                  )}
-                  <span className="text-xs font-semibold" style={{ color: "var(--ig-gold)" }}>{c.recipient_count} ✉</span>
-                </div>
+                {c.recipient_count > 0 && (
+                  <div className="flex gap-4 mt-2">
+                    <div>
+                      <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>Öffnungen </span>
+                      <span className="text-xs font-semibold" style={{ color: "var(--ig-navy)" }}>
+                        {c.open_rate !== null ? `${c.open_rate}%` : "—"}
+                        {c.opens > 0 && <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}> ({c.opens})</span>}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>Klicks </span>
+                      <span className="text-xs font-semibold" style={{ color: "var(--ig-navy)" }}>
+                        {c.click_rate !== null ? `${c.click_rate}%` : "—"}
+                        {c.clicks > 0 && <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}> ({c.clicks})</span>}
+                      </span>
+                    </div>
+                    {c.open_rate !== null && (
+                      <div className="flex-1 flex items-center gap-1.5">
+                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--ig-light)" }}>
+                          <div className="h-full rounded-full" style={{ width: `${c.open_rate}%`, background: "var(--ig-navy)", transition: "width 0.5s" }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

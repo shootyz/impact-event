@@ -7,18 +7,22 @@ export async function GET(req: NextRequest) {
 
   const db = supabaseAdmin()
 
+  const memberIds = (await db.from('members').select('id').eq('event_id', eventId)).data?.map((m: { id: string }) => m.id) ?? []
+
   const [
     { data: members },
     { data: zielgruppen },
     { data: campaigns },
     { data: inviteCodes },
     { data: registrations },
+    { data: campaignEvents },
   ] = await Promise.all([
     db.from('members').select('id, sprache, anrede, zielgruppe_id, unsubscribed').eq('event_id', eventId),
     db.from('zielgruppen').select('id, name').eq('event_id', eventId),
     db.from('campaigns').select('id, subject, blocks_json, sent_at, recipient_count, zielgruppe_id').eq('event_id', eventId).not('sent_at', 'is', null).order('sent_at', { ascending: false }),
-    db.from('invite_codes').select('member_id, used').in('member_id', (await db.from('members').select('id').eq('event_id', eventId)).data?.map((m: { id: string }) => m.id) ?? []),
+    db.from('invite_codes').select('member_id, used').in('member_id', memberIds.length > 0 ? memberIds : ['']),
     db.from('registrations').select('checked_in, checked_in_at, created_at').eq('event_id', eventId),
+    db.from('campaign_events').select('campaign_id, type').in('member_id', memberIds.length > 0 ? memberIds : ['']),
   ])
 
   const activeMembers = (members ?? []).filter((m: { unsubscribed: boolean }) => !m.unsubscribed)
@@ -49,16 +53,30 @@ export async function GET(req: NextRequest) {
   const totalCodes = (inviteCodes ?? []).length
   const usedCodes = (inviteCodes ?? []).filter((c: { used: boolean }) => c.used).length
 
+  // Index campaign events by campaign_id
+  const eventsByCampaign: Record<string, { opens: number; clicks: number }> = {}
+  for (const ev of (campaignEvents ?? []) as { campaign_id: string; type: string }[]) {
+    if (!eventsByCampaign[ev.campaign_id]) eventsByCampaign[ev.campaign_id] = { opens: 0, clicks: 0 }
+    if (ev.type === 'open') eventsByCampaign[ev.campaign_id].opens++
+    if (ev.type === 'click') eventsByCampaign[ev.campaign_id].clicks++
+  }
+
   // Campaigns
   const campaignList = (campaigns ?? []).map((c: { id: string; subject: string; blocks_json: unknown; sent_at: string; recipient_count: number | null; zielgruppe_id: string | null }) => {
     const bj = c.blocks_json as { lang?: string; title?: string } | null
+    const ev = eventsByCampaign[c.id] ?? { opens: 0, clicks: 0 }
+    const recipients = c.recipient_count ?? 0
     return {
       id: c.id,
       title: (bj && !Array.isArray(bj) ? bj.title : null) || c.subject,
       lang: bj && !Array.isArray(bj) ? (bj.lang ?? null) : null,
       sent_at: c.sent_at,
-      recipient_count: c.recipient_count ?? 0,
+      recipient_count: recipients,
       zielgruppe: c.zielgruppe_id ? (zgMap[c.zielgruppe_id] ?? null) : null,
+      opens: ev.opens,
+      clicks: ev.clicks,
+      open_rate: recipients > 0 ? Math.round((ev.opens / recipients) * 100) : null,
+      click_rate: recipients > 0 ? Math.round((ev.clicks / recipients) * 100) : null,
     }
   })
 
