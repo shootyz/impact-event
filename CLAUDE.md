@@ -23,6 +23,7 @@ Performance: every change that could make the app slower needs user approval fir
 ## PDF → Campaign Builder
 
 **Trigger:** User drops a PDF (event description) and says something like:
+- "Impact Event" + PDF attached ← primary trigger
 - "PDF → Builder"
 - "Erstelle Entwurf aus diesem PDF"
 - "Kampagne aus diesem PDF"
