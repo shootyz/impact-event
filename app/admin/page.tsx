@@ -180,10 +180,11 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
   onDelete: (id: string) => void;
   onSchedule?: (id: string, scheduled_at: string | null) => void;
   onEdit?: () => void;
-  onDuplicate?: () => void;
+  onDuplicate?: () => Promise<void>;
   zielgruppeName?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -404,9 +405,12 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
               </div>
             )}
             {onDuplicate && (
-              <button onClick={onDuplicate} className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
-                Duplizieren
+              <button
+                disabled={duplicating}
+                onClick={async () => { setDuplicating(true); await onDuplicate(); setDuplicating(false); }}
+                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all active:scale-95 disabled:opacity-50"
+                style={{ background: duplicating ? "var(--ig-navy)" : "var(--ig-light)", color: duplicating ? "#fff" : "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+                {duplicating ? "Wird dupliziert…" : "Duplizieren"}
               </button>
             )}
             <button onClick={() => onDelete(c.id)} className="p-1.5 rounded-lg" style={{ color: "var(--ig-gray3)" }}
