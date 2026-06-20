@@ -47,10 +47,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Explicitly update sprache + anrede for each imported member (upsert may not override with null)
+  // Explicitly update sprache + anrede (+ zielgruppe_id if provided) — upsert may not override with null
   const updateResults = await Promise.all(rows.map(m =>
     db.from('members')
-      .update({ sprache: m.sprache, anrede: m.anrede })
+      .update({ sprache: m.sprache, anrede: m.anrede, ...(zielgruppe_id ? { zielgruppe_id } : {}) })
       .eq('email', m.email)
       .eq('event_id', event_id)
   ))

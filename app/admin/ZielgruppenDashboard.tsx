@@ -81,14 +81,16 @@ export default function ZielgruppenDashboard({
   async function addMember(zgId: string) {
     if (!newMember) return;
     setAdding(true);
-    await fetch("/api/members", {
+    const res = await fetch("/api/members", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ members: [newMember], zielgruppe_id: zgId, event_id: eventId }),
     });
-    const updated = await fetch(`/api/members?eventId=${eventId}`).then(r => r.json());
-    if (Array.isArray(updated)) onMembersChange(updated);
-    setNewMember(null);
+    if (res.ok) {
+      const updated = await fetch(`/api/members?eventId=${eventId}`).then(r => r.json());
+      if (Array.isArray(updated)) onMembersChange(updated);
+      setNewMember(null);
+    }
     setAdding(false);
   }
 
