@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     .from('events')
     .insert({
       name: 'Impact Gstaad 2025 — Demo',
-      date: '2025-09-06',
+      date: '2026-09-05',
       location: 'Gstaad Palace',
       description: 'Demo-Event mit vollständigen Statistiken.',
       active: true,
