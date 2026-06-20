@@ -248,8 +248,8 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
               )}
             </div>
           ))}
-          {slot.note !== undefined && (
-            <Editable value={slot.note ?? ""} onChange={v => updateSlot(slot.id, { note: v })}
+          {slot.note?.trim() && (
+            <Editable value={slot.note} onChange={v => updateSlot(slot.id, { note: v })}
               placeholder="Hinweis…" multiline
               style={{ color: D.gray, fontSize: 13, marginTop: 8, display: "block" }} />
           )}
@@ -297,12 +297,12 @@ function SpeakerPreview({ block, onChange }: { block: SpeakerBlock & { label?: s
       )}
       <Editable value={block.name} onChange={v => onChange({ ...block, name: v })}
         placeholder="Name" style={{ color: D.navy, fontSize: 16, fontWeight: 700, marginBottom: 2 }} />
-      <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
-        placeholder="Titel" style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 }} />
-      <Editable value={block.book} onChange={v => onChange({ ...block, book: v })}
-        placeholder="Buch / Kurzbeschrieb" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 8, whiteSpace: "pre-wrap" }} />
-      <Editable value={block.bio} onChange={v => onChange({ ...block, bio: v })}
-        placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, whiteSpace: "pre-wrap" }} />
+      {block.title?.trim() && <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
+        placeholder="Titel" style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }} />}
+      {block.book?.trim() && <Editable value={block.book} onChange={v => onChange({ ...block, book: v })}
+        placeholder="Buch / Kurzbeschrieb" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 8, whiteSpace: "pre-wrap" }} />}
+      {block.bio?.trim() && <Editable value={block.bio} onChange={v => onChange({ ...block, bio: v })}
+        placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, whiteSpace: "pre-wrap" }} />}
     </div>
   );
 }
