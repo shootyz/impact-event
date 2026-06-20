@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await db
     .from('members')
-    .upsert(rows, { onConflict: 'email,event_id', ignoreDuplicates: false })
+    .upsert(rows, { onConflict: 'email', ignoreDuplicates: false })
     .select()
 
   if (error) {
