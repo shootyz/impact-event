@@ -211,11 +211,11 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
       {block.slots.map((slot, si) => (
         <div key={slot.id} style={{ borderBottom: si < block.slots.length - 1 ? `1px solid ${D.gray2}` : "none" }}>
           {slot.is_break ? (
-            <div style={{ background: "#faf9f2", padding: "14px 0" }}>
+            <div style={{ background: "#faf9f2", padding: "14px 0", textAlign: "center" }}>
               <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
-                placeholder="Zeit" style={{ color: D.navy, fontSize: 12, fontWeight: 700, marginBottom: 4 }} />
+                placeholder="Zeit" style={{ color: D.navy, fontSize: 12, fontWeight: 700, marginBottom: 4, textAlign: "center" }} />
               <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
-                placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} />
+                placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, textAlign: "center" }} />
             </div>
           ) : (
             <div style={{ padding: "14px 0" }}>
