@@ -88,9 +88,11 @@ export default function ZielgruppenDashboard({
     const text = await file.text();
     const lines = text.trim().split("\n");
     const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g, ""));
-    const iFirst = headers.indexOf("first_name");
-    const iLast = headers.indexOf("last_name");
-    const iEmail = headers.indexOf("email");
+    const iFirst = headers.findIndex(h => h === "first_name" || h === "vorname");
+    const iLast = headers.findIndex(h => h === "last_name" || h === "name");
+    const iEmail = headers.findIndex(h => h === "email" || h === "e-mail");
+    const iAnrede = headers.findIndex(h => h === "anrede");
+    const iSprache = headers.findIndex(h => h === "sprache");
     if (iFirst < 0 || iLast < 0 || iEmail < 0) {
       setCsvResult({ zgId, inserted: -1 });
       setCsvImporting(false);
@@ -98,7 +100,13 @@ export default function ZielgruppenDashboard({
     }
     const rows = lines.slice(1).map(l => {
       const cols = l.split(",").map(c => c.trim().replace(/"/g, ""));
-      return { first_name: cols[iFirst], last_name: cols[iLast], email: cols[iEmail] };
+      return {
+        first_name: cols[iFirst] ?? "",
+        last_name: cols[iLast] ?? "",
+        email: cols[iEmail] ?? "",
+        ...(iAnrede >= 0 ? { anrede: cols[iAnrede] ?? "" } : {}),
+        ...(iSprache >= 0 ? { sprache: (cols[iSprache] ?? "de").toLowerCase() } : {}),
+      };
     }).filter(r => r.email);
     const res = await fetch("/api/members", {
       method: "POST",
