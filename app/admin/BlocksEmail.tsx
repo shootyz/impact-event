@@ -163,7 +163,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
         <div>
           <Divider />
           <SectionHead label={block.label || t.speaker} />
-          {(block.speakers ?? []).map((sp, i) => (
+          {(block.speakers ?? [(block as unknown as Record<string,unknown>)].map(b => ({ id: "legacy", photo_url: (b as Record<string,string>).photo_url ?? "", name: (b as Record<string,string>).name ?? "", title: (b as Record<string,string>).title ?? "", bio: (b as Record<string,string>).bio ?? "", book: (b as Record<string,string>).book ?? "" }))).map((sp, i) => (
             <div key={sp.id} style={i > 0 ? { borderTop: `1px solid ${D.gray2}`, marginTop: 20, paddingTop: 20 } : {}}>
               {sp.photo_url && <img src={sp.photo_url} alt={sp.name} width={80} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 12, display: "block" }} />}
               <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.name}</p>

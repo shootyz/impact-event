@@ -446,7 +446,11 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
   );
 }
 
-function SpeakerEditor({ block, onChange }: { block: SpeakerBlock; onChange: (b: SpeakerBlock) => void }) {
+function SpeakerEditor({ block: rawBlock, onChange }: { block: SpeakerBlock; onChange: (b: SpeakerBlock) => void }) {
+  // Migrate legacy blocks that stored speaker fields directly on the block
+  const block: SpeakerBlock = rawBlock.speakers
+    ? rawBlock
+    : { type: "speaker", speakers: [{ id: Math.random().toString(36).slice(2), photo_url: (rawBlock as unknown as Record<string,string>).photo_url ?? "", name: (rawBlock as unknown as Record<string,string>).name ?? "", title: (rawBlock as unknown as Record<string,string>).title ?? "", bio: (rawBlock as unknown as Record<string,string>).bio ?? "", book: (rawBlock as unknown as Record<string,string>).book ?? "" }] };
   const updateSp = (i: number, sp: Speaker) => onChange({ ...block, speakers: block.speakers.map((s, j) => j === i ? sp : s) });
   const addSp = () => onChange({ ...block, speakers: [...block.speakers, { id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] });
   const removeSp = (i: number) => onChange({ ...block, speakers: block.speakers.filter((_, j) => j !== i) });

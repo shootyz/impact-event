@@ -281,7 +281,8 @@ function ModerationPreview({ block, onChange }: { block: ModerationBlock & { lab
   );
 }
 
-function SpeakerPreview({ block, onChange }: { block: SpeakerBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof rawBlock) => void }) {
+  const block = rawBlock.speakers ? rawBlock : { ...rawBlock, speakers: [{ id: "legacy", photo_url: (rawBlock as unknown as Record<string,string>).photo_url ?? "", name: (rawBlock as unknown as Record<string,string>).name ?? "", title: (rawBlock as unknown as Record<string,string>).title ?? "", bio: (rawBlock as unknown as Record<string,string>).bio ?? "", book: (rawBlock as unknown as Record<string,string>).book ?? "" }] };
   const updateSpeaker = (i: number, patch: Partial<Speaker>) =>
     onChange({ ...block, speakers: block.speakers.map((s, j) => j === i ? { ...s, ...patch } : s) });
   const addSpeaker = () => onChange({ ...block, speakers: [...block.speakers, { id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] });

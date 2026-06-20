@@ -202,7 +202,9 @@ ${block.website_url ? `<table width="100%" cellpadding="0" cellspacing="0" style
     }
 
     case "speaker": {
-      const speakerHtmls = (block.speakers ?? []).map((sp, i) => `${i > 0 ? `<div style="height:1px;background:${D.gray2};margin:20px 0;"></div>` : ""}
+      const legacyBlock = block as unknown as Record<string, string>;
+      const speakers = block.speakers ?? [{ id: "legacy", photo_url: legacyBlock.photo_url ?? "", name: legacyBlock.name ?? "", title: legacyBlock.title ?? "", bio: legacyBlock.bio ?? "", book: legacyBlock.book ?? "" }];
+      const speakerHtmls = speakers.map((sp, i) => `${i > 0 ? `<div style="height:1px;background:${D.gray2};margin:20px 0;"></div>` : ""}
 ${sp.photo_url ? `<img src="${sp.photo_url}" alt="${sp.name}" width="100" style="display:block;width:100px;height:100px;object-fit:cover;border-radius:50%;border:3px solid ${D.gold};margin:0 0 16px;" />` : ""}
 <p style="color:${D.navy};font-size:16px;font-weight:700;margin:0 0 3px;font-family:Arial,sans-serif;">${sp.name}</p>
 ${sp.title ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">${sp.title}</p>` : ""}
