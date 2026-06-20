@@ -13,8 +13,8 @@ const inputCls = "w-full rounded-lg border px-2.5 py-1.5 text-xs outline-none tr
 const inputStyle = { borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" };
 
 // Reusable button classes
-const btnPrimary = "transition hover:opacity-90 active:scale-95 disabled:opacity-40 font-semibold text-xs px-3 py-1.5 rounded-lg";
-const btnSecondary = "transition hover:opacity-80 active:scale-95 text-xs px-3 py-1.5 rounded-lg";
+const btnPrimary = "transition hover:opacity-70 active:scale-95 disabled:opacity-40 font-semibold text-xs px-3 py-1.5 rounded-lg";
+const btnSecondary = "transition hover:opacity-65 active:scale-95 text-xs px-3 py-1.5 rounded-lg";
 const btnIcon = "transition hover:opacity-100 active:scale-95 p-2 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center";
 
 type EditingMember = {

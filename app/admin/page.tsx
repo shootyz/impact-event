@@ -305,7 +305,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                 setPreviewHtml(await res.text());
                 setPreviewLoading(false);
               }}
-              className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-90"
+              className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-70"
               style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
               {expanded ? "Schliessen" : "Vorschau"}
             </button>
@@ -314,7 +314,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                 {onEdit && (
                   <>
                     <button onClick={onEdit}
-                      className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-90"
+                      className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-70"
                       style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                       Bearbeiten
                     </button>
@@ -327,7 +327,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                         }
                         setShowTestPanel(o => !o);
                       }}
-                        className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-90"
+                        className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-70"
                         style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                         Testmail
                       </button>
@@ -391,7 +391,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                   </>
                 )}
                 <button disabled={sending} onClick={() => setConfirmSend(true)}
-                  className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95 hover:opacity-90"
+                  className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95 hover:opacity-70"
                   style={{ background: "var(--ig-gold)", color: "#fff", border: "none" }}>
                   Jetzt senden
                 </button>
@@ -413,11 +413,11 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                   setSending(false);
                   if (res.ok) { setSendResult(`✓ An ${d.sent} Mitglieder gesendet`); onSend(c.id, d.sent); }
                   else { setSendResult(d.error || "Error"); setConfirmSend(false); }
-                }} disabled={sending} className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95 hover:opacity-90" style={{ background: "#dc2626", color: "#fff", border: "none" }}>
+                }} disabled={sending} className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95 hover:opacity-70" style={{ background: "#dc2626", color: "#fff", border: "none" }}>
                   {sending ? "Wird gesendet…" : "Bestätigen"}
                 </button>
                 <button onClick={() => setConfirmSend(false)}
-                  className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-90"
+                  className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-70"
                   style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                   Abbrechen
                 </button>
@@ -450,18 +450,18 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
               if (!scheduleValue) return;
               const res = await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scheduled_at: new Date(scheduleValue).toISOString() }) });
               if (res.ok && onSchedule) { onSchedule(c.id, new Date(scheduleValue).toISOString()); setScheduling(false); }
-            }} className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95 hover:opacity-90" style={{ background: "var(--ig-navy)", color: "#fff", border: "none" }}>
+            }} className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95 hover:opacity-70" style={{ background: "var(--ig-navy)", color: "#fff", border: "none" }}>
               Speichern
             </button>
             {c.scheduled_at && (
               <button onClick={async () => {
                 await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scheduled_at: null }) });
                 if (onSchedule) { onSchedule(c.id, null); setScheduling(false); }
-              }} className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-90" style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid #dc2626" }}>
+              }} className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-70" style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid #dc2626" }}>
                 Entfernen
               </button>
             )}
-            <button onClick={() => setScheduling(false)} className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-90"
+            <button onClick={() => setScheduling(false)} className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-70"
               style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>
               Cancel
             </button>

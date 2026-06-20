@@ -615,13 +615,13 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
         )}
         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
           <button disabled={index === 0} onClick={() => onMove(-1)}
-            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-80"
+            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-65"
             style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↑</button>
           <button disabled={index === total - 1} onClick={() => onMove(1)}
-            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-80"
+            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-65"
             style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↓</button>
           <button onClick={onRemove}
-            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95"
+            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 hover:opacity-65"
             style={{ borderColor: "#fecaca", color: "#dc2626" }}>✕</button>
         </div>
       </div>
@@ -918,7 +918,7 @@ export default function CampaignBuilder({
                     <button key={ab.type} onClick={() => addBlock(ab.type)}
                       className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition active:scale-[0.99]"
                       style={{ color: "#111", borderBottom: "1px solid #f3f4f6" }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#f9fafb"}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#e8ecf0"}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "white"}>
                       <span>{ab.icon}</span>
                       <span>{getBlockLabel(ab.type, "de")}</span>
@@ -938,7 +938,7 @@ export default function CampaignBuilder({
             {result ? result.msg : autoSaveStatus ?? ""}
           </div>
           <button disabled={!canSave || saving}
-            className="px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition active:scale-95 disabled:opacity-40 hover:opacity-90"
+            className="px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition active:scale-95 disabled:opacity-40 hover:opacity-70"
             style={{ background: "#D28D28", color: "white" }}
             onClick={async () => {
               setSaving(true); setResult(null);
