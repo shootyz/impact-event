@@ -4,6 +4,9 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { T, getLang } from "@/lib/i18n";
 
+type FormField = { id: string; type: "text" | "textarea"; label: string; required: boolean; visible: boolean };
+type FormConfig = { intro: string; fields: FormField[] };
+
 type Event = {
   id: string;
   name: string;
@@ -12,6 +15,7 @@ type Event = {
   description: string | null;
   registration_type: "invite" | "form";
   max_capacity: number | null;
+  form_config: FormConfig | null;
 };
 
 function RegistrationPageInner() {
@@ -37,8 +41,7 @@ function RegistrationPageInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   // Form-type registration
-  const [formCompany, setFormCompany] = useState("");
-  const [formMessage, setFormMessage] = useState("");
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [formSuccess, setFormSuccess] = useState(false);
   const [formCapacityFull, setFormCapacityFull] = useState(false);
 
@@ -109,7 +112,19 @@ function RegistrationPageInner() {
     if (!vorname.trim() || !nachname.trim()) { setError(t.errorName); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(email)) { setError(t.errorEmail); return; }
+    // Validate required custom fields
+    const activeFields = (event?.form_config?.fields ?? []).filter(f => f.visible);
+    for (const f of activeFields) {
+      if (f.required && !formValues[f.id]?.trim()) {
+        setError(`Bitte füllen Sie das Feld "${f.label}" aus.`);
+        return;
+      }
+    }
     setLoading(true);
+    const extraFields: Record<string, string> = {};
+    for (const f of activeFields) {
+      if (formValues[f.id]?.trim()) extraFields[f.id] = formValues[f.id].trim();
+    }
     const res = await fetch("/api/form-register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -118,8 +133,9 @@ function RegistrationPageInner() {
         first_name: vorname.trim(),
         last_name: nachname.trim(),
         email,
-        company: formCompany.trim() || null,
-        message: formMessage.trim() || null,
+        company: extraFields.company || null,
+        message: extraFields.message || null,
+        extra_fields: extraFields,
       }),
     });
     const data = await res.json();
@@ -239,6 +255,11 @@ function RegistrationPageInner() {
               </div>
             </div>
 
+            {/* Intro text (form events) */}
+            {event?.registration_type === "form" && event.form_config?.intro && (
+              <p className="text-sm text-center" style={{ color: "var(--ig-gray3)" }}>{event.form_config.intro}</p>
+            )}
+
             {/* Form card */}
             <div className="rounded-2xl border p-6 shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
               {inviteCodeId && (
@@ -305,36 +326,42 @@ function RegistrationPageInner() {
                     />
                   </div>
                 )}
-                {event?.registration_type === "form" && (
-                  <>
-                    <div>
-                      <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Firma / Organisation</label>
-                      <input
-                        type="text"
-                        value={formCompany}
-                        onChange={e => setFormCompany(e.target.value)}
-                        placeholder="Optional"
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                        style={inputStyle}
-                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
-                      />
+                {event?.registration_type === "form" && (() => {
+                  const fields = (event.form_config?.fields ?? [
+                    { id: "company", type: "text" as const, label: "Firma / Organisation", required: false, visible: true },
+                    { id: "message", type: "textarea" as const, label: "Nachricht", required: false, visible: true },
+                  ]).filter(f => f.visible);
+                  return fields.map(f => (
+                    <div key={f.id}>
+                      <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
+                        {f.label} {f.required && <span style={{ color: "var(--ig-gold)" }}>*</span>}
+                      </label>
+                      {f.type === "textarea" ? (
+                        <textarea
+                          value={formValues[f.id] ?? ""}
+                          onChange={e => setFormValues(v => ({ ...v, [f.id]: e.target.value }))}
+                          placeholder={f.required ? "" : "Optional"}
+                          rows={3}
+                          className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
+                          style={inputStyle}
+                          onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                          onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={formValues[f.id] ?? ""}
+                          onChange={e => setFormValues(v => ({ ...v, [f.id]: e.target.value }))}
+                          placeholder={f.required ? "" : "Optional"}
+                          className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                          style={inputStyle}
+                          onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                          onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                        />
+                      )}
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Nachricht</label>
-                      <textarea
-                        value={formMessage}
-                        onChange={e => setFormMessage(e.target.value)}
-                        placeholder="Optional"
-                        rows={3}
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
-                        style={inputStyle}
-                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
-                      />
-                    </div>
-                  </>
-                )}
+                  ));
+                })()}
 
                 {error && (
                   <div className="rounded-xl px-4 py-3 border border-red-100 bg-red-50">

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin()
     .from('form_registrations')
-    .select('id, first_name, last_name, email, company, message, status, created_at')
+    .select('id, first_name, last_name, email, company, message, extra_fields, status, created_at')
     .eq('event_id', eventId)
     .order('created_at', { ascending: false })
 

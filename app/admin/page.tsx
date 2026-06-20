@@ -162,8 +162,18 @@ type Registration = {
   checked_in: boolean; checked_in_at: string | null; created_at: string;
 };
 type Event = { id: string; name: string; date: string; location: string; };
-type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; registration_type: "invite" | "form"; max_capacity: number | null; };
-type FormRegistration = { id: string; first_name: string; last_name: string; email: string; company: string | null; message: string | null; status: "pending" | "confirmed" | "rejected" | "waitlisted"; created_at: string; };
+type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; registration_type: "invite" | "form"; max_capacity: number | null; form_config?: FormConfig | null; };
+type FormRegistration = { id: string; first_name: string; last_name: string; email: string; company: string | null; message: string | null; extra_fields?: Record<string, string> | null; status: "pending" | "confirmed" | "rejected" | "waitlisted"; created_at: string; };
+type FormField = { id: string; type: "text" | "textarea"; label: string; required: boolean; visible: boolean };
+type FormConfig = { intro: string; fields: FormField[] };
+const BUILTIN_FIELD_IDS = ["company", "message"];
+const DEFAULT_FORM_CONFIG: FormConfig = {
+  intro: "",
+  fields: [
+    { id: "company", type: "text", label: "Firma / Organisation", required: false, visible: true },
+    { id: "message", type: "textarea", label: "Nachricht", required: false, visible: true },
+  ],
+};
 
 const EVENT_CATEGORIES = ["Impact Circle Event", "Impact Workshop", "Impact Experience", "Young Impact Day"] as const;
 type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: string; message?: string; };
@@ -564,6 +574,9 @@ export default function AdminPage() {
   const [maxCapInput, setMaxCapInput] = useState("");
   const [regTypeSaving, setRegTypeSaving] = useState(false);
   const [regTypeStatus, setRegTypeStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [formConfig, setFormConfig] = useState<FormConfig>(DEFAULT_FORM_CONFIG);
+  const [formConfigSaving, setFormConfigSaving] = useState(false);
+  const [formConfigStatus, setFormConfigStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   // Event list UI state
   const [eventsView, setEventsView] = useState<"grid" | "list">("grid");
   const [eventsSort, setEventsSort] = useState<"date-desc" | "date-asc" | "name-asc" | "created-desc">("date-desc");
@@ -1356,6 +1369,8 @@ export default function AdminPage() {
               setRegTypeInput(ev.registration_type ?? "invite");
               setMaxCapInput(ev.max_capacity?.toString() ?? "");
               setRegTypeStatus(null);
+              setFormConfig(ev.form_config ?? DEFAULT_FORM_CONFIG);
+              setFormConfigStatus(null);
               setMembersLoaded(false);
               setFormRegsLoaded(false);
               if (ev.registration_type !== "form") loadRegistrations(savedPassword.current, ev.id);
@@ -2019,6 +2034,107 @@ export default function AdminPage() {
               </div>
             </Card>
 
+            {/* Formular konfigurieren (nur bei form-type) */}
+            {selectedEvent?.registration_type === "form" && (
+              <Card>
+                <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+                <CardHeader title="Formular konfigurieren" subtitle="Felder, Labels und Intro-Text" />
+                <div className="p-5 space-y-4">
+                  {/* Intro */}
+                  <div>
+                    <label className="block text-xs font-semibold tracking-wide mb-1.5" style={{ color: "var(--ig-gray3)" }}>INTRO-TEXT</label>
+                    <textarea
+                      value={formConfig.intro}
+                      onChange={e => setFormConfig(c => ({ ...c, intro: e.target.value }))}
+                      rows={2}
+                      placeholder="Optionaler Text über dem Formular"
+                      className={`${inputClass} resize-none`} style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                    />
+                  </div>
+
+                  {/* Fields */}
+                  <div>
+                    <label className="block text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--ig-gray3)" }}>FELDER</label>
+                    <div className="space-y-2">
+                      {formConfig.fields.map((field, idx) => (
+                        <div key={field.id} className="rounded-xl border p-3 space-y-2" style={{ background: field.visible ? "white" : "var(--ig-light)", borderColor: "var(--ig-gray2)" }}>
+                          <div className="flex items-center gap-2">
+                            {/* drag handle placeholder */}
+                            <span className="text-gray-300 select-none cursor-grab">⠿</span>
+                            <input
+                              type="text"
+                              value={field.label}
+                              onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, label: e.target.value } : f) }))}
+                              className="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none"
+                              style={{ border: "1.5px solid var(--ig-gray2)", background: "var(--ig-light)" }}
+                              onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                              onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                            />
+                            {!BUILTIN_FIELD_IDS.includes(field.id) && (
+                              <select
+                                value={field.type}
+                                onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, type: e.target.value as "text" | "textarea" } : f) }))}
+                                className="text-xs px-2 py-1.5 rounded-lg outline-none"
+                                style={{ border: "1.5px solid var(--ig-gray2)", background: "var(--ig-light)", color: "var(--ig-navy)" }}
+                              >
+                                <option value="text">Einzeilig</option>
+                                <option value="textarea">Mehrzeilig</option>
+                              </select>
+                            )}
+                            <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none" style={{ color: "var(--ig-gray3)" }}>
+                              <input type="checkbox" checked={field.required} onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, required: e.target.checked } : f) }))} />
+                              Pflicht
+                            </label>
+                            <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none" style={{ color: "var(--ig-gray3)" }}>
+                              <input type="checkbox" checked={field.visible} onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, visible: e.target.checked } : f) }))} />
+                              Aktiv
+                            </label>
+                            {!BUILTIN_FIELD_IDS.includes(field.id) && (
+                              <button
+                                onClick={() => setFormConfig(c => ({ ...c, fields: c.fields.filter((_, i) => i !== idx) }))}
+                                className="text-red-400 hover:text-red-600 transition text-sm leading-none"
+                              >✕</button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Add custom field */}
+                    <button
+                      onClick={() => setFormConfig(c => ({ ...c, fields: [...c.fields, { id: `custom_${Math.random().toString(36).slice(2,8)}`, type: "text", label: "Neues Feld", required: false, visible: true }] }))}
+                      className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
+                      style={{ border: "1.5px dashed var(--ig-gray2)", color: "var(--ig-gray3)", background: "transparent" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
+                    >
+                      <IconPlus className="w-3.5 h-3.5" /> Feld hinzufügen
+                    </button>
+                  </div>
+
+                  {formConfigStatus && <p className={`text-xs ${formConfigStatus.ok ? "text-green-600" : "text-red-500"}`}>{formConfigStatus.msg}</p>}
+                  <div className="flex justify-end">
+                    <BtnPrimary disabled={formConfigSaving || !selectedEventId} onClick={async () => {
+                      if (!selectedEventId) return;
+                      setFormConfigSaving(true); setFormConfigStatus(null);
+                      const res = await fetch(`/api/admin/events/${selectedEventId}`, {
+                        method: "PATCH", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ adminPassword: savedPassword.current, form_config: formConfig }),
+                      });
+                      setFormConfigSaving(false);
+                      if (!res.ok) { setFormConfigStatus({ ok: false, msg: "Fehler beim Speichern." }); return; }
+                      setAllEventCards(prev => prev.map(e => e.id === selectedEventId ? { ...e, form_config: formConfig } : e));
+                      setFormConfigStatus({ ok: true, msg: "Gespeichert." });
+                    }}>
+                      {formConfigSaving ? "Speichert…" : "Speichern"}
+                    </BtnPrimary>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {/* CSV Import */}
             <Card>
               <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
@@ -2157,6 +2273,9 @@ export default function AdminPage() {
                         <p className="font-semibold text-sm" style={{ color: "var(--ig-navy)" }}>{reg.first_name} {reg.last_name}</p>
                         <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>{reg.email}{reg.company ? ` · ${reg.company}` : ""}</p>
                         {reg.message && <p className="text-xs mt-1 italic" style={{ color: "var(--ig-gray3)" }}>{reg.message}</p>}
+                        {reg.extra_fields && Object.entries(reg.extra_fields).filter(([k]) => k !== "company" && k !== "message").map(([, v]) => v ? (
+                          <p key={v} className="text-xs mt-0.5 italic" style={{ color: "var(--ig-gray3)" }}>{v}</p>
+                        ) : null)}
                         <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{new Date(reg.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                       </div>
                       <select

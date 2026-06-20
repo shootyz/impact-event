@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { event_id, first_name, last_name, email, company, message } = body
+  const { event_id, first_name, last_name, email, company, message, extra_fields } = body
 
   if (!event_id || !first_name || !last_name || !email) {
     return NextResponse.json({ error: 'Pflichtfelder fehlen.' }, { status: 400 })
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
     email: email.toLowerCase().trim(),
     company: company?.trim() || null,
     message: message?.trim() || null,
+    extra_fields: extra_fields ?? null,
     status: 'pending',
   })
 

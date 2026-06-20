@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get('slug')
   const base = supabase()
     .from('events')
-    .select('id, name, date, location, description, registration_password, registration_type, max_capacity')
+    .select('id, name, date, location, description, registration_password, registration_type, max_capacity, form_config')
   const { data: event, error } = await (
     id ? base.eq('id', id) :
     slug ? base.eq('slug', slug) :
@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
       registration_password: !!event.registration_password,
       registration_type: event.registration_type ?? 'invite',
       max_capacity: event.max_capacity ?? null,
+      form_config: event.form_config ?? null,
     },
     {
       headers: { 'Cache-Control': 's-maxage=30, stale-while-revalidate=60' },
