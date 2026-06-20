@@ -35,6 +35,8 @@ export type Member = {
   unsubscribed: boolean
   created_at: string
   zielgruppe_id: string | null
+  anrede?: string | null
+  sprache?: string | null
   invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null
 }
 
