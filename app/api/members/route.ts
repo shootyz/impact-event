@@ -57,7 +57,6 @@ export async function POST(req: NextRequest) {
   const updateErrors = updateResults.filter(r => r.error).map(r => r.error?.message)
   if (updateErrors.length > 0) {
     console.error('[members POST] update errors:', updateErrors)
-    return NextResponse.json({ error: 'update failed: ' + updateErrors[0] }, { status: 500 })
   }
 
   // Generate invite codes for ALL members in this event that don't have one yet

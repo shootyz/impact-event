@@ -47,10 +47,15 @@ export default function ZielgruppenDashboard({
   const [csvZgId, setCsvZgId] = useState<string | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvResult, setCsvResult] = useState<{ zgId: string; inserted: number } | null>(null);
+  const [searchQuery, setSearchQuery] = useState<Record<string, string>>({});
   const csvRef = useRef<HTMLInputElement>(null);
 
-  const groupMembers = (zgId: string) =>
-    members.filter(m => m.zielgruppe_id === zgId && !m.unsubscribed);
+  const groupMembers = (zgId: string) => {
+    const q = (searchQuery[zgId] ?? "").toLowerCase().trim();
+    return members
+      .filter(m => m.zielgruppe_id === zgId && !m.unsubscribed)
+      .filter(m => !q || [m.first_name, m.last_name, m.email, m.anrede ?? ""].join(" ").toLowerCase().includes(q));
+  };
 
   async function saveEdit() {
     if (!editing) return;
@@ -219,6 +224,26 @@ export default function ZielgruppenDashboard({
             {/* Member table */}
             {isOpen && (
               <div>
+                {/* Search bar */}
+                <div className="px-4 py-2.5" style={{ borderBottom: "1px solid var(--ig-gray2)", background: "var(--ig-light)" }}>
+                  <div className="relative">
+                    <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--ig-gray3)" }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/></svg>
+                    <input
+                      className={inputCls}
+                      style={{ ...inputStyle, paddingLeft: "2rem" }}
+                      placeholder="Suchen…"
+                      value={searchQuery[zg.id] ?? ""}
+                      onChange={e => setSearchQuery(q => ({ ...q, [zg.id]: e.target.value }))}
+                      onFocus={e => (e.currentTarget.style.borderColor = "var(--ig-navy)")}
+                      onBlur={e => (e.currentTarget.style.borderColor = "var(--ig-gray2)")}
+                    />
+                    {searchQuery[zg.id] && (
+                      <button onClick={() => setSearchQuery(q => ({ ...q, [zg.id]: "" }))}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs opacity-50 hover:opacity-100 transition"
+                        style={{ color: "var(--ig-gray3)" }}>✕</button>
+                    )}
+                  </div>
+                </div>
                 {list.length > 0 ? (
                   <table className="w-full text-xs" style={{ borderCollapse: "collapse" }}>
                     <thead>
@@ -295,7 +320,9 @@ export default function ZielgruppenDashboard({
                     </tbody>
                   </table>
                 ) : (
-                  <p className="px-4 py-3 text-xs" style={{ color: "var(--ig-gray3)" }}>Noch keine Mitglieder.</p>
+                  <p className="px-4 py-3 text-xs" style={{ color: "var(--ig-gray3)" }}>
+                    {searchQuery[zg.id] ? `Keine Treffer für „${searchQuery[zg.id]}".` : "Noch keine Mitglieder."}
+                  </p>
                 )}
 
                 {/* Footer: add member + CSV import */}
