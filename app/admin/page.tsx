@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import CampaignBuilder from "./CampaignBuilder";
 import PreviewPanel from "./PreviewPanel";
+import ZielgruppenDashboard from "./ZielgruppenDashboard";
 import type { CampaignBlock } from "./campaign-renderer";
 import type { Lang } from "./i18n";
 
@@ -557,7 +558,7 @@ export default function AdminPage() {
   const [newEventResult, setNewEventResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // Mailing state
-  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; zielgruppe_id: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
+  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; zielgruppe_id: string | null; anrede?: string | null; sprache?: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
   type Zielgruppe = { id: string; name: string; created_at: string };
   type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; };
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
@@ -1991,154 +1992,18 @@ export default function AdminPage() {
             {mailingTab === "members" && (
               <div className="space-y-4">
 
-                {/* Zielgruppen */}
-                <Card>
-                  <CardHeader title="Zielgruppen" />
-                  <div className="p-5 space-y-3">
-                    {/* Existing groups */}
-                    {zielgruppen.map(z => {
-                      const count = members.filter(m => m.zielgruppe_id === z.id && !m.unsubscribed).length;
-                      const isRenaming = renamingZielgruppe?.id === z.id;
-                      return (
-                        <div key={z.id} className="flex items-center gap-2">
-                          {isRenaming ? (
-                            <>
-                              <input autoFocus className={inputClass} style={{ ...inputStyle, flex: 1 }}
-                                value={renamingZielgruppe.name}
-                                onChange={e => setRenamingZielgruppe({ ...renamingZielgruppe, name: e.target.value })}
-                                onKeyDown={async e => {
-                                  if (e.key === "Escape") { setRenamingZielgruppe(null); return; }
-                                  if (e.key !== "Enter" || !renamingZielgruppe.name.trim()) return;
-                                  const res = await fetch(`/api/zielgruppen/${z.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: renamingZielgruppe.name.trim() }) });
-                                  const d = await res.json();
-                                  if (res.ok) { setZielgruppen(prev => prev.map(x => x.id === z.id ? d : x).sort((a, b) => a.name.localeCompare(b.name))); }
-                                  setRenamingZielgruppe(null);
-                                }}
-                                onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                                onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                              <button className="text-xs px-3 py-2 rounded-xl font-semibold"
-                                style={{ background: "var(--ig-navy)", color: "white" }}
-                                onClick={async () => {
-                                  if (!renamingZielgruppe.name.trim()) return;
-                                  const res = await fetch(`/api/zielgruppen/${z.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: renamingZielgruppe.name.trim() }) });
-                                  const d = await res.json();
-                                  if (res.ok) { setZielgruppen(prev => prev.map(x => x.id === z.id ? d : x).sort((a, b) => a.name.localeCompare(b.name))); }
-                                  setRenamingZielgruppe(null);
-                                }}>Speichern</button>
-                              <button className="text-xs px-3 py-2 rounded-xl" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}
-                                onClick={() => setRenamingZielgruppe(null)}>Abbrechen</button>
-                            </>
-                          ) : (
-                            <>
-                              <button className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium text-left"
-                                style={{ background: activeZielgruppe === z.id ? "var(--ig-navy)" : "var(--ig-light)", color: activeZielgruppe === z.id ? "white" : "var(--ig-navy)", borderColor: activeZielgruppe === z.id ? "var(--ig-navy)" : "var(--ig-gray2)" }}
-                                onClick={() => setActiveZielgruppe(activeZielgruppe === z.id ? null : z.id)}>
-                                <span className="flex-1">{z.name}</span>
-                                <span className="text-xs opacity-60">{count} Mitglieder</span>
-                              </button>
-                              <button title="Umbenennen" className="p-2 rounded-xl border text-sm" style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-gray3)", background: "var(--ig-light)" }}
-                                onClick={() => setRenamingZielgruppe({ id: z.id, name: z.name })}>✎</button>
-                              <button title="Löschen" className="p-2 rounded-xl border text-sm" style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-gray3)", background: "var(--ig-light)" }}
-                                onClick={async () => {
-                                  await fetch(`/api/zielgruppen/${z.id}`, { method: "DELETE" });
-                                  setZielgruppen(prev => prev.filter(x => x.id !== z.id));
-                                  setMembers(prev => prev.map(m => m.zielgruppe_id === z.id ? { ...m, zielgruppe_id: null } : m));
-                                  if (activeZielgruppe === z.id) setActiveZielgruppe(null);
-                                }}>
-                                <IconTrash className="w-3.5 h-3.5" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {activeZielgruppe && (
-                      <button onClick={() => setActiveZielgruppe(null)} className="text-xs px-3 py-1.5 rounded-xl border"
-                        style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-gray3)" }}>
-                        ← Alle anzeigen
-                      </button>
-                    )}
-                    {/* Create new group */}
-                    {(() => {
-                      const doCreate = async () => {
-                        if (!newZielgruppeName.trim() || zielgruppeLoading) return;
-                        setZielgruppeLoading(true);
-                        const res = await fetch("/api/zielgruppen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newZielgruppeName.trim(), event_id: selectedEventId }) });
-                        const d = await res.json();
-                        if (res.ok) { setZielgruppen(prev => [...prev, d].sort((a, b) => a.name.localeCompare(b.name))); setNewZielgruppeName(""); }
-                        setZielgruppeLoading(false);
-                      };
-                      return (
-                        <div className="space-y-2">
-                          <input className="w-full px-3 py-2 text-sm outline-none rounded-xl border bg-transparent" placeholder="Neue Zielgruppe…" value={newZielgruppeName}
-                            style={{ borderColor: "var(--ig-gray2)" }}
-                            onChange={e => setNewZielgruppeName(e.target.value)}
-                            onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                            onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
-                            onKeyDown={e => { if (e.key === "Enter") doCreate(); }} />
-                          <div className="flex justify-end">
-                            <button disabled={!newZielgruppeName.trim() || zielgruppeLoading}
-                              onClick={doCreate}
-                              className="px-4 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-40"
-                              style={{ background: "var(--ig-gold)", color: "white" }}>
-                              {zielgruppeLoading ? "…" : "+ Erstellen"}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </Card>
-
-                {/* Add single member */}
-                <Card>
-                  <CardHeader title="Mitglied hinzufügen" />
-                  <div className="p-5 space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <input className={inputClass} style={inputStyle} placeholder="Vorname" value={newMemberFirst}
-                        onChange={e => setNewMemberFirst(e.target.value)}
-                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                      <input className={inputClass} style={inputStyle} placeholder="Nachname" value={newMemberLast}
-                        onChange={e => setNewMemberLast(e.target.value)}
-                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                    </div>
-                    <input className={inputClass} style={inputStyle} placeholder="Email" value={newMemberEmail} type="email"
-                      onChange={e => setNewMemberEmail(e.target.value)}
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                    {zielgruppen.length > 0 && (
-                      <select className={inputClass} style={inputStyle} value={newMemberZielgruppe} onChange={e => setNewMemberZielgruppe(e.target.value)}
-                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
-                        <option value="">Keine Zielgruppe</option>
-                        {zielgruppen.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-                      </select>
-                    )}
-                    {newMemberError && <p className="text-xs text-red-500">{newMemberError}</p>}
-                    <div className="flex justify-end"><BtnPrimary disabled={newMemberLoading}
-                      onClick={async () => {
-                        if (!newMemberFirst.trim() || !newMemberLast.trim() || !newMemberEmail.trim()) {
-                          setNewMemberError("Alle Felder sind erforderlich."); return;
-                        }
-                        setNewMemberError("");
-                        setNewMemberLoading(true);
-                        const res = await fetch("/api/members", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ members: [{ first_name: newMemberFirst, last_name: newMemberLast, email: newMemberEmail }], zielgruppe_id: newMemberZielgruppe || null, event_id: selectedEventId }),
-                        });
-                        const d = await res.json();
-                        setNewMemberLoading(false);
-                        if (!res.ok) { setNewMemberError(d.error || "Fehler"); return; }
-                        setNewMemberFirst(""); setNewMemberLast(""); setNewMemberEmail(""); setNewMemberZielgruppe("");
-                        fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); });
-                      }}>
-                      {newMemberLoading ? "Wird hinzugefügt…" : "Mitglied hinzufügen"}
-                    </BtnPrimary></div>
-                  </div>
-                </Card>
+                {/* Zielgruppen Dashboard */}
+                {membersLoading ? (
+                  <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
+                ) : (
+                  <ZielgruppenDashboard
+                    zielgruppen={zielgruppen}
+                    members={members as import("@/lib/supabase").Member[]}
+                    eventId={selectedEventId!}
+                    onMembersChange={updated => setMembers(updated as Member[])}
+                    onZielgruppeChange={updated => setZielgruppen(updated)}
+                  />
+                )}
 
                 {/* CSV Import */}
                 <Card>
@@ -2197,60 +2062,6 @@ export default function AdminPage() {
                         {memberCsvResult.inserted < 0 ? "CSV muss Spalten haben: first_name, last_name, email" : `${memberCsvResult.inserted} Mitglieder importiert/aktualisiert.`}
                       </p>
                     )}
-                  </div>
-                </Card>
-
-                {/* Member list */}
-                <Card>
-                  <CardHeader title={`Mitglieder (${(activeZielgruppe ? members.filter(m => m.zielgruppe_id === activeZielgruppe) : members).filter(m => !m.unsubscribed).length} aktiv${activeZielgruppe ? ` · ${zielgruppen.find(z => z.id === activeZielgruppe)?.name}` : ""})`} />
-                  <div className="divide-y" style={{ borderColor: "var(--ig-gray2)" }}>
-                    {membersLoading ? (
-                      <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
-                    ) : members.length === 0 ? (
-                      <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Noch keine Mitglieder.</div>
-                    ) : (activeZielgruppe ? members.filter(m => m.zielgruppe_id === activeZielgruppe) : members).map(m => (
-                      <div key={m.id} className="px-5 py-3 flex items-center justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate" style={{ color: m.unsubscribed ? "var(--ig-gray3)" : "var(--ig-navy)" }}>
-                            {m.first_name} {m.last_name}
-                            {m.unsubscribed && <span className="ml-2 text-xs" style={{ color: "var(--ig-gray3)" }}>(abgemeldet)</span>}
-                          </p>
-                          <p className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>{m.email}</p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {/* Zielgruppe badge / selector */}
-                          {zielgruppen.length > 0 && (
-                            <select className="text-xs rounded-lg border px-2 py-1 outline-none"
-                              style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "var(--ig-light)" }}
-                              value={m.zielgruppe_id ?? ""}
-                              onChange={async e => {
-                                const val = e.target.value || null;
-                                await fetch(`/api/members/${m.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ zielgruppe_id: val }) });
-                                setMembers(prev => prev.map(x => x.id === m.id ? { ...x, zielgruppe_id: val } : x));
-                              }}>
-                              <option value="">–</option>
-                              {zielgruppen.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-                            </select>
-                          )}
-                          {(() => {
-                            const ic = Array.isArray(m.invite_codes) ? m.invite_codes[0] : m.invite_codes;
-                            return ic?.code ? (
-                              <span className="text-xs font-mono font-bold px-2 py-1 rounded-lg" style={{ background: ic.used ? "var(--ig-gray2)" : "#F8F9FF", color: ic.used ? "var(--ig-gray3)" : "var(--ig-gold)", border: "1px solid var(--ig-gray2)", letterSpacing: "0.1em", textDecoration: ic.used ? "line-through" : "none" }}>
-                                {ic.code}
-                              </span>
-                            ) : null;
-                          })()}
-                          <button onClick={async () => {
-                            await fetch("/api/members", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id }) });
-                            setMembers(prev => prev.filter(x => x.id !== m.id));
-                          }} className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
-                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
-                            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
-                            <IconTrash className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </Card>
               </div>
