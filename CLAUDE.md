@@ -29,12 +29,30 @@ Performance: every change that could make the app slower needs user approval fir
 - "Kampagne aus diesem PDF"
 - "Mach einen Entwurf"
 
-**What to do:**
+**What to do — vollständiger Ablauf:**
+
+### Schritt 1: Event erstellen
+POST to `/api/admin/events` with admin password:
+```ts
+POST /api/admin/events
+{
+  adminPassword: string,         // ask user if not known
+  name: string,                  // from PDF: event title
+  date: string,                  // ISO date from PDF: "YYYY-MM-DD"
+  location: string,              // venue name from PDF
+  description: string,           // 1–2 sentence summary
+  category: string,              // best match: "Impact Circle Event" | "Impact Workshop" | "Impact Experience" | "Young Impact Day"
+  active: true
+}
+```
+Response contains `id` — use this as `event_id` for the campaign.
+
+### Schritt 2: Kampagne erstellen
 1. Read the PDF with the Read tool
 2. Extract: event title, date/time, venue, programme slots, speakers, finalists, deadlines, register link, intro text
 3. Build a `blocks_json` object matching the schema below
-4. POST to `/api/campaigns` with `event_id` = current selectedEventId (ask user if unknown)
-5. Tell user the draft is saved and they'll find it under "Entwürfe"
+4. POST to `/api/campaigns` with the `event_id` from Step 1
+5. Tell user: event created + campaign draft saved under "Entwürfe"
 
 **Available block types** (use only what the PDF contains):
 
