@@ -90,13 +90,6 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
             {formattedDate && <p style={{ color: D.black, fontSize: 14, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</p>}
             {block.venue_name && <p style={{ color: D.black, fontSize: 14, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_name}</p>}
             {block.venue_address && <p style={{ color: D.gray, fontSize: 13, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_address}</p>}
-            {block.moderation_name && (
-              <div style={{ marginTop: 8 }}>
-                <p style={{ color: D.gray, fontSize: 11, margin: "0 0 2px", letterSpacing: 1, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{t.moderation}</p>
-                <p style={{ color: D.black, fontSize: 14, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.moderation_name}</p>
-                {block.moderation_title && <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.moderation_title}</p>}
-              </div>
-            )}
           </div>
           {(block.date || block.venue_address) && (
             <div style={{ borderTop: `1px solid ${D.gray2}`, marginTop: 14, paddingTop: 14 }}>
@@ -179,6 +172,17 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           {block.title && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
           {block.book?.trim() && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.book}</p>}
           {block.bio && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.bio}</p>}
+          <CustomFields block={block} />
+        </div>
+      );
+
+    case "moderation":
+      return (
+        <div>
+          <Divider />
+          <SectionHead label={block.label || t.moderation} />
+          <p style={{ color: D.black, fontSize: 15, fontWeight: 600, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.name}</p>
+          {block.title?.trim() && <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
           <CustomFields block={block} />
         </div>
       );

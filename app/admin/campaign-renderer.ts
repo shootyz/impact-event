@@ -14,8 +14,12 @@ export type EventDetailsBlock = {
   venue_name: string;
   venue_address: string;
   venue_maps_url: string;
-  moderation_name: string;
-  moderation_title: string;
+};
+
+export type ModerationBlock = {
+  type: "moderation";
+  name: string;
+  title: string;
 };
 
 export type ProgramSlot = {
@@ -60,6 +64,7 @@ export type CustomField = { id: string; label: string; value: string };
 export type CampaignBlock = (
   | IntroBlock
   | EventDetailsBlock
+  | ModerationBlock
   | ProgramBlock
   | FinalistsBlock
   | SpeakerBlock
@@ -131,10 +136,6 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
         details.push(`<p style="color:${D.black};font-size:14px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.venue_name}</p>`);
       if (block.venue_address)
         details.push(`<p style="color:${D.gray};font-size:13px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.venue_address}</p>`);
-      if (block.moderation_name)
-        details.push(`<p style="color:${D.gray};font-size:11px;letter-spacing:1px;margin:6px 0 2px;font-family:Arial,sans-serif;">${t.moderation}</p><p style="color:${D.black};font-size:14px;margin:0 0 2px;font-family:Arial,sans-serif;">${block.moderation_name}</p>`);
-      if (block.moderation_title)
-        details.push(`<p style="color:${D.gray};font-size:13px;margin:0 0 6px;font-family:Arial,sans-serif;">${block.moderation_title}</p>`);
 
       const calMapsLinks: string[] = [];
       if (block.date && ctx?.campaignId && ctx?.appUrl)
@@ -205,6 +206,11 @@ ${block.photo_url ? `<img src="${block.photo_url}" alt="${block.name}" width="10
 ${block.title ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">${block.title}</p>` : ""}
 ${block.book?.trim() ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${block.book}</p>` : ""}
 ${block.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${block.bio}</p>` : ""}${extra}`;
+
+    case "moderation":
+      return `${sectionHeadHtml(block.label || t.moderation)}
+<p style="color:${D.black};font-size:15px;font-weight:600;margin:0 0 2px;font-family:Arial,sans-serif;">${block.name}</p>
+${block.title?.trim() ? `<p style="color:${D.gray};font-size:13px;margin:0;font-family:Arial,sans-serif;">${block.title}</p>` : ""}${extra}`;
 
     case "text":
       return richHtmlToEmail(block.content, D.black);

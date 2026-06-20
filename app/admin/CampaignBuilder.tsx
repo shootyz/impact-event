@@ -6,9 +6,9 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import PreviewPanel from "./PreviewPanel";
 import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATIONS } from "./i18n";
-export type { IntroBlock, EventDetailsBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
+export type { IntroBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
 export { renderBlocksToHtml, richHtmlToEmail } from "./campaign-renderer";
-import type { IntroBlock, EventDetailsBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
+import type { IntroBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
 import { richHtmlToEmail, renderBlocksToHtml } from "./campaign-renderer";
 
 
@@ -201,20 +201,11 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
           style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
         />
       </div>
-      {(["venue_name", "venue_address", "moderation_name", "moderation_title"] as const).map(k => (
+      {(["venue_name", "venue_address"] as const).map(k => (
         <div key={k}>
-          <label className={labelCls} style={labelSty}>{
-            k === "venue_name" ? "Venue Name" : k === "venue_address" ? "Adresse" :
-            k === "moderation_name" ? "Moderation Name" : "Moderation Titel"
-          }</label>
-          <div className="flex flex-col gap-1">
-            <FocusInput value={block[k]} onChange={v => onChange({ ...block, [k]: v })}
-              placeholder={
-                k === "venue_name" ? "Kirchgemeindehaus Gstaad" :
-                k === "venue_address" ? "Untergstaadstrasse 8, 3780 Gstaad" :
-                k === "moderation_name" ? "Carolin Roth" : "Business Moderator & Journalist"
-              } />
-          </div>
+          <label className={labelCls} style={labelSty}>{k === "venue_name" ? "Venue Name" : "Adresse"}</label>
+          <FocusInput value={block[k]} onChange={v => onChange({ ...block, [k]: v })}
+            placeholder={k === "venue_name" ? "Kirchgemeindehaus Gstaad" : "Untergstaadstrasse 8, 3780 Gstaad"} />
         </div>
       ))}
     </div>
@@ -384,6 +375,21 @@ function FinalistsEditor({ block, onChange }: { block: FinalistsBlock; onChange:
           <label className={labelCls} style={labelSty}>Website Button-Text</label>
           <FocusInput value={block.website_label} onChange={v => onChange({ ...block, website_label: v })} placeholder="greenbusinessaward.ch" />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ModerationEditor({ block, onChange }: { block: ModerationBlock; onChange: (b: ModerationBlock) => void }) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className={labelCls} style={labelSty}>Name</label>
+        <FocusInput value={block.name} onChange={v => onChange({ ...block, name: v })} placeholder="Carolin Roth" />
+      </div>
+      <div>
+        <label className={labelCls} style={labelSty}>Titel</label>
+        <FocusInput value={block.title} onChange={v => onChange({ ...block, title: v })} placeholder="Business Moderator & Journalist" />
       </div>
     </div>
   );
@@ -605,6 +611,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           {block.type === "event_details" && <EventDetailsEditor block={block} onChange={onChange as (b: EventDetailsBlock) => void} subject={subject} lang={lang} />}
           {block.type === "program" && <ProgramEditor block={block} onChange={onChange as (b: ProgramBlock) => void} />}
           {block.type === "finalists" && <FinalistsEditor block={block} onChange={onChange as (b: FinalistsBlock) => void} />}
+          {block.type === "moderation" && <ModerationEditor block={block} onChange={onChange as (b: ModerationBlock) => void} />}
           {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} />}
           {block.type === "info" && <InfoEditor block={block} onChange={onChange as (b: InfoBlock) => void} />}
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
@@ -636,6 +643,7 @@ const ADDABLE_BLOCK_TYPES: { type: CampaignBlock["type"]; icon: string }[] = [
   { type: "event_details", icon: "📅" },
   { type: "program", icon: "📋" },
   { type: "finalists", icon: "🏆" },
+  { type: "moderation", icon: "🎙️" },
   { type: "speaker", icon: "🎤" },
   { type: "text", icon: "📝" },
   { type: "info", icon: "ℹ️" },
@@ -647,7 +655,8 @@ const ADDABLE_BLOCK_TYPES: { type: CampaignBlock["type"]; icon: string }[] = [
 function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
   switch (type) {
     case "intro": return { type, text: "" };
-    case "event_details": return { type, category: "", event_title: "", date: "", time: "13:00", venue_name: "", venue_address: "", venue_maps_url: "", moderation_name: "", moderation_title: "" };
+    case "event_details": return { type, category: "", event_title: "", date: "", time: "13:00", venue_name: "", venue_address: "", venue_maps_url: "" };
+    case "moderation": return { type, name: "", title: "" };
     case "program": return { type, slots: [{ id: uid(), time: "", title: "", sub_items: [], note: "" }] };
     case "finalists": return { type, title: "Green Business Award", intro: "", items: [{ id: uid(), name: "", category: "", description: "" }], video_url: "", website_url: "", website_label: "" };
     case "speaker": return { type, photo_url: "", name: "", title: "", bio: "", book: "" };

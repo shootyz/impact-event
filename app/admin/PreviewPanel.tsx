@@ -5,7 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import type {
-  CampaignBlock, IntroBlock, EventDetailsBlock, ProgramBlock,
+  CampaignBlock, IntroBlock, EventDetailsBlock, ModerationBlock, ProgramBlock,
   FinalistsBlock, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, RegisterButtonBlock,
 } from "./CampaignBuilder";
 import { type Lang, T, DATE_LOCALE } from "./i18n";
@@ -153,8 +153,6 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
   else if (block.time) rows.push({ label: tl.time, content: <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
   if (block.venue_name !== undefined) rows.push({ label: tl.venue, content: <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
   if (block.venue_address !== undefined) rows.push({ label: tl.address, content: <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
-  if (block.moderation_name) rows.push({ label: tl.moderation, content: <Editable value={block.moderation_name} onChange={v => onChange({ ...block, moderation_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
-  if (block.moderation_title) rows.push({ label: tl.moderation + " Title", content: <Editable value={block.moderation_title} onChange={v => onChange({ ...block, moderation_title: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
   if (block.date) rows.push({ label: "", content: (
     <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
       <button onClick={downloadIcs}
@@ -190,13 +188,6 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
         {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 14 }} />}
         {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.black, fontSize: 14 }} />}
         {block.venue_address !== undefined && <Editable value={block.venue_address} onChange={v => onChange({ ...block, venue_address: v })} placeholder="Adresse" style={{ color: D.gray, fontSize: 13 }} />}
-        {block.moderation_name && (
-          <div style={{ marginTop: 2 }}>
-            <p style={{ color: D.gray, fontSize: 11, margin: "0 0 2px", letterSpacing: 1 }}>{tl.moderation}</p>
-            <Editable value={block.moderation_name} onChange={v => onChange({ ...block, moderation_name: v })} placeholder="Name" style={{ color: D.black, fontSize: 14 }} />
-            {block.moderation_title && <Editable value={block.moderation_title} onChange={v => onChange({ ...block, moderation_title: v })} placeholder="Titel" style={{ color: D.gray, fontSize: 13 }} />}
-          </div>
-        )}
       </div>
       {(block.date || block.venue_address) && (
         <div style={{ borderTop: `1px solid ${D.gray2}`, marginTop: 14, paddingTop: 14, display: "flex", alignItems: "center", gap: 4 }}>
@@ -284,6 +275,19 @@ function FinalistsPreview({ block, onChange }: { block: FinalistsBlock & { label
           {block.website_label || block.website_url}
         </a>
       )}
+    </div>
+  );
+}
+
+function ModerationPreview({ block, onChange }: { block: ModerationBlock & { label?: string }; onChange: (b: typeof block) => void }) {
+  const tl = T["de"];
+  return (
+    <div>
+      <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 6px" }}>{tl.moderation}</p>
+      <Editable value={block.name} onChange={v => onChange({ ...block, name: v })}
+        placeholder="Name" style={{ color: D.black, fontSize: 15, fontWeight: 600 }} />
+      {block.title !== undefined && <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
+        placeholder="Titel / Funktion" style={{ color: D.gray, fontSize: 13 }} />}
     </div>
   );
 }
@@ -427,6 +431,9 @@ export default function PreviewPanel({
               )}
               {block.type === "finalists" && (
                 <FinalistsPreview block={block} onChange={b => updateBlock(i, b)} />
+              )}
+              {block.type === "moderation" && (
+                <ModerationPreview block={block} onChange={b => updateBlock(i, b)} />
               )}
               {block.type === "speaker" && (
                 <SpeakerPreview block={block} onChange={b => updateBlock(i, b)} />
