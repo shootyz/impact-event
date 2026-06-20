@@ -100,7 +100,7 @@ function renderCustomFields(block: CampaignBlock): string {
 export function richHtmlToEmail(html: string, color: string): string {
   if (!html || html === "<p></p>") return "";
   return html
-    .replace(/<p>/g, `<p style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
+    .replace(/<p( [^>]*)?>/g, (_, attrs) => `<p${attrs ?? ""} style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
     .replace(/<ul>/g, `<ul style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;list-style-type:disc;font-family:Arial,sans-serif;">`)
     .replace(/<ol>/g, `<ol style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;font-family:Arial,sans-serif;">`)
     .replace(/<li>/g, `<li style="margin-bottom:4px;">`)
@@ -157,7 +157,7 @@ ${extra}`;
       const slotHtmls = block.slots.map((slot, i) => {
         const isFirst = i === 0;
         const isLast = i === block.slots.length - 1;
-        const pad = isFirst ? "0 0 16px" : isLast ? "16px 0 0" : "16px 0";
+        const pad = isFirst ? "0 0 14px" : isLast ? "14px 0 0" : "14px 0";
         const subItems = slot.sub_items.filter(s => s.title);
         return `<tr><td style="padding:${pad};">
   <p style="color:${D.navy};font-size:12px;font-weight:700;margin:0 0 4px;font-family:Arial,sans-serif;">${slot.time}</p>

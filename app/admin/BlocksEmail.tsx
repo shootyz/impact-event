@@ -119,7 +119,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <Divider />
           <SectionHead label={(block as ProgramBlock).title || block.label || t.program} />
           {block.slots.map((slot, si) => (
-            <div key={slot.id} style={{ padding: "14px 0", borderBottom: si < block.slots.length - 1 ? `1px solid ${D.gray2}` : "none" }}>
+            <div key={slot.id} style={{ padding: si === 0 ? "0 0 14px" : "14px 0", borderBottom: si < block.slots.length - 1 ? `1px solid ${D.gray2}` : "none" }}>
               {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12, fontWeight: 700, margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
               {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, margin: slot.sub_items.filter(s => s.title).length ? "0 0 16px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
               {slot.sub_items.filter(s => s.title).map(sub => (
