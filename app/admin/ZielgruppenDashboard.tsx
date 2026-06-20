@@ -147,6 +147,20 @@ export default function ZielgruppenDashboard({
           if (file && csvZgId) importCsv(csvZgId, file);
         }} />
 
+      {/* Create new Zielgruppe — top */}
+      <div className="flex gap-2">
+        <input className={inputCls} style={{ ...inputStyle, flex: 1 }} placeholder="Neue Zielgruppe…"
+          value={newZGName} onChange={e => setNewZGName(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") createZG(); }}
+          onFocus={e => (e.currentTarget.style.borderColor = "var(--ig-navy)")}
+          onBlur={e => (e.currentTarget.style.borderColor = "var(--ig-gray2)")} />
+        <button disabled={creatingZG || !newZGName.trim()} onClick={createZG}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+          style={{ background: "var(--ig-navy)", color: "white" }}>
+          {creatingZG ? "…" : "Erstellen"}
+        </button>
+      </div>
+
       {zielgruppen.map(zg => {
         const list = groupMembers(zg.id);
         const isOpen = expanded === zg.id;
@@ -311,19 +325,6 @@ export default function ZielgruppenDashboard({
         );
       })}
 
-      {/* Create new Zielgruppe */}
-      <div className="flex gap-2 pt-1">
-        <input className={inputCls} style={{ ...inputStyle, flex: 1 }} placeholder="Neue Zielgruppe…"
-          value={newZGName} onChange={e => setNewZGName(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") createZG(); }}
-          onFocus={e => (e.currentTarget.style.borderColor = "var(--ig-navy)")}
-          onBlur={e => (e.currentTarget.style.borderColor = "var(--ig-gray2)")} />
-        <button disabled={creatingZG || !newZGName.trim()} onClick={createZG}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
-          style={{ background: "var(--ig-navy)", color: "white" }}>
-          {creatingZG ? "…" : "Erstellen"}
-        </button>
-      </div>
     </div>
   );
 }
