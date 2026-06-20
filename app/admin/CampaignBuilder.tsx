@@ -131,6 +131,34 @@ function IntroEditor({ block, onChange }: { block: IntroBlock; onChange: (b: Int
   );
 }
 
+function MapsLookupButton({ venueName, onResult }: { venueName: string; onResult: (url: string) => void }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const lookup = async () => {
+    setLoading(true); setError(false);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(venueName)}&format=json&limit=1`, {
+        headers: { "Accept-Language": "de", "User-Agent": "ImpactGstaad/1.0" }
+      });
+      const data = await res.json();
+      if (data?.[0]) {
+        const { lat, lon } = data[0];
+        onResult(`https://www.google.com/maps?q=${lat},${lon}`);
+      } else {
+        setError(true);
+      }
+    } catch { setError(true); }
+    setLoading(false);
+  };
+  return (
+    <button onClick={lookup} disabled={loading}
+      className="text-xs font-medium transition hover:opacity-65 disabled:opacity-40"
+      style={{ color: error ? "#dc2626" : "var(--ig-gold)" }}>
+      {loading ? "Suche…" : error ? "Nicht gefunden" : "↗ Ort suchen"}
+    </button>
+  );
+}
+
 function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock; onChange: (b: EventDetailsBlock) => void; subject?: string; lang?: Lang }) {
   const t = T[lang];
   const cats = CATEGORIES[lang];
@@ -208,13 +236,8 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
       <div>
         <div className="flex items-center justify-between mb-1">
           <label className={labelCls} style={{ ...labelSty, margin: 0 }}>Google Maps URL</label>
-          {block.venue_name.trim() && !block.venue_maps_url.trim() && (
-            <button
-              onClick={() => onChange({ ...block, venue_maps_url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(block.venue_name)}` })}
-              className="text-xs font-medium transition hover:opacity-65"
-              style={{ color: "var(--ig-gold)" }}>
-              ↗ Von Venue Name übernehmen
-            </button>
+          {block.venue_name.trim() && (
+            <MapsLookupButton venueName={block.venue_name} onResult={url => onChange({ ...block, venue_maps_url: url })} />
           )}
         </div>
         <FocusInput value={block.venue_maps_url} onChange={v => onChange({ ...block, venue_maps_url: v })} placeholder="https://maps.google.com/..." />
