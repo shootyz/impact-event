@@ -10,6 +10,8 @@ type Event = {
   date: string;
   location: string;
   description: string | null;
+  registration_type: "invite" | "form";
+  max_capacity: number | null;
 };
 
 function RegistrationPageInner() {
@@ -34,6 +36,11 @@ function RegistrationPageInner() {
   const [emailLocked, setEmailLocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // Form-type registration
+  const [formCompany, setFormCompany] = useState("");
+  const [formMessage, setFormMessage] = useState("");
+  const [formSuccess, setFormSuccess] = useState(false);
+  const [formCapacityFull, setFormCapacityFull] = useState(false);
 
   useEffect(() => {
     const url = eventId ? `/api/event?id=${encodeURIComponent(eventId)}` : "/api/event";
@@ -42,7 +49,7 @@ function RegistrationPageInner() {
       .then((data) => {
         if (!data.error) {
           setEvent(data);
-          if (!data.registration_password) setUnlocked(true);
+          if (!data.registration_password || data.registration_type === 'form') setUnlocked(true);
         }
         setEventLoading(false);
       });
@@ -94,6 +101,35 @@ function RegistrationPageInner() {
       return;
     }
     router.push(`/success/${data.token}?lang=${lang}${eventId ? `&event=${eventId}` : ""}`);
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!vorname.trim() || !nachname.trim()) { setError(t.errorName); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(email)) { setError(t.errorEmail); return; }
+    setLoading(true);
+    const res = await fetch("/api/form-register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event_id: eventId,
+        first_name: vorname.trim(),
+        last_name: nachname.trim(),
+        email,
+        company: formCompany.trim() || null,
+        message: formMessage.trim() || null,
+      }),
+    });
+    const data = await res.json();
+    setLoading(false);
+    if (!res.ok) {
+      if (res.status === 409 && data.error === "capacity_full") { setFormCapacityFull(true); return; }
+      setError(data.error || t.errorGeneric);
+      return;
+    }
+    setFormSuccess(true);
   };
 
   const eventDate = event
@@ -162,8 +198,30 @@ function RegistrationPageInner() {
           </div>
         )}
 
+        {/* Capacity full (form events) */}
+        {event && formCapacityFull && (
+          <div className="rounded-2xl border p-8 text-center shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+            <div className="text-4xl mb-4">🎟️</div>
+            <h2 className="text-lg font-bold mb-2" style={{ color: "var(--ig-navy)" }}>Maximale Gästeanzahl erreicht</h2>
+            <p className="text-sm" style={{ color: "var(--ig-gray3)" }}>
+              Leider sind alle verfügbaren Plätze für diesen Event bereits vergeben.
+            </p>
+          </div>
+        )}
+
+        {/* Form-type success */}
+        {event && formSuccess && (
+          <div className="rounded-2xl border p-8 text-center shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+            <div className="text-4xl mb-4">✅</div>
+            <h2 className="text-lg font-bold mb-2" style={{ color: "var(--ig-navy)" }}>Vielen Dank!</h2>
+            <p className="text-sm" style={{ color: "var(--ig-gray3)" }}>
+              Ihre Anmeldung wurde erfolgreich übermittelt. Wir melden uns in Kürze bei Ihnen.
+            </p>
+          </div>
+        )}
+
         {/* Registration form */}
-        {event && unlocked && (
+        {event && unlocked && !formCapacityFull && !formSuccess && (
           <div className="space-y-4">
             {/* Event info card */}
             <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
@@ -188,7 +246,7 @@ function RegistrationPageInner() {
                   {t.welcome(vorname)}
                 </div>
               )}
-              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              <form onSubmit={event?.registration_type === "form" ? handleFormSubmit : handleSubmit} className="space-y-4" noValidate>
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { label: t.firstName, value: vorname, set: setVorname, placeholder: t.firstNamePlaceholder, locked: nameLocked },
@@ -212,28 +270,71 @@ function RegistrationPageInner() {
                     </div>
                   ))}
                 </div>
-                {[
-                  { label: t.email, value: email, set: setEmail, placeholder: "name@example.com", locked: emailLocked, confirm: false },
-                  { label: t.confirmEmail, value: emailConfirm, set: setEmailConfirm, placeholder: "name@example.com", locked: emailLocked, confirm: true },
-                ].map(({ label, value, set, placeholder, locked, confirm }) => (
-                  <div key={label}>
+                <div>
+                  <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
+                    {t.email} <span style={{ color: "var(--ig-gold)" }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={email}
+                    onChange={(e) => !emailLocked && setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    readOnly={emailLocked}
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                    style={{ ...inputStyle, opacity: emailLocked ? 0.7 : 1, cursor: emailLocked ? "default" : "text" }}
+                    onFocus={e => !emailLocked && (e.currentTarget.style.borderColor = "var(--ig-navy)")}
+                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                  />
+                </div>
+                {event?.registration_type !== "form" && (
+                  <div>
                     <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
-                      {label} <span style={{ color: "var(--ig-gold)" }}>*</span>
+                      {t.confirmEmail} <span style={{ color: "var(--ig-gold)" }}>*</span>
                     </label>
                     <input
                       type="text"
-                      value={value}
-                      onChange={(e) => !locked && set(e.target.value)}
-                      placeholder={placeholder}
-                      readOnly={locked}
-                      onPaste={confirm && !locked ? (e) => e.preventDefault() : undefined}
+                      value={emailConfirm}
+                      onChange={(e) => !emailLocked && setEmailConfirm(e.target.value)}
+                      placeholder="name@example.com"
+                      readOnly={emailLocked}
+                      onPaste={!emailLocked ? (e) => e.preventDefault() : undefined}
                       className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                      style={{ ...inputStyle, opacity: locked ? 0.7 : 1, cursor: locked ? "default" : "text" }}
-                      onFocus={e => !locked && (e.currentTarget.style.borderColor = "var(--ig-navy)")}
+                      style={{ ...inputStyle, opacity: emailLocked ? 0.7 : 1, cursor: emailLocked ? "default" : "text" }}
+                      onFocus={e => !emailLocked && (e.currentTarget.style.borderColor = "var(--ig-navy)")}
                       onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
                     />
                   </div>
-                ))}
+                )}
+                {event?.registration_type === "form" && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Firma / Organisation</label>
+                      <input
+                        type="text"
+                        value={formCompany}
+                        onChange={e => setFormCompany(e.target.value)}
+                        placeholder="Optional"
+                        className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                        style={inputStyle}
+                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>Nachricht</label>
+                      <textarea
+                        value={formMessage}
+                        onChange={e => setFormMessage(e.target.value)}
+                        placeholder="Optional"
+                        rows={3}
+                        className="w-full px-4 py-3 rounded-xl text-sm outline-none resize-none"
+                        style={inputStyle}
+                        onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                        onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                      />
+                    </div>
+                  </>
+                )}
 
                 {error && (
                   <div className="rounded-xl px-4 py-3 border border-red-100 bg-red-50">
@@ -254,9 +355,11 @@ function RegistrationPageInner() {
               </form>
             </div>
 
-            <p className="text-center text-xs tracking-wide" style={{ color: "var(--ig-navy)" }}>
-              {t.ticketByEmail}
-            </p>
+            {event?.registration_type !== "form" && (
+              <p className="text-center text-xs tracking-wide" style={{ color: "var(--ig-navy)" }}>
+                {t.ticketByEmail}
+              </p>
+            )}
           </div>
         )}
       </div>

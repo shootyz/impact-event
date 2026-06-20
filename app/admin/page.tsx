@@ -162,7 +162,8 @@ type Registration = {
   checked_in: boolean; checked_in_at: string | null; created_at: string;
 };
 type Event = { id: string; name: string; date: string; location: string; };
-type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; };
+type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; registration_type: "invite" | "form"; max_capacity: number | null; };
+type FormRegistration = { id: string; first_name: string; last_name: string; email: string; company: string | null; message: string | null; status: "pending" | "confirmed" | "rejected" | "waitlisted"; created_at: string; };
 
 const EVENT_CATEGORIES = ["Impact Circle Event", "Impact Workshop", "Impact Experience", "Young Impact Day"] as const;
 type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: string; message?: string; };
@@ -527,7 +528,7 @@ export default function AdminPage() {
   const [scanning, setScanning] = useState(false);
   const [eventSection, setEventSection] = useState<null | "mailing" | "management">(null);
   const [showScannerPicker, setShowScannerPicker] = useState(false);
-  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "analytics">("list");
+  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "analytics" | "form-regs">("list");
 
   const [dialog, setDialog] = useState<{ title: string; message: string; danger?: boolean; onConfirm: () => void } | null>(null);
   const showConfirm = (title: string, message: string, danger: boolean, onConfirm: () => void) =>
@@ -559,6 +560,10 @@ export default function AdminPage() {
   const [slugInput, setSlugInput] = useState("");
   const [slugStatus, setSlugStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [slugSaving, setSlugSaving] = useState(false);
+  const [regTypeInput, setRegTypeInput] = useState<"invite" | "form">("invite");
+  const [maxCapInput, setMaxCapInput] = useState("");
+  const [regTypeSaving, setRegTypeSaving] = useState(false);
+  const [regTypeStatus, setRegTypeStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   // Event list UI state
   const [eventsView, setEventsView] = useState<"grid" | "list">("grid");
   const [eventsSort, setEventsSort] = useState<"date-desc" | "date-asc" | "name-asc" | "created-desc">("date-desc");
@@ -573,8 +578,13 @@ export default function AdminPage() {
   const [newEventDesc, setNewEventDesc] = useState("");
   const [newEventPw, setNewEventPw] = useState("");
   const [newEventCategory, setNewEventCategory] = useState<string>("");
+  const [newEventRegType, setNewEventRegType] = useState<"invite" | "form">("invite");
+  const [newEventMaxCapacity, setNewEventMaxCapacity] = useState("");
   const [newEventLoading, setNewEventLoading] = useState(false);
   const [newEventResult, setNewEventResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [formRegs, setFormRegs] = useState<FormRegistration[]>([]);
+  const [formRegsLoading, setFormRegsLoading] = useState(false);
+  const [formRegsLoaded, setFormRegsLoaded] = useState(false);
 
   // Mailing state
   type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; zielgruppe_id: string | null; anrede?: string | null; sprache?: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
@@ -653,6 +663,15 @@ export default function AdminPage() {
   useEffect(() => {
     if (authenticated && savedPassword.current) loadAllEvents();
   }, [authenticated, loadAllEvents]);
+
+  useEffect(() => {
+    if (activeTab === "form-regs" && selectedEventId && !formRegsLoaded) {
+      setFormRegsLoading(true);
+      fetch(`/api/admin/form-registrations?password=${encodeURIComponent(savedPassword.current)}&eventId=${selectedEventId}`)
+        .then(r => r.json())
+        .then(data => { if (Array.isArray(data)) setFormRegs(data); setFormRegsLoading(false); setFormRegsLoaded(true); });
+    }
+  }, [activeTab, selectedEventId, formRegsLoaded]);
 
   useEffect(() => {
     if (eventSection === "mailing" && selectedEventId && !membersLoaded) {
@@ -971,11 +990,15 @@ export default function AdminPage() {
   // ─── MAIN ADMIN ──────────────────────────────────────────────────────────────
   const selectedEvent = allEventCards.find(e => e.id === selectedEventId) ?? null;
   const eventTabs = [
-    { id: "scanner", label: "Scanner" },
-    { id: "list", label: "Gäste" },
-    { id: "tools", label: "Tools" },
-    { id: "analytics", label: "Statistiken" },
-  ] as const;
+    ...(selectedEvent?.registration_type === "form"
+      ? [{ id: "form-regs" as const, label: "Anmeldungen" }]
+      : [
+          { id: "scanner" as const, label: "Scanner" },
+          { id: "list" as const, label: "Gäste" },
+        ]),
+    { id: "tools" as const, label: "Tools" },
+    { id: "analytics" as const, label: "Statistiken" },
+  ];
   const mailingTabs = [
     { id: "compose", label: "Neue Kampagne" },
     { id: "drafts", label: "Entwürfe" },
@@ -1245,6 +1268,19 @@ export default function AdminPage() {
                   placeholder="Zugangscode für Portal (optional)" className={inputClass} style={inputStyle}
                   onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                   onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                <select value={newEventRegType} onChange={e => setNewEventRegType(e.target.value as "invite" | "form")}
+                  className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
+                  <option value="invite">Einladung (Ticket-Code)</option>
+                  <option value="form">Formular-Anmeldung</option>
+                </select>
+                {newEventRegType === "form" && (
+                  <input type="number" min={1} value={newEventMaxCapacity} onChange={e => setNewEventMaxCapacity(e.target.value)}
+                    placeholder="Max. Gästeanzahl (optional)" className={inputClass} style={inputStyle}
+                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                )}
                 {newEventResult && (
                   <p className={`text-xs ${newEventResult.ok ? "text-green-600" : "text-red-500"}`}>{newEventResult.msg}</p>
                 )}
@@ -1263,11 +1299,11 @@ export default function AdminPage() {
                       try {
                         const res = await fetch("/api/admin/events", {
                           method: "POST", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ adminPassword: savedPassword.current, name: newEventName, date: newEventDate, location: newEventLocation, description: newEventDesc, registration_password: newEventPw, category: newEventCategory || null }),
+                          body: JSON.stringify({ adminPassword: savedPassword.current, name: newEventName, date: newEventDate, location: newEventLocation, description: newEventDesc, registration_password: newEventPw, category: newEventCategory || null, registration_type: newEventRegType, max_capacity: newEventMaxCapacity || null }),
                         });
                         const d = await res.json();
                         if (!res.ok) { setNewEventResult({ ok: false, msg: d.error || "Fehler beim Erstellen." }); return; }
-                        setNewEventName(""); setNewEventDate(""); setNewEventLocation(""); setNewEventDesc(""); setNewEventPw(""); setNewEventCategory("");
+                        setNewEventName(""); setNewEventDate(""); setNewEventLocation(""); setNewEventDesc(""); setNewEventPw(""); setNewEventCategory(""); setNewEventRegType("invite"); setNewEventMaxCapacity("");
                         setShowCreateEvent(false);
                         loadAllEvents();
                       } catch {
@@ -1314,11 +1350,15 @@ export default function AdminPage() {
             const openEvent = (ev: EventCard) => {
               setSelectedEventId(ev.id);
               setEventSection(null);
-              setActiveTab("list");
+              setActiveTab(ev.registration_type === "form" ? "form-regs" : "list");
               setSlugInput(ev.slug ?? "");
               setSlugStatus(null);
+              setRegTypeInput(ev.registration_type ?? "invite");
+              setMaxCapInput(ev.max_capacity?.toString() ?? "");
+              setRegTypeStatus(null);
               setMembersLoaded(false);
-              loadRegistrations(savedPassword.current, ev.id);
+              setFormRegsLoaded(false);
+              if (ev.registration_type !== "form") loadRegistrations(savedPassword.current, ev.id);
             };
 
             const duplicateEvent = async (ev: EventCard) => {
@@ -1939,6 +1979,46 @@ export default function AdminPage() {
               </div>
             </Card>
 
+            {/* Anmeldemodus */}
+            <Card>
+              <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+              <CardHeader title="Anmeldemodus" subtitle="Einladung (Ticket) oder Formular-Anmeldung" />
+              <div className="p-5 space-y-3">
+                <select value={regTypeInput} onChange={e => { setRegTypeInput(e.target.value as "invite" | "form"); setRegTypeStatus(null); }}
+                  className={inputClass} style={inputStyle}
+                  onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                  onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
+                  <option value="invite">Einladung (Ticket-Code)</option>
+                  <option value="form">Formular-Anmeldung</option>
+                </select>
+                {regTypeInput === "form" && (
+                  <input type="number" min={1} value={maxCapInput} onChange={e => { setMaxCapInput(e.target.value); setRegTypeStatus(null); }}
+                    placeholder="Max. Gästeanzahl (leer = unbegrenzt)"
+                    className={inputClass} style={inputStyle}
+                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                )}
+                {regTypeStatus && <p className={`text-xs ${regTypeStatus.ok ? "text-green-600" : "text-red-500"}`}>{regTypeStatus.msg}</p>}
+                <div className="flex justify-end">
+                  <BtnPrimary disabled={regTypeSaving || !selectedEventId} onClick={async () => {
+                    if (!selectedEventId) return;
+                    setRegTypeSaving(true); setRegTypeStatus(null);
+                    const res = await fetch(`/api/admin/events/${selectedEventId}`, {
+                      method: "PATCH", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ adminPassword: savedPassword.current, registration_type: regTypeInput, max_capacity: maxCapInput || null }),
+                    });
+                    setRegTypeSaving(false);
+                    if (!res.ok) { setRegTypeStatus({ ok: false, msg: "Fehler beim Speichern." }); return; }
+                    setAllEventCards(prev => prev.map(e => e.id === selectedEventId ? { ...e, registration_type: regTypeInput, max_capacity: maxCapInput ? Number(maxCapInput) : null } : e));
+                    setRegTypeStatus({ ok: true, msg: "Gespeichert." });
+                    setFormRegsLoaded(false);
+                  }}>
+                    {regTypeSaving ? "Speichert…" : "Speichern"}
+                  </BtnPrimary>
+                </div>
+              </div>
+            </Card>
+
             {/* CSV Import */}
             <Card>
               <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
@@ -2044,6 +2124,69 @@ export default function AdminPage() {
         {/* ═══════════ ANALYTICS TAB ═══════════ */}
         {eventSection === "management" && activeTab === "analytics" && selectedEventId && (
           <AnalyticsDashboard eventId={selectedEventId} />
+        )}
+
+        {/* ═══════════ FORM-REGISTRATIONS TAB ═══════════ */}
+        {eventSection === "management" && activeTab === "form-regs" && selectedEventId && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
+                {formRegs.length} Anmeldung{formRegs.length !== 1 ? "en" : ""}
+                {selectedEvent?.max_capacity ? ` · Max. ${selectedEvent.max_capacity}` : ""}
+              </p>
+              <button
+                onClick={() => { setFormRegsLoaded(false); }}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
+                style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
+              >
+                <IconRefresh className="w-3.5 h-3.5" /> Aktualisieren
+              </button>
+            </div>
+            {formRegsLoading ? (
+              <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div>
+            ) : formRegs.length === 0 ? (
+              <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Noch keine Anmeldungen.</div>
+            ) : (
+              <div className="space-y-2">
+                {formRegs.map(reg => (
+                  <Card key={reg.id}>
+                    <div className="px-5 py-4 flex items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm" style={{ color: "var(--ig-navy)" }}>{reg.first_name} {reg.last_name}</p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>{reg.email}{reg.company ? ` · ${reg.company}` : ""}</p>
+                        {reg.message && <p className="text-xs mt-1 italic" style={{ color: "var(--ig-gray3)" }}>{reg.message}</p>}
+                        <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{new Date(reg.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                      </div>
+                      <select
+                        value={reg.status}
+                        onChange={async e => {
+                          const newStatus = e.target.value;
+                          await fetch("/api/admin/form-registrations", {
+                            method: "PATCH", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ adminPassword: savedPassword.current, id: reg.id, status: newStatus }),
+                          });
+                          setFormRegs(prev => prev.map(r => r.id === reg.id ? { ...r, status: newStatus as FormRegistration["status"] } : r));
+                        }}
+                        className="text-xs px-2 py-1 rounded-lg outline-none flex-shrink-0"
+                        style={{
+                          border: "1.5px solid var(--ig-gray2)",
+                          color: reg.status === "confirmed" ? "#16a34a" : reg.status === "rejected" ? "#dc2626" : reg.status === "waitlisted" ? "#d97706" : "var(--ig-navy)",
+                          background: reg.status === "confirmed" ? "#f0fdf4" : reg.status === "rejected" ? "#fff5f5" : reg.status === "waitlisted" ? "#fffbeb" : "white",
+                        }}
+                      >
+                        <option value="pending">Ausstehend</option>
+                        <option value="confirmed">Bestätigt</option>
+                        <option value="rejected">Abgelehnt</option>
+                        <option value="waitlisted">Warteliste</option>
+                      </select>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* ═══════════ MAILING TAB ═══════════ */}

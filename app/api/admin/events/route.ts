@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { adminPassword, name, date, location, description, registration_password, category } = await req.json()
+  const { adminPassword, name, date, location, description, registration_password, category, registration_type, max_capacity } = await req.json()
 
   if (adminPassword !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
@@ -55,6 +55,8 @@ export async function POST(req: NextRequest) {
       registration_password: registration_password?.trim() || null,
       active: true,
       category: category?.trim() || null,
+      registration_type: registration_type ?? 'invite',
+      max_capacity: max_capacity ? Number(max_capacity) : null,
     })
     .select()
     .single()
