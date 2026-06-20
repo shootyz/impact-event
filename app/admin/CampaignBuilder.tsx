@@ -306,8 +306,14 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
             </button>
           </div>
           <div>
-            <label className={labelCls} style={labelSty}>Hinweis <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
-            <FocusInput value={slot.note} onChange={v => updateSlot(slot.id, { note: v })} placeholder="+ Additional speakers to be announced" />
+            {slot.note ? (
+              <>
+                <label className={labelCls} style={labelSty}>Hinweis</label>
+                <FocusInput value={slot.note} onChange={v => updateSlot(slot.id, { note: v })} placeholder="+ Additional speakers to be announced" />
+              </>
+            ) : (
+              <button className="text-xs" style={{ color: "var(--ig-gray3)" }} onClick={() => updateSlot(slot.id, { note: " " })}>+ Hinweis hinzufügen</button>
+            )}
           </div>
         </div>
       ))}
