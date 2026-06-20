@@ -5,6 +5,7 @@ import type jsQRType from "jsqr";
 import CampaignBuilder from "./CampaignBuilder";
 import PreviewPanel from "./PreviewPanel";
 import ZielgruppenDashboard from "./ZielgruppenDashboard";
+import AnalyticsDashboard from "./AnalyticsDashboard";
 import type { CampaignBlock } from "./campaign-renderer";
 import type { Lang } from "./i18n";
 
@@ -526,7 +527,7 @@ export default function AdminPage() {
   const [scanning, setScanning] = useState(false);
   const [eventSection, setEventSection] = useState<null | "mailing" | "management">(null);
   const [showScannerPicker, setShowScannerPicker] = useState(false);
-  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools">("list");
+  const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "analytics">("list");
 
   const [dialog, setDialog] = useState<{ title: string; message: string; danger?: boolean; onConfirm: () => void } | null>(null);
   const showConfirm = (title: string, message: string, danger: boolean, onConfirm: () => void) =>
@@ -973,6 +974,7 @@ export default function AdminPage() {
     { id: "scanner", label: "Scanner" },
     { id: "list", label: "Gäste" },
     { id: "tools", label: "Tools" },
+    { id: "analytics", label: "Statistiken" },
   ] as const;
   const mailingTabs = [
     { id: "compose", label: "Neue Kampagne" },
@@ -2009,6 +2011,11 @@ export default function AdminPage() {
           </div>
         )}
 
+
+        {/* ═══════════ ANALYTICS TAB ═══════════ */}
+        {eventSection === "management" && activeTab === "analytics" && selectedEventId && (
+          <AnalyticsDashboard eventId={selectedEventId} />
+        )}
 
         {/* ═══════════ MAILING TAB ═══════════ */}
         {eventSection === "mailing" && (
