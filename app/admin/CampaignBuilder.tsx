@@ -447,10 +447,10 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
 }
 
 function SpeakerEditor({ block: rawBlock, onChange }: { block: SpeakerBlock; onChange: (b: SpeakerBlock) => void }) {
-  // Migrate legacy blocks that stored speaker fields directly on the block
-  const block: SpeakerBlock = rawBlock.speakers
+  const legacy = rawBlock as unknown as Record<string, string>;
+  const block: SpeakerBlock = rawBlock.speakers?.length
     ? rawBlock
-    : { type: "speaker", speakers: [{ id: Math.random().toString(36).slice(2), photo_url: (rawBlock as unknown as Record<string,string>).photo_url ?? "", name: (rawBlock as unknown as Record<string,string>).name ?? "", title: (rawBlock as unknown as Record<string,string>).title ?? "", bio: (rawBlock as unknown as Record<string,string>).bio ?? "", book: (rawBlock as unknown as Record<string,string>).book ?? "" }] };
+    : { type: "speaker", speakers: [{ id: Math.random().toString(36).slice(2), photo_url: legacy.photo_url ?? "", name: legacy.name ?? "", title: legacy.title ?? "", bio: legacy.bio ?? "", book: legacy.book ?? "" }] };
   const updateSp = (i: number, sp: Speaker) => onChange({ ...block, speakers: block.speakers.map((s, j) => j === i ? sp : s) });
   const addSp = () => onChange({ ...block, speakers: [...block.speakers, { id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] });
   const removeSp = (i: number) => onChange({ ...block, speakers: block.speakers.filter((_, j) => j !== i) });
@@ -731,6 +731,23 @@ export default function CampaignBuilder({
   const [blocks, setBlocks] = useState<CampaignBlock[]>(
     initialBlocks && initialBlocks.length > 0 ? initialBlocks : [{ type: "intro", text: "" }]
   );
+  const historyRef = useRef<CampaignBlock[][]>([]);
+  const [canUndo, setCanUndo] = useState(false);
+  const setBlocksWithHistory = useCallback((updater: CampaignBlock[] | ((prev: CampaignBlock[]) => CampaignBlock[])) => {
+    setBlocks(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      historyRef.current = [...historyRef.current.slice(-49), prev];
+      setCanUndo(true);
+      return next;
+    });
+  }, []);
+  const undo = useCallback(() => {
+    if (!historyRef.current.length) return;
+    const prev = historyRef.current[historyRef.current.length - 1];
+    historyRef.current = historyRef.current.slice(0, -1);
+    setCanUndo(historyRef.current.length > 0);
+    setBlocks(prev);
+  }, []);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
@@ -747,25 +764,25 @@ export default function CampaignBuilder({
   const blocksRef = useRef(blocks);
   const zielgruppeIdRef = useRef(zielgruppeId);
   const updateBlock = (i: number, b: CampaignBlock) =>
-    setBlocks(prev => prev.map((x, idx) => idx === i ? b : x));
+    setBlocksWithHistory(prev => prev.map((x, idx) => idx === i ? b : x));
   const removeBlock = (i: number) =>
-    setBlocks(prev => prev.filter((_, idx) => idx !== i));
+    setBlocksWithHistory(prev => prev.filter((_, idx) => idx !== i));
   const moveBlock = (i: number, dir: -1 | 1) =>
-    setBlocks(prev => {
+    setBlocksWithHistory(prev => {
       const next = [...prev];
       const j = i + dir;
       [next[i], next[j]] = [next[j], next[i]];
       return next;
     });
   const addBlock = (type: CampaignBlock["type"]) => {
-    setBlocks(prev => [...prev, defaultBlock(type)]);
+    setBlocksWithHistory(prev => [...prev, defaultBlock(type)]);
     setAddMenuOpen(false);
   };
   const dropBlock = useCallback(() => {
     if (dragIdx === null || overIdx === null || dragIdx === overIdx) {
       setDragIdx(null); setOverIdx(null); return;
     }
-    setBlocks(prev => {
+    setBlocksWithHistory(prev => {
       const next = [...prev];
       const [item] = next.splice(dragIdx, 1);
       next.splice(overIdx, 0, item);
@@ -776,6 +793,18 @@ export default function CampaignBuilder({
 
   const bodyHtml = renderBlocksToHtml(blocks, { lang });
   const canSave = subject.trim() && blocks.length > 0;
+
+  // Cmd+Z undo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [undo]);
 
   // Keep refs in sync so the interval always reads latest values
   useEffect(() => { titleRef.current = title; isDirtyRef.current = true; }, [title]);
@@ -937,6 +966,10 @@ export default function CampaignBuilder({
           <div className="text-xs" style={{ color: result ? (result.ok ? "#16a34a" : "#dc2626") : "#9ca3af" }}>
             {result ? result.msg : autoSaveStatus ?? ""}
           </div>
+          <div className="flex items-center gap-2">
+          <button onClick={undo} disabled={!canUndo} title="Rückgängig (⌘Z)"
+            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-65 flex items-center justify-center"
+            style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↩</button>
           <button disabled={!canSave || saving}
             className="px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition active:scale-95 disabled:opacity-40 hover:opacity-70"
             style={{ background: "#D28D28", color: "white" }}
@@ -952,6 +985,7 @@ export default function CampaignBuilder({
             }}>
             {saving ? "Wird gespeichert…" : "Als Entwurf speichern"}
           </button>
+          </div>
         </div>
       </div>
     </div>
