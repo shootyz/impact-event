@@ -82,7 +82,7 @@ function buildCampaignHtml({
         </td></tr>
 ` : ''
 
-  return `<!DOCTYPE html>
+  const rawHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -137,9 +137,9 @@ function buildCampaignHtml({
 </html>`
 
   if (campaignId && member.id !== 'test') {
-    return wrapLinksForTracking(html, appUrl, campaignId, member.id)
+    return wrapLinksForTracking(rawHtml, appUrl, campaignId, member.id)
   }
-  return html
+  return rawHtml
 }
 
 function buildSalutation(member: Member, lang: Lang): string {
