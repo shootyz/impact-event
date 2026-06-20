@@ -13,9 +13,9 @@ const inputCls = "w-full rounded-lg border px-2.5 py-1.5 text-xs outline-none tr
 const inputStyle = { borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" };
 
 // Reusable button classes
-const btnPrimary = "transition active:scale-95 disabled:opacity-40 font-semibold text-xs px-3 py-1.5 rounded-lg";
-const btnSecondary = "transition active:scale-95 text-xs px-3 py-1.5 rounded-lg";
-const btnIcon = "transition active:scale-95 p-1.5 rounded-lg";
+const btnPrimary = "transition hover:opacity-90 active:scale-95 disabled:opacity-40 font-semibold text-xs px-3 py-1.5 rounded-lg";
+const btnSecondary = "transition hover:opacity-80 active:scale-95 text-xs px-3 py-1.5 rounded-lg";
+const btnIcon = "transition hover:opacity-100 active:scale-95 p-1.5 rounded-lg";
 
 type EditingMember = {
   id: string; first_name: string; last_name: string;
@@ -41,6 +41,7 @@ export default function ZielgruppenDashboard({
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [addSuccess, setAddSuccess] = useState(false);
   const [newZGName, setNewZGName] = useState("");
   const [creatingZG, setCreatingZG] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -96,6 +97,8 @@ export default function ZielgruppenDashboard({
         const updated = await fetch(`/api/members?eventId=${eventId}`).then(r => r.json());
         if (Array.isArray(updated)) onMembersChange(updated);
         setNewMember(null);
+        setAddSuccess(true);
+        setTimeout(() => setAddSuccess(false), 3000);
       }
     } catch (e) {
       setAddError(String(e));
@@ -365,8 +368,12 @@ export default function ZielgruppenDashboard({
                       </div>
                     </div>
                   ) : (
+                    <div className="flex flex-col gap-2">
+                    {addSuccess && (
+                      <p className="text-xs font-medium" style={{ color: "#16a34a" }}>✓ Mitglied hinzugefügt</p>
+                    )}
                     <div className="flex items-center gap-4">
-                      <button onClick={() => setNewMember(emptyNew())}
+                      <button onClick={() => { setNewMember(emptyNew()); setAddSuccess(false); }}
                         className="text-xs font-medium flex items-center gap-1.5 transition active:scale-95 opacity-90 hover:opacity-100"
                         style={{ color: "var(--ig-gold)" }}>
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
@@ -386,6 +393,7 @@ export default function ZielgruppenDashboard({
                           {csvResult.inserted < 0 ? "Spalten fehlen (first_name, last_name, email)" : `✓ ${csvResult.inserted} importiert`}
                         </span>
                       )}
+                    </div>
                     </div>
                   )}
                 </div>

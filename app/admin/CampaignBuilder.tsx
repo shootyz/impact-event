@@ -254,7 +254,7 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
         <div key={slot.id} className="rounded-xl border p-4 space-y-3" style={{ borderColor: "#e5e7eb", background: "#fafafa" }}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#1E3263" }}>Slot {i + 1}</span>
-            <button onClick={() => removeSlot(slot.id)} className="text-xs px-2 py-1 rounded transition active:scale-95" style={{ color: "#dc2626" }}>Entfernen</button>
+            <button onClick={() => removeSlot(slot.id)} className="text-xs px-2 py-1 rounded transition active:scale-95 hover:opacity-70" style={{ color: "#dc2626" }}>Entfernen</button>
           </div>
           <div className="space-y-3">
             <div>
@@ -299,7 +299,7 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
             </div>
           )}
           <div className="flex gap-3">
-            <button onClick={() => addSubItem(slot.id)} className="text-xs px-3 py-1.5 rounded-lg border font-medium transition active:scale-95" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
+            <button onClick={() => addSubItem(slot.id)} className="text-xs px-3 py-1.5 rounded-lg border font-medium transition active:scale-95 hover:opacity-70" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#D28D28"; (e.currentTarget as HTMLElement).style.color = "#D28D28"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLElement).style.color = "#6b7280"; }}>
               + Unterpunkt
@@ -311,7 +311,7 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
           </div>
         </div>
       ))}
-      <button onClick={addSlot} className="px-3 py-1.5 rounded-lg border text-xs font-medium transition active:scale-95" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
+      <button onClick={addSlot} className="px-3 py-1.5 rounded-lg border text-xs font-medium transition active:scale-95 hover:opacity-70" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#1E3263"; (e.currentTarget as HTMLElement).style.color = "#1E3263"; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLElement).style.color = "#6b7280"; }}>
         + Slot hinzufügen
@@ -342,7 +342,7 @@ function FinalistsEditor({ block, onChange }: { block: FinalistsBlock; onChange:
         <div key={f.id} className="rounded-xl border p-4 space-y-3" style={{ borderColor: "#e5e7eb", background: "#fafafa" }}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#1E3263" }}>Finalist {i + 1}</span>
-            <button onClick={() => removeItem(f.id)} className="text-xs px-2 py-1 rounded transition active:scale-95" style={{ color: "#dc2626" }}>Entfernen</button>
+            <button onClick={() => removeItem(f.id)} className="text-xs px-2 py-1 rounded transition active:scale-95 hover:opacity-70" style={{ color: "#dc2626" }}>Entfernen</button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -360,7 +360,7 @@ function FinalistsEditor({ block, onChange }: { block: FinalistsBlock; onChange:
           </div>
         </div>
       ))}
-      <button onClick={addItem} className="px-3 py-1.5 rounded-lg border text-xs font-medium transition active:scale-95" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
+      <button onClick={addItem} className="px-3 py-1.5 rounded-lg border text-xs font-medium transition active:scale-95 hover:opacity-70" style={{ borderColor: "#d1d5db", color: "#6b7280" }}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#1E3263"; (e.currentTarget as HTMLElement).style.color = "#1E3263"; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#d1d5db"; (e.currentTarget as HTMLElement).style.color = "#6b7280"; }}>
         + Finalist hinzufügen
@@ -578,10 +578,10 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
         )}
         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
           <button disabled={index === 0} onClick={() => onMove(-1)}
-            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30"
+            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-80"
             style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↑</button>
           <button disabled={index === total - 1} onClick={() => onMove(1)}
-            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30"
+            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-80"
             style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↓</button>
           <button onClick={onRemove}
             className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95"
@@ -944,7 +944,7 @@ export default function CampaignBuilder({
         {/* Save button */}
         <div className="flex justify-end">
           <button disabled={!canSave || saving}
-            className="px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition active:scale-95 disabled:opacity-40"
+            className="px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition active:scale-95 disabled:opacity-40 hover:opacity-90"
             style={{ background: "#D28D28", color: "white" }}
             onClick={async () => {
               setSaving(true); setResult(null);
