@@ -86,8 +86,11 @@ export default function ZielgruppenDashboard({
     setCsvImporting(true);
     setCsvResult(null);
     const text = await file.text();
-    const lines = text.trim().split("\n");
-    const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g, ""));
+    const lines = text.trim().split(/\r?\n/);
+    // Auto-detect delimiter: semicolon or comma
+    const delim = lines[0].includes(";") ? ";" : ",";
+    const splitLine = (l: string) => l.split(delim).map(c => c.trim().replace(/^"|"$/g, ""));
+    const headers = splitLine(lines[0]).map(h => h.toLowerCase());
     const iFirst = headers.findIndex(h => h === "first_name" || h === "vorname");
     const iLast = headers.findIndex(h => h === "last_name" || h === "name");
     const iEmail = headers.findIndex(h => h === "email" || h === "e-mail");
@@ -98,9 +101,9 @@ export default function ZielgruppenDashboard({
       setCsvImporting(false);
       return;
     }
-    const rows = lines.slice(1).map(l => {
-      const cols = l.split(",").map(c => c.trim().replace(/"/g, ""));
-      const spracheRaw = iSprache >= 0 ? cols[iSprache]?.toLowerCase() ?? "" : "";
+    const rows = lines.slice(1).filter(l => l.trim()).map(l => {
+      const cols = splitLine(l);
+      const spracheRaw = iSprache >= 0 ? (cols[iSprache] ?? "").toLowerCase() : "";
       return {
         first_name: cols[iFirst] ?? "",
         last_name: cols[iLast] ?? "",
