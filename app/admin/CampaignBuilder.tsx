@@ -421,10 +421,14 @@ function SpeakerEditor({ block, onChange }: { block: SpeakerBlock; onChange: (b:
           <FocusInput value={block.title} onChange={v => onChange({ ...block, title: v })} placeholder="Vice-Chairman, Roche · Impact Advisory Board" />
         </div>
       </div>
-      <div>
-        <label className={labelCls} style={labelSty}>Buch / Vortrag <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
-        <FocusInput value={block.book} onChange={v => onChange({ ...block, book: v })} placeholder="André will present his new book The New Nature of Business…" />
-      </div>
+      {block.book ? (
+        <div>
+          <label className={labelCls} style={labelSty}>Buch / Vortrag</label>
+          <FocusInput value={block.book} onChange={v => onChange({ ...block, book: v })} placeholder="André will present his new book…" />
+        </div>
+      ) : (
+        <button className="text-xs" style={{ color: "var(--ig-gray3)" }} onClick={() => onChange({ ...block, book: " " })}>+ Buch / Vortrag hinzufügen</button>
+      )}
       <div>
         <label className={labelCls} style={labelSty}>Bio</label>
         <FocusInput multiline rows={3} value={block.bio} onChange={v => onChange({ ...block, bio: v })} placeholder="A groundbreaking work on how business leaders…" />
