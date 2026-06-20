@@ -2073,13 +2073,6 @@ export default function AdminPage() {
             {/* ── Compose ── */}
             {mailingTab === "compose" && (
               <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
-                {editingCampaign && (
-                  <div className="px-5 pt-3">
-                    <button className="text-xs underline" style={{ color: "var(--ig-gold)" }} onClick={() => { setEditingCampaign(null); setBuilderZielgruppeId(null); }}>
-                      ← Zurück zu neuer Kampagne
-                    </button>
-                  </div>
-                )}
                 <CampaignBuilder
                   key={editingCampaign?.id ?? "new"}
                   campaignId={editingCampaign?.id}
