@@ -593,6 +593,14 @@ export default function AdminPage() {
   const [newEventCategory, setNewEventCategory] = useState<string>("");
   const [newEventRegType, setNewEventRegType] = useState<"invite" | "form">("invite");
   const [newEventMaxCapacity, setNewEventMaxCapacity] = useState("");
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editEvName, setEditEvName] = useState("");
+  const [editEvDate, setEditEvDate] = useState("");
+  const [editEvLocation, setEditEvLocation] = useState("");
+  const [editEvDesc, setEditEvDesc] = useState("");
+  const [editEvCategory, setEditEvCategory] = useState("");
+  const [editEvSaving, setEditEvSaving] = useState(false);
+  const [editEvResult, setEditEvResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [newEventLoading, setNewEventLoading] = useState(false);
   const [newEventResult, setNewEventResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [formRegs, setFormRegs] = useState<FormRegistration[]>([]);
@@ -1494,6 +1502,15 @@ export default function AdminPage() {
                         </div>
                       </button>
                       <div className="px-4 pb-3 pt-2.5 flex items-center gap-1.5 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
+                        {/* Edit */}
+                        <button title="Bearbeiten"
+                          onClick={e => { e.stopPropagation(); setEditingEventId(editingEventId === ev.id ? null : ev.id); setEditEvName(ev.name); setEditEvDate(ev.date?.slice(0,16) ?? ""); setEditEvLocation(ev.location); setEditEvDesc(ev.description ?? ""); setEditEvCategory(ev.category ?? ""); setEditEvResult(null); }}
+                          className="p-2 rounded-lg transition flex items-center justify-center"
+                          style={{ border: `1px solid ${editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-gray2)"}`, color: editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-navy)", background: editingEventId === ev.id ? "var(--ig-light)" : "white" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = editingEventId === ev.id ? "var(--ig-light)" : "white"; }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
                         {/* Portal */}
                         <a href={portalUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
                           title="Portal öffnen"
@@ -1549,6 +1566,56 @@ export default function AdminPage() {
                           <IconTrash className="w-3.5 h-3.5" />
                         </button>
                       </div>
+                      {/* Inline edit form */}
+                      {editingEventId === ev.id && (
+                        <div className="px-4 pb-4 pt-1 border-t space-y-2" style={{ borderColor: "var(--ig-gray2)", background: "var(--ig-light)" }}>
+                          <input type="text" value={editEvName} onChange={e => setEditEvName(e.target.value)}
+                            placeholder="Event-Name *" className={inputClass} style={inputStyle}
+                            onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                            onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                          <select value={editEvCategory} onChange={e => setEditEvCategory(e.target.value)}
+                            className={inputClass} style={inputStyle}
+                            onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                            onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
+                            <option value="">Kategorie (optional)</option>
+                            {EVENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                          <input type="datetime-local" value={editEvDate} onChange={e => setEditEvDate(e.target.value)}
+                            className={inputClass} style={inputStyle}
+                            onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                            onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                          <input type="text" value={editEvLocation} onChange={e => setEditEvLocation(e.target.value)}
+                            placeholder="Ort *" className={inputClass} style={inputStyle}
+                            onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                            onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                          <input type="text" value={editEvDesc} onChange={e => setEditEvDesc(e.target.value)}
+                            placeholder="Beschreibung (optional)" className={inputClass} style={inputStyle}
+                            onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                            onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                          {editEvResult && <p className={`text-xs ${editEvResult.ok ? "text-green-600" : "text-red-500"}`}>{editEvResult.msg}</p>}
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            <button onClick={() => { setEditingEventId(null); setEditEvResult(null); }}
+                              className="text-sm transition" style={{ color: "var(--ig-gray3)" }}
+                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
+                              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                              Abbrechen
+                            </button>
+                            <BtnPrimary disabled={editEvSaving || !editEvName.trim() || !editEvDate || !editEvLocation.trim()} onClick={async () => {
+                              setEditEvSaving(true); setEditEvResult(null);
+                              const res = await fetch(`/api/admin/events/${ev.id}`, {
+                                method: "PATCH", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ adminPassword: savedPassword.current, name: editEvName, date: editEvDate, location: editEvLocation, description: editEvDesc, category: editEvCategory || null }),
+                              });
+                              setEditEvSaving(false);
+                              if (!res.ok) { setEditEvResult({ ok: false, msg: "Fehler beim Speichern." }); return; }
+                              setAllEventCards(prev => prev.map(e => e.id === ev.id ? { ...e, name: editEvName, date: editEvDate, location: editEvLocation, description: editEvDesc, category: editEvCategory || null } : e));
+                              setEditingEventId(null);
+                            }}>
+                              {editEvSaving ? "Speichert…" : "Speichern"}
+                            </BtnPrimary>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
