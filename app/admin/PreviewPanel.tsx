@@ -292,12 +292,7 @@ function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & {
     <div>
       {(block.speakers ?? []).map((sp, i) => (
         <div key={sp.id} style={i > 0 ? { borderTop: `1px solid ${D.gray2}`, marginTop: 20, paddingTop: 20 } : {}}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-            {sp.photo_url && <img src={sp.photo_url} alt={sp.name} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}` }} />}
-            {block.speakers.length > 1 && (
-              <button onClick={() => removeSpeaker(i)} style={{ background: "none", border: "none", cursor: "pointer", color: D.gray, fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
-            )}
-          </div>
+          {sp.photo_url && <img src={sp.photo_url} alt={sp.name} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 8 }} />}
           <Editable value={sp.name} onChange={v => updateSpeaker(i, { name: v })}
             placeholder="Name" style={{ color: D.navy, fontSize: 16, fontWeight: 700, marginBottom: 2 }} />
           {sp.title?.trim() && <Editable value={sp.title} onChange={v => updateSpeaker(i, { title: v })}
@@ -308,9 +303,6 @@ function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & {
             placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, whiteSpace: "pre-wrap" }} />}
         </div>
       ))}
-      <button onClick={addSpeaker} style={{ marginTop: 16, color: D.gold, fontSize: 13, fontWeight: 600, background: "none", border: `1px dashed ${D.gold}`, borderRadius: 6, padding: "6px 14px", cursor: "pointer", width: "100%" }}>
-        + Speaker hinzufügen
-      </button>
     </div>
   );
 }

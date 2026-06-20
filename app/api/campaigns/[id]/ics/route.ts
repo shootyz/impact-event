@@ -16,7 +16,9 @@ export async function GET(_req: NextRequest, props: any) {
 
   let blocks: CampaignBlock[] = []
   try {
-    const parsed = JSON.parse(campaign.blocks_json || '[]')
+    const parsed = typeof campaign.blocks_json === 'string'
+      ? JSON.parse(campaign.blocks_json || '[]')
+      : (campaign.blocks_json ?? [])
     blocks = Array.isArray(parsed) ? parsed : (parsed.blocks ?? [])
   } catch { /* empty */ }
 

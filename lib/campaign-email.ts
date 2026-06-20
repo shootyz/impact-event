@@ -203,13 +203,14 @@ export async function buildCampaignHtmlForMember({
       campaignLang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
       hasRegisterBlock = blocks.some((b: CampaignBlock) => b.type === 'register_button')
 
-      const eventIdMatch = campaign.event_url?.match(/[?&]event=([^&]+)/)
+      const eventId = campaign.event_id ?? campaign.event_url?.match(/[?&]event=([^&]+)/)?.[1] ?? null
       const qrParams: string[] = []
       if (campaignLang !== 'en') qrParams.push(`lang=${campaignLang}`)
-      if (eventIdMatch) qrParams.push(`event=${eventIdMatch[1]}`)
+      if (eventId) qrParams.push(`event=${eventId}`)
+      const baseUrl = `${appUrl}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
       const registerUrl = inviteCode
         ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
-        : campaign.event_url ?? null
+        : eventId ? baseUrl : (campaign.event_url ?? null)
 
       bodyHtml = renderToStaticMarkup(React.createElement(BlocksEmail, { blocks, lang: campaignLang, campaignId: campaign.id, appUrl, registerUrl: registerUrl ?? undefined }))
     } catch { /* use body_html fallback */ }
@@ -298,13 +299,14 @@ export async function sendCampaign({
     const inviteCode = codeMap.get(member.id) ?? null
 
     // Compute per-member register URL
-    const eventIdMatch = eventUrl?.match(/[?&]event=([^&]+)/)
+    const evId = eventId ?? eventUrl?.match(/[?&]event=([^&]+)/)?.[1] ?? null
     const qrParams: string[] = []
     if (campaignLang !== 'en') qrParams.push(`lang=${campaignLang}`)
-    if (eventIdMatch) qrParams.push(`event=${eventIdMatch[1]}`)
+    if (evId) qrParams.push(`event=${evId}`)
+    const memberBaseUrl = `${appUrl}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
     const memberRegisterUrl = inviteCode
       ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
-      : eventUrl ?? null
+      : evId ? memberBaseUrl : (eventUrl ?? null)
 
     // When blocks contain a register_button, render per-member with personalized URL
     const finalBodyHtml = hasRegisterBlock && parsedBlocks

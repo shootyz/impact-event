@@ -278,7 +278,15 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
       {block.slots.map((slot, i) => (
         <div key={slot.id} className="rounded-xl border p-4 space-y-3" style={{ borderColor: "#e5e7eb", background: "#fafafa" }}>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#1E3263" }}>Slot {i + 1}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: slot.is_break ? "#B8973A" : "#1E3263" }}>
+                {slot.is_break ? "☕ Pause" : `Slot ${i + 1}`}
+              </span>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input type="checkbox" checked={!!slot.is_break} onChange={e => updateSlot(slot.id, { is_break: e.target.checked })} className="rounded" />
+                <span className="text-xs" style={{ color: "#9ca3af" }}>Pause</span>
+              </label>
+            </div>
             <button onClick={() => removeSlot(slot.id)} className="text-xs px-2 py-1 rounded transition active:scale-95 hover:opacity-70" style={{ color: "#dc2626" }}>Entfernen</button>
           </div>
           <div className="space-y-3">
@@ -641,9 +649,10 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
             className="flex-1 text-sm font-semibold rounded px-1 border"
             style={{ color: "#1E3263", borderColor: "#d1d5db", outline: "none" }} />
         ) : (
-          <span className="font-semibold text-sm flex-1" style={{ color: "#1E3263" }}
-            onDoubleClick={startRename} title="Doppelklick zum Umbenennen">
+          <span className="font-semibold text-sm flex-1 flex items-center gap-1.5 group/title" style={{ color: "#1E3263" }}
+            onDoubleClick={startRename}>
             {block.label || getBlockLabel(block.type, "de")}
+            <span onClick={startRename} className="opacity-0 group-hover/title:opacity-60 transition cursor-pointer text-xs" title="Umbenennen" style={{ color: "#9ca3af" }}>✎</span>
           </span>
         )}
         <div className="flex gap-1" onClick={e => e.stopPropagation()}>

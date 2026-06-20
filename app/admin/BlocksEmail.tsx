@@ -88,7 +88,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           {block.event_title && <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 14px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.event_title}</p>}
           <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: 14 }}>
             <tbody><tr><td style={{ background: "#faf8f4", padding: "12px 16px", borderLeft: `3px solid ${D.gold}` }}>
-              {formattedDate && <p style={{ color: D.navy, fontSize: 14, fontWeight: 700, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</p>}
+              {formattedDate && <p style={{ color: D.black, fontSize: 14, fontWeight: 700, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</p>}
               {block.venue_name && <p style={{ color: D.black, fontSize: 14, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_name}</p>}
             </td></tr></tbody>
           </table>
@@ -118,15 +118,24 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <SectionHead label={(block as ProgramBlock).title || block.label || t.program} />
           {block.slots.map((slot, si) => (
             <div key={slot.id} style={{ padding: si === 0 ? "0 0 14px" : "14px 0", borderBottom: si < block.slots.length - 1 ? `1px solid ${D.gray2}` : "none" }}>
-              {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12, fontWeight: 700, margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
-              {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, margin: slot.sub_items.filter(s => s.title).length ? "0 0 16px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
-              {slot.sub_items.filter(s => s.title).map(sub => (
-                <div key={sub.id} style={{ marginTop: 10, marginBottom: 10, paddingTop: 10, paddingBottom: 10, paddingLeft: 12, borderLeft: `3px solid ${D.gold}` }}>
-                  <p style={{ color: D.black, fontSize: 14, fontWeight: 600, margin: "0 0 3px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.title}</p>
-                  {sub.speaker && <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.speaker}</p>}
+              {slot.is_break ? (
+                <div style={{ background: "#faf8f1", padding: "8px 14px", borderLeft: `2px solid ${D.gold}` }}>
+                  {slot.time?.trim() && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
+                  {slot.title?.trim() && <p style={{ color: "#8a7a55", fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
                 </div>
-              ))}
-              {slot.note?.trim() && <p style={{ color: D.gray, fontSize: 13, margin: "12px 0 0", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.note}</p>}
+              ) : (
+                <>
+                  {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12, fontWeight: 700, margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
+                  {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, margin: slot.sub_items.filter(s => s.title).length ? "0 0 16px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
+                  {slot.sub_items.filter(s => s.title).map(sub => (
+                    <div key={sub.id} style={{ marginTop: 10, marginBottom: 10, paddingTop: 10, paddingBottom: 10, paddingLeft: 12, borderLeft: `3px solid ${D.gold}` }}>
+                      <p style={{ color: D.black, fontSize: 14, fontWeight: 600, margin: "0 0 3px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.title}</p>
+                      {sub.speaker && <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.speaker}</p>}
+                    </div>
+                  ))}
+                  {slot.note?.trim() && <p style={{ color: D.gray, fontSize: 13, margin: "12px 0 0", fontFamily: "'Helvetice Neue',Helvetica,Arial,sans-serif" }}>{slot.note}</p>}
+                </>
+              )}
             </div>
           ))}
           <CustomFields block={block} />

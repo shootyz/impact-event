@@ -36,6 +36,7 @@ export type ProgramSlot = {
   title: string;
   sub_items: { id: string; title: string; speaker: string }[];
   note: string;
+  is_break?: boolean;
 };
 
 export type ProgramBlock = { type: "program"; title?: string; slots: ProgramSlot[] };
@@ -140,7 +141,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
         calMapsLinks.push(`<a href="${block.venue_maps_url}" style="color:${D.gold};font-size:13px;font-weight:400;text-decoration:none;font-family:Arial,sans-serif;">Maps</a>`);
 
       const boxLines: string[] = [];
-      if (dateStr) boxLines.push(`<p style="color:${D.navy};font-size:14px;font-weight:700;margin:0 0 6px;font-family:Arial,sans-serif;">${dateStr}</p>`);
+      if (dateStr) boxLines.push(`<p style="color:${D.black};font-size:14px;font-weight:700;margin:0 0 6px;font-family:Arial,sans-serif;">${dateStr}</p>`);
       if (block.venue_name) boxLines.push(`<p style="color:${D.black};font-size:14px;margin:0;font-family:Arial,sans-serif;">${block.venue_name}</p>`);
 
       return `${dividerHtml()}
@@ -161,6 +162,14 @@ ${extra}`;
         const isLast = i === block.slots.length - 1;
         const pad = isFirst ? "0 0 14px" : isLast ? "14px 0 0" : "14px 0";
         const subItems = slot.sub_items.filter(s => s.title);
+        if (slot.is_break) {
+          return `<tr><td style="padding:${pad};">
+  <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background:#faf8f1;padding:8px 14px;border-left:2px solid ${D.gold};">
+    <p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 2px;font-family:Arial,sans-serif;">${slot.time}</p>
+    <p style="color:#8a7a55;font-size:13px;margin:0;font-family:Arial,sans-serif;">${slot.title}</p>
+  </td></tr></table>
+</td></tr>`;
+        }
         return `<tr><td style="padding:${pad};">
   <p style="color:${D.navy};font-size:12px;font-weight:700;margin:0 0 4px;font-family:Arial,sans-serif;">${slot.time}</p>
   <p style="color:${D.black};font-size:15px;font-weight:400;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${slot.title}</p>
