@@ -97,7 +97,7 @@ function buildCampaignHtml({
           <img src="${appUrl.replace(/\/$/, '')}/logo.png" alt="Impact Gstaad" height="48"
             style="display:block;margin:0 auto 28px;" />
           <div style="height:1px;background:#e8e8e8;margin-bottom:28px;"></div>
-          <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">Dear ${member.first_name},</p>
+          <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${buildSalutation(member, lang)},</p>
         </td></tr>
 
         <!-- Body: intro (before CTA marker) -->
@@ -125,6 +125,23 @@ function buildCampaignHtml({
   </table>
 </body>
 </html>`
+}
+
+function buildSalutation(member: Member, lang: Lang): string {
+  const name = member.first_name
+  const anrede = member.anrede ?? ''
+  if (lang === 'de') {
+    if (anrede === 'Frau') return `Liebe ${name}`
+    if (anrede === 'Herr') return `Lieber ${name}`
+    return `Liebe/-r ${name}`
+  }
+  if (lang === 'fr') {
+    if (anrede === 'Frau') return `Chère ${name}`
+    if (anrede === 'Herr') return `Cher ${name}`
+    return `Chère/-er ${name}`
+  }
+  // EN
+  return `Dear ${name}`
 }
 
 function firstNameFromEmail(email: string): string {
