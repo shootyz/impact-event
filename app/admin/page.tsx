@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import type jsQRType from "jsqr";
 import CampaignBuilder from "./CampaignBuilder";
 import PreviewPanel from "./PreviewPanel";
 import ZielgruppenDashboard from "./ZielgruppenDashboard";
@@ -602,6 +603,7 @@ export default function AdminPage() {
   const [showScannerModal, setShowScannerModal] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
 
+  const jsQRRef = useRef<typeof jsQRType | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scannerRef = useRef<HTMLDivElement>(null);
@@ -637,17 +639,17 @@ export default function AdminPage() {
   useEffect(() => {
     if (eventSection === "mailing" && selectedEventId && !membersLoaded) {
       setMembersLoading(true);
-      fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => {
-        if (Array.isArray(d)) setMembers(d);
+      setCampaignsLoading(true);
+      Promise.all([
+        fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()),
+        fetch(`/api/zielgruppen?eventId=${selectedEventId}`).then(r => r.json()),
+        fetch(`/api/campaigns?eventId=${selectedEventId}`).then(r => r.json()),
+      ]).then(([members, zielgruppen, campaigns]) => {
+        if (Array.isArray(members)) setMembers(members);
+        if (Array.isArray(zielgruppen)) setZielgruppen(zielgruppen);
+        if (Array.isArray(campaigns)) setCampaigns(campaigns);
         setMembersLoading(false);
         setMembersLoaded(true);
-      });
-      fetch(`/api/zielgruppen?eventId=${selectedEventId}`).then(r => r.json()).then(d => {
-        if (Array.isArray(d)) setZielgruppen(d);
-      });
-      setCampaignsLoading(true);
-      fetch(`/api/campaigns?eventId=${selectedEventId}`).then(r => r.json()).then(d => {
-        if (Array.isArray(d)) setCampaigns(d);
         setCampaignsLoading(false);
       });
     }
@@ -747,20 +749,25 @@ export default function AdminPage() {
     if (!ctx) return;
     ctx.drawImage(video, 0, 0);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    import("jsqr").then(({ default: jsQR }) => {
+    const jsQR = jsQRRef.current;
+    if (jsQR) {
       const code = jsQR(imageData.data, imageData.width, imageData.height);
       if (code && code.data && code.data !== lastScanRef.current) {
         lastScanRef.current = code.data;
         handleScan(code.data);
         setTimeout(() => { lastScanRef.current = ""; }, 4000);
       }
-    });
+    }
     rafRef.current = requestAnimationFrame(tick);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startScanner = useCallback(async () => {
     await unlockAndLoadAudio();
+    if (!jsQRRef.current) {
+      const { default: jsQR } = await import("jsqr");
+      jsQRRef.current = jsQR;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       streamRef.current = stream;

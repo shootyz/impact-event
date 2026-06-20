@@ -46,6 +46,7 @@ export default function ZielgruppenDashboard({
   const [creatingZG, setCreatingZG] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renamingName, setRenamingName] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
   const [csvZgId, setCsvZgId] = useState<string | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvResult, setCsvResult] = useState<{ zgId: string; inserted: number } | null>(null);
@@ -175,6 +176,26 @@ export default function ZielgruppenDashboard({
 
   return (
     <div className="space-y-3">
+      {/* Delete confirm dialog */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+            <div className="h-0.5" style={{ background: "#dc2626" }} />
+            <div className="px-6 pt-6 pb-4">
+              <p className="font-bold text-sm mb-1" style={{ color: "var(--ig-navy)" }}>Mitglied löschen</p>
+              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{deleteConfirm.name} wirklich entfernen?</p>
+            </div>
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={() => setDeleteConfirm(null)}
+                className={`${btnSecondary} flex-1 py-2`}
+                style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)" }}>Abbrechen</button>
+              <button onClick={() => { deleteMember(deleteConfirm.id); setDeleteConfirm(null); }}
+                className={`${btnPrimary} flex-1 py-2`}
+                style={{ background: "#dc2626", color: "white" }}>Löschen</button>
+            </div>
+          </div>
+        </div>
+      )}
       <input ref={csvRef} type="file" accept=".csv" className="hidden"
         onChange={e => {
           const file = e.target.files?.[0];
@@ -216,7 +237,15 @@ export default function ZielgruppenDashboard({
               ) : (
                 <>
                   <button className="flex-1 flex items-center gap-3 text-left transition active:scale-[0.99]"
-                    onClick={() => { setExpanded(isOpen ? null : zg.id); setEditing(null); setNewMember(null); setCsvResult(null); }}>
+                    onClick={() => {
+                    if (isOpen) {
+                      setExpanded(null);
+                      setSearchQuery(q => { const n = { ...q }; delete n[zg.id]; return n; });
+                    } else {
+                      setExpanded(zg.id);
+                    }
+                    setEditing(null); setNewMember(null); setCsvResult(null);
+                  }}>
                     <span className="font-semibold text-sm" style={{ color: isOpen ? "white" : "var(--ig-navy)" }}>{zg.name}</span>
                     <span className="text-xs rounded-full px-2 py-0.5" style={{ background: isOpen ? "rgba(255,255,255,0.15)" : "var(--ig-light)", color: isOpen ? "white" : "var(--ig-gray3)" }}>
                       {list.length}
@@ -321,7 +350,7 @@ export default function ZielgruppenDashboard({
                                 <div className="flex gap-1.5 justify-end">
                                   <button onClick={() => setEditing({ id: m.id, first_name: m.first_name, last_name: m.last_name, email: m.email, anrede: m.anrede || "", sprache: m.sprache || "de" })}
                                     className={`${btnSecondary} hover:border-[var(--ig-navy)] hover:text-[var(--ig-navy)]`} style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>✎</button>
-                                  <button onClick={() => deleteMember(m.id)}
+                                  <button onClick={() => setDeleteConfirm({ id: m.id, name: `${m.first_name} ${m.last_name}` })}
                                     className={`${btnSecondary} hover:bg-red-50`} style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid var(--ig-gray2)" }}>
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                   </button>
@@ -334,9 +363,12 @@ export default function ZielgruppenDashboard({
                     </tbody>
                   </table>
                 ) : (
-                  <p className="px-4 py-3 text-xs" style={{ color: "var(--ig-gray3)" }}>
-                    {searchQuery[zg.id] ? `Keine Treffer für „${searchQuery[zg.id]}".` : "Noch keine Mitglieder."}
-                  </p>
+                  <div className="flex flex-col items-center py-8 gap-2">
+                    <svg className="w-8 h-8 opacity-20" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" style={{ color: "var(--ig-navy)" }}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                    <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
+                      {searchQuery[zg.id] ? `Keine Treffer für „${searchQuery[zg.id]}".` : "Noch keine Mitglieder — CSV importieren oder manuell hinzufügen."}
+                    </p>
+                  </div>
                 )}
 
                 {/* Footer: add member + CSV import */}

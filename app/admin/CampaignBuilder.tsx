@@ -892,23 +892,11 @@ export default function CampaignBuilder({
 
 
         {/* Result */}
-        {/* Auto-save status */}
-        {autoSaveStatus && (
-          <p className="text-xs text-center" style={{ color: "#9ca3af" }}>{autoSaveStatus}</p>
-        )}
-
-        {result && (
-          <div className="rounded-xl px-4 py-3 text-sm" style={{
-            background: result.ok ? "#f0fdf4" : "#fef2f2",
-            color: result.ok ? "#16a34a" : "#dc2626",
-            border: `1px solid ${result.ok ? "#bbf7d0" : "#fecaca"}`
-          }}>
-            {result.msg}
+        {/* Save button + status */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-xs" style={{ color: result ? (result.ok ? "#16a34a" : "#dc2626") : "#9ca3af" }}>
+            {result ? result.msg : autoSaveStatus ?? ""}
           </div>
-        )}
-
-        {/* Save button */}
-        <div className="flex justify-end">
           <button disabled={!canSave || saving}
             className="px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition active:scale-95 disabled:opacity-40 hover:opacity-90"
             style={{ background: "#D28D28", color: "white" }}

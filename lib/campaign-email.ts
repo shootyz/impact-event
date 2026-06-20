@@ -150,17 +150,18 @@ function firstNameFromEmail(email: string): string {
   return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase()
 }
 
-export function buildCampaignHtmlForTest({ appUrl, email, subject, bodyHtml, eventUrl }: {
-  appUrl: string; email: string; subject: string; bodyHtml: string; eventUrl: string | null
+export function buildCampaignHtmlForTest({ appUrl, email, subject, bodyHtml, eventUrl, lang }: {
+  appUrl: string; email: string; subject: string; bodyHtml: string; eventUrl: string | null; lang?: Lang
 }) {
   return buildCampaignHtml({
     appUrl,
-    member: { id: 'test', first_name: firstNameFromEmail(email), last_name: '', email, unsubscribe_token: 'test', unsubscribed: false, created_at: '', zielgruppe_id: null },
+    member: { id: 'test', first_name: firstNameFromEmail(email), last_name: '', email, unsubscribe_token: 'test', unsubscribed: false, created_at: '', zielgruppe_id: null, anrede: 'Herr' },
     subject,
     headerImageUrl: null,
     bodyHtml,
     eventUrl,
     inviteCode: null,
+    lang: lang ?? 'de',
   })
 }
 
