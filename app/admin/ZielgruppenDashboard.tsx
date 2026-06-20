@@ -100,12 +100,13 @@ export default function ZielgruppenDashboard({
     }
     const rows = lines.slice(1).map(l => {
       const cols = l.split(",").map(c => c.trim().replace(/"/g, ""));
+      const spracheRaw = iSprache >= 0 ? cols[iSprache]?.toLowerCase() ?? "" : "";
       return {
         first_name: cols[iFirst] ?? "",
         last_name: cols[iLast] ?? "",
         email: cols[iEmail] ?? "",
-        ...(iAnrede >= 0 ? { anrede: cols[iAnrede] ?? "" } : {}),
-        ...(iSprache >= 0 ? { sprache: (cols[iSprache] ?? "de").toLowerCase() } : {}),
+        anrede: iAnrede >= 0 ? (cols[iAnrede] ?? "") : "",
+        sprache: spracheRaw || null,
       };
     }).filter(r => r.email);
     const res = await fetch("/api/members", {
@@ -256,7 +257,10 @@ export default function ZielgruppenDashboard({
                               <td className="px-4 py-2.5 font-medium" style={{ color: "var(--ig-navy)" }}>{m.last_name}</td>
                               <td className="px-4 py-2.5" style={{ color: "var(--ig-gray3)" }}>{m.email}</td>
                               <td className="px-4 py-2.5">
-                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "var(--ig-light)", color: "var(--ig-navy)" }}>{(m.sprache || "de").toUpperCase()}</span>
+                                {m.sprache
+                                  ? <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "var(--ig-light)", color: "var(--ig-navy)" }}>{m.sprache.toUpperCase()}</span>
+                                  : <span style={{ color: "var(--ig-gray2)" }}>—</span>
+                                }
                               </td>
                               <td className="px-4 py-2.5">
                                 {(() => {

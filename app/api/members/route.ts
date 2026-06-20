@@ -25,12 +25,14 @@ export async function POST(req: NextRequest) {
   }
 
   const db = supabaseAdmin()
-  const rows = members.map((m: { first_name: string; last_name: string; email: string }) => ({
+  const rows = members.map((m: { first_name: string; last_name: string; email: string; anrede?: string | null; sprache?: string | null }) => ({
     first_name: m.first_name.trim(),
     last_name: m.last_name.trim(),
     email: m.email.toLowerCase().trim(),
     event_id,
     ...(zielgruppe_id ? { zielgruppe_id } : {}),
+    anrede: m.anrede ?? "",
+    sprache: m.sprache ?? null,
   }))
 
   const { data, error } = await db
