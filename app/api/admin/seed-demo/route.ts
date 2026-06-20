@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
   const deMembers = subscribedMembers.filter((m: { sprache: string }) => (m.sprache || 'de') === 'de')
   const enMembers = subscribedMembers.filter((m: { sprache: string }) => m.sprache === 'en')
 
-  const { data: campaigns } = await db.from('campaigns').insert([
+  const { data: campaigns, error: campErr } = await db.from('campaigns').insert([
     {
       event_id: eventId,
       subject: 'Ihre Einladung zum Impact Gstaad 2025',
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
     },
   ]).select()
 
-  if (!campaigns) return NextResponse.json({ error: 'campaigns insert failed' }, { status: 500 })
+  if (campErr || !campaigns) return NextResponse.json({ error: 'campaigns insert failed', detail: campErr?.message, code: campErr?.code }, { status: 500 })
   const [campDe, campEn] = campaigns
 
   // ── 7. Campaign events (opens + clicks) ──
