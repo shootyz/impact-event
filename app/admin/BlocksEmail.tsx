@@ -48,14 +48,14 @@ function RichContent({ html }: { html: string }) {
   if (!html || html === "<p></p>") return null;
   // Inject inline styles into the HTML tags
   const styled = html
-    .replace(/<p>/g, `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
+    .replace(/<p( [^>]*)?>/g, (_, attrs) => `<p${attrs ?? ""} style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
     .replace(/<ul>/g, `<ul style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;list-style-type:disc;font-family:Arial,sans-serif;">`)
     .replace(/<ol>/g, `<ol style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;font-family:Arial,sans-serif;">`)
     .replace(/<li>/g, `<li style="margin-bottom:4px;">`)
     .replace(/<strong>/g, `<strong style="font-weight:700;">`)
     .replace(/<em>/g, `<em style="font-style:italic;">`)
     .replace(/<a href="([^"]+)"[^>]*>/g, `<a href="$1" style="color:${D.gold};text-decoration:underline;">`);
-  return <div dangerouslySetInnerHTML={{ __html: styled }} />;
+  return <div style={{ lineHeight: 1.75, fontSize: 15, color: D.black, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }} dangerouslySetInnerHTML={{ __html: styled }} />;
 }
 
 function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {

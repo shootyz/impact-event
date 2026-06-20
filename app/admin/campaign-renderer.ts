@@ -114,7 +114,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
   const extra = renderCustomFields(block);
   switch (block.type) {
     case "intro":
-      return richHtmlToEmail(block.text, D.black);
+      return `<div style="line-height:1.75;font-size:15px;color:${D.black};font-family:Arial,sans-serif;">${richHtmlToEmail(block.text, D.black)}</div>`;
 
     case "event_details": {
       const locale = DATE_LOCALE[ctx?.lang ?? "en"];
