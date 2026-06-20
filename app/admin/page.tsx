@@ -990,30 +990,59 @@ export default function AdminPage() {
       <header className="sticky top-0 z-20 border-b w-full" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            {selectedEventId ? (
-              <button
-                onClick={() => {
-                  if (eventSection !== null) { setEventSection(null); stopScanner(); }
-                  else { setSelectedEventId(null); setEventSection(null); }
-                }}
-                className="flex items-center gap-2 text-sm font-medium transition"
-                style={{ color: "var(--ig-navy)" }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 12H5M12 5l-7 7 7 7"/>
-                </svg>
-                <span className="hidden sm:inline truncate max-w-xs">
-                  {eventSection ? selectedEvent?.name ?? "Event" : "Events"}
-                </span>
-              </button>
-            ) : (
+            {/* Logo — always visible, click goes to events overview */}
+            <button
+              onClick={() => { setSelectedEventId(null); setEventSection(null); stopScanner(); }}
+              className="flex items-center shrink-0"
+              title="Zur Event-Übersicht"
+            >
               <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
+            </button>
+            {/* Breadcrumb arrow when inside an event */}
+            {selectedEventId && (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ig-gray3)", flexShrink: 0 }}>
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+                <button
+                  onClick={() => { setEventSection(null); stopScanner(); }}
+                  className="text-sm font-medium truncate max-w-[140px] sm:max-w-xs transition"
+                  style={{ color: eventSection ? "var(--ig-gray3)" : "var(--ig-navy)" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = eventSection ? "var(--ig-gray3)" : "var(--ig-navy)"}
+                >
+                  {selectedEvent?.name ?? "Event"}
+                </button>
+              </>
+            )}
+            {selectedEventId && eventSection && (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ig-gray3)", flexShrink: 0 }}>
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+                <span className="text-sm font-semibold truncate max-w-[80px] sm:max-w-xs" style={{ color: "var(--ig-navy)" }}>
+                  {eventSection === "mailing" ? "Mailing" : "Management"}
+                </span>
+              </>
             )}
           </div>
           {(selectedEventId || !selectedEventId) && (
             <div className="flex items-center gap-2">
+              {/* Section switcher — only visible inside an event section */}
+              {selectedEventId && eventSection && (
+                <button
+                  onClick={() => { setEventSection(null); stopScanner(); }}
+                  title="Bereich wechseln"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition"
+                  style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                  </svg>
+                </button>
+              )}
               {/* Global scanner button */}
               <div className="relative">
                 <button
