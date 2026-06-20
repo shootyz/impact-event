@@ -563,7 +563,7 @@ export default function AdminPage() {
   type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; };
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [builderZielgruppeId, setBuilderZielgruppeId] = useState<string | null>(null);
-  const [mailingTab, setMailingTab] = useState<"members" | "compose" | "drafts" | "campaigns">("members");
+  const [mailingTab, setMailingTab] = useState<"members" | "compose" | "drafts" | "campaigns">("compose");
   const [draftsLang, setDraftsLang] = useState<"all" | "en" | "de" | "fr">("all");
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
@@ -951,9 +951,9 @@ export default function AdminPage() {
     { id: "tools", label: "Tools" },
   ] as const;
   const mailingTabs = [
-    { id: "members", label: "Mitglieder" },
     { id: "compose", label: "Neue Kampagne" },
     { id: "drafts", label: "Entwürfe" },
+    { id: "members", label: "Zielgruppen" },
     { id: "campaigns", label: "Archiv" },
   ] as const;
 
