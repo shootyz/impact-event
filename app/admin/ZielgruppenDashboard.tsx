@@ -12,6 +12,11 @@ const SPRACHE_OPTIONS = [
 const inputCls = "w-full rounded-lg border px-2.5 py-1.5 text-xs outline-none transition";
 const inputStyle = { borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" };
 
+// Reusable button classes
+const btnPrimary = "transition active:scale-95 disabled:opacity-40 font-semibold text-xs px-3 py-1.5 rounded-lg";
+const btnSecondary = "transition active:scale-95 text-xs px-3 py-1.5 rounded-lg";
+const btnIcon = "transition active:scale-95 p-1.5 rounded-lg";
+
 type EditingMember = {
   id: string; first_name: string; last_name: string;
   email: string; anrede: string; sprache: string;
@@ -87,7 +92,6 @@ export default function ZielgruppenDashboard({
     setCsvResult(null);
     const text = await file.text();
     const lines = text.trim().split(/\r?\n/);
-    // Auto-detect delimiter: semicolon or comma
     const delim = lines[0].includes(";") ? ";" : ",";
     const splitLine = (l: string) => l.split(delim).map(c => c.trim().replace(/^"|"$/g, ""));
     const headers = splitLine(lines[0]).map(h => h.toLowerCase());
@@ -152,7 +156,6 @@ export default function ZielgruppenDashboard({
 
   return (
     <div className="space-y-3">
-      {/* Hidden file input shared across all groups */}
       <input ref={csvRef} type="file" accept=".csv" className="hidden"
         onChange={e => {
           const file = e.target.files?.[0];
@@ -167,7 +170,7 @@ export default function ZielgruppenDashboard({
           onFocus={e => (e.currentTarget.style.borderColor = "var(--ig-navy)")}
           onBlur={e => (e.currentTarget.style.borderColor = "var(--ig-gray2)")} />
         <button disabled={creatingZG || !newZGName.trim()} onClick={createZG}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+          className={`${btnPrimary} px-4`}
           style={{ background: "var(--ig-navy)", color: "white" }}>
           {creatingZG ? "…" : "Erstellen"}
         </button>
@@ -188,12 +191,12 @@ export default function ZielgruppenDashboard({
                     onKeyDown={e => { if (e.key === "Enter") renameZG(zg.id); if (e.key === "Escape") setRenamingId(null); }}
                     onFocus={e => (e.currentTarget.style.borderColor = "var(--ig-gold)")}
                     onBlur={e => (e.currentTarget.style.borderColor = "var(--ig-gray2)")} />
-                  <button onClick={() => renameZG(zg.id)} className="text-xs px-3 py-1.5 rounded-lg font-semibold" style={{ background: "var(--ig-gold)", color: "white" }}>Speichern</button>
-                  <button onClick={() => setRenamingId(null)} className="text-xs px-3 py-1.5 rounded-lg" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>Abbrechen</button>
+                  <button onClick={() => renameZG(zg.id)} className={btnPrimary} style={{ background: "var(--ig-gold)", color: "white" }}>Speichern</button>
+                  <button onClick={() => setRenamingId(null)} className={btnSecondary} style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>Abbrechen</button>
                 </>
               ) : (
                 <>
-                  <button className="flex-1 flex items-center gap-3 text-left"
+                  <button className="flex-1 flex items-center gap-3 text-left transition active:scale-[0.99]"
                     onClick={() => { setExpanded(isOpen ? null : zg.id); setEditing(null); setNewMember(null); setCsvResult(null); }}>
                     <span className="font-semibold text-sm" style={{ color: isOpen ? "white" : "var(--ig-navy)" }}>{zg.name}</span>
                     <span className="text-xs rounded-full px-2 py-0.5" style={{ background: isOpen ? "rgba(255,255,255,0.15)" : "var(--ig-light)", color: isOpen ? "white" : "var(--ig-gray3)" }}>
@@ -202,9 +205,11 @@ export default function ZielgruppenDashboard({
                     <svg className="ml-auto w-4 h-4 transition-transform" style={{ color: isOpen ? "white" : "var(--ig-gray3)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                   </button>
                   <button title="Umbenennen" onClick={() => { setRenamingId(zg.id); setRenamingName(zg.name); }}
-                    className="p-1.5 rounded-lg text-xs" style={{ color: isOpen ? "rgba(255,255,255,0.6)" : "var(--ig-gray3)" }}>✎</button>
+                    className={`${btnIcon} opacity-60 hover:opacity-100`}
+                    style={{ color: isOpen ? "white" : "var(--ig-gray3)" }}>✎</button>
                   <button title="Löschen" onClick={() => deleteZG(zg.id)}
-                    className="p-1.5 rounded-lg" style={{ color: isOpen ? "rgba(255,255,255,0.6)" : "var(--ig-gray3)" }}>
+                    className={`${btnIcon} opacity-60 hover:opacity-100`}
+                    style={{ color: isOpen ? "white" : "var(--ig-gray3)" }}>
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 </>
@@ -248,8 +253,8 @@ export default function ZielgruppenDashboard({
                               <td className="px-3 py-2" />
                               <td className="px-3 py-2">
                                 <div className="flex gap-1.5">
-                                  <button disabled={saving} onClick={saveEdit} className="px-2.5 py-1 rounded-lg font-semibold text-xs disabled:opacity-50" style={{ background: "var(--ig-navy)", color: "white" }}>{saving ? "…" : "✓"}</button>
-                                  <button onClick={() => setEditing(null)} className="px-2.5 py-1 rounded-lg text-xs" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>✕</button>
+                                  <button disabled={saving} onClick={saveEdit} className={`${btnPrimary} disabled:opacity-50`} style={{ background: "var(--ig-navy)", color: "white" }}>{saving ? "…" : "✓"}</button>
+                                  <button onClick={() => setEditing(null)} className={btnSecondary} style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>✕</button>
                                 </div>
                               </td>
                             </>
@@ -276,9 +281,9 @@ export default function ZielgruppenDashboard({
                               <td className="px-3 py-2">
                                 <div className="flex gap-1.5 justify-end">
                                   <button onClick={() => setEditing({ id: m.id, first_name: m.first_name, last_name: m.last_name, email: m.email, anrede: m.anrede || "", sprache: m.sprache || "de" })}
-                                    className="px-2.5 py-1 rounded-lg text-xs" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>✎</button>
+                                    className={`${btnSecondary} hover:border-[var(--ig-navy)] hover:text-[var(--ig-navy)]`} style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>✎</button>
                                   <button onClick={() => deleteMember(m.id)}
-                                    className="px-2.5 py-1 rounded-lg text-xs" style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid var(--ig-gray2)" }}>
+                                    className={`${btnSecondary} hover:bg-red-50`} style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid var(--ig-gray2)" }}>
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                   </button>
                                 </div>
@@ -295,7 +300,6 @@ export default function ZielgruppenDashboard({
 
                 {/* Footer: add member + CSV import */}
                 <div className="px-4 py-3 space-y-3" style={{ borderTop: "1px solid var(--ig-gray2)" }}>
-                  {/* Add member inline form */}
                   {newMember ? (
                     <div className="space-y-2">
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -312,17 +316,17 @@ export default function ZielgruppenDashboard({
                       <div className="flex gap-2">
                         <button disabled={adding || !newMember.first_name || !newMember.last_name || !newMember.email}
                           onClick={() => addMember(zg.id)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                          className={btnPrimary}
                           style={{ background: "var(--ig-navy)", color: "white" }}>
                           {adding ? "Wird hinzugefügt…" : "Hinzufügen"}
                         </button>
-                        <button onClick={() => setNewMember(null)} className="px-3 py-1.5 rounded-lg text-xs" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>Abbrechen</button>
+                        <button onClick={() => setNewMember(null)} className={btnSecondary} style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>Abbrechen</button>
                       </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-4">
                       <button onClick={() => setNewMember(emptyNew())}
-                        className="text-xs font-medium flex items-center gap-1.5"
+                        className="text-xs font-medium flex items-center gap-1.5 transition active:scale-95 opacity-90 hover:opacity-100"
                         style={{ color: "var(--ig-gold)" }}>
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                         Mitglied hinzufügen
@@ -331,7 +335,7 @@ export default function ZielgruppenDashboard({
                       <button
                         disabled={csvImporting}
                         onClick={() => { setCsvZgId(zg.id); setCsvResult(null); csvRef.current?.click(); }}
-                        className="text-xs font-medium flex items-center gap-1.5 disabled:opacity-40"
+                        className="text-xs font-medium flex items-center gap-1.5 transition active:scale-95 disabled:opacity-40 opacity-90 hover:opacity-100"
                         style={{ color: "var(--ig-gold)" }}>
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                         {csvImporting && csvZgId === zg.id ? "Importiert…" : "CSV importieren"}
@@ -349,7 +353,6 @@ export default function ZielgruppenDashboard({
           </div>
         );
       })}
-
     </div>
   );
 }

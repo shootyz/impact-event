@@ -92,7 +92,7 @@ function BtnPrimary({ children, onClick, disabled, type = "button", className = 
       disabled={disabled}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className={`px-4 py-1.5 rounded-lg font-semibold text-xs tracking-wide transition disabled:opacity-40 flex items-center justify-center gap-1.5 ${className}`}
+      className={`px-4 py-1.5 rounded-lg font-semibold text-xs tracking-wide transition active:scale-95 disabled:opacity-40 flex items-center justify-center gap-1.5 ${className}`}
       style={{ background: hover && !disabled ? "#B8791F" : "var(--ig-gold)", color: "#fff" }}
     >
       {children}
@@ -110,7 +110,7 @@ function BtnOutline({ children, onClick, disabled, className = "" }: {
       disabled={disabled}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className={`py-2 rounded-lg font-medium text-xs tracking-wide transition disabled:opacity-40 flex items-center justify-center gap-1.5 ${className}`}
+      className={`py-2 rounded-lg font-medium text-xs tracking-wide transition active:scale-95 disabled:opacity-40 flex items-center justify-center gap-1.5 ${className}`}
       style={{
         border: `1.5px solid ${hover ? "var(--ig-navy)" : "var(--ig-gray2)"}`,
         color: hover ? "var(--ig-navy)" : "var(--ig-black)",
@@ -294,7 +294,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                 setPreviewHtml(await res.text());
                 setPreviewLoading(false);
               }}
-              className="text-xs px-3 py-1.5 rounded-lg font-medium"
+              className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95"
               style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
               {expanded ? "Schliessen" : "Vorschau"}
             </button>
@@ -303,7 +303,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                 {onEdit && (
                   <>
                     <button onClick={onEdit}
-                      className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                      className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95"
                       style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                       Bearbeiten
                     </button>
@@ -316,7 +316,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                         }
                         setShowTestPanel(o => !o);
                       }}
-                        className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                        className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95"
                         style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                         Testmail
                       </button>
@@ -380,7 +380,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                   </>
                 )}
                 <button disabled={sending} onClick={() => setConfirmSend(true)}
-                  className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                  className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95"
                   style={{ background: "var(--ig-gold)", color: "#fff", border: "none" }}>
                   Jetzt senden
                 </button>
@@ -395,11 +395,11 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                   setSending(false);
                   if (res.ok) { setSendResult(`✓ An ${d.sent} Mitglieder gesendet`); onSend(c.id, d.sent); }
                   else { setSendResult(d.error || "Error"); setConfirmSend(false); }
-                }} disabled={sending} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{ background: "#dc2626", color: "#fff", border: "none" }}>
+                }} disabled={sending} className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95" style={{ background: "#dc2626", color: "#fff", border: "none" }}>
                   {sending ? "Wird gesendet…" : "Bestätigen"}
                 </button>
                 <button onClick={() => setConfirmSend(false)}
-                  className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                  className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95"
                   style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                   Abbrechen
                 </button>
@@ -431,18 +431,18 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
               if (!scheduleValue) return;
               const res = await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scheduled_at: new Date(scheduleValue).toISOString() }) });
               if (res.ok && onSchedule) { onSchedule(c.id, new Date(scheduleValue).toISOString()); setScheduling(false); }
-            }} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{ background: "var(--ig-navy)", color: "#fff", border: "none" }}>
+            }} className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95" style={{ background: "var(--ig-navy)", color: "#fff", border: "none" }}>
               Speichern
             </button>
             {c.scheduled_at && (
               <button onClick={async () => {
                 await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scheduled_at: null }) });
                 if (onSchedule) { onSchedule(c.id, null); setScheduling(false); }
-              }} className="text-xs px-3 py-1.5 rounded-lg font-medium" style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid #dc2626" }}>
+              }} className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95" style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid #dc2626" }}>
                 Entfernen
               </button>
             )}
-            <button onClick={() => setScheduling(false)} className="text-xs px-3 py-1.5 rounded-lg font-medium"
+            <button onClick={() => setScheduling(false)} className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95"
               style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>
               Cancel
             </button>
