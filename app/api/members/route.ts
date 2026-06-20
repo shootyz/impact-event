@@ -60,9 +60,11 @@ export async function POST(req: NextRequest) {
     if (missing.length > 0) {
       const codes = missing.map((m: { id: string }) => ({
         member_id: m.id,
+        event_id,
         code: Math.random().toString(36).slice(2, 8).toUpperCase(),
       }))
-      await db.from('invite_codes').insert(codes)
+      const { error: codeError } = await db.from('invite_codes').insert(codes)
+      if (codeError) console.error('invite_codes insert error:', codeError.message)
     }
   }
 
