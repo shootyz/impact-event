@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
       date: '2025-09-06',
       location: 'Gstaad Palace',
       description: 'Demo-Event mit vollständigen Statistiken.',
+      active: true,
     })
     .select()
     .single()
