@@ -11,6 +11,19 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin()
 
+  // ── 0. Cleanup any previous demo data ──
+  const demoEmails = [
+    'k.vonarx@demo.ch','t.mueller@demo.ch','s.reuter@demo.ch','m.steinberg@demo.ch','e.braun@demo.ch',
+    'c.dupont@demo.fr','p.martin@demo.fr','j.whitfield@demo.com','s.collins@demo.com',
+    'a.keller@partner.ch','m.huber@partner.ch','c.bauer@partner.ch','l.fischer@partner.ch','m.hart@partner.com',
+    'j.weber@media.ch','d.schmid@media.ch','l.koch@media.ch','h.zimmer@demo.ch',
+  ]
+  await db.from('members').delete().in('email', demoEmails)
+  const { data: oldEvents } = await db.from('events').select('id').eq('name', 'Impact Gstaad 2025 — Demo')
+  if (oldEvents && oldEvents.length > 0) {
+    await db.from('events').delete().in('id', oldEvents.map((e: { id: string }) => e.id))
+  }
+
   // ── 1. Event ──
   const { data: event, error: evErr } = await db
     .from('events')
