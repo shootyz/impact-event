@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest, props: any) {
   const body = await req.json()
   if (!checkAuth(req, body)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const db = supabaseAdmin()
-  const allowed = ['scheduled_at', 'subject', 'body_html', 'event_url', 'blocks_json', 'zielgruppe_id', 'lang_group_id']
+  const allowed = ['scheduled_at', 'subject', 'body_html', 'event_url', 'header_image_url', 'blocks_json', 'zielgruppe_id', 'lang_group_id']
   const patch: Record<string, unknown> = {}
   for (const key of allowed) if (key in body) patch[key] = body[key]
   const { data, error } = await db

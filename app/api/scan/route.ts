@@ -14,32 +14,17 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin()
 
-  const { data: registration, error } = await db
-    .from('registrations')
-    .select('*, events(*)')
-    .eq('qr_token', token)
-    .single()
+  const { data, error } = await db.rpc('scan_checkin_atomic', { p_token: token })
 
-  if (error || !registration) {
-    return NextResponse.json({ error: 'Ungültiger QR-Code.' }, { status: 404 })
+  if (error) {
+    console.error(error)
+    return NextResponse.json({ error: 'Check-in fehlgeschlagen.' }, { status: 500 })
   }
 
-  if (registration.checked_in) {
-    return NextResponse.json({
-      status: 'already_checked_in',
-      name: registration.name,
-      checked_in_at: registration.checked_in_at,
-    })
-  }
+  const result = data as { status: string; name?: string; email?: string; checked_in_at?: string }
 
-  await db
-    .from('registrations')
-    .update({ checked_in: true, checked_in_at: new Date().toISOString() })
-    .eq('id', registration.id)
+  if (result.status === 'not_found') return NextResponse.json({ error: 'Ungültiger QR-Code.' }, { status: 404 })
+  if (result.status === 'already_checked_in') return NextResponse.json({ status: 'already_checked_in', name: result.name, checked_in_at: result.checked_in_at })
 
-  return NextResponse.json({
-    status: 'success',
-    name: registration.name,
-    email: registration.email,
-  })
+  return NextResponse.json({ status: 'success', name: result.name, email: result.email })
 }
