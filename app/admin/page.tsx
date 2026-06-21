@@ -245,6 +245,15 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
             <p className="text-xs" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
               {statusText}
               {!c.sent_at && !zielgruppeName && <span style={{ color: "var(--ig-gray3)" }}> · <span style={{ fontStyle: "italic" }}>Keine Zielgruppe</span></span>}
+              {" · "}
+              <button
+                onClick={() => { navigator.clipboard.writeText(c.id); }}
+                title="ID kopieren"
+                className="font-mono transition"
+                style={{ color: "var(--ig-gray3)", fontSize: 10, background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "var(--ig-navy)")}
+                onMouseLeave={e => (e.currentTarget.style.color = "var(--ig-gray3)")}
+              >{c.id.slice(0, 8)}…</button>
               {c.sent_at && c.recipient_count != null && (
                 <> · <button ref={recipientsBtnRef}
                   className="underline"
