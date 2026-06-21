@@ -919,18 +919,25 @@ export default function CampaignBuilder({
       {/* Right: editor */}
       <div className="flex-1 p-5 space-y-5" style={{ minWidth: 0, overflowY: "auto", height: "100%" }}>
 
-        {/* Language toggle */}
-        <div className="flex items-center gap-1">
-          {LANGUAGES.map(l => (
-            <button key={l.code} onClick={() => setLang(l.code)}
-              className="px-3 py-1 rounded-lg text-xs font-bold tracking-widest transition active:scale-95"
-              style={{
-                background: lang === l.code ? "var(--ig-navy)" : "var(--ig-gray2)",
-                color: lang === l.code ? "white" : "var(--ig-navy)",
-              }}>
-              {l.label}
-            </button>
-          ))}
+        {/* Language toggle — clickable only for new campaigns; read-only for existing ones */}
+        <div className="flex items-center gap-2">
+          {campaignId ? (
+            <span className="px-3 py-1 rounded-lg text-xs font-bold tracking-widest"
+              style={{ background: "var(--ig-navy)", color: "white" }}>
+              {lang.toUpperCase()}
+            </span>
+          ) : (
+            LANGUAGES.map(l => (
+              <button key={l.code} onClick={() => setLang(l.code)}
+                className="px-3 py-1 rounded-lg text-xs font-bold tracking-widest transition active:scale-95"
+                style={{
+                  background: lang === l.code ? "var(--ig-navy)" : "var(--ig-gray2)",
+                  color: lang === l.code ? "white" : "var(--ig-navy)",
+                }}>
+                {l.label}
+              </button>
+            ))
+          )}
         </div>
 
         {/* Campaign title */}

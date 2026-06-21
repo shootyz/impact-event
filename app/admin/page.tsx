@@ -199,6 +199,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
 }) {
   const [expanded, setExpanded] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [idCopied, setIdCopied] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -247,13 +248,13 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
               {!c.sent_at && !zielgruppeName && <span style={{ color: "var(--ig-gray3)" }}> · <span style={{ fontStyle: "italic" }}>Keine Zielgruppe</span></span>}
               {" · "}
               <button
-                onClick={() => { navigator.clipboard.writeText(c.id); }}
+                onClick={() => { navigator.clipboard.writeText(c.id); setIdCopied(true); setTimeout(() => setIdCopied(false), 2000); }}
                 title="ID kopieren"
                 className="font-mono transition"
-                style={{ color: "var(--ig-gray3)", fontSize: 10, background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "var(--ig-navy)")}
-                onMouseLeave={e => (e.currentTarget.style.color = "var(--ig-gray3)")}
-              >{c.id.slice(0, 8)}…</button>
+                style={{ color: idCopied ? "var(--ig-gold)" : "var(--ig-gray3)", fontSize: 10, background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                onMouseEnter={e => { if (!idCopied) e.currentTarget.style.color = "var(--ig-navy)"; }}
+                onMouseLeave={e => { if (!idCopied) e.currentTarget.style.color = "var(--ig-gray3)"; }}
+              >{idCopied ? "ID kopiert ✓" : `ID: ${c.id.slice(0, 8)}…`}</button>
               {c.sent_at && c.recipient_count != null && (
                 <> · <button ref={recipientsBtnRef}
                   className="underline"
