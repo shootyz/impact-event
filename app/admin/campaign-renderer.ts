@@ -167,15 +167,18 @@ ${extra}`;
       const slotHtmls = block.slots.map((slot, i) => {
         const isFirst = i === 0;
         const isLast = i === block.slots.length - 1;
-        const pad = isFirst ? "0 0 14px" : isLast ? "14px 0 0" : "14px 0";
+        const nextIsBreak = block.slots[i + 1]?.is_break;
+        const prevIsBreak = block.slots[i - 1]?.is_break;
         const subItems = slot.sub_items.filter(s => s.title);
         if (slot.is_break) {
-          return `<tr><td style="padding:${pad};background:#faf9f2;text-align:center;">
+          return `<tr><td style="padding:14px 0;background:#faf8f4;text-align:center;">
   <p style="color:${D.navy};font-size:12px;font-weight:700;margin:0 0 4px;text-align:center;font-family:Arial,sans-serif;">${esc(slot.time)}</p>
   <p style="color:${D.black};font-size:15px;margin:0;text-align:center;font-family:Arial,sans-serif;">${esc(slot.title)}</p>
 </td></tr>`;
         }
-        return `<tr><td style="padding:${pad};">
+        const pad = isFirst ? "0 0 14px" : isLast ? "14px 0 0" : "14px 0";
+        const border = !isLast && !nextIsBreak ? `border-bottom:1px solid ${D.gray2};` : "";
+        return `<tr><td style="padding:${pad};${border}">
   <p style="color:${D.navy};font-size:12px;font-weight:700;margin:0 0 4px;font-family:Arial,sans-serif;">${esc(slot.time)}</p>
   <p style="color:${D.black};font-size:15px;font-weight:400;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${esc(slot.title)}</p>
   ${subItems.length ? `<table width="100%" cellpadding="0" cellspacing="0">
