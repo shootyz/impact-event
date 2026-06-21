@@ -180,7 +180,7 @@ type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: s
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
 // ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
-type CampaignType = { id: string; subject: string; body_html: string; blocks_json?: { title?: string } | unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; };
+type CampaignType = { id: string; subject: string; body_html: string; blocks_json?: { title?: string } | unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; lang_group_id?: string | null; };
 const TEST_EMAILS = [
   "nik.thomi@impactgstaad.ch",
   "andreas.wandfluh@impactgstaad.ch",
@@ -620,7 +620,7 @@ export default function AdminPage() {
   // Mailing state
   type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; zielgruppe_id: string | null; anrede?: string | null; sprache?: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
   type Zielgruppe = { id: string; name: string; created_at: string };
-  type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; };
+  type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; lang_group_id?: string | null; };
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [builderZielgruppeId, setBuilderZielgruppeId] = useState<string | null>(null);
   const [mailingTab, setMailingTab] = useState<"members" | "compose" | "drafts" | "campaigns">("drafts");
@@ -2420,6 +2420,19 @@ export default function AdminPage() {
                   initialLang={(() => { const bj = editingCampaign?.blocks_json; if (!bj) return undefined; const p = typeof bj === 'string' ? JSON.parse(bj) : bj; if (Array.isArray(p)) return undefined; return (p as { lang?: import("./i18n").Lang }).lang; })()}
                   initialTitle={(() => { const bj = editingCampaign?.blocks_json; if (!bj) return undefined; const p = typeof bj === 'string' ? JSON.parse(bj) : bj; if (Array.isArray(p)) return undefined; return (p as { title?: string }).title; })()}
                   initialEventUrl={editingCampaign?.event_url ?? undefined}
+                  langSiblings={(() => {
+                    const grp = editingCampaign?.lang_group_id;
+                    if (!grp) return undefined;
+                    return campaigns.filter(c => c.lang_group_id === grp && c.id !== editingCampaign?.id).map(c => {
+                      const bj = c.blocks_json as { lang?: string } | null;
+                      const lang = (bj && !Array.isArray(bj) ? bj.lang : null) as import("./i18n").Lang | null;
+                      return { id: c.id, lang: lang ?? "de" as import("./i18n").Lang };
+                    });
+                  })()}
+                  onSwitchLang={(id) => {
+                    const c = campaigns.find(x => x.id === id);
+                    if (c) { setEditingCampaign(c); }
+                  }}
                   zielgruppeId={builderZielgruppeId}
                   onZielgruppeChange={setBuilderZielgruppeId}
                   zielgruppen={zielgruppen}

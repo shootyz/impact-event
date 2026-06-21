@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { subject, header_image_url, body_html, event_url, send_now, blocks_json, zielgruppe_id, event_id } = await req.json()
+  const { subject, header_image_url, body_html, event_url, send_now, blocks_json, zielgruppe_id, event_id, lang_group_id } = await req.json()
 
   if (!event_id) return NextResponse.json({ error: 'event_id required' }, { status: 400 })
   if (!subject?.trim() || !body_html?.trim()) {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   const { data: campaign, error } = await db
     .from('campaigns')
-    .insert({ subject, header_image_url: header_image_url || null, body_html, event_url: event_url || null, blocks_json: blocks_json ?? null, zielgruppe_id: zielgruppe_id ?? null, event_id })
+    .insert({ subject, header_image_url: header_image_url || null, body_html, event_url: event_url || null, blocks_json: blocks_json ?? null, zielgruppe_id: zielgruppe_id ?? null, event_id, lang_group_id: lang_group_id ?? null })
     .select()
     .single()
 

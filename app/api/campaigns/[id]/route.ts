@@ -3,6 +3,17 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { sendCampaign } from '@/lib/campaign-email'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function GET(req: NextRequest, props: any) {
+  const { id } = await props.params
+  const adminPassword = req.nextUrl.searchParams.get('adminPassword')
+  if (adminPassword !== process.env.ADMIN_PASSWORD) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const db = supabaseAdmin()
+  const { data, error } = await db.from('campaigns').select('*').eq('id', id).single()
+  if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json(data)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function POST(req: NextRequest, props: any) {
   const { id } = await props.params
   const db = supabaseAdmin()
@@ -40,7 +51,7 @@ export async function PATCH(req: NextRequest, props: any) {
   const { id } = await props.params
   const body = await req.json()
   const db = supabaseAdmin()
-  const allowed = ['scheduled_at', 'subject', 'body_html', 'event_url', 'blocks_json', 'zielgruppe_id']
+  const allowed = ['scheduled_at', 'subject', 'body_html', 'event_url', 'blocks_json', 'zielgruppe_id', 'lang_group_id']
   const patch: Record<string, unknown> = {}
   for (const key of allowed) if (key in body) patch[key] = body[key]
   const { data, error } = await db

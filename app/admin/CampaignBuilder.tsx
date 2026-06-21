@@ -748,6 +748,8 @@ export default function CampaignBuilder({
   onZielgruppeChange,
   zielgruppen,
   events,
+  langSiblings,
+  onSwitchLang,
 }: {
   onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string, isAutoSave?: boolean, lang?: Lang, title?: string) => Promise<string>;
   campaignId?: string;
@@ -760,6 +762,8 @@ export default function CampaignBuilder({
   onZielgruppeChange: (id: string | null) => void;
   zielgruppen?: ZielgruppeOption[];
   events?: EventOption[];
+  langSiblings?: { id: string; lang: Lang }[];
+  onSwitchLang?: (id: string) => void;
 }) {
   const [lang, setLang] = useState<Lang>(initialLang ?? "en");
   const [title, setTitle] = useState(initialTitle ?? "");
@@ -919,25 +923,40 @@ export default function CampaignBuilder({
       {/* Right: editor */}
       <div className="flex-1 p-5 space-y-5" style={{ minWidth: 0, overflowY: "auto", height: "100%" }}>
 
-        {/* Language toggle — clickable only for new campaigns; read-only for existing ones */}
-        <div className="flex items-center gap-2">
-          {campaignId ? (
-            <span className="px-3 py-1 rounded-lg text-xs font-bold tracking-widest"
-              style={{ background: "var(--ig-navy)", color: "white" }}>
-              {lang.toUpperCase()}
-            </span>
-          ) : (
-            LANGUAGES.map(l => (
-              <button key={l.code} onClick={() => setLang(l.code)}
+        {/* Language toggle */}
+        <div className="flex items-center gap-1">
+          {LANGUAGES.map(l => {
+            const isCurrent = lang === l.code;
+            const sibling = langSiblings?.find(s => s.lang === l.code);
+            const hasSibling = !!sibling;
+            // For new campaigns: all clickable to set lang
+            // For existing campaigns: current lang is read-only badge; siblings are clickable; others are dimmed
+            const isExisting = !!campaignId;
+            const clickable = !isExisting || hasSibling;
+            return (
+              <button
+                key={l.code}
+                disabled={isExisting && !isCurrent && !hasSibling}
+                onClick={() => {
+                  if (isCurrent) return;
+                  if (isExisting && hasSibling && onSwitchLang) {
+                    onSwitchLang(sibling!.id);
+                  } else if (!isExisting) {
+                    setLang(l.code);
+                  }
+                }}
                 className="px-3 py-1 rounded-lg text-xs font-bold tracking-widest transition active:scale-95"
                 style={{
-                  background: lang === l.code ? "var(--ig-navy)" : "var(--ig-gray2)",
-                  color: lang === l.code ? "white" : "var(--ig-navy)",
+                  background: isCurrent ? "var(--ig-navy)" : hasSibling ? "var(--ig-gray2)" : "transparent",
+                  color: isCurrent ? "white" : hasSibling ? "var(--ig-navy)" : "var(--ig-gray3)",
+                  cursor: clickable && !isCurrent ? "pointer" : "default",
+                  opacity: isExisting && !isCurrent && !hasSibling ? 0.35 : 1,
+                  border: hasSibling && !isCurrent ? "1px solid var(--ig-gray2)" : "1px solid transparent",
                 }}>
                 {l.label}
               </button>
-            ))
-          )}
+            );
+          })}
         </div>
 
         {/* Campaign title */}
