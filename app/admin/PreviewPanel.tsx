@@ -313,10 +313,12 @@ function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & {
           {sp.bio?.trim() && <Editable value={sp.bio} onChange={v => updateSpeaker(i, { bio: v })}
             placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 12, whiteSpace: "pre-wrap" }} />}
           {sp.link_url?.trim() && (
-            <a href={sp.link_url} target="_blank" rel="noreferrer"
-              style={{ display: "inline-block", color: D.navy, textDecoration: "none", border: `1.5px solid ${D.navy}`, borderRadius: 8, padding: "7px 16px", fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>
-              Mehr Infos
-            </a>
+            <div style={{ textAlign: "right", marginTop: 8 }}>
+              <a href={sp.link_url} target="_blank" rel="noreferrer"
+                style={{ display: "inline-block", background: D.gold, color: "#ffffff", textDecoration: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700 }}>
+                Mehr Infos
+              </a>
+            </div>
           )}
         </div>
       ))}
