@@ -292,7 +292,8 @@ function ModerationPreview({ block, onChange }: { block: ModerationBlock & { lab
   );
 }
 
-function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof rawBlock) => void }) {
+function SpeakerPreview({ block: rawBlock, onChange, lang = "de" }: { block: SpeakerBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof rawBlock) => void; lang?: Lang }) {
+  const tl = T[lang];
   const block = rawBlock.speakers ? rawBlock : { ...rawBlock, speakers: [{ id: "legacy", photo_url: (rawBlock as unknown as Record<string,string>).photo_url ?? "", name: (rawBlock as unknown as Record<string,string>).name ?? "", title: (rawBlock as unknown as Record<string,string>).title ?? "", bio: (rawBlock as unknown as Record<string,string>).bio ?? "", book: (rawBlock as unknown as Record<string,string>).book ?? "" }] };
   const updateSpeaker = (i: number, patch: Partial<Speaker>) =>
     onChange({ ...block, speakers: block.speakers.map((s, j) => j === i ? { ...s, ...patch } : s) });
@@ -316,7 +317,7 @@ function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & {
             <div style={{ textAlign: "right", marginTop: 8 }}>
               <a href={sp.link_url} target="_blank" rel="noreferrer"
                 style={{ display: "inline-block", background: D.gold, color: "#ffffff", textDecoration: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700 }}>
-                Mehr Infos
+                {tl.moreInfo}
               </a>
             </div>
           )}
@@ -451,7 +452,7 @@ export default function PreviewPanel({
                 <ModerationPreview block={block} onChange={b => updateBlock(i, b)} />
               )}
               {block.type === "speaker" && (
-                <SpeakerPreview block={block} onChange={b => updateBlock(i, b)} />
+                <SpeakerPreview block={block} onChange={b => updateBlock(i, b)} lang={lang} />
               )}
               {block.type === "text" && (
                 <TextPreview block={block} onChange={b => updateBlock(i, b)} />
