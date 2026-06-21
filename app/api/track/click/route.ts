@@ -12,7 +12,16 @@ export async function GET(req: NextRequest) {
   }
 
   if (url) {
-    return NextResponse.redirect(url, { status: 302 })
+    // Guard against javascript:, data:, and other non-HTTP protocols
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+        return NextResponse.redirect(url, { status: 302 })
+      }
+    } catch {
+      // invalid URL — fall through
+    }
   }
+
   return new NextResponse('Not found', { status: 404 })
 }

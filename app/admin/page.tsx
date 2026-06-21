@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type jsQRType from "jsqr";
 import CampaignBuilder from "./CampaignBuilder";
 import PreviewPanel from "./PreviewPanel";
-import ZielgruppenDashboard from "./ZielgruppenDashboard";
-import AnalyticsDashboard from "./AnalyticsDashboard";
+import dynamic from "next/dynamic";
+const ZielgruppenDashboard = dynamic(() => import("./ZielgruppenDashboard"), { ssr: false });
+const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard"), { ssr: false });
 import type { CampaignBlock } from "./campaign-renderer";
 import type { Lang } from "./i18n";
 
@@ -710,8 +711,8 @@ export default function AdminPage() {
       setMembersLoading(true);
       setCampaignsLoading(true);
       Promise.all([
-        fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()),
-        fetch(`/api/zielgruppen?eventId=${selectedEventId}`).then(r => r.json()),
+        fetch(`/api/members?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()),
+        fetch(`/api/zielgruppen?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()),
         fetch(`/api/campaigns?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()),
       ]).then(([members, zielgruppen, campaigns]) => {
         if (Array.isArray(members)) setMembers(members);
@@ -1157,7 +1158,7 @@ export default function AdminPage() {
                     if (mailingTab === "compose") return;
                     setMembersLoaded(false);
                     setMembersLoading(true);
-                    fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
+                    fetch(`/api/members?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
                     setCampaignsLoading(true);
                     fetch(`/api/campaigns?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
                   } else if (eventSection === "management" && selectedEventId) {
@@ -2402,6 +2403,7 @@ export default function AdminPage() {
                     zielgruppen={zielgruppen}
                     members={members as import("@/lib/supabase").Member[]}
                     eventId={selectedEventId!}
+                    adminPassword={savedPassword.current}
                     onMembersChange={updated => setMembers(updated as Member[])}
                     onZielgruppeChange={updated => setZielgruppen(updated)}
                   />

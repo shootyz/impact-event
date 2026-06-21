@@ -1,10 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendCampaign } from '@/lib/campaign-email'
 
-export async function GET() {
-  const db = supabaseAdmin()
+export async function GET(req: NextRequest) {
+  // Vercel Cron authenticates via CRON_SECRET header
+  const authHeader = req.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
+  const db = supabaseAdmin()
   const { data: campaigns, error } = await db
     .from('campaigns')
     .select('*')
@@ -25,8 +30,11 @@ export async function GET() {
         subject: campaign.subject,
         headerImageUrl: campaign.header_image_url,
         bodyHtml: campaign.body_html,
+        blocksJson: campaign.blocks_json,
         eventUrl: campaign.event_url,
         appUrl,
+        zielgruppeId: campaign.zielgruppe_id ?? null,
+        eventId: campaign.event_id ?? null,
       })
       totalSent += result.sent
     } catch (e) {

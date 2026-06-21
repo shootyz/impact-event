@@ -26,12 +26,13 @@ type NewMember = { first_name: string; last_name: string; email: string; anrede:
 const emptyNew = (): NewMember => ({ first_name: "", last_name: "", email: "", anrede: "", sprache: "de" });
 
 export default function ZielgruppenDashboard({
-  zielgruppen, members, eventId,
+  zielgruppen, members, eventId, adminPassword,
   onMembersChange, onZielgruppeChange,
 }: {
   zielgruppen: Zielgruppe[];
   members: Member[];
   eventId: string;
+  adminPassword: string;
   onMembersChange: (members: Member[]) => void;
   onZielgruppeChange: (zielgruppen: Zielgruppe[]) => void;
 }) {
@@ -66,7 +67,7 @@ export default function ZielgruppenDashboard({
     const res = await fetch(`/api/members/${editing.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editing),
+      body: JSON.stringify({ ...editing, adminPassword }),
     });
     if (res.ok) {
       const d = await res.json();
@@ -77,7 +78,7 @@ export default function ZielgruppenDashboard({
   }
 
   async function deleteMember(id: string) {
-    await fetch("/api/members", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+    await fetch("/api/members", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, adminPassword }) });
     onMembersChange(members.filter(m => m.id !== id));
   }
 
@@ -89,13 +90,13 @@ export default function ZielgruppenDashboard({
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ members: [newMember], zielgruppe_id: zgId, event_id: eventId }),
+        body: JSON.stringify({ members: [newMember], zielgruppe_id: zgId, event_id: eventId, adminPassword }),
       });
       const d = await res.json();
       if (!res.ok) {
         setAddError(d.error ?? `Fehler ${res.status}`);
       } else {
-        const updated = await fetch(`/api/members?eventId=${eventId}`).then(r => r.json());
+        const updated = await fetch(`/api/members?eventId=${eventId}&adminPassword=${encodeURIComponent(adminPassword)}`).then(r => r.json());
         if (Array.isArray(updated)) onMembersChange(updated);
         setNewMember(null);
         setAddSuccess(true);
@@ -139,11 +140,11 @@ export default function ZielgruppenDashboard({
     const res = await fetch("/api/members", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ members: rows, zielgruppe_id: zgId, event_id: eventId }),
+      body: JSON.stringify({ members: rows, zielgruppe_id: zgId, event_id: eventId, adminPassword }),
     });
     const d = await res.json();
     setCsvResult({ zgId, inserted: d.inserted ?? 0 });
-    const updated = await fetch(`/api/members?eventId=${eventId}`).then(r => r.json());
+    const updated = await fetch(`/api/members?eventId=${eventId}&adminPassword=${encodeURIComponent(adminPassword)}`).then(r => r.json());
     if (Array.isArray(updated)) onMembersChange(updated);
     setCsvImporting(false);
     setCsvZgId(null);
@@ -153,7 +154,7 @@ export default function ZielgruppenDashboard({
   async function createZG() {
     if (!newZGName.trim()) return;
     setCreatingZG(true);
-    const res = await fetch("/api/zielgruppen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newZGName.trim(), event_id: eventId }) });
+    const res = await fetch("/api/zielgruppen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newZGName.trim(), event_id: eventId, adminPassword }) });
     const d = await res.json();
     if (res.ok) { onZielgruppeChange([...zielgruppen, d].sort((a, b) => a.name.localeCompare(b.name))); setNewZGName(""); }
     setCreatingZG(false);
@@ -161,14 +162,14 @@ export default function ZielgruppenDashboard({
 
   async function renameZG(id: string) {
     if (!renamingName.trim()) return;
-    const res = await fetch(`/api/zielgruppen/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: renamingName.trim() }) });
+    const res = await fetch(`/api/zielgruppen/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: renamingName.trim(), adminPassword }) });
     const d = await res.json();
     if (res.ok) { onZielgruppeChange(zielgruppen.map(z => z.id === id ? d : z).sort((a, b) => a.name.localeCompare(b.name))); }
     setRenamingId(null);
   }
 
   async function deleteZG(id: string) {
-    await fetch(`/api/zielgruppen/${id}`, { method: "DELETE" });
+    await fetch(`/api/zielgruppen/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword }) });
     onZielgruppeChange(zielgruppen.filter(z => z.id !== id));
     onMembersChange(members.map(m => m.zielgruppe_id === id ? { ...m, zielgruppe_id: null } : m));
     if (expanded === id) setExpanded(null);

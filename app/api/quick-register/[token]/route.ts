@@ -58,6 +58,17 @@ export async function GET(
     return NextResponse.redirect(`${appUrl}/success/${byEmail.data.qr_token}?already=1${lang ? `&lang=${lang}` : ''}`)
   }
 
+  // Capacity check (if event has max_capacity set)
+  if (event.max_capacity != null) {
+    const { count } = await db
+      .from('registrations')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', event.id)
+    if (count != null && count >= event.max_capacity) {
+      return NextResponse.redirect(`${appUrl}/?capacity_full=1${langSuffix ? `&${langSuffix.slice(1)}` : ''}`)
+    }
+  }
+
   const qrToken = randomUUID()
   const { data: registration, error: regError } = await db
     .from('registrations')

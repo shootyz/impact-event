@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+function checkAuth(req: NextRequest, body?: Record<string, unknown>): boolean {
+  const pw = process.env.ADMIN_PASSWORD
+  return (req.nextUrl.searchParams.get('adminPassword') ?? body?.adminPassword) === pw
+}
+
+function makeCode(): string {
+  // 8-char alphanumeric — ~2.8 trillion combinations, collision-safe for any realistic scale
+  return Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map(b => '0123456789ABCDEFGHJKMNPQRSTVWXYZ'[b % 32])
+    .join('')
+}
+
 export async function GET(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const eventId = req.nextUrl.searchParams.get('eventId')
   if (!eventId) return NextResponse.json({ error: 'eventId required' }, { status: 400 })
 
@@ -18,6 +31,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
+  if (!checkAuth(req, body)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { members, zielgruppe_id, event_id } = body
   if (!event_id) return NextResponse.json({ error: 'event_id required' }, { status: 400 })
   if (!Array.isArray(members) || members.length === 0) {
@@ -35,11 +50,9 @@ export async function POST(req: NextRequest) {
     sprache: m.sprache ?? null,
   }))
 
-  console.log('[members POST] rows sample:', JSON.stringify(rows[0]))
-
   const { data, error } = await db
     .from('members')
-    .upsert(rows, { onConflict: 'email', ignoreDuplicates: false })
+    .upsert(rows, { onConflict: 'email,event_id', ignoreDuplicates: false })
     .select()
 
   if (error) {
@@ -47,7 +60,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Explicitly update sprache + anrede (+ zielgruppe_id if provided) — upsert may not override with null
+  // Explicitly update sprache + anrede (upsert may not override with null)
   const updateResults = await Promise.all(rows.map(m =>
     db.from('members')
       .update({ sprache: m.sprache, anrede: m.anrede, ...(zielgruppe_id ? { zielgruppe_id } : {}) })
@@ -55,16 +68,10 @@ export async function POST(req: NextRequest) {
       .eq('event_id', event_id)
   ))
   const updateErrors = updateResults.filter(r => r.error).map(r => r.error?.message)
-  if (updateErrors.length > 0) {
-    console.error('[members POST] update errors:', updateErrors)
-  }
+  if (updateErrors.length > 0) console.error('[members POST] update errors:', updateErrors)
 
-  // Generate invite codes for ALL members in this event that don't have one yet
-  const { data: allMembers } = await db
-    .from('members')
-    .select('id')
-    .eq('event_id', event_id)
-
+  // Generate invite codes for members that don't have one yet
+  const { data: allMembers } = await db.from('members').select('id').eq('event_id', event_id)
   if (allMembers && allMembers.length > 0) {
     const { data: existingCodes } = await db
       .from('invite_codes')
@@ -75,11 +82,7 @@ export async function POST(req: NextRequest) {
     const missing = allMembers.filter((m: { id: string }) => !existingIds.has(m.id))
 
     if (missing.length > 0) {
-      const codes = missing.map((m: { id: string }) => ({
-        member_id: m.id,
-        event_id,
-        code: Math.random().toString(36).slice(2, 8).toUpperCase(),
-      }))
+      const codes = missing.map((m: { id: string }) => ({ member_id: m.id, event_id, code: makeCode() }))
       const { error: codeError } = await db.from('invite_codes').insert(codes)
       if (codeError) console.error('invite_codes insert error:', codeError.message)
     }
@@ -89,7 +92,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { id } = await req.json()
+  const body = await req.json()
+  if (!checkAuth(req, body)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { id } = body
   const db = supabaseAdmin()
   const { error } = await db.from('members').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
