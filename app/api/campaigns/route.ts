@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendCampaign } from '@/lib/campaign-email'
 
-function checkAuth(req: NextRequest, body?: Record<string, unknown>): boolean {
-  const pw = process.env.ADMIN_PASSWORD
-  const fromQuery = req.nextUrl.searchParams.get('adminPassword')
-  const fromBody = body?.adminPassword as string | undefined
-  return (fromQuery ?? fromBody) === pw
-}
-
 export async function GET(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
   const eventId = req.nextUrl.searchParams.get('eventId')
   if (!eventId) return NextResponse.json({ error: 'eventId required' }, { status: 400 })
 
@@ -27,7 +21,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  if (!checkAuth(req, body)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
 
   const { subject, header_image_url, body_html, event_url, send_now, blocks_json, zielgruppe_id, event_id, lang_group_id } = body
 

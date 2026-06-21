@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 function makeCode(): string {
@@ -9,9 +10,7 @@ function makeCode(): string {
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  if (body?.adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') { return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 }) }
 
   const db = supabaseAdmin()
   const { data: members } = await db.from('members').select('id')

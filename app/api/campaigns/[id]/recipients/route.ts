@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function GET(_req: NextRequest, props: any) {
+export async function GET(req: NextRequest, props: any) {
+  const auth = checkAdminAuth(req)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: auth === 'rate_limited' ? 429 : 401 })
+
   const { id } = await props.params
   const db = supabaseAdmin()
   const { data, error } = await db

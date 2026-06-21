@@ -44,10 +44,21 @@ function CustomFields({ block }: { block: CampaignBlock }) {
   );
 }
 
+function sanitizeHtml(raw: string): string {
+  // Strip dangerous tags and event attributes before rendering
+  return raw
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<object[\s\S]*?<\/object>/gi, '')
+    .replace(/<embed[^>]*>/gi, '')
+    .replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript:/gi, '')
+}
+
 function RichContent({ html }: { html: string }) {
   if (!html || html === "<p></p>") return null;
   // Inject inline styles into the HTML tags
-  const styled = html
+  const styled = sanitizeHtml(html)
     .replace(/<p( [^>]*)?>/g, (_, attrs) => `<p${attrs ?? ""} style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
     .replace(/<ul>/g, `<ul style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;list-style-type:disc;font-family:Arial,sans-serif;">`)
     .replace(/<ol>/g, `<ol style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;font-family:Arial,sans-serif;">`)

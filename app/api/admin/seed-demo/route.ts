@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
 
 // One-time demo seed — protected by admin password
 export async function POST(req: NextRequest) {
   const { password } = await req.json()
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
+    return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
   }
 
   const db = supabaseAdmin()

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
   const adminPassword = req.nextUrl.searchParams.get('password')
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
+  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
+    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
   }
   const { data: events } = await supabaseAdmin()
     .from('events')
@@ -17,8 +18,8 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { adminPassword, eventId, registration_password } = await req.json()
 
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
+  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
+    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
   }
 
   const db = supabaseAdmin()

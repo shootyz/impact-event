@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendCampaign } from '@/lib/campaign-email'
-
-function checkAuth(req: NextRequest, body?: Record<string, unknown>): boolean {
-  const pw = process.env.ADMIN_PASSWORD
-  const fromQuery = req.nextUrl.searchParams.get('adminPassword')
-  const fromBody = body?.adminPassword as string | undefined
-  return (fromQuery ?? fromBody) === pw
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function GET(req: NextRequest, props: any) {
   const { id } = await props.params
-  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
   const db = supabaseAdmin()
   const { data, error } = await db.from('campaigns').select('*').eq('id', id).single()
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -23,7 +17,7 @@ export async function GET(req: NextRequest, props: any) {
 export async function POST(req: NextRequest, props: any) {
   const { id } = await props.params
   const body = await req.json()
-  if (!checkAuth(req, body)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
   const db = supabaseAdmin()
   const { data: campaign, error } = await db
     .from('campaigns')
@@ -58,7 +52,7 @@ export async function POST(req: NextRequest, props: any) {
 export async function PATCH(req: NextRequest, props: any) {
   const { id } = await props.params
   const body = await req.json()
-  if (!checkAuth(req, body)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
   const db = supabaseAdmin()
   const allowed = ['scheduled_at', 'subject', 'body_html', 'event_url', 'header_image_url', 'blocks_json', 'zielgruppe_id', 'lang_group_id']
   const patch: Record<string, unknown> = {}
@@ -77,7 +71,7 @@ export async function PATCH(req: NextRequest, props: any) {
 export async function DELETE(req: NextRequest, props: any) {
   const { id } = await props.params
   const body = await req.json().catch(() => ({}))
-  if (!checkAuth(req, body)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
   const db = supabaseAdmin()
   const { error } = await db.from('campaigns').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

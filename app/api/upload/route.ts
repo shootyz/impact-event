@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 const MAX_SIZE = 8 * 1024 * 1024 // 8 MB
 
 export async function POST(req: NextRequest) {
-  const pw = req.nextUrl.searchParams.get('adminPassword')
-  if (pw !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const _a = checkAdminAuth(req); if (_a !== 'ok') { return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 }) }
 
   const formData = await req.formData()
   const file = formData.get('file') as File | null

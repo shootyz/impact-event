@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { buildCampaignHtmlForMember } from '@/lib/campaign-email'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { Member } from '@/lib/supabase'
@@ -11,7 +12,8 @@ const getResend = () => {
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const { campaign_id, recipients, adminPassword } = body
-  if (adminPassword !== process.env.ADMIN_PASSWORD) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = checkAdminAuth(req, body)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
   if (!Array.isArray(recipients) || recipients.length === 0) {
     return NextResponse.json({ error: 'No recipients' }, { status: 400 })

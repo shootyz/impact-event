@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function PATCH(
@@ -8,8 +9,8 @@ export async function PATCH(
   const { id } = await params
   const { adminPassword, active, name, date, location, description, slug, category, registration_type, max_capacity, form_config } = await req.json()
 
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
+  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
+    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
   }
 
   const updates: Record<string, unknown> = {}
@@ -41,8 +42,8 @@ export async function DELETE(
   const { id } = await params
   const { adminPassword } = await req.json()
 
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
+  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
+    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
   }
 
   const { error } = await supabaseAdmin()

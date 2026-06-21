@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
 
@@ -32,8 +33,8 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file') as File | null
   const eventId = formData.get('eventId') as string | null
 
-  if (adminPassword !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
+  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
+    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
   }
 
   if (!file) {

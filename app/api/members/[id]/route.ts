@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 function makeCode(): string {
@@ -12,8 +13,8 @@ export async function PATCH(req: NextRequest, props: any) {
   const { id } = await props.params
   const body = await req.json()
 
-  const pw = req.nextUrl.searchParams.get('adminPassword') ?? body?.adminPassword
-  if (pw !== process.env.ADMIN_PASSWORD) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const _a = checkAdminAuth(req, body)
+  if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
 
   const db = supabaseAdmin()
   const allowed = ['first_name', 'last_name', 'email', 'zielgruppe_id', 'anrede', 'sprache']

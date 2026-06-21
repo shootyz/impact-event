@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { buildCampaignHtmlForTest } from '@/lib/campaign-email'
 import { renderBlocksToHtml } from '@/app/admin/campaign-renderer'
 import type { CampaignBlock } from '@/app/admin/campaign-renderer'
 
 export async function POST(req: NextRequest) {
-  const { subject, body_html, event_url, blocks_json } = await req.json()
+  const body = await req.json()
+  const auth = checkAdminAuth(req, body)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: auth === 'rate_limited' ? 429 : 401 })
+
+  const { subject, body_html, event_url, blocks_json } = body
   if (!body_html && !blocks_json) return NextResponse.json({ error: 'body_html required' }, { status: 400 })
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!
 
