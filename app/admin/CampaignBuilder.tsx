@@ -440,10 +440,12 @@ function ModerationEditor({ block, onChange }: { block: ModerationBlock; onChang
 function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speaker; onChange: (s: Speaker) => void; onRemove: () => void; canRemove: boolean }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [photoUrlInput, setPhotoUrlInput] = useState("");
+  const [showPhotoUrl, setShowPhotoUrl] = useState(false);
   return (
     <div className="space-y-3">
-      <div className="flex gap-3 items-center">
-        <div>
+      <div className="flex gap-3 items-center flex-wrap">
+        <div className="flex gap-2 items-center flex-wrap">
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async e => {
             const file = e.target.files?.[0]; if (!file) return;
             setUploading(true);
@@ -457,10 +459,23 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
             disabled={uploading}>
             {uploading ? "Hochladen…" : sp.photo_url ? "Bild ersetzen" : "Bild hochladen"}
           </button>
+          <button onClick={() => setShowPhotoUrl(v => !v)}
+            className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}>
+            Von URL
+          </button>
         </div>
         {sp.photo_url && <img src={sp.photo_url} alt="" className="w-10 h-10 rounded-full object-cover" style={{ border: "2px solid #D28D28" }} />}
         {canRemove && <button onClick={onRemove} className="ml-auto text-xs" style={{ color: "var(--ig-gray3)" }}>Entfernen</button>}
       </div>
+      {showPhotoUrl && (
+        <div className="flex gap-2">
+          <FocusInput value={photoUrlInput} onChange={setPhotoUrlInput} placeholder="https://…/portrait.jpg" />
+          <button className="text-xs px-3 py-1.5 rounded-lg font-medium shrink-0" style={{ background: "var(--ig-navy)", color: "white" }}
+            onClick={() => { if (photoUrlInput.trim()) { onChange({ ...sp, photo_url: photoUrlInput.trim() }); setPhotoUrlInput(""); setShowPhotoUrl(false); } }}>
+            Übernehmen
+          </button>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelCls} style={labelSty}>Name</label>
@@ -483,6 +498,10 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
         <label className={labelCls} style={labelSty}>Bio</label>
         <FocusInput multiline rows={3} value={sp.bio} onChange={v => onChange({ ...sp, bio: v })} placeholder="A groundbreaking work on how business leaders…" />
       </div>
+      <div>
+        <label className={labelCls} style={labelSty}>Mehr Infos — URL <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
+        <FocusInput value={sp.link_url ?? ""} onChange={v => onChange({ ...sp, link_url: v || undefined })} placeholder="https://…" />
+      </div>
     </div>
   );
 }
@@ -493,7 +512,7 @@ function SpeakerEditor({ block: rawBlock, onChange }: { block: SpeakerBlock; onC
     ? rawBlock
     : { type: "speaker", speakers: [{ id: Math.random().toString(36).slice(2), photo_url: legacy.photo_url ?? "", name: legacy.name ?? "", title: legacy.title ?? "", bio: legacy.bio ?? "", book: legacy.book ?? "" }] };
   const updateSp = (i: number, sp: Speaker) => onChange({ ...block, speakers: block.speakers.map((s, j) => j === i ? sp : s) });
-  const addSp = () => onChange({ ...block, speakers: [...block.speakers, { id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] });
+  const addSp = () => onChange({ ...block, speakers: [...block.speakers, { id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "", link_url: undefined }] });
   const removeSp = (i: number) => onChange({ ...block, speakers: block.speakers.filter((_, j) => j !== i) });
   return (
     <div className="space-y-4">

@@ -311,7 +311,13 @@ function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & {
           {sp.book?.trim() && <Editable value={sp.book} onChange={v => updateSpeaker(i, { book: v })}
             placeholder="Buch / Kurzbeschrieb" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 8, whiteSpace: "pre-wrap" }} />}
           {sp.bio?.trim() && <Editable value={sp.bio} onChange={v => updateSpeaker(i, { bio: v })}
-            placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, whiteSpace: "pre-wrap" }} />}
+            placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 12, whiteSpace: "pre-wrap" }} />}
+          {sp.link_url?.trim() && (
+            <a href={sp.link_url} target="_blank" rel="noreferrer"
+              style={{ display: "inline-block", color: D.navy, textDecoration: "none", border: `1.5px solid ${D.navy}`, borderRadius: 8, padding: "7px 16px", fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>
+              Mehr Infos
+            </a>
+          )}
         </div>
       ))}
     </div>
