@@ -23,6 +23,7 @@ export type Speaker = {
   bio: string;
   book: string;
   link_url?: string;
+  link_label?: string;
 };
 
 export type ModerationBlock = {
@@ -218,7 +219,7 @@ ${sp.photo_url ? `<img src="${sp.photo_url}" alt="${sp.name}" width="100" style=
 ${sp.title ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">${sp.title}</p>` : ""}
 ${sp.book?.trim() ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${sp.book}</p>` : ""}
 ${sp.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 12px;font-family:Arial,sans-serif;">${sp.bio}</p>` : ""}
-${sp.link_url?.trim() ? `<p style="text-align:right;margin:8px 0 0;"><a href="${sp.link_url}" style="display:inline-block;background:${D.gold};color:#ffffff;text-decoration:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;font-family:Arial,sans-serif;">${t.moreInfo}</a></p>` : ""}`);
+${sp.link_url?.trim() ? `<p style="text-align:right;margin:8px 0 0;"><a href="${sp.link_url}" style="display:inline-block;background:${D.gold};color:#ffffff;text-decoration:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;font-family:Arial,sans-serif;">${sp.link_label?.trim() || t.moreInfo}</a></p>` : ""}`);
       return `${sectionHeadHtml(block.label || t.speaker)}
 ${speakerHtmls.join("\n")}${extra}`;
     }

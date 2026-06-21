@@ -317,7 +317,7 @@ function SpeakerPreview({ block: rawBlock, onChange, lang = "de" }: { block: Spe
             <div style={{ textAlign: "right", marginTop: 8 }}>
               <a href={sp.link_url} target="_blank" rel="noreferrer"
                 style={{ display: "inline-block", background: D.gold, color: "#ffffff", textDecoration: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700 }}>
-                {tl.moreInfo}
+                {sp.link_label?.trim() || tl.moreInfo}
               </a>
             </div>
           )}

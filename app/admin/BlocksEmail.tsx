@@ -179,7 +179,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
               {sp.title && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.title}</p>}
               {sp.book?.trim() && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.book}</p>}
               {sp.bio && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 12px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.bio}</p>}
-              {sp.link_url?.trim() && <p style={{ textAlign: "right", margin: "8px 0 0" }}><a href={sp.link_url} style={{ display: "inline-block", background: D.gold, color: "#ffffff", textDecoration: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{t.moreInfo}</a></p>}
+              {sp.link_url?.trim() && <p style={{ textAlign: "right", margin: "8px 0 0" }}><a href={sp.link_url} style={{ display: "inline-block", background: D.gold, color: "#ffffff", textDecoration: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.link_label?.trim() || t.moreInfo}</a></p>}
             </div>
           ))}
           <CustomFields block={block} />

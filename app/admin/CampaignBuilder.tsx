@@ -498,9 +498,15 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
         <label className={labelCls} style={labelSty}>Bio</label>
         <FocusInput multiline rows={3} value={sp.bio} onChange={v => onChange({ ...sp, bio: v })} placeholder="A groundbreaking work on how business leaders…" />
       </div>
-      <div>
-        <label className={labelCls} style={labelSty}>Mehr Infos — URL <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
-        <FocusInput value={sp.link_url ?? ""} onChange={v => onChange({ ...sp, link_url: v || undefined })} placeholder="https://…" />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelCls} style={labelSty}>Mehr Infos — URL <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
+          <FocusInput value={sp.link_url ?? ""} onChange={v => onChange({ ...sp, link_url: v || undefined })} placeholder="https://…" />
+        </div>
+        <div>
+          <label className={labelCls} style={labelSty}>Button-Text <span style={{ color: "#9ca3af", fontWeight: 400 }}>(leer = Standard)</span></label>
+          <FocusInput value={sp.link_label ?? ""} onChange={v => onChange({ ...sp, link_label: v || undefined })} placeholder="Mehr Infos" />
+        </div>
       </div>
     </div>
   );
