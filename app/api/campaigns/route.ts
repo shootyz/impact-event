@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendCampaign } from '@/lib/campaign-email'
 
+function checkAuth(req: NextRequest, body?: Record<string, unknown>): boolean {
+  const pw = process.env.ADMIN_PASSWORD
+  const fromQuery = req.nextUrl.searchParams.get('adminPassword')
+  const fromBody = body?.adminPassword as string | undefined
+  return (fromQuery ?? fromBody) === pw
+}
+
 export async function GET(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const eventId = req.nextUrl.searchParams.get('eventId')
   if (!eventId) return NextResponse.json({ error: 'eventId required' }, { status: 400 })
 
@@ -18,18 +26,23 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { subject, header_image_url, body_html, event_url, send_now, blocks_json, zielgruppe_id, event_id, lang_group_id } = await req.json()
+  const body = await req.json()
+  if (!checkAuth(req, body)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { subject, header_image_url, body_html, event_url, send_now, blocks_json, zielgruppe_id, event_id, lang_group_id } = body
 
   if (!event_id) return NextResponse.json({ error: 'event_id required' }, { status: 400 })
-  if (!subject?.trim() || !body_html?.trim()) {
-    return NextResponse.json({ error: 'Subject and body are required' }, { status: 400 })
+  if (!subject?.trim()) return NextResponse.json({ error: 'Subject is required' }, { status: 400 })
+  // Allow blocks_json-only campaigns (body_html can be empty string)
+  if (!blocks_json && !body_html?.trim()) {
+    return NextResponse.json({ error: 'Either blocks_json or body_html is required' }, { status: 400 })
   }
 
   const db = supabaseAdmin()
 
   const { data: campaign, error } = await db
     .from('campaigns')
-    .insert({ subject, header_image_url: header_image_url || null, body_html, event_url: event_url || null, blocks_json: blocks_json ?? null, zielgruppe_id: zielgruppe_id ?? null, event_id, lang_group_id: lang_group_id ?? null })
+    .insert({ subject, header_image_url: header_image_url || null, body_html: body_html || '', event_url: event_url || null, blocks_json: blocks_json ?? null, zielgruppe_id: zielgruppe_id ?? null, event_id, lang_group_id: lang_group_id ?? null })
     .select()
     .single()
 
@@ -42,7 +55,7 @@ export async function POST(req: NextRequest) {
         campaignId: campaign.id,
         subject,
         headerImageUrl: header_image_url || null,
-        bodyHtml: body_html,
+        bodyHtml: body_html || '',
         blocksJson: blocks_json ?? null,
         eventUrl: event_url || null,
         appUrl,

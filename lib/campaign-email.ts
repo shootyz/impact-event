@@ -272,18 +272,20 @@ export async function sendCampaign({
   if (zielgruppeId) query = query.eq('zielgruppe_id', zielgruppeId)
   const { data: allMembers, error } = await query
 
+  if (error || !allMembers) throw new Error('Failed to load members')
+
   // Filter by language: member.sprache must match campaignLang.
   // Members with no sprache set are treated as 'de' (default).
-  const members = (allMembers ?? []).filter((m: Member) => {
+  const members = allMembers.filter((m: Member) => {
     const mLang = (m.sprache || 'de').toLowerCase()
     return mLang === campaignLang.toLowerCase()
   })
 
-  if (error || !allMembers) throw new Error('Failed to load members')
-
-  const { data: inviteCodes } = await db
-    .from('invite_codes')
-    .select('member_id, code')
+  // Only load invite codes belonging to the relevant members to avoid cross-event code mixing
+  const memberIds = members.map((m: Member) => m.id)
+  const { data: inviteCodes } = memberIds.length
+    ? await db.from('invite_codes').select('member_id, code').in('member_id', memberIds)
+    : { data: [] }
 
   const codeMap = new Map<string, string>()
   if (inviteCodes) {

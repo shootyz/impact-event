@@ -188,7 +188,7 @@ const TEST_EMAILS = [
   "chantal.reichenbach@impactgstaad.ch",
 ];
 
-function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zielgruppeName }: {
+function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zielgruppeName, adminPassword }: {
   c: CampaignType;
   onSend: (id: string, sent: number) => void;
   onDelete: (id: string) => void;
@@ -196,6 +196,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
   onEdit?: () => void;
   onDuplicate?: () => Promise<void>;
   zielgruppeName?: string;
+  adminPassword?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
@@ -397,7 +398,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                                 const res = await fetch("/api/campaigns/test", {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ campaign_id: c.id, subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, recipients: testSelected }),
+                                  body: JSON.stringify({ adminPassword, campaign_id: c.id, subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, recipients: testSelected }),
                                 });
                                 const d = await res.json();
                                 setTestSending(false);
@@ -429,7 +430,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                 <div className="flex gap-1.5">
                 <button onClick={async () => {
                   setSending(true);
-                  const res = await fetch(`/api/campaigns/${c.id}`, { method: "POST" });
+                  const res = await fetch(`/api/campaigns/${c.id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword }) });
                   const d = await res.json();
                   setSending(false);
                   if (res.ok) { setSendResult(`✓ An ${d.sent} Mitglieder gesendet`); onSend(c.id, d.sent); }
@@ -469,14 +470,14 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
               style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "var(--ig-light)", outline: "none" }} />
             <button onClick={async () => {
               if (!scheduleValue) return;
-              const res = await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scheduled_at: new Date(scheduleValue).toISOString() }) });
+              const res = await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword, scheduled_at: new Date(scheduleValue).toISOString() }) });
               if (res.ok && onSchedule) { onSchedule(c.id, new Date(scheduleValue).toISOString()); setScheduling(false); }
             }} className="text-xs px-3 py-1.5 rounded-lg font-bold transition active:scale-95 hover:opacity-70" style={{ background: "var(--ig-navy)", color: "#fff", border: "none" }}>
               Speichern
             </button>
             {c.scheduled_at && (
               <button onClick={async () => {
-                await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scheduled_at: null }) });
+                await fetch(`/api/campaigns/${c.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword, scheduled_at: null }) });
                 if (onSchedule) { onSchedule(c.id, null); setScheduling(false); }
               }} className="text-xs px-3 py-1.5 rounded-lg font-medium transition active:scale-95 hover:opacity-70" style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid #dc2626" }}>
                 Entfernen
@@ -711,7 +712,7 @@ export default function AdminPage() {
       Promise.all([
         fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()),
         fetch(`/api/zielgruppen?eventId=${selectedEventId}`).then(r => r.json()),
-        fetch(`/api/campaigns?eventId=${selectedEventId}`).then(r => r.json()),
+        fetch(`/api/campaigns?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()),
       ]).then(([members, zielgruppen, campaigns]) => {
         if (Array.isArray(members)) setMembers(members);
         if (Array.isArray(zielgruppen)) setZielgruppen(zielgruppen);
@@ -1158,7 +1159,7 @@ export default function AdminPage() {
                     setMembersLoading(true);
                     fetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
                     setCampaignsLoading(true);
-                    fetch(`/api/campaigns?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
+                    fetch(`/api/campaigns?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
                   } else if (eventSection === "management" && selectedEventId) {
                     loadRegistrations(savedPassword.current, selectedEventId);
                   } else {
@@ -2444,7 +2445,7 @@ export default function AdminPage() {
                       const res = await fetch(`/api/campaigns/${existingId}`, {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocksJson, zielgruppe_id: zielgruppeId }),
+                        body: JSON.stringify({ adminPassword: savedPassword.current, subject, body_html: bodyHtml, event_url: eventUrl || null, blocks_json: blocksJson, zielgruppe_id: zielgruppeId }),
                       });
                       const d = await res.json();
                       if (res.ok) setCampaigns(prev => prev.map(c => c.id === existingId ? d : c).concat(prev.find(c => c.id === existingId) ? [] : [d]));
@@ -2454,7 +2455,7 @@ export default function AdminPage() {
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocksJson, zielgruppe_id: zielgruppeId ?? null, event_id: selectedEventId }),
+                        body: JSON.stringify({ adminPassword: savedPassword.current, subject, body_html: bodyHtml, event_url: eventUrl || null, send_now: false, blocks_json: blocksJson, zielgruppe_id: zielgruppeId ?? null, event_id: selectedEventId }),
                       });
                       const d = await res.json();
                       if (res.ok) {
@@ -2504,9 +2505,10 @@ export default function AdminPage() {
                     </Card>
                   ) : drafts.map(c => (
                     <CampaignCard key={c.id} c={c}
+                      adminPassword={savedPassword.current}
                       zielgruppeName={zielgruppen.find(z => z.id === c.zielgruppe_id)?.name}
                       onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
-                      onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
+                      onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                       onSchedule={(id, scheduled_at) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x))}
                       onEdit={c.blocks_json ? () => { setEditingCampaign(c); setBuilderZielgruppeId(c.zielgruppe_id ?? null); setMailingTab("compose"); } : undefined}
                     />
@@ -2526,15 +2528,16 @@ export default function AdminPage() {
                   <Card><div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Noch keine gesendeten Kampagnen.</div></Card>
                 ) : sent.map(c => (
                   <CampaignCard key={c.id} c={c}
+                    adminPassword={savedPassword.current}
                     zielgruppeName={zielgruppen.find(z => z.id === c.zielgruppe_id)?.name}
                     onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
-                    onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
+                    onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                     onSchedule={(id, scheduled_at) => { setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x)); }}
                     onDuplicate={async () => {
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ subject: `${c.subject} (Kopie)`, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null, zielgruppe_id: c.zielgruppe_id || null, event_id: c.event_id, send_now: false }),
+                        body: JSON.stringify({ adminPassword: savedPassword.current, subject: `${c.subject} (Kopie)`, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null, zielgruppe_id: c.zielgruppe_id || null, event_id: c.event_id, send_now: false }),
                       });
                       const d = await res.json();
                       if (res.ok) {

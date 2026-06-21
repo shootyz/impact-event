@@ -9,7 +9,9 @@ const getResend = () => {
 }
 
 export async function POST(req: NextRequest) {
-  const { campaign_id, recipients } = await req.json()
+  const body = await req.json()
+  const { campaign_id, recipients, adminPassword } = body
+  if (adminPassword !== process.env.ADMIN_PASSWORD) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!Array.isArray(recipients) || recipients.length === 0) {
     return NextResponse.json({ error: 'No recipients' }, { status: 400 })
