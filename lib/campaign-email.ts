@@ -253,6 +253,9 @@ export async function sendCampaign({
   let hasRegisterBlock = false
   let campaignLang: Lang = 'en'
   let parsedBlocks: CampaignBlock[] | null = null
+  // Placeholder URL: pre-render blocks once, then string-replace per member (avoids N React renders)
+  const REGISTER_URL_PH = 'https://register-url-placeholder.impactgstaad.internal/'
+  let preRenderedBlocksHtml: string | null = null
   const staticBodyHtml = (() => {
     if (!blocksJson) return bodyHtml
     try {
@@ -260,7 +263,11 @@ export async function sendCampaign({
       parsedBlocks = (Array.isArray(parsed) ? parsed : parsed.blocks ?? []) as CampaignBlock[]
       campaignLang = (!Array.isArray(parsed) && parsed.lang) ? parsed.lang : 'en'
       hasRegisterBlock = (parsedBlocks as CampaignBlock[]).some(b => b.type === 'register_button')
-      // For hasRegisterBlock, we render per-member below; here render without registerUrl as fallback
+      if (hasRegisterBlock) {
+        // Pre-render once with placeholder; will be string-replaced per member
+        preRenderedBlocksHtml = renderToStaticMarkup(React.createElement(BlocksEmail, { blocks: parsedBlocks, lang: campaignLang, campaignId, appUrl, registerUrl: REGISTER_URL_PH }))
+        return preRenderedBlocksHtml
+      }
       return renderToStaticMarkup(React.createElement(BlocksEmail, { blocks: parsedBlocks, lang: campaignLang, campaignId, appUrl }))
     } catch { return bodyHtml }
   })()
@@ -310,9 +317,9 @@ export async function sendCampaign({
       ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
       : evId ? memberBaseUrl : (eventUrl ?? null)
 
-    // When blocks contain a register_button, render per-member with personalized URL
-    const finalBodyHtml = hasRegisterBlock && parsedBlocks
-      ? renderToStaticMarkup(React.createElement(BlocksEmail, { blocks: parsedBlocks, lang: campaignLang, campaignId, appUrl, registerUrl: memberRegisterUrl ?? undefined }))
+    // When blocks contain a register_button, swap the pre-rendered placeholder URL per member
+    const finalBodyHtml = hasRegisterBlock && preRenderedBlocksHtml
+      ? preRenderedBlocksHtml.replaceAll(REGISTER_URL_PH, memberRegisterUrl ?? REGISTER_URL_PH)
       : staticBodyHtml
 
     const html = buildCampaignHtml({
@@ -345,11 +352,8 @@ export async function sendCampaign({
     .update({ sent_at: new Date().toISOString(), recipient_count: sent })
     .eq('id', campaignId)
 
-  // Log recipients
-  const recipientRows = (members as Member[]).filter(m => {
-    // only those we actually tried to send to (all non-unsubscribed in scope)
-    return !m.unsubscribed && (!zielgruppeId || m.zielgruppe_id === zielgruppeId)
-  }).map(m => ({
+  // Log recipients — `members` is already the correctly filtered set
+  const recipientRows = (members as Member[]).map(m => ({
     campaign_id: campaignId,
     email: m.email,
     first_name: m.first_name,

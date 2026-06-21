@@ -67,13 +67,13 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
     },
   });
 
-  // Sync external value changes (e.g. block load)
+  // Sync external value changes (e.g. switching between blocks)
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
       editor.commands.setContent(value || "");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [value]);
 
   if (!editor) return null;
 

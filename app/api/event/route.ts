@@ -8,8 +8,8 @@ export async function GET(req: NextRequest) {
     .from('events')
     .select('id, name, date, location, description, registration_password, registration_type, max_capacity, form_config')
   const { data: event, error } = await (
-    id ? base.eq('id', id) :
-    slug ? base.eq('slug', slug) :
+    id ? base.eq('id', id).eq('active', true) :
+    slug ? base.eq('slug', slug).eq('active', true) :
     base.eq('active', true)
   ).single()
 
