@@ -11,6 +11,7 @@ export type EventDetailsBlock = {
   event_title: string;
   date: string;
   time: string;
+  end_time?: string;
   venue_name: string;
   venue_maps_url: string;
 };
