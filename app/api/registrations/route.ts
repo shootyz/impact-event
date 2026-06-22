@@ -3,7 +3,6 @@ import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
-  const auth = checkAdminAuth(req)
   const eventId = req.nextUrl.searchParams.get('eventId')
 
   const _auth = checkAdminAuth(req); if (_auth !== 'ok') {
@@ -12,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const db = supabaseAdmin()
 
-  const base = db.from('events').select('id, name, date, location, description, registration_password, active')
+  const base = db.from('events').select('id, name, date, location, description, active')
   const { data: event } = await (eventId ? base.eq('id', eventId) : base.eq('active', true).order('date', { ascending: true }).limit(1)).single()
 
   if (!event) {

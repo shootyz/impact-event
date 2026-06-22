@@ -4,8 +4,12 @@ import { sendCampaign } from '@/lib/campaign-email'
 
 export async function GET(req: NextRequest) {
   // Vercel Cron authenticates via CRON_SECRET header
-  const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const authHeader = req.headers.get('authorization') ?? ''
+  const expected = `Bearer ${process.env.CRON_SECRET ?? ''}`
+  const { timingSafeEqual } = await import('crypto')
+  const match = authHeader.length === expected.length &&
+    timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+  if (!match) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
