@@ -3,7 +3,7 @@ import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
-  const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
+  const _a = checkAdminAuth(req); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
   const eventId = req.nextUrl.searchParams.get('eventId')
   if (!eventId) return NextResponse.json({ error: 'eventId required' }, { status: 400 })
 

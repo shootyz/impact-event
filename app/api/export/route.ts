@@ -3,7 +3,6 @@ import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
-  const auth = checkAdminAuth(req)
   const type = req.nextUrl.searchParams.get('type') // 'all' | 'checkedin' | 'noshows'
   const eventId = req.nextUrl.searchParams.get('eventId')
 

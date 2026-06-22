@@ -6,7 +6,7 @@ import { sendCampaign } from '@/lib/campaign-email'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function GET(req: NextRequest, props: any) {
   const { id } = await props.params
-  const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
+  const _a = checkAdminAuth(req); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
   const db = supabaseAdmin()
   const { data, error } = await db.from('campaigns').select('*').eq('id', id).single()
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
