@@ -146,7 +146,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
       try { return new Date(block.date + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang ?? "en"], { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { return block.date; }
     }
     return block.date;
-  })() + (block.time ? `, ${block.time}` : "") : null;
+  })() + (block.time ? `, ${block.time}${block.end_time ? ` – ${block.end_time}` : ""}` : "") : null;
 
   const rows: { label: string; content: React.ReactNode }[] = [];
   if (formattedDate) rows.push({ label: tl.date, content: <span style={{ color: D.black, fontSize: 15, fontWeight: 400 }}>{formattedDate}</span> });

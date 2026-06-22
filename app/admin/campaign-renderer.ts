@@ -142,7 +142,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
       const formattedDate = block.date
         ? (() => { try { const d = new Date(block.date + "T12:00:00"); if (isNaN(d.getTime())) return block.date; return d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" }); } catch { return block.date; } })()
         : "";
-      const dateStr = formattedDate + (block.time ? `, ${esc(block.time)}` : "");
+      const dateStr = formattedDate + (block.time ? `, ${esc(block.time)}${block.end_time ? ` – ${esc(block.end_time)}` : ""}` : "");
 
       const lines: string[] = [];
       if (block.category)

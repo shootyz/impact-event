@@ -221,13 +221,24 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
       </div>
       <div>
         <label className={labelCls} style={labelSty}>Uhrzeit</label>
-        <input
-          type="time"
-          value={block.time ?? ""}
-          onChange={e => onChange({ ...block, time: e.target.value })}
-          className="rounded-lg border px-3 py-2 text-sm"
-          style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="time"
+            value={block.time ?? ""}
+            onChange={e => onChange({ ...block, time: e.target.value })}
+            className="rounded-lg border px-3 py-2 text-sm"
+            style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
+          />
+          <span className="text-sm" style={{ color: "var(--ig-gray3)" }}>–</span>
+          <input
+            type="time"
+            value={block.end_time ?? ""}
+            onChange={e => onChange({ ...block, end_time: e.target.value || undefined })}
+            className="rounded-lg border px-3 py-2 text-sm"
+            style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", outline: "none" }}
+            placeholder="Endzeit"
+          />
+        </div>
       </div>
       <div>
         <label className={labelCls} style={labelSty}>Venue Name</label>
@@ -656,14 +667,15 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
   }
 
   return (
-    <div draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
+    <div onDragOver={onDragOver} onDrop={onDrop}
       className="rounded-2xl border overflow-hidden transition-all"
       style={{ borderColor: isDragOver ? "#1E3263" : "#e5e7eb", opacity: 1 }}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none"
         style={{ background: "#f9fafb", borderBottom: open ? "1px solid #e5e7eb" : "none" }}
         onClick={() => !renaming && setOpen(o => !o)}>
-        <span style={{ cursor: "grab", color: "#9ca3af", fontSize: 16, lineHeight: 1 }} title="Ziehen zum Verschieben"
+        <span draggable onDragStart={onDragStart}
+          style={{ cursor: "grab", color: "#9ca3af", fontSize: 16, lineHeight: 1 }} title="Ziehen zum Verschieben"
           onClick={e => e.stopPropagation()}>⠿</span>
         <span className="text-lg">{open ? "▾" : "▸"}</span>
         {renaming ? (

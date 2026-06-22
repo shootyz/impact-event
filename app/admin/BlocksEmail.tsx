@@ -91,7 +91,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           if (isNaN(d.getTime())) return block.date;
           return d.toLocaleDateString(DATE_LOCALE[lang], { weekday: "long", day: "numeric", month: "long", year: "numeric" });
         } catch { return block.date; }
-      })() + (block.time ? `, ${block.time}` : "") : null;
+      })() + (block.time ? `, ${block.time}${block.end_time ? ` – ${block.end_time}` : ""}` : "") : null;
 
       return (
         <div>
