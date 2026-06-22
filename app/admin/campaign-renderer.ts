@@ -111,7 +111,14 @@ function renderCustomFields(block: CampaignBlock): string {
 
 export function richHtmlToEmail(html: string, color: string): string {
   if (!html || html === "<p></p>") return "";
-  return html
+  const sanitized = html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<object[\s\S]*?<\/object>/gi, '')
+    .replace(/<embed[^>]*>/gi, '')
+    .replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript:/gi, '')
+  return sanitized
     .replace(/<p( [^>]*)?>/g, (_, attrs) => `<p${attrs ?? ""} style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
     .replace(/<ul>/g, `<ul style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;list-style-type:disc;font-family:Arial,sans-serif;">`)
     .replace(/<ol>/g, `<ol style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;font-family:Arial,sans-serif;">`)
