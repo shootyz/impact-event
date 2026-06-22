@@ -724,9 +724,9 @@ export default function AdminPage() {
       setMembersLoading(true);
       setCampaignsLoading(true);
       Promise.all([
-        fetch(`/api/members?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()),
-        fetch(`/api/zielgruppen?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()),
-        fetch(`/api/campaigns?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()),
+        authFetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()),
+        authFetch(`/api/zielgruppen?eventId=${selectedEventId}`).then(r => r.json()),
+        authFetch(`/api/campaigns?eventId=${selectedEventId}`).then(r => r.json()),
       ]).then(([members, zielgruppen, campaigns]) => {
         if (Array.isArray(members)) setMembers(members);
         if (Array.isArray(zielgruppen)) setZielgruppen(zielgruppen);
@@ -1171,9 +1171,9 @@ export default function AdminPage() {
                     if (mailingTab === "compose") return;
                     setMembersLoaded(false);
                     setMembersLoading(true);
-                    fetch(`/api/members?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
+                    authFetch(`/api/members?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setMembers(d); setMembersLoading(false); setMembersLoaded(true); });
                     setCampaignsLoading(true);
-                    fetch(`/api/campaigns?eventId=${selectedEventId}&adminPassword=${encodeURIComponent(savedPassword.current)}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
+                    authFetch(`/api/campaigns?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
                   } else if (eventSection === "management" && selectedEventId) {
                     loadRegistrations(savedPassword.current, selectedEventId);
                   } else {

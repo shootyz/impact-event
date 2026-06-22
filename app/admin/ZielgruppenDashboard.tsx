@@ -144,7 +144,7 @@ export default function ZielgruppenDashboard({
     });
     const d = await res.json();
     setCsvResult({ zgId, inserted: d.inserted ?? 0 });
-    const updated = await fetch(`/api/members?eventId=${eventId}&adminPassword=${encodeURIComponent(adminPassword)}`).then(r => r.json());
+    const updated = await fetch(`/api/members?eventId=${eventId}`, { headers: { "Authorization": `Bearer ${adminPassword}` } }).then(r => r.json());
     if (Array.isArray(updated)) onMembersChange(updated);
     setCsvImporting(false);
     setCsvZgId(null);
