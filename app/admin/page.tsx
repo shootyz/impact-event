@@ -920,7 +920,7 @@ export default function AdminPage() {
     const data = await res.json();
     setManualLoading(false);
     if (!res.ok) { setManualStatus({ ok: false, msg: data.error }); }
-    else { setManualStatus({ ok: true, msg: `${manualVorname} ${manualNachname} wurde registriert.` }); setManualVorname(""); setManualNachname(""); setManualEmail(""); loadRegistrations(savedPassword.current); }
+    else { setManualStatus({ ok: true, msg: `${manualVorname} ${manualNachname} wurde registriert.` }); setManualVorname(""); setManualNachname(""); setManualEmail(""); setManualForm(false); loadRegistrations(savedPassword.current, selectedEventId ?? undefined); }
   };
 
   const handleCSVImport = async () => {
@@ -1038,10 +1038,9 @@ export default function AdminPage() {
   const eventTabs = [
     ...(selectedEvent?.registration_type === "form"
       ? [{ id: "form-regs" as const, label: "Anmeldungen" }]
-      : [
-          { id: "scanner" as const, label: "Scanner" },
-          { id: "list" as const, label: "Gäste" },
-        ]),
+      : []),
+    { id: "scanner" as const, label: "Scanner" },
+    { id: "list" as const, label: "Gäste" },
     { id: "tools" as const, label: "Tools" },
     { id: "analytics" as const, label: "Statistiken" },
   ];
@@ -1396,7 +1395,7 @@ export default function AdminPage() {
             const openEvent = (ev: EventCard) => {
               setSelectedEventId(ev.id);
               setEventSection(null);
-              setActiveTab(ev.registration_type === "form" ? "form-regs" : "list");
+              setActiveTab(ev.registration_type === "form" ? "form-regs" : "scanner");
               setSlugInput(ev.slug ?? "");
               setSlugStatus(null);
               setRegTypeInput(ev.registration_type ?? "invite");
