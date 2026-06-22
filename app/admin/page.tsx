@@ -2340,16 +2340,43 @@ export default function AdminPage() {
                 {formRegs.length} Anmeldung{formRegs.length !== 1 ? "en" : ""}
                 {selectedEvent?.max_capacity ? ` · Max. ${selectedEvent.max_capacity}` : ""}
               </p>
-              <button
-                onClick={() => { setFormRegsLoaded(false); }}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
-                style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
-              >
-                <IconRefresh className="w-3.5 h-3.5" /> Aktualisieren
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setFormRegsLoaded(false); }}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
+                  style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
+                ><IconRefresh className="w-3.5 h-3.5" /> Aktualisieren</button>
+                <BtnPrimary type="button" onClick={() => setManualForm(f => !f)}>+ Manuell</BtnPrimary>
+              </div>
             </div>
+            {manualForm && (
+              <Card className="mb-4">
+                <form className="px-5 py-4 space-y-3" onSubmit={async e => {
+                  e.preventDefault();
+                  if (!manualVorname.trim() || !manualNachname.trim()) { setManualStatus({ ok: false, msg: "Vor- und Nachname erforderlich." }); return; }
+                  setManualLoading(true);
+                  const res = await fetch("/api/form-register", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ event_id: selectedEventId, first_name: manualVorname.trim(), last_name: manualNachname.trim(), email: manualEmail.trim() || `manuell-${Date.now()}@noemail.local` }),
+                  });
+                  const d = await res.json();
+                  setManualLoading(false);
+                  if (d.ok) { setManualStatus({ ok: true, msg: `${manualVorname} ${manualNachname} eingetragen.` }); setManualVorname(""); setManualNachname(""); setManualEmail(""); setFormRegsLoaded(false); setManualForm(false); }
+                  else { setManualStatus({ ok: false, msg: d.error ?? "Fehler." }); }
+                }}>
+                  <p className="text-xs font-semibold" style={{ color: "var(--ig-navy)" }}>Manuelle Anmeldung</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input placeholder="Vorname *" value={manualVorname} onChange={e => setManualVorname(e.target.value)} required className="rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                    <input placeholder="Nachname *" value={manualNachname} onChange={e => setManualNachname(e.target.value)} required className="rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                  </div>
+                  <input placeholder="E-Mail (optional)" value={manualEmail} onChange={e => setManualEmail(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                  {manualStatus && <p className={`text-xs ${manualStatus.ok ? "text-green-600" : "text-red-500"}`}>{manualStatus.msg}</p>}
+                  <div className="flex justify-end"><BtnPrimary type="submit" disabled={manualLoading}>{manualLoading ? "Wird gespeichert…" : "Speichern"}</BtnPrimary></div>
+                </form>
+              </Card>
+            )}
             {formRegsLoading ? (
               <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div>
             ) : formRegs.length === 0 ? (

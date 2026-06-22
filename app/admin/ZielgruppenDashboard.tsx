@@ -52,14 +52,18 @@ export default function ZielgruppenDashboard({
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvResult, setCsvResult] = useState<{ zgId: string; inserted: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState<Record<string, string>>({});
+  const [showUnsub, setShowUnsub] = useState<Record<string, boolean>>({});
   const csvRef = useRef<HTMLInputElement>(null);
 
   const groupMembers = (zgId: string) => {
     const q = (searchQuery[zgId] ?? "").toLowerCase().trim();
+    const includeUnsub = showUnsub[zgId] ?? false;
     return members
-      .filter(m => m.zielgruppe_id === zgId && !m.unsubscribed)
+      .filter(m => m.zielgruppe_id === zgId && (includeUnsub || !m.unsubscribed))
       .filter(m => !q || [m.first_name, m.last_name, m.email, m.anrede ?? ""].join(" ").toLowerCase().includes(q));
   };
+
+  const unsubCount = (zgId: string) => members.filter(m => m.zielgruppe_id === zgId && m.unsubscribed).length;
 
   async function saveEdit() {
     if (!editing) return;
@@ -269,8 +273,8 @@ export default function ZielgruppenDashboard({
             {isOpen && (
               <div>
                 {/* Search bar */}
-                <div className="px-4 py-2.5" style={{ borderBottom: "1px solid var(--ig-gray2)", background: "var(--ig-light)" }}>
-                  <div className="relative">
+                <div className="px-4 py-2.5 flex items-center gap-2" style={{ borderBottom: "1px solid var(--ig-gray2)", background: "var(--ig-light)" }}>
+                  <div className="relative flex-1">
                     <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--ig-gray3)" }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35"/></svg>
                     <input
                       className={inputCls}
@@ -287,7 +291,22 @@ export default function ZielgruppenDashboard({
                         style={{ color: "var(--ig-gray3)" }}>✕</button>
                     )}
                   </div>
+                  {unsubCount(zg.id) > 0 && (
+                    <button
+                      onClick={() => setShowUnsub(s => ({ ...s, [zg.id]: !s[zg.id] }))}
+                      className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition flex-shrink-0"
+                      style={{
+                        border: "1px solid",
+                        borderColor: showUnsub[zg.id] ? "#dc2626" : "var(--ig-gray2)",
+                        color: showUnsub[zg.id] ? "#dc2626" : "var(--ig-gray3)",
+                        background: showUnsub[zg.id] ? "#fff5f5" : "white",
+                      }}
+                    >
+                      {unsubCount(zg.id)} abgemeldet {showUnsub[zg.id] ? "ausblenden" : "anzeigen"}
+                    </button>
+                  )}
                 </div>
+
                 {list.length > 0 ? (
                   <div className="overflow-x-auto">
                   <table className="w-full text-xs" style={{ borderCollapse: "collapse", minWidth: 560 }}>
@@ -331,8 +350,11 @@ export default function ZielgruppenDashboard({
                           ) : (
                             <>
                               <td className="px-4 py-2.5" style={{ color: "var(--ig-gray3)" }}>{m.anrede || "—"}</td>
-                              <td className="px-4 py-2.5 font-medium" style={{ color: "var(--ig-navy)" }}>{m.first_name}</td>
-                              <td className="px-4 py-2.5 font-medium" style={{ color: "var(--ig-navy)" }}>{m.last_name}</td>
+                              <td className="px-4 py-2.5 font-medium" style={{ color: m.unsubscribed ? "var(--ig-gray3)" : "var(--ig-navy)" }}>
+                                {m.first_name}
+                                {m.unsubscribed && <span className="ml-1.5 px-1.5 py-0.5 rounded text-xs font-semibold" style={{ background: "#fff5f5", color: "#dc2626", border: "1px solid #fecaca" }}>abgemeldet</span>}
+                              </td>
+                              <td className="px-4 py-2.5 font-medium" style={{ color: m.unsubscribed ? "var(--ig-gray3)" : "var(--ig-navy)" }}>{m.last_name}</td>
                               <td className="px-4 py-2.5 max-w-[160px]" style={{ color: "var(--ig-gray3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email}</td>
                               <td className="px-4 py-2.5">
                                 {m.sprache
