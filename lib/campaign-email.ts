@@ -256,6 +256,13 @@ export async function sendCampaign({
   // Placeholder URL: pre-render blocks once, then string-replace per member (avoids N React renders)
   const REGISTER_URL_PH = 'https://register-url-placeholder.impactgstaad.internal/'
   let preRenderedBlocksHtml: string | null = null
+
+  // For form-type events, never use quick-register URLs — the form handles registration
+  let isFormEvent = false
+  if (eventId) {
+    const { data: eventRow } = await supabaseAdmin().from('events').select('registration_type').eq('id', eventId).single()
+    isFormEvent = eventRow?.registration_type === 'form'
+  }
   const staticBodyHtml = (() => {
     if (!blocksJson) return bodyHtml
     try {
@@ -313,7 +320,7 @@ export async function sendCampaign({
     if (campaignLang !== 'en') qrParams.push(`lang=${campaignLang}`)
     if (evId) qrParams.push(`event=${evId}`)
     const memberBaseUrl = `${appUrl}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
-    const memberRegisterUrl = inviteCode
+    const memberRegisterUrl = (!isFormEvent && inviteCode)
       ? `${appUrl}/api/quick-register/${encodeURIComponent(inviteCode)}${qrParams.length ? `?${qrParams.join('&')}` : ''}`
       : evId ? memberBaseUrl : (eventUrl ?? null)
 
