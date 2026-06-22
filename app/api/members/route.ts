@@ -92,7 +92,13 @@ export async function DELETE(req: NextRequest) {
   const _a = checkAdminAuth(req, body ?? {}); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
   const { id } = body
   const db = supabaseAdmin()
+  // Get email first so we can clean up campaign_recipients
+  const { data: member } = await db.from('members').select('email').eq('id', id).single()
   const { error } = await db.from('members').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // Remove from campaign recipient history so deleted users don't appear in sent campaigns
+  if (member?.email) {
+    await db.from('campaign_recipients').delete().eq('email', member.email)
+  }
   return NextResponse.json({ ok: true })
 }
