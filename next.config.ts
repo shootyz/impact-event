@@ -29,6 +29,15 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
+      {
+        // Explicitly deny cross-origin access to all API routes
+        source: "/api/(.*)",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "https://impactgstaad.vercel.app" },
+          { key: "Access-Control-Allow-Methods", value: "GET, POST, PATCH, DELETE, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
+        ],
+      },
     ]
   },
 };
