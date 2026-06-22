@@ -24,7 +24,7 @@ function parseCSV(text: string): Array<Record<string, string>> {
       name: fullName || cols[0] || '',
       email: cols[emailIdx] || '',
     }
-  }).filter((r) => r.email.includes('@'))
+  }).filter((r) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email.trim()))
 }
 
 export async function POST(req: NextRequest) {
