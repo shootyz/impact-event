@@ -92,16 +92,16 @@ function HourChart({ data }: { data: { hour: number; count: number }[] }) {
   );
 }
 
-export default function AnalyticsDashboard({ eventId }: { eventId: string }) {
+export default function AnalyticsDashboard({ eventId, adminPassword }: { eventId: string; adminPassword: string }) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/analytics?eventId=${eventId}`)
+    fetch(`/api/analytics?eventId=${eventId}&password=${encodeURIComponent(adminPassword)}`)
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); });
-  }, [eventId]);
+  }, [eventId, adminPassword]);
 
   if (loading) return (
     <div className="py-16 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Statistiken werden geladen…</div>

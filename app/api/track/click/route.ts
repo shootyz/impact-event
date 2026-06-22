@@ -6,7 +6,8 @@ export async function GET(req: NextRequest) {
   const mid = req.nextUrl.searchParams.get('mid')
   const url = req.nextUrl.searchParams.get('url')
 
-  if (cid && mid) {
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (cid && mid && UUID_RE.test(cid) && UUID_RE.test(mid)) {
     const db = supabaseAdmin()
     await db.from('campaign_events').insert({ campaign_id: cid, member_id: mid, type: 'click' })
   }

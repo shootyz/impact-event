@@ -3,10 +3,8 @@ import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
-  const adminPassword = req.nextUrl.searchParams.get('password')
-  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
-    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
-  }
+  const auth = checkAdminAuth(req)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
   const db = supabaseAdmin()
   const { data: events } = await db
@@ -36,11 +34,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { adminPassword, name, date, location, description, registration_password, category, registration_type, max_capacity } = await req.json()
+  const body = await req.json()
+  const auth = checkAdminAuth(req, body)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
-  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
-    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
-  }
+  const { name, date, location, description, registration_password, category, registration_type, max_capacity } = body
 
   if (!name?.trim() || !date || !location?.trim()) {
     return NextResponse.json({ error: 'Name, Datum und Ort sind erforderlich.' }, { status: 400 })

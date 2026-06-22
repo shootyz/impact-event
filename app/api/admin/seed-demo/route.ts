@@ -5,8 +5,9 @@ import { randomUUID } from 'crypto'
 
 // One-time demo seed — protected by admin password
 export async function POST(req: NextRequest) {
-  const { password } = await req.json()
-  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
+  const body = await req.json()
+  const auth = checkAdminAuth(req, body)
+  if (auth !== 'ok') {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
   }
 

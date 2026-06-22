@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (!rateLimit(ip, { max: 3, windowMs: 60_000 })) {
+    return NextResponse.json({ error: 'Zu viele Anfragen.' }, { status: 429 })
+  }
+
   const { token } = await params
   const db = supabaseAdmin()
 

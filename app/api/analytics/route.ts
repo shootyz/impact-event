@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
+  const auth = checkAdminAuth(req)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
+
   const eventId = req.nextUrl.searchParams.get('eventId')
   if (!eventId) return NextResponse.json({ error: 'eventId required' }, { status: 400 })
 

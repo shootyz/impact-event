@@ -7,11 +7,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const { adminPassword, active, name, date, location, description, slug, category, registration_type, max_capacity, form_config } = await req.json()
+  const body = await req.json()
+  const auth = checkAdminAuth(req, body)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
-  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
-    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
-  }
+  const { active, name, date, location, description, slug, category, registration_type, max_capacity, form_config } = body
 
   const updates: Record<string, unknown> = {}
   if (active !== undefined) updates.active = active
@@ -40,11 +40,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const { adminPassword } = await req.json()
-
-  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
-    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
-  }
+  const body = await req.json()
+  const auth = checkAdminAuth(req, body)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
   const { error } = await supabaseAdmin()
     .from('events')

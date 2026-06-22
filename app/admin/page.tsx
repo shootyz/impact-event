@@ -2318,7 +2318,7 @@ export default function AdminPage() {
 
         {/* ═══════════ ANALYTICS TAB ═══════════ */}
         {eventSection === "management" && activeTab === "analytics" && selectedEventId && (
-          <AnalyticsDashboard eventId={selectedEventId} />
+          <AnalyticsDashboard eventId={selectedEventId} adminPassword={adminPassword} />
         )}
 
         {/* ═══════════ FORM-REGISTRATIONS TAB ═══════════ */}

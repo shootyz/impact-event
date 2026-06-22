@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const db = supabaseAdmin()
   const { data, error } = await db
     .from('invite_codes')
-    .select('id, used, members(first_name, last_name, email)')
+    .select('id, used, members(first_name, last_name)')
     .eq('code', code.toUpperCase().trim())
     .single()
 
@@ -16,11 +16,10 @@ export async function GET(req: NextRequest) {
   if (data.used) return NextResponse.json({ error: 'Code already used' }, { status: 409 })
 
   const memberRaw = data.members
-  const member = (Array.isArray(memberRaw) ? memberRaw[0] : memberRaw) as { first_name: string; last_name: string; email: string } | null
+  const member = (Array.isArray(memberRaw) ? memberRaw[0] : memberRaw) as { first_name: string; last_name: string } | null
   return NextResponse.json({
     valid: true,
     id: data.id,
     name: member ? `${member.first_name} ${member.last_name}` : null,
-    email: member?.email ?? null,
   })
 }

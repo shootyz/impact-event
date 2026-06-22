@@ -3,10 +3,9 @@ import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
-  const adminPassword = req.nextUrl.searchParams.get('password')
-  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
-    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
-  }
+  const auth = checkAdminAuth(req)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
+
   const { data: events } = await supabaseAdmin()
     .from('events')
     .select('id, name, date, registration_password')
@@ -16,12 +15,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { adminPassword, eventId, registration_password } = await req.json()
+  const body = await req.json()
+  const auth = checkAdminAuth(req, body)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
-  const auth = checkAdminAuth(req, body ?? {}); if (auth !== 'ok') {
-    return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
-  }
-
+  const { eventId, registration_password } = body
   const db = supabaseAdmin()
 
   if (eventId) {
@@ -30,7 +28,6 @@ export async function PATCH(req: NextRequest) {
       .update({ registration_password: registration_password || null })
       .eq('id', eventId)
   } else {
-    // fallback: update the single active event
     const { data: ev } = await db.from('events').select('id').eq('active', true).single()
     if (!ev) return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
     await db.from('events').update({ registration_password: registration_password || null }).eq('id', ev.id)
