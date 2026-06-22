@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { T, getLang } from "@/lib/i18n";
 
-type FormField = { id: string; type: "text" | "textarea"; label: string; required: boolean; visible: boolean };
+type FormField = { id: string; type: "text" | "textarea" | "select" | "checkbox"; label: string; required: boolean; visible: boolean; options?: string[] };
 type FormConfig = { intro: string; fields: FormField[] };
 
 type Event = {
@@ -327,15 +327,18 @@ function RegistrationPageInner() {
                   </div>
                 )}
                 {event?.registration_type === "form" && (() => {
+                  const STANDARD_IDS = new Set(["vorname", "nachname", "email"]);
                   const fields = (event.form_config?.fields ?? [
                     { id: "company", type: "text" as const, label: "Firma / Organisation", required: false, visible: true },
                     { id: "message", type: "textarea" as const, label: "Nachricht", required: false, visible: true },
-                  ]).filter(f => f.visible);
+                  ]).filter(f => f.visible && !STANDARD_IDS.has(f.id));
                   return fields.map(f => (
                     <div key={f.id}>
-                      <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
-                        {f.label} {f.required && <span style={{ color: "var(--ig-gold)" }}>*</span>}
-                      </label>
+                      {f.type !== "checkbox" && (
+                        <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
+                          {f.label} {f.required && <span style={{ color: "var(--ig-gold)" }}>*</span>}
+                        </label>
+                      )}
                       {f.type === "textarea" ? (
                         <textarea
                           value={formValues[f.id] ?? ""}
@@ -347,6 +350,29 @@ function RegistrationPageInner() {
                           onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                           onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
                         />
+                      ) : f.type === "select" ? (
+                        <select
+                          value={formValues[f.id] ?? ""}
+                          onChange={e => setFormValues(v => ({ ...v, [f.id]: e.target.value }))}
+                          className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                          style={{ ...inputStyle, appearance: "auto" as React.CSSProperties["appearance"] }}
+                        >
+                          <option value="">— bitte wählen —</option>
+                          {(f.options ?? []).map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      ) : f.type === "checkbox" ? (
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formValues[f.id] === "true"}
+                            onChange={e => setFormValues(v => ({ ...v, [f.id]: e.target.checked ? "true" : "false" }))}
+                            className="w-4 h-4 rounded"
+                            style={{ accentColor: "var(--ig-gold)" }}
+                          />
+                          <span className="text-xs font-semibold tracking-[0.12em] uppercase" style={{ color: "var(--ig-navy)" }}>
+                            {f.label} {f.required && <span style={{ color: "var(--ig-gold)" }}>*</span>}
+                          </span>
+                        </label>
                       ) : (
                         <input
                           type="text"
