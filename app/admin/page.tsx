@@ -1773,7 +1773,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ═══════════ SCANNER TAB ═══════════ */}
+        {/* SCANNER TAB */}
         {eventSection === "management" && activeTab === "scanner" && (
           <div className="sm:max-w-sm sm:mx-auto">
 
@@ -1872,7 +1872,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ═══════════ GÄSTE TAB ═══════════ */}
+        {/* GSTE TAB */}
         {eventSection === "management" && activeTab === "list" && (
           <div className="space-y-4">
             {/* Manual add */}
@@ -1999,7 +1999,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ═══════════ TOOLS TAB ═══════════ */}
+        {/* TOOLS TAB */}
         {eventSection === "management" && activeTab === "tools" && selectedEvent && (
           <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0 items-start">
 
@@ -2326,12 +2326,12 @@ export default function AdminPage() {
         )}
 
 
-        {/* ═══════════ ANALYTICS TAB ═══════════ */}
+        {/* ANALYTICS TAB */}
         {eventSection === "management" && activeTab === "analytics" && selectedEventId && (
           <AnalyticsDashboard eventId={selectedEventId} adminPassword={adminPassword} />
         )}
 
-        {/* ═══════════ FORM-REGISTRATIONS TAB ═══════════ */}
+        {/* FORM-REGISTRATIONS TAB */}
         {eventSection === "management" && activeTab === "form-regs" && selectedEventId && (
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -2424,7 +2424,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ═══════════ MAILING TAB ═══════════ */}
+        {/* MAILING TAB */}
         {eventSection === "mailing" && (
           <div className="space-y-4">
 
