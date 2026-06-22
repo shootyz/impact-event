@@ -672,13 +672,26 @@ export default function AdminPage() {
   const rafRef = useRef<number>(0);
   const lastScanRef = useRef<string>("");
   const savedPassword = useRef("");
+  const authHeaders = () => ({ "Authorization": `Bearer ${savedPassword.current}` });
+  const authFetch = (url: string, init?: RequestInit) =>
+    fetch(url, { ...init, headers: { ...authHeaders(), ...(init?.headers ?? {}) } });
+  const downloadExport = async (url: string, filename: string) => {
+    const res = await authFetch(url);
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
   const audioCtxRef = useRef<AudioContext | null>(null);
   const soundBuffers = useRef<Record<string, AudioBuffer>>({});
 
   const loadRegistrations = useCallback(async (pw: string, evId?: string | null) => {
     setLoading(true);
-    const url = `/api/registrations?password=${encodeURIComponent(pw)}${evId ? `&eventId=${evId}` : ''}`;
-    const res = await fetch(url);
+    const url = `/api/registrations${evId ? `?eventId=${evId}` : ''}`;
+    const res = await authFetch(url);
     const data = await res.json();
     if (data.registrations) { setRegistrations(data.registrations); setEvent(data.event); }
     setLoading(false);
@@ -687,7 +700,7 @@ export default function AdminPage() {
   const loadAllEvents = useCallback(async () => {
     if (!savedPassword.current) return;
     setEventsLoading(true);
-    const res = await fetch(`/api/admin/events?password=${encodeURIComponent(savedPassword.current)}`);
+    const res = await authFetch(`/api/admin/events`);
     const data = await res.json();
     if (Array.isArray(data)) setAllEventCards(data);
     setEventsLoading(false);
@@ -700,7 +713,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (activeTab === "form-regs" && selectedEventId && !formRegsLoaded) {
       setFormRegsLoading(true);
-      fetch(`/api/admin/form-registrations?password=${encodeURIComponent(savedPassword.current)}&eventId=${selectedEventId}`)
+      authFetch(`/api/admin/form-registrations?eventId=${selectedEventId}`)
         .then(r => r.json())
         .then(data => { if (Array.isArray(data)) setFormRegs(data); setFormRegsLoading(false); setFormRegsLoaded(true); });
     }
@@ -728,7 +741,7 @@ export default function AdminPage() {
   useEffect(() => {
     const stored = sessionStorage.getItem("adminPw");
     if (!stored) return;
-    fetch("/api/registrations?password=" + encodeURIComponent(stored)).then(async (res) => {
+    fetch("/api/registrations", { headers: { "Authorization": `Bearer ${stored}` } }).then(async (res) => {
       if (res.status === 401) { sessionStorage.removeItem("adminPw"); return; }
       const data = await res.json();
       savedPassword.current = stored;
@@ -741,7 +754,7 @@ export default function AdminPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
-    const res = await fetch("/api/registrations?password=" + encodeURIComponent(password));
+    const res = await fetch("/api/registrations", { headers: { "Authorization": `Bearer ${password}` } });
     if (res.status === 401) { setAuthError("Falsches Passwort."); return; }
     savedPassword.current = password;
     sessionStorage.setItem("adminPw", password);
@@ -929,7 +942,7 @@ export default function AdminPage() {
   const handleSendQRToImported = async () => {
     if (!csvResult || csvResult.imported === 0) return;
     setCsvSending(true); setCsvSendResult(null);
-    const res = await fetch(`/api/registrations?password=${encodeURIComponent(savedPassword.current)}`);
+    const res = await authFetch(`/api/registrations`);
     const data = await res.json();
     const allRegs: Registration[] = data.registrations || [];
     const sorted = [...allRegs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -1533,15 +1546,14 @@ export default function AdminPage() {
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
                         </a>
                         {/* CSV */}
-                        <a href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=all&eventId=${ev.id}`}
-                          target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                        <button onClick={e => { e.stopPropagation(); downloadExport(`/api/export?type=all&eventId=${ev.id}`, `export-${ev.id}.csv`); }}
                           title="CSV exportieren"
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}>
                           <IconDownload className="w-3.5 h-3.5" />
-                        </a>
+                        </button>
                         {/* Kopie */}
                         <button title="Duplizieren" disabled={duplicatingId === ev.id}
                           onClick={e => { e.stopPropagation(); duplicateEvent(ev); }}
@@ -2259,10 +2271,9 @@ export default function AdminPage() {
                   { type: "checkedin", label: "Eingecheckt", count: checkedInCount },
                   { type: "noshows", label: "No-Shows", count: registrations.length - checkedInCount },
                 ].map(({ type, label, count }) => (
-                  <a key={type}
-                    href={`/api/export?password=${encodeURIComponent(savedPassword.current)}&type=${type}${selectedEventId ? `&eventId=${selectedEventId}` : ''}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-between px-4 py-3 rounded-xl border transition group"
+                  <button key={type}
+                    onClick={() => downloadExport(`/api/export?type=${type}${selectedEventId ? `&eventId=${selectedEventId}` : ''}`, `export-${type}.csv`)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border transition group"
                     style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-black)", background: "white" }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
@@ -2272,7 +2283,7 @@ export default function AdminPage() {
                       <span className="text-sm font-medium">{label}</span>
                     </div>
                     <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>{count} Personen</span>
-                  </a>
+                  </button>
                 ))}
               </div>
             </Card>

@@ -6,23 +6,17 @@ function passwordsMatch(candidate: string, expected: string): boolean {
   try {
     const a = Buffer.from(candidate, 'utf8')
     const b = Buffer.from(expected, 'utf8')
-    // timingSafeEqual requires equal-length buffers
-    if (a.length !== b.length) {
-      // Still do a dummy compare to avoid length-based timing leak
-      timingSafeEqual(b, b)
-      return false
-    }
+    if (a.length !== b.length) { timingSafeEqual(b, b); return false }
     return timingSafeEqual(a, b)
   } catch {
     return false
   }
 }
 
-/**
- * Checks adminPassword from query param or request body.
- * Also applies rate limiting (20 req/min per IP) to block brute-force.
- * Returns 'ok' | 'rate_limited' | 'unauthorized'
- */
+// Password accepted from:
+// 1. Authorization: Bearer <password> header  (preferred — not logged in URLs)
+// 2. Request body: { adminPassword } or { password }
+// Query params are intentionally NOT accepted (URL logs in Vercel/CDN would expose the secret)
 export function checkAdminAuth(
   req: NextRequest,
   body?: Record<string, unknown>
@@ -33,17 +27,16 @@ export function checkAdminAuth(
   const expected = process.env.ADMIN_PASSWORD
   if (!expected) return 'unauthorized'
 
+  const authHeader = req.headers.get('authorization') ?? ''
   const candidate =
-    req.nextUrl.searchParams.get('adminPassword') ??
-    req.nextUrl.searchParams.get('password') ??
-    (body?.adminPassword as string | undefined) ??
-    (body?.password as string | undefined) ??
+    (authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '') ||
+    (body?.adminPassword as string | undefined) ||
+    (body?.password as string | undefined) ||
     ''
 
   return passwordsMatch(candidate, expected) ? 'ok' : 'unauthorized'
 }
 
-/** Convenience: returns true if auth passes, false otherwise (no rate limit distinction). */
 export function isAdminAuthed(req: NextRequest, body?: Record<string, unknown>): boolean {
   return checkAdminAuth(req, body) === 'ok'
 }

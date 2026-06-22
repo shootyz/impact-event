@@ -96,7 +96,7 @@ export default function ZielgruppenDashboard({
       if (!res.ok) {
         setAddError(d.error ?? `Fehler ${res.status}`);
       } else {
-        const updated = await fetch(`/api/members?eventId=${eventId}&adminPassword=${encodeURIComponent(adminPassword)}`).then(r => r.json());
+        const updated = await fetch(`/api/members?eventId=${eventId}`, { headers: { "Authorization": `Bearer ${adminPassword}` } }).then(r => r.json());
         if (Array.isArray(updated)) onMembersChange(updated);
         setNewMember(null);
         setAddSuccess(true);

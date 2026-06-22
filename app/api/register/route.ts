@@ -17,6 +17,36 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin()
 
+  // Verify the event is invite-type and that the invite_code_id actually belongs
+  // to this event — prevents registering without a valid code or cross-event code reuse
+  if (event_id) {
+    const { data: event } = await db
+      .from('events')
+      .select('registration_type')
+      .eq('id', event_id)
+      .single()
+
+    if (event?.registration_type === 'invite') {
+      if (!invite_code_id) {
+        return NextResponse.json({ error: 'Einladungscode erforderlich.' }, { status: 400 })
+      }
+      // Confirm code belongs to this event and is unused
+      const { data: code } = await db
+        .from('invite_codes')
+        .select('id, used, members(event_id)')
+        .eq('id', invite_code_id)
+        .single()
+
+      const memberEventId = code
+        ? (Array.isArray(code.members) ? code.members[0] : code.members as { event_id: string } | null)?.event_id
+        : null
+
+      if (!code || code.used || memberEventId !== event_id) {
+        return NextResponse.json({ error: 'Ungültiger oder bereits verwendeter Einladungscode.' }, { status: 400 })
+      }
+    }
+  }
+
   const { data, error: rpcError } = await db.rpc('register_invite_atomic', {
     p_event_id: event_id ?? null,
     p_name: name.trim(),
@@ -34,7 +64,6 @@ export async function POST(req: NextRequest) {
   if (result.error === 'duplicate') return NextResponse.json({ error: 'Diese E-Mail-Adresse ist bereits angemeldet.', token: result.token }, { status: 409 })
   if (!result.ok) return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
 
-  // Send confirmation email (non-blocking)
   try {
     const { data: event } = await db.from('events').select('*').eq('id', result.event_id!).single()
     const { data: registration } = await db.from('registrations').select('*').eq('id', result.id!).single()

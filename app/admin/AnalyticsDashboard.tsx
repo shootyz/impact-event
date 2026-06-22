@@ -98,7 +98,7 @@ export default function AnalyticsDashboard({ eventId, adminPassword }: { eventId
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/analytics?eventId=${eventId}&password=${encodeURIComponent(adminPassword)}`)
+    fetch(`/api/analytics?eventId=${eventId}`, { headers: { "Authorization": `Bearer ${adminPassword}` } })
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); });
   }, [eventId, adminPassword]);

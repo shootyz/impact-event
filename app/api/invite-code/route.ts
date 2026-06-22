@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (!rateLimit(ip, { max: 5, windowMs: 60_000 })) {
+    return NextResponse.json({ error: 'Zu viele Anfragen.' }, { status: 429 })
+  }
+
   const code = req.nextUrl.searchParams.get('code')
   if (!code) return NextResponse.json({ error: 'Missing code' }, { status: 400 })
 
