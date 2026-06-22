@@ -94,10 +94,16 @@ export async function DELETE(req: NextRequest) {
   const db = supabaseAdmin()
   // Get email first so we can clean up globally
   const { data: member } = await db.from('members').select('email').eq('id', id).single()
+  // Delete invite codes first
+  await db.from('invite_codes').delete().eq('member_id', id)
   const { error } = await db.from('members').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (member?.email) {
     // Delete across all events + campaign history
+    const { data: otherMembers } = await db.from('members').select('id').eq('email', member.email)
+    if (otherMembers && otherMembers.length > 0) {
+      await db.from('invite_codes').delete().in('member_id', otherMembers.map((m: {id: string}) => m.id))
+    }
     await Promise.all([
       db.from('members').delete().eq('email', member.email),
       db.from('campaign_recipients').delete().eq('email', member.email),
