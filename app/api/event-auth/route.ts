@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
 import { rateLimit } from '@/lib/rate-limit'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
@@ -11,7 +11,9 @@ export async function POST(req: NextRequest) {
 
   const { password, eventId } = await req.json()
 
-  const base = supabase()
+  // Read the gate password via the service_role client only — never the anon
+  // client. The anon role has no column-level access to registration_password.
+  const base = supabaseAdmin()
     .from('events')
     .select('id, registration_password')
   const { data: event } = await (eventId ? base.eq('id', eventId) : base.eq('active', true)).single()

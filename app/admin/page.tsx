@@ -2405,7 +2405,7 @@ export default function AdminPage() {
                       async () => {
                         const res = await fetch("/api/admin/clear", {
                           method: "DELETE", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ adminPassword: savedPassword.current, eventId: selectedEventId }),
+                          body: JSON.stringify({ adminPassword: savedPassword.current, eventId: selectedEventId, expectedCount: registrations.length }),
                         });
                         await res.json();
                         setDialog(null);

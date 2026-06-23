@@ -11,6 +11,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Nicht autorisiert.' }, { status: 401 })
   }
 
+  // Dev-only seeding. Disabled unless explicitly enabled via env — this endpoint
+  // deletes and recreates demo data and must never be reachable in production by
+  // default (it is not wired into the admin UI).
+  if (process.env.ALLOW_DEMO_SEED !== 'true') {
+    return NextResponse.json({ error: 'Demo-Seed ist deaktiviert.' }, { status: 403 })
+  }
+
   const db = supabaseAdmin()
 
   // ── 0. Cleanup any previous demo data ──

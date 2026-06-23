@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id')
   const slug = req.nextUrl.searchParams.get('slug')
-  const base = supabase()
+  // Service_role client: this route reads registration_password (to expose only a
+  // boolean to the client). The anon role has no column access to that field.
+  const base = supabaseAdmin()
     .from('events')
     .select('id, name, date, location, description, registration_password, registration_type, max_capacity, form_config')
   const { data: event, error } = await (
