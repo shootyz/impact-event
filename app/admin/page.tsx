@@ -164,7 +164,7 @@ type Registration = {
 };
 type Event = { id: string; name: string; date: string; location: string; };
 type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; registration_type: "invite" | "form"; max_capacity: number | null; form_config?: FormConfig | null; };
-type FormRegistration = { id: string; first_name: string; last_name: string; email: string; company: string | null; message: string | null; extra_fields?: Record<string, string> | null; status: "pending" | "confirmed" | "rejected" | "waitlisted"; created_at: string; };
+type FormRegistration = { id: string; first_name: string; last_name: string; email: string; company: string | null; message: string | null; extra_fields?: Record<string, string> | null; status: "pending" | "confirmed" | "rejected" | "waitlisted"; created_at: string; checked_in?: boolean; checked_in_at?: string | null; qr_token?: string | null; };
 type FormField = { id: string; type: "text" | "textarea"; label: string; required: boolean; visible: boolean };
 type FormConfig = { intro: string; fields: FormField[] };
 const BUILTIN_FIELD_IDS = ["company", "message"];
@@ -1928,6 +1928,11 @@ export default function AdminPage() {
                           <p key={k} className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>{v === "true" ? k : v}</p>
                         ))}
                         <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{new Date(reg.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                        {reg.checked_in && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full mt-1" style={{ background: "#dcfce7", color: "#16a34a" }}>
+                            <IconCheck className="w-3 h-3" /> Eingecheckt
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <select
@@ -1952,6 +1957,21 @@ export default function AdminPage() {
                           <option value="rejected">Abgelehnt</option>
                           <option value="waitlisted">Warteliste</option>
                         </select>
+                        {reg.qr_token && (
+                          <button
+                            onClick={async () => {
+                              const newVal = !reg.checked_in;
+                              await fetch(`/api/guest/${reg.qr_token}`, {
+                                method: "PATCH", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ adminPassword: savedPassword.current, checked_in: newVal }),
+                              });
+                              setFormRegs(prev => prev.map(r => r.id === reg.id ? { ...r, checked_in: newVal } : r));
+                            }}
+                            className="p-1.5 rounded-lg transition"
+                            style={{ color: reg.checked_in ? "#16a34a" : "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}
+                            title={reg.checked_in ? "Check-in rückgängig" : "Einchecken"}
+                          ><IconCheck className="w-4 h-4" /></button>
+                        )}
                         <button
                           onClick={async () => {
                             if (!confirm(`${reg.first_name} ${reg.last_name} wirklich löschen?`)) return;

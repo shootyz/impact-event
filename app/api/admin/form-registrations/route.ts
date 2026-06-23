@@ -9,14 +9,30 @@ export async function GET(req: NextRequest) {
   const eventId = req.nextUrl.searchParams.get('eventId')
   if (!eventId) return NextResponse.json({ error: 'eventId fehlt.' }, { status: 400 })
 
-  const { data, error } = await supabaseAdmin()
+  const db = supabaseAdmin()
+  const { data, error } = await db
     .from('form_registrations')
     .select('id, first_name, last_name, email, company, message, extra_fields, status, created_at')
     .eq('event_id', eventId)
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data ?? [])
+
+  // Join with registrations to get checked_in status + qr_token
+  const emails = (data ?? []).map((r: { email: string }) => r.email)
+  const { data: regs } = emails.length
+    ? await db.from('registrations').select('email, qr_token, checked_in, checked_in_at').eq('event_id', eventId).in('email', emails)
+    : { data: [] }
+  const regMap = new Map((regs ?? []).map((r: { email: string; qr_token: string; checked_in: boolean; checked_in_at: string | null }) => [r.email, r]))
+
+  const enriched = (data ?? []).map((r: { email: string }) => ({
+    ...r,
+    checked_in: regMap.get(r.email)?.checked_in ?? false,
+    checked_in_at: regMap.get(r.email)?.checked_in_at ?? null,
+    qr_token: regMap.get(r.email)?.qr_token ?? null,
+  }))
+
+  return NextResponse.json(enriched)
 }
 
 export async function PATCH(req: NextRequest) {
