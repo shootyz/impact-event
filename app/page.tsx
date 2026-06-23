@@ -145,7 +145,12 @@ function RegistrationPageInner() {
       setError(data.error || t.errorGeneric);
       return;
     }
-    setFormSuccess(true);
+    // Redirect to ticket page if qr_token returned, otherwise show success
+    if (data.qr_token) {
+      router.push(`/success/${data.qr_token}?lang=${lang}${eventId ? `&event=${eventId}` : ""}`);
+    } else {
+      setFormSuccess(true);
+    }
   };
 
   const eventDate = event
