@@ -9,6 +9,19 @@
   --ig-gray3: #A7C4DE;
 }
 
+/* Keyboard focus rings (a11y). :focus-visible only triggers for keyboard nav,
+   so mouse users are unaffected and the inline onFocus border styling still works.
+   Element+pseudo selectors out-specify Tailwind's `outline-none` utility. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--ig-navy);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
 html, body {
   max-width: 100%;
   overflow-x: hidden;

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { T, getLang } from "@/lib/i18n";
+import logo from "@/public/logo.png";
 
 type FormField = { id: string; type: "text" | "textarea" | "select" | "checkbox"; label: string; required: boolean; visible: boolean; options?: string[] };
 type FormConfig = { intro: string; fields: FormField[] };
@@ -35,7 +37,6 @@ function RegistrationPageInner() {
   const [vorname, setVorname] = useState("");
   const [nachname, setNachname] = useState("");
   const [email, setEmail] = useState("");
-  const [emailConfirm, setEmailConfirm] = useState("");
   const [nameLocked, setNameLocked] = useState(false);
   const [emailLocked, setEmailLocked] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -80,7 +81,6 @@ function RegistrationPageInner() {
     if (!vorname.trim() || !nachname.trim()) { setError(t.errorName); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(email)) { setError(t.errorEmail); return; }
-    if (email.toLowerCase() !== emailConfirm.toLowerCase()) { setError(t.errorEmailMatch); return; }
     setLoading(true);
     const res = await fetch("/api/register", {
       method: "POST",
@@ -167,7 +167,7 @@ function RegistrationPageInner() {
 
         {/* Logo */}
         <div className="text-center mb-10">
-          <img src="/logo.png" alt="Impact Gstaad" className="h-12 mx-auto mb-8 object-contain" />
+          <Image src={logo} alt="Impact Gstaad" priority className="h-12 w-auto mx-auto mb-8 object-contain" />
           <div className="h-px mb-8" style={{ background: "var(--ig-gray2)" }} />
           <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--ig-gold)" }}>
             {t.eventRegistration}
@@ -275,15 +275,16 @@ function RegistrationPageInner() {
               <form onSubmit={event?.registration_type === "form" ? handleFormSubmit : handleSubmit} className="space-y-4" noValidate>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: t.firstName, value: vorname, set: setVorname, placeholder: t.firstNamePlaceholder, locked: nameLocked },
-                    { label: t.lastName, value: nachname, set: setNachname, placeholder: t.lastNamePlaceholder, locked: nameLocked },
-                  ].map(({ label, value, set, placeholder, locked }) => (
+                    { label: t.firstName, value: vorname, set: setVorname, placeholder: t.firstNamePlaceholder, locked: nameLocked, autoComplete: "given-name" },
+                    { label: t.lastName, value: nachname, set: setNachname, placeholder: t.lastNamePlaceholder, locked: nameLocked, autoComplete: "family-name" },
+                  ].map(({ label, value, set, placeholder, locked, autoComplete }) => (
                     <div key={label}>
                       <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
                         {label} <span style={{ color: "var(--ig-gold)" }}>*</span>
                       </label>
                       <input
                         type="text"
+                        autoComplete={autoComplete}
                         value={value}
                         onChange={(e) => !locked && set(e.target.value)}
                         placeholder={placeholder}
@@ -301,7 +302,11 @@ function RegistrationPageInner() {
                     {t.email} <span style={{ color: "var(--ig-gold)" }}>*</span>
                   </label>
                   <input
-                    type="text"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    spellCheck={false}
                     value={email}
                     onChange={(e) => !emailLocked && setEmail(e.target.value)}
                     placeholder="name@example.com"
@@ -312,25 +317,6 @@ function RegistrationPageInner() {
                     onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
                   />
                 </div>
-                {event?.registration_type !== "form" && (
-                  <div>
-                    <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
-                      {t.confirmEmail} <span style={{ color: "var(--ig-gold)" }}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={emailConfirm}
-                      onChange={(e) => !emailLocked && setEmailConfirm(e.target.value)}
-                      placeholder="name@example.com"
-                      readOnly={emailLocked}
-                      onPaste={!emailLocked ? (e) => e.preventDefault() : undefined}
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                      style={{ ...inputStyle, opacity: emailLocked ? 0.7 : 1, cursor: emailLocked ? "default" : "text" }}
-                      onFocus={e => !emailLocked && (e.currentTarget.style.borderColor = "var(--ig-navy)")}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
-                    />
-                  </div>
-                )}
                 {event?.registration_type === "form" && (() => {
                   const STANDARD_IDS = new Set(["vorname", "nachname", "email"]);
                   const fields = (event.form_config?.fields ?? [
