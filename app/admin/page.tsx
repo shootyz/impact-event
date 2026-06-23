@@ -1174,6 +1174,7 @@ export default function AdminPage() {
                     authFetch(`/api/campaigns?eventId=${selectedEventId}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setCampaigns(d); setCampaignsLoading(false); });
                   } else if (eventSection === "management" && selectedEventId) {
                     loadRegistrations(savedPassword.current, selectedEventId);
+                    setFormRegsLoaded(false); // refresh form registrations (Anmeldungen) too
                   } else {
                     loadAllEvents();
                   }
@@ -1880,15 +1881,7 @@ export default function AdminPage() {
                 {formRegs.length} Anmeldung{formRegs.length !== 1 ? "en" : ""}
                 {selectedEvent?.max_capacity ? ` · Max. ${selectedEvent.max_capacity}` : ""}
               </p>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setFormRegsLoaded(false)}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
-                  style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
-                ><IconRefresh className="w-3.5 h-3.5" /> Aktualisieren</button>
-                <BtnPrimary type="button" onClick={() => setManualForm(f => !f)}>+ Manuell</BtnPrimary>
-              </div>
+              <BtnPrimary type="button" onClick={() => setManualForm(f => !f)}>+ Manuell</BtnPrimary>
             </div>
             {manualForm && (
               <Card>
@@ -1927,9 +1920,15 @@ export default function AdminPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm" style={{ color: "var(--ig-navy)" }}>{reg.first_name} {reg.last_name}</p>
                         <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>{reg.email}</p>
-                        {reg.extra_fields && Object.entries(reg.extra_fields as Record<string, string>).filter(([, v]) => v && v !== "false").map(([k, v]) => (
-                          <p key={k} className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>{v === "true" ? k : v}</p>
-                        ))}
+                        {reg.extra_fields && Object.entries(reg.extra_fields as Record<string, string>).filter(([, v]) => v && v !== "false").map(([k, v]) => {
+                          const label = selectedEvent?.form_config?.fields?.find(f => f.id === k)?.label ?? k;
+                          const value = v === "true" ? "Ja" : v;
+                          return (
+                            <p key={k} className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>
+                              <span style={{ fontWeight: 600, color: "var(--ig-navy)" }}>{label}:</span> {value}
+                            </p>
+                          );
+                        })}
                         <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{new Date(reg.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                         {reg.checked_in && (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full mt-1" style={{ background: "#dcfce7", color: "#16a34a" }}>
