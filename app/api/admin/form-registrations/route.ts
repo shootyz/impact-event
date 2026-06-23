@@ -32,3 +32,21 @@ export async function PATCH(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(req: NextRequest) {
+  const body = await req.json()
+  const auth = checkAdminAuth(req, body)
+  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
+
+  const { id } = body
+  if (!id) return NextResponse.json({ error: 'id fehlt.' }, { status: 400 })
+
+  const db = supabaseAdmin()
+  // Also delete linked registration (for QR/ticket)
+  const { data: fr } = await db.from('form_registrations').select('email, event_id').eq('id', id).single()
+  await db.from('form_registrations').delete().eq('id', id)
+  if (fr?.email) {
+    await db.from('registrations').delete().eq('email', fr.email).eq('event_id', fr.event_id)
+  }
+  return NextResponse.json({ ok: true })
+}

@@ -711,7 +711,7 @@ export default function AdminPage() {
   }, [authenticated, loadAllEvents]);
 
   useEffect(() => {
-    if (activeTab === "form-regs" && selectedEventId && !formRegsLoaded) {
+    if ((activeTab === "form-regs" || (activeTab === "list" && selectedEvent?.registration_type === "form")) && selectedEventId && !formRegsLoaded) {
       setFormRegsLoading(true);
       authFetch(`/api/admin/form-registrations?eventId=${selectedEventId}`)
         .then(r => r.json())
@@ -1036,11 +1036,8 @@ export default function AdminPage() {
   // ─── MAIN ADMIN ──────────────────────────────────────────────────────────────
   const selectedEvent = allEventCards.find(e => e.id === selectedEventId) ?? null;
   const eventTabs = [
-    ...(selectedEvent?.registration_type === "form"
-      ? [{ id: "form-regs" as const, label: "Anmeldungen" }]
-      : []),
     { id: "scanner" as const, label: "Scanner" },
-    { id: "list" as const, label: "Gäste" },
+    { id: "list" as const, label: "Anmeldungen" },
     { id: "tools" as const, label: "Tools" },
     { id: "analytics" as const, label: "Statistiken" },
   ];
@@ -1395,7 +1392,7 @@ export default function AdminPage() {
             const openEvent = (ev: EventCard) => {
               setSelectedEventId(ev.id);
               setEventSection(null);
-              setActiveTab(ev.registration_type === "form" ? "form-regs" : "scanner");
+              setActiveTab("scanner");
               setSlugInput(ev.slug ?? "");
               setSlugStatus(null);
               setRegTypeInput(ev.registration_type ?? "invite");
@@ -1743,7 +1740,7 @@ export default function AdminPage() {
       >
 
         {/* ── Filter Pills ── */}
-        {eventSection === "management" && activeTab === "list" && (
+        {eventSection === "management" && activeTab === "list" && selectedEvent?.registration_type !== "form" && (
           <div className="flex gap-2 mb-5 flex-wrap justify-center">
             {([
               { label: "Alle", value: registrations.length, filter: "all" as const },
@@ -1872,8 +1869,113 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* GSTE TAB */}
-        {eventSection === "management" && activeTab === "list" && (
+        {/* ANMELDUNGEN TAB — Form-Events */}
+        {eventSection === "management" && activeTab === "list" && selectedEvent?.registration_type === "form" && selectedEventId && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
+                {formRegs.length} Anmeldung{formRegs.length !== 1 ? "en" : ""}
+                {selectedEvent?.max_capacity ? ` · Max. ${selectedEvent.max_capacity}` : ""}
+              </p>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setFormRegsLoaded(false)}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
+                  style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
+                ><IconRefresh className="w-3.5 h-3.5" /> Aktualisieren</button>
+                <BtnPrimary type="button" onClick={() => setManualForm(f => !f)}>+ Manuell</BtnPrimary>
+              </div>
+            </div>
+            {manualForm && (
+              <Card>
+                <form className="px-5 py-4 space-y-3" onSubmit={async e => {
+                  e.preventDefault();
+                  if (!manualVorname.trim() || !manualNachname.trim()) { setManualStatus({ ok: false, msg: "Vor- und Nachname erforderlich." }); return; }
+                  setManualLoading(true);
+                  const res = await fetch("/api/form-register", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ event_id: selectedEventId, first_name: manualVorname.trim(), last_name: manualNachname.trim(), email: manualEmail.trim() || `manuell-${Date.now()}@noemail.local` }),
+                  });
+                  const d = await res.json();
+                  setManualLoading(false);
+                  if (d.ok) { setManualStatus({ ok: true, msg: `${manualVorname} ${manualNachname} eingetragen.` }); setManualVorname(""); setManualNachname(""); setManualEmail(""); setFormRegsLoaded(false); setManualForm(false); }
+                  else { setManualStatus({ ok: false, msg: d.error ?? "Fehler." }); }
+                }}>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input placeholder="Vorname *" value={manualVorname} onChange={e => setManualVorname(e.target.value)} required className="rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                    <input placeholder="Nachname *" value={manualNachname} onChange={e => setManualNachname(e.target.value)} required className="rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                  </div>
+                  <input placeholder="E-Mail (optional)" value={manualEmail} onChange={e => setManualEmail(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                  {manualStatus && <p className={`text-xs ${manualStatus.ok ? "text-green-600" : "text-red-500"}`}>{manualStatus.msg}</p>}
+                  <div className="flex justify-end"><BtnPrimary type="submit" disabled={manualLoading}>{manualLoading ? "Wird gespeichert…" : "Speichern"}</BtnPrimary></div>
+                </form>
+              </Card>
+            )}
+            {formRegsLoading ? (
+              <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div>
+            ) : formRegs.length === 0 ? (
+              <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Noch keine Anmeldungen.</div>
+            ) : (
+              <div className="space-y-2">
+                {formRegs.map(reg => (
+                  <Card key={reg.id}>
+                    <div className="px-5 py-4 flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm" style={{ color: "var(--ig-navy)" }}>{reg.first_name} {reg.last_name}</p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>{reg.email}</p>
+                        {reg.extra_fields && Object.entries(reg.extra_fields as Record<string, string>).filter(([, v]) => v && v !== "false").map(([k, v]) => (
+                          <p key={k} className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>{v === "true" ? k : v}</p>
+                        ))}
+                        <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{new Date(reg.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <select
+                          value={reg.status}
+                          onChange={async e => {
+                            const newStatus = e.target.value;
+                            await fetch("/api/admin/form-registrations", {
+                              method: "PATCH", headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ adminPassword: savedPassword.current, id: reg.id, status: newStatus }),
+                            });
+                            setFormRegs(prev => prev.map(r => r.id === reg.id ? { ...r, status: newStatus as FormRegistration["status"] } : r));
+                          }}
+                          className="text-xs px-2 py-1 rounded-lg outline-none"
+                          style={{
+                            border: "1.5px solid var(--ig-gray2)",
+                            color: reg.status === "confirmed" ? "#16a34a" : reg.status === "rejected" ? "#dc2626" : reg.status === "waitlisted" ? "#d97706" : "var(--ig-navy)",
+                            background: reg.status === "confirmed" ? "#f0fdf4" : reg.status === "rejected" ? "#fff5f5" : reg.status === "waitlisted" ? "#fffbeb" : "white",
+                          }}
+                        >
+                          <option value="pending">Ausstehend</option>
+                          <option value="confirmed">Bestätigt</option>
+                          <option value="rejected">Abgelehnt</option>
+                          <option value="waitlisted">Warteliste</option>
+                        </select>
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`${reg.first_name} ${reg.last_name} wirklich löschen?`)) return;
+                            await fetch("/api/admin/form-registrations", {
+                              method: "DELETE", headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ adminPassword: savedPassword.current, id: reg.id }),
+                            });
+                            setFormRegs(prev => prev.filter(r => r.id !== reg.id));
+                          }}
+                          className="p-1.5 rounded-lg transition"
+                          style={{ color: "#dc2626" }}
+                          title="Löschen"
+                        ><IconTrash className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ANMELDUNGEN TAB — Invite-Events (Gäste) */}
+        {eventSection === "management" && activeTab === "list" && selectedEvent?.registration_type !== "form" && (
           <div className="space-y-4">
             {/* Manual add */}
             <Card>
@@ -2331,98 +2433,6 @@ export default function AdminPage() {
           <AnalyticsDashboard eventId={selectedEventId} adminPassword={savedPassword.current} />
         )}
 
-        {/* FORM-REGISTRATIONS TAB */}
-        {eventSection === "management" && activeTab === "form-regs" && selectedEventId && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
-                {formRegs.length} Anmeldung{formRegs.length !== 1 ? "en" : ""}
-                {selectedEvent?.max_capacity ? ` · Max. ${selectedEvent.max_capacity}` : ""}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => { setFormRegsLoaded(false); }}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
-                  style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
-                ><IconRefresh className="w-3.5 h-3.5" /> Aktualisieren</button>
-                <BtnPrimary type="button" onClick={() => setManualForm(f => !f)}>+ Manuell</BtnPrimary>
-              </div>
-            </div>
-            {manualForm && (
-              <Card className="mb-4">
-                <form className="px-5 py-4 space-y-3" onSubmit={async e => {
-                  e.preventDefault();
-                  if (!manualVorname.trim() || !manualNachname.trim()) { setManualStatus({ ok: false, msg: "Vor- und Nachname erforderlich." }); return; }
-                  setManualLoading(true);
-                  const res = await fetch("/api/form-register", {
-                    method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ event_id: selectedEventId, first_name: manualVorname.trim(), last_name: manualNachname.trim(), email: manualEmail.trim() || `manuell-${Date.now()}@noemail.local` }),
-                  });
-                  const d = await res.json();
-                  setManualLoading(false);
-                  if (d.ok) { setManualStatus({ ok: true, msg: `${manualVorname} ${manualNachname} eingetragen.` }); setManualVorname(""); setManualNachname(""); setManualEmail(""); setFormRegsLoaded(false); setManualForm(false); }
-                  else { setManualStatus({ ok: false, msg: d.error ?? "Fehler." }); }
-                }}>
-                  <p className="text-xs font-semibold" style={{ color: "var(--ig-navy)" }}>Manuelle Anmeldung</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input placeholder="Vorname *" value={manualVorname} onChange={e => setManualVorname(e.target.value)} required className="rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
-                    <input placeholder="Nachname *" value={manualNachname} onChange={e => setManualNachname(e.target.value)} required className="rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
-                  </div>
-                  <input placeholder="E-Mail (optional)" value={manualEmail} onChange={e => setManualEmail(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
-                  {manualStatus && <p className={`text-xs ${manualStatus.ok ? "text-green-600" : "text-red-500"}`}>{manualStatus.msg}</p>}
-                  <div className="flex justify-end"><BtnPrimary type="submit" disabled={manualLoading}>{manualLoading ? "Wird gespeichert…" : "Speichern"}</BtnPrimary></div>
-                </form>
-              </Card>
-            )}
-            {formRegsLoading ? (
-              <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div>
-            ) : formRegs.length === 0 ? (
-              <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Noch keine Anmeldungen.</div>
-            ) : (
-              <div className="space-y-2">
-                {formRegs.map(reg => (
-                  <Card key={reg.id}>
-                    <div className="px-5 py-4 flex items-start gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm" style={{ color: "var(--ig-navy)" }}>{reg.first_name} {reg.last_name}</p>
-                        <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>{reg.email}{reg.company ? ` · ${reg.company}` : ""}</p>
-                        {reg.message && <p className="text-xs mt-1 italic" style={{ color: "var(--ig-gray3)" }}>{reg.message}</p>}
-                        {reg.extra_fields && Object.entries(reg.extra_fields).filter(([k]) => k !== "company" && k !== "message").map(([, v]) => v ? (
-                          <p key={v} className="text-xs mt-0.5 italic" style={{ color: "var(--ig-gray3)" }}>{v}</p>
-                        ) : null)}
-                        <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>{new Date(reg.created_at).toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
-                      </div>
-                      <select
-                        value={reg.status}
-                        onChange={async e => {
-                          const newStatus = e.target.value;
-                          await fetch("/api/admin/form-registrations", {
-                            method: "PATCH", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ adminPassword: savedPassword.current, id: reg.id, status: newStatus }),
-                          });
-                          setFormRegs(prev => prev.map(r => r.id === reg.id ? { ...r, status: newStatus as FormRegistration["status"] } : r));
-                        }}
-                        className="text-xs px-2 py-1 rounded-lg outline-none flex-shrink-0"
-                        style={{
-                          border: "1.5px solid var(--ig-gray2)",
-                          color: reg.status === "confirmed" ? "#16a34a" : reg.status === "rejected" ? "#dc2626" : reg.status === "waitlisted" ? "#d97706" : "var(--ig-navy)",
-                          background: reg.status === "confirmed" ? "#f0fdf4" : reg.status === "rejected" ? "#fff5f5" : reg.status === "waitlisted" ? "#fffbeb" : "white",
-                        }}
-                      >
-                        <option value="pending">Ausstehend</option>
-                        <option value="confirmed">Bestätigt</option>
-                        <option value="rejected">Abgelehnt</option>
-                        <option value="waitlisted">Warteliste</option>
-                      </select>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* MAILING TAB */}
         {eventSection === "mailing" && (
