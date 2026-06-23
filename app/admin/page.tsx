@@ -424,14 +424,13 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
               </>
             )}
             {!c.sent_at && confirmSend && (
-              <div className="flex flex-col items-end gap-1.5">
+              <>
                 {(() => {
                   const bj = c.blocks_json as { lang?: string } | null;
                   const lang = bj && !Array.isArray(bj) ? bj.lang?.toUpperCase() : null;
                   if (!lang) return null;
-                  return <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Wird nur an <strong style={{ color: "var(--ig-navy)" }}>{lang}</strong>-Mitglieder gesendet</p>;
+                  return <p className="w-full text-right text-xs order-first m-0" style={{ color: "var(--ig-gray3)" }}>Wird nur an <strong style={{ color: "var(--ig-navy)" }}>{lang}</strong>-Mitglieder gesendet</p>;
                 })()}
-                <div className="flex gap-1.5">
                 <button onClick={async () => {
                   setSending(true);
                   const res = await fetch(`/api/campaigns/${c.id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword }) });
@@ -447,8 +446,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                   style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                   Abbrechen
                 </button>
-                </div>
-              </div>
+              </>
             )}
             {onDuplicate && (
               <button
