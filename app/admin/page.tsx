@@ -576,6 +576,8 @@ export default function AdminPage() {
   const [allEventCards, setAllEventCards] = useState<EventCard[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  // Declared here (not after render vars) so useEffect closures don't create TDZ in minified bundle
+  const selectedEvent = allEventCards.find(e => e.id === selectedEventId) ?? null;
   const [eventPwInputs, setEventPwInputs] = useState<Record<string, string>>({});
   const [eventPwResults, setEventPwResults] = useState<Record<string, { ok: boolean; msg: string } | null>>({});
   const [eventPwLoading, setEventPwLoading] = useState<Record<string, boolean>>({});
@@ -1034,7 +1036,6 @@ export default function AdminPage() {
   }
 
   // ─── MAIN ADMIN ──────────────────────────────────────────────────────────────
-  const selectedEvent = allEventCards.find(e => e.id === selectedEventId) ?? null;
   const eventTabs = [
     { id: "scanner" as const, label: "Scanner" },
     { id: "list" as const, label: "Anmeldungen" },
