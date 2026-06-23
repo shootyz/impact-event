@@ -1936,28 +1936,6 @@ export default function AdminPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <select
-                          value={reg.status}
-                          onChange={async e => {
-                            const newStatus = e.target.value;
-                            await fetch("/api/admin/form-registrations", {
-                              method: "PATCH", headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ adminPassword: savedPassword.current, id: reg.id, status: newStatus }),
-                            });
-                            setFormRegs(prev => prev.map(r => r.id === reg.id ? { ...r, status: newStatus as FormRegistration["status"] } : r));
-                          }}
-                          className="text-xs px-2 py-1 rounded-lg outline-none"
-                          style={{
-                            border: "1.5px solid var(--ig-gray2)",
-                            color: reg.status === "confirmed" ? "#16a34a" : reg.status === "rejected" ? "#dc2626" : reg.status === "waitlisted" ? "#d97706" : "var(--ig-navy)",
-                            background: reg.status === "confirmed" ? "#f0fdf4" : reg.status === "rejected" ? "#fff5f5" : reg.status === "waitlisted" ? "#fffbeb" : "white",
-                          }}
-                        >
-                          <option value="pending">Ausstehend</option>
-                          <option value="confirmed">Bestätigt</option>
-                          <option value="rejected">Abgelehnt</option>
-                          <option value="waitlisted">Warteliste</option>
-                        </select>
                         {reg.qr_token && (
                           <button
                             onClick={async () => {
