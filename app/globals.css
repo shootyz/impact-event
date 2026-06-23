@@ -3,6 +3,9 @@
 :root {
   --ig-navy:  #1E3263;
   --ig-gold:  #D28D28;
+  /* Darker, accessible gold for text/buttons on light backgrounds.
+     #D28D28 on white is only ~2.8:1 (fails WCAG AA); this is ~4.7:1. */
+  --ig-gold-deep: #9C6818;
   --ig-black: #26292F;
   --ig-light: #F8F9FF;
   --ig-gray2: #D0DDEA;

@@ -1439,7 +1439,7 @@ export default function AdminPage() {
                               {ev.location && ` · ${ev.location}`}
                             </p>
                           </div>
-                          <div className="text-right flex-shrink-0">
+                          <div className="text-right flex-shrink-0" title="eingecheckt / angemeldet">
                             <p className="text-base font-bold" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}<span className="text-xs font-normal" style={{ color: "var(--ig-gray3)" }}>/{ev.total}</span></p>
                           </div>
                         </button>
@@ -1517,9 +1517,10 @@ export default function AdminPage() {
                             </p>
                             {ev.slug && <p className="text-xs mt-1 font-mono" style={{ color: "var(--ig-gold)" }}>/{ev.slug}</p>}
                           </div>
-                          <div className="text-right flex-shrink-0">
+                          <div className="text-right flex-shrink-0" title="eingecheckt / angemeldet">
                             <p className="text-2xl font-bold leading-none" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}</p>
-                            <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>/ {ev.total}</p>
+                            <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>von {ev.total}</p>
+                            <p className="text-[10px] uppercase tracking-wide mt-1" style={{ color: "var(--ig-gray3)" }}>eingecheckt</p>
                           </div>
                         </div>
                         <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--ig-light)" }}>

@@ -169,7 +169,7 @@ function RegistrationPageInner() {
         <div className="text-center mb-10">
           <Image src={logo} alt="Impact Gstaad" priority className="h-12 w-auto mx-auto mb-8 object-contain" />
           <div className="h-px mb-8" style={{ background: "var(--ig-gray2)" }} />
-          <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--ig-gold)" }}>
+          <p className="text-xs font-semibold tracking-[0.2em] uppercase mb-2" style={{ color: "var(--ig-gold-deep)" }}>
             {t.eventRegistration}
           </p>
           {eventLoading ? (
@@ -209,9 +209,9 @@ function RegistrationPageInner() {
                 type="submit"
                 disabled={gateLoading}
                 className="w-full py-3.5 rounded-xl font-semibold text-sm text-white tracking-wide transition disabled:opacity-40"
-                style={{ background: "var(--ig-gold)" }}
-                onMouseEnter={e => !gateLoading && (e.currentTarget.style.background = "#B8791F")}
-                onMouseLeave={e => e.currentTarget.style.background = "var(--ig-gold)"}
+                style={{ background: "var(--ig-gold-deep)" }}
+                onMouseEnter={e => !gateLoading && (e.currentTarget.style.background = "#7A4F12")}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--ig-gold-deep)"}
               >
                 {gateLoading ? t.checking : t.continue}
               </button>
@@ -390,9 +390,9 @@ function RegistrationPageInner() {
                   type="submit"
                   disabled={loading}
                   className="w-full py-4 rounded-xl font-semibold text-sm text-white tracking-widest uppercase transition disabled:opacity-40"
-                  style={{ background: "var(--ig-gold)", marginTop: "8px" }}
-                  onMouseEnter={e => !loading && (e.currentTarget.style.background = "#B8791F")}
-                  onMouseLeave={e => e.currentTarget.style.background = "var(--ig-gold)"}
+                  style={{ background: "var(--ig-gold-deep)", marginTop: "8px" }}
+                  onMouseEnter={e => !loading && (e.currentTarget.style.background = "#7A4F12")}
+                  onMouseLeave={e => e.currentTarget.style.background = "var(--ig-gold-deep)"}
                 >
                   {loading ? t.registering : t.registerNow}
                 </button>
