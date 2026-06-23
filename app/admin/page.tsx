@@ -318,7 +318,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
               </>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-end gap-2 flex-wrap">
             <button onClick={async () => {
                 if (expanded) { setExpanded(false); return; }
                 setExpanded(true);
