@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import type jsQRType from "jsqr";
-import CampaignBuilder from "./CampaignBuilder";
-import PreviewPanel from "./PreviewPanel";
 import dynamic from "next/dynamic";
+// Lazy-loaded: CampaignBuilder + PreviewPanel pull in TipTap/ProseMirror (~578 KB).
+// Loading them only when the mailing section renders keeps that weight off the
+// events/scanner views that open first.
+const CampaignBuilder = dynamic(() => import("./CampaignBuilder"), { ssr: false });
+const PreviewPanel = dynamic(() => import("./PreviewPanel"), { ssr: false });
 const ZielgruppenDashboard = dynamic(() => import("./ZielgruppenDashboard"), { ssr: false });
 const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard"), { ssr: false });
 import type { CampaignBlock } from "./campaign-renderer";
