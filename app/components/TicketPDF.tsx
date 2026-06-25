@@ -31,6 +31,7 @@ const s = StyleSheet.create({
   },
   logo: { height: 32, objectFit: "contain", objectPositionX: 0 },
   eventNameBlock: { flex: 1, paddingHorizontal: 24, alignItems: "flex-end" },
+  eventEyebrow: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gold, letterSpacing: 1.5, textTransform: "uppercase", textAlign: "right", marginBottom: 4 },
   eventName: { fontSize: 16, fontFamily: "Helvetica-Bold", color: C.navy, textAlign: "right" },
 
   goldBar: { height: 3, backgroundColor: C.gold },
@@ -179,6 +180,11 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 
+  // Split "Category: Title" into a gold eyebrow + navy title, matching the email header.
+  const sepIdx = event.name.indexOf(": ");
+  const eventCategory = sepIdx > 0 ? event.name.slice(0, sepIdx) : null;
+  const eventTitle = sepIdx > 0 ? event.name.slice(sepIdx + 2) : event.name;
+
   return (
     <Document title={`Ticket — ${guestName}`} author="Impact Gstaad">
       <Page size="A4" style={s.page}>
@@ -188,7 +194,8 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
           <View style={s.header}>
             <Image src={logoUrl} style={s.logo} />
             <View style={s.eventNameBlock}>
-              <Text style={s.eventName}>{event.name}</Text>
+              {eventCategory ? <Text style={s.eventEyebrow}>{eventCategory}</Text> : null}
+              <Text style={s.eventName}>{eventTitle}</Text>
               {event.description ? (
                 <Text style={{ fontSize: 9, color: C.gray3, textAlign: "right", marginTop: 3 }}>{event.description}</Text>
               ) : null}
