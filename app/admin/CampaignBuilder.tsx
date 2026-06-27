@@ -461,15 +461,21 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
   const [uploading, setUploading] = useState(false);
   const [photoUrlInput, setPhotoUrlInput] = useState("");
   const [showPhotoUrl, setShowPhotoUrl] = useState(false);
-  const handlePaste = async (e: React.ClipboardEvent) => {
-    const imageItem = Array.from(e.clipboardData.items).find(i => i.type.startsWith("image/"));
-    if (!imageItem) return;
-    e.preventDefault();
-    const file = imageItem.getAsFile(); if (!file) return;
-    await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading);
-  };
+  const [photoFocused, setPhotoFocused] = useState(false);
+  useEffect(() => {
+    if (!photoFocused) return;
+    const handler = async (e: ClipboardEvent) => {
+      const imageItem = Array.from(e.clipboardData?.items ?? []).find(i => i.type.startsWith("image/"));
+      if (!imageItem) return;
+      e.preventDefault();
+      const file = imageItem.getAsFile(); if (!file) return;
+      await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading);
+    };
+    document.addEventListener("paste", handler);
+    return () => document.removeEventListener("paste", handler);
+  }, [photoFocused, sp, onChange]);
   return (
-    <div className="space-y-3" onPaste={handlePaste}>
+    <div className="space-y-3">
       <div className="flex gap-3 items-center flex-wrap">
         <div className="flex gap-2 items-center flex-wrap">
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async e => {
@@ -489,7 +495,8 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
         <div
           tabIndex={0}
           title="Klicken, dann Cmd+V zum Einfügen"
-          onPaste={handlePaste}
+          onFocus={() => setPhotoFocused(true)}
+          onBlur={() => setPhotoFocused(false)}
           className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer overflow-hidden shrink-0"
           style={{ border: `2px solid #D28D28`, background: sp.photo_url ? "transparent" : "#f3f4f6" }}>
           {sp.photo_url
