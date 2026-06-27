@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { supabaseAdmin } from "@/lib/supabase";
 import RegistrationForm, { type EventPayload } from "./RegistrationForm";
@@ -32,8 +33,7 @@ export default async function RegistrationPage({
   const sp = await searchParams;
   const raw = sp.event;
   const eventId = (Array.isArray(raw) ? raw[0] : raw) ?? "";
-  // If the server fetch returns null (no event, or a transient error) the client
-  // form falls back to its original /api/event fetch — behaviour is preserved.
+  if (!eventId) redirect("/admin");
   const initialEvent = await fetchEvent(eventId);
 
   return (
