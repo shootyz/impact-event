@@ -497,7 +497,7 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
             ? <img src={sp.photo_url} alt="" className="w-full h-full object-cover" />
             : <span className="text-lg" style={{ color: "#D28D28" }}>+</span>}
         </div>
-        <textarea ref={pasteRef} onPaste={handlePaste} className="sr-only" aria-hidden readOnly />
+        <textarea ref={pasteRef} onPaste={handlePaste} style={{ position: "fixed", left: -9999, top: -9999, opacity: 0, width: 1, height: 1 }} />
         {canRemove && <button onClick={onRemove} className="ml-auto text-xs" style={{ color: "var(--ig-gray3)" }}>Entfernen</button>}
       </div>
       {showPhotoUrl && (
