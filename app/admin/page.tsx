@@ -1060,7 +1060,7 @@ export default function AdminPage() {
             {/* Logo — always visible, click goes to events overview */}
             <button
               onClick={() => { setSelectedEventId(null); setEventSection(null); stopScanner(); }}
-              className="flex items-center shrink-0"
+              className="flex items-center shrink-0 cursor-pointer"
               title="Zur Event-Übersicht"
             >
               <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
