@@ -549,7 +549,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [eventSection, setEventSection] = useState<null | "mailing" | "management">(null);
+  const [eventSection, setEventSection] = useState<null | "mailing" | "management" | "formular">(null);
   const [showScannerPicker, setShowScannerPicker] = useState(false);
   const [activeTab, setActiveTab] = useState<"scanner" | "list" | "tools" | "analytics" | "form-regs">("list");
 
@@ -1088,7 +1088,7 @@ export default function AdminPage() {
                   <path d="M9 18l6-6-6-6"/>
                 </svg>
                 <span className="text-sm font-semibold truncate max-w-[80px] sm:max-w-xs" style={{ color: "var(--ig-navy)" }}>
-                  {eventSection === "mailing" ? "Mailing" : "Management"}
+                  {eventSection === "mailing" ? "Mailing" : eventSection === "formular" ? "Formular" : "Management"}
                 </span>
               </>
             )}
@@ -1682,6 +1682,16 @@ export default function AdminPage() {
                   </svg>
                 ),
               },
+              ...(selectedEvent?.registration_type === "form" ? [{
+                key: "formular" as const,
+                label: "Anmeldeformular",
+                sub: "Felder, Labels, Intro",
+                svg: (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h6M7 16h4"/>
+                  </svg>
+                ),
+              }] : []),
             ]).map(({ key, label, svg }) => (
               <button
                 key={key}
@@ -1695,6 +1705,99 @@ export default function AdminPage() {
                 <p className="font-bold text-base" style={{ color: "var(--ig-navy)" }}>{label}</p>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Formular section ── */}
+      {selectedEventId && eventSection === "formular" && selectedEvent?.registration_type === "form" && (
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 space-y-5">
+          {/* Intro */}
+          <div>
+            <label className="block text-xs font-semibold tracking-wide mb-1.5" style={{ color: "var(--ig-gray3)" }}>INTRO-TEXT</label>
+            <textarea
+              value={formConfig.intro}
+              onChange={e => setFormConfig(c => ({ ...c, intro: e.target.value }))}
+              rows={2}
+              placeholder="Optionaler Text über dem Formular"
+              className={`${inputClass} resize-none`} style={inputStyle}
+              onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+              onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+            />
+          </div>
+
+          {/* Fields */}
+          <div>
+            <label className="block text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--ig-gray3)" }}>FELDER</label>
+            <div className="space-y-2">
+              {formConfig.fields.map((field, idx) => (
+                <div key={field.id} className="rounded-xl border p-3 space-y-2" style={{ background: field.visible ? "white" : "var(--ig-light)", borderColor: "var(--ig-gray2)" }}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="text"
+                      value={field.label}
+                      onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, label: e.target.value } : f) }))}
+                      className="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none"
+                      style={{ border: "1.5px solid var(--ig-gray2)", background: "var(--ig-light)" }}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                    />
+                    {!BUILTIN_FIELD_IDS.includes(field.id) && (
+                      <select
+                        value={field.type}
+                        onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, type: e.target.value as "text" | "textarea" } : f) }))}
+                        className="text-xs px-2 py-1.5 rounded-lg outline-none"
+                        style={{ border: "1.5px solid var(--ig-gray2)", background: "var(--ig-light)", color: "var(--ig-navy)" }}
+                      >
+                        <option value="text">Einzeilig</option>
+                        <option value="textarea">Mehrzeilig</option>
+                      </select>
+                    )}
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none" style={{ color: "var(--ig-gray3)" }}>
+                      <input type="checkbox" checked={field.required} onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, required: e.target.checked } : f) }))} />
+                      Pflicht
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none" style={{ color: "var(--ig-gray3)" }}>
+                      <input type="checkbox" checked={field.visible} onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, visible: e.target.checked } : f) }))} />
+                      Aktiv
+                    </label>
+                    {!BUILTIN_FIELD_IDS.includes(field.id) && (
+                      <button
+                        onClick={() => setFormConfig(c => ({ ...c, fields: c.fields.filter((_, i) => i !== idx) }))}
+                        className="text-red-400 hover:text-red-600 transition text-sm leading-none"
+                      >✕</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setFormConfig(c => ({ ...c, fields: [...c.fields, { id: `custom_${Math.random().toString(36).slice(2,8)}`, type: "text", label: "Neues Feld", required: false, visible: true }] }))}
+              className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
+              style={{ border: "1.5px dashed var(--ig-gray2)", color: "var(--ig-gray3)", background: "transparent" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
+            >
+              <IconPlus className="w-3.5 h-3.5" /> Feld hinzufügen
+            </button>
+          </div>
+
+          {formConfigStatus && <p className={`text-xs ${formConfigStatus.ok ? "text-green-600" : "text-red-500"}`}>{formConfigStatus.msg}</p>}
+          <div className="flex justify-end">
+            <BtnPrimary disabled={formConfigSaving || !selectedEventId} onClick={async () => {
+              if (!selectedEventId) return;
+              setFormConfigSaving(true); setFormConfigStatus(null);
+              const res = await fetch(`/api/admin/events/${selectedEventId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ adminPassword: savedPassword.current, form_config: formConfig }),
+              });
+              setFormConfigSaving(false);
+              if (!res.ok) { setFormConfigStatus({ ok: false, msg: "Fehler beim Speichern." }); return; }
+              setAllEventCards(prev => prev.map(e => e.id === selectedEventId ? { ...e, form_config: formConfig } : e));
+              setFormConfigStatus({ ok: true, msg: "Gespeichert." });
+            }}>
+              {formConfigSaving ? "Speichert…" : "Speichern"}
+            </BtnPrimary>
           </div>
         </div>
       )}
@@ -2463,6 +2566,7 @@ export default function AdminPage() {
             {mailingTab === "compose" && (
               <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
                 <CampaignBuilder
+                  adminPassword={savedPassword.current}
                   key={editingCampaign?.id ?? "new"}
                   campaignId={editingCampaign?.id}
                   initialSubject={editingCampaign?.subject}
