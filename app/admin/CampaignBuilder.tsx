@@ -470,6 +470,25 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
             disabled={uploading}>
             {uploading ? "Hochladen…" : sp.photo_url ? "Bild ersetzen" : "Bild hochladen"}
           </button>
+          <button onClick={async () => {
+            try {
+              const items = await navigator.clipboard.read();
+              const imageItem = items.find(item => item.types.some(t => t.startsWith("image/")));
+              if (!imageItem) { alert("Kein Bild in der Zwischenablage gefunden."); return; }
+              const imageType = imageItem.types.find(t => t.startsWith("image/")) ?? "image/png";
+              const blob = await imageItem.getType(imageType);
+              const file = new File([blob], "paste.png", { type: imageType });
+              setUploading(true);
+              const fd = new FormData(); fd.append("file", file);
+              const res = await fetch("/api/upload", { method: "POST", body: fd });
+              const d = await res.json(); if (d.url) onChange({ ...sp, photo_url: d.url });
+              setUploading(false);
+            } catch { alert("Zugriff auf Zwischenablage fehlgeschlagen. Bitte Berechtigung erteilen."); }
+          }}
+            className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
+            disabled={uploading}>
+            Einfügen
+          </button>
           <button onClick={() => setShowPhotoUrl(v => !v)}
             className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}>
             Von URL
