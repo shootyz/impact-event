@@ -168,7 +168,7 @@ type Registration = {
 type Event = { id: string; name: string; date: string; location: string; };
 type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; registration_type: "invite" | "form"; max_capacity: number | null; form_config?: FormConfig | null; };
 type FormRegistration = { id: string; first_name: string; last_name: string; email: string; company: string | null; message: string | null; extra_fields?: Record<string, string> | null; status: "pending" | "confirmed" | "rejected" | "waitlisted"; created_at: string; checked_in?: boolean; checked_in_at?: string | null; qr_token?: string | null; };
-type FormField = { id: string; type: "text" | "textarea"; label: string; required: boolean; visible: boolean };
+type FormField = { id: string; type: "text" | "textarea" | "select" | "checkbox" | "radio"; label: string; required: boolean; visible: boolean; options?: string[] };
 type FormConfig = { intro: string; fields: FormField[] };
 const BUILTIN_FIELD_IDS = ["company", "message"];
 const DEFAULT_FORM_CONFIG: FormConfig = {
@@ -1745,12 +1745,18 @@ export default function AdminPage() {
                     {!BUILTIN_FIELD_IDS.includes(field.id) && (
                       <select
                         value={field.type}
-                        onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, type: e.target.value as "text" | "textarea" } : f) }))}
+                        onChange={e => {
+                          const t = e.target.value as FormField["type"];
+                          setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, type: t, options: (t === "select" || t === "radio") ? (f.options ?? ["Option 1"]) : undefined } : f) }));
+                        }}
                         className="text-xs px-2 py-1.5 rounded-lg outline-none"
                         style={{ border: "1.5px solid var(--ig-gray2)", background: "var(--ig-light)", color: "var(--ig-navy)" }}
                       >
                         <option value="text">Einzeilig</option>
                         <option value="textarea">Mehrzeilig</option>
+                        <option value="checkbox">Checkbox</option>
+                        <option value="select">Dropdown</option>
+                        <option value="radio">Radio-Buttons</option>
                       </select>
                     )}
                     <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none" style={{ color: "var(--ig-gray3)" }}>
@@ -1768,6 +1774,30 @@ export default function AdminPage() {
                       >✕</button>
                     )}
                   </div>
+                  {(field.type === "select" || field.type === "radio") && (
+                    <div className="pl-6 space-y-1.5">
+                      <p className="text-xs font-semibold" style={{ color: "var(--ig-gray3)" }}>OPTIONEN</p>
+                      {(field.options ?? []).map((opt, oi) => (
+                        <div key={oi} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, options: (f.options ?? []).map((o, j) => j === oi ? e.target.value : o) } : f) }))}
+                            className="flex-1 px-2 py-1 rounded-lg text-xs outline-none"
+                            style={{ border: "1.5px solid var(--ig-gray2)", background: "white" }}
+                            onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                            onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                          />
+                          <button onClick={() => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, options: (f.options ?? []).filter((_, j) => j !== oi) } : f) }))} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, options: [...(f.options ?? []), "Neue Option"] } : f) }))}
+                        className="text-xs px-2 py-1 rounded-lg transition"
+                        style={{ border: "1px dashed var(--ig-gray2)", color: "var(--ig-gray3)" }}
+                      >+ Option</button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -2328,107 +2358,6 @@ export default function AdminPage() {
                 </div>
               </div>
             </Card>
-
-            {/* Formular konfigurieren (nur bei form-type) */}
-            {selectedEvent?.registration_type === "form" && (
-              <Card className="sm:col-span-2">
-                <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
-                <CardHeader title="Formular konfigurieren" subtitle="Felder, Labels und Intro-Text" />
-                <div className="p-5 space-y-4">
-                  {/* Intro */}
-                  <div>
-                    <label className="block text-xs font-semibold tracking-wide mb-1.5" style={{ color: "var(--ig-gray3)" }}>INTRO-TEXT</label>
-                    <textarea
-                      value={formConfig.intro}
-                      onChange={e => setFormConfig(c => ({ ...c, intro: e.target.value }))}
-                      rows={2}
-                      placeholder="Optionaler Text über dem Formular"
-                      className={`${inputClass} resize-none`} style={inputStyle}
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
-                    />
-                  </div>
-
-                  {/* Fields */}
-                  <div>
-                    <label className="block text-xs font-semibold tracking-wide mb-2" style={{ color: "var(--ig-gray3)" }}>FELDER</label>
-                    <div className="space-y-2">
-                      {formConfig.fields.map((field, idx) => (
-                        <div key={field.id} className="rounded-xl border p-3 space-y-2" style={{ background: field.visible ? "white" : "var(--ig-light)", borderColor: "var(--ig-gray2)" }}>
-                          <div className="flex items-center gap-2">
-                            {/* drag handle placeholder */}
-                            <span className="text-gray-300 select-none cursor-grab">⠿</span>
-                            <input
-                              type="text"
-                              value={field.label}
-                              onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, label: e.target.value } : f) }))}
-                              className="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none"
-                              style={{ border: "1.5px solid var(--ig-gray2)", background: "var(--ig-light)" }}
-                              onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                              onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
-                            />
-                            {!BUILTIN_FIELD_IDS.includes(field.id) && (
-                              <select
-                                value={field.type}
-                                onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, type: e.target.value as "text" | "textarea" } : f) }))}
-                                className="text-xs px-2 py-1.5 rounded-lg outline-none"
-                                style={{ border: "1.5px solid var(--ig-gray2)", background: "var(--ig-light)", color: "var(--ig-navy)" }}
-                              >
-                                <option value="text">Einzeilig</option>
-                                <option value="textarea">Mehrzeilig</option>
-                              </select>
-                            )}
-                            <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none" style={{ color: "var(--ig-gray3)" }}>
-                              <input type="checkbox" checked={field.required} onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, required: e.target.checked } : f) }))} />
-                              Pflicht
-                            </label>
-                            <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none" style={{ color: "var(--ig-gray3)" }}>
-                              <input type="checkbox" checked={field.visible} onChange={e => setFormConfig(c => ({ ...c, fields: c.fields.map((f, i) => i === idx ? { ...f, visible: e.target.checked } : f) }))} />
-                              Aktiv
-                            </label>
-                            {!BUILTIN_FIELD_IDS.includes(field.id) && (
-                              <button
-                                onClick={() => setFormConfig(c => ({ ...c, fields: c.fields.filter((_, i) => i !== idx) }))}
-                                className="text-red-400 hover:text-red-600 transition text-sm leading-none"
-                              >✕</button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Add custom field */}
-                    <button
-                      onClick={() => setFormConfig(c => ({ ...c, fields: [...c.fields, { id: `custom_${Math.random().toString(36).slice(2,8)}`, type: "text", label: "Neues Feld", required: false, visible: true }] }))}
-                      className="mt-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition"
-                      style={{ border: "1.5px dashed var(--ig-gray2)", color: "var(--ig-gray3)", background: "transparent" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
-                    >
-                      <IconPlus className="w-3.5 h-3.5" /> Feld hinzufügen
-                    </button>
-                  </div>
-
-                  {formConfigStatus && <p className={`text-xs ${formConfigStatus.ok ? "text-green-600" : "text-red-500"}`}>{formConfigStatus.msg}</p>}
-                  <div className="flex justify-end">
-                    <BtnPrimary disabled={formConfigSaving || !selectedEventId} onClick={async () => {
-                      if (!selectedEventId) return;
-                      setFormConfigSaving(true); setFormConfigStatus(null);
-                      const res = await fetch(`/api/admin/events/${selectedEventId}`, {
-                        method: "PATCH", headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ adminPassword: savedPassword.current, form_config: formConfig }),
-                      });
-                      setFormConfigSaving(false);
-                      if (!res.ok) { setFormConfigStatus({ ok: false, msg: "Fehler beim Speichern." }); return; }
-                      setAllEventCards(prev => prev.map(e => e.id === selectedEventId ? { ...e, form_config: formConfig } : e));
-                      setFormConfigStatus({ ok: true, msg: "Gespeichert." });
-                    }}>
-                      {formConfigSaving ? "Speichert…" : "Speichern"}
-                    </BtnPrimary>
-                  </div>
-                </div>
-              </Card>
-            )}
 
             {/* CSV Import */}
             <Card>

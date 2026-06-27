@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { T, getLang } from "@/lib/i18n";
 import logo from "@/public/logo.png";
 
-type FormField = { id: string; type: "text" | "textarea" | "select" | "checkbox"; label: string; required: boolean; visible: boolean; options?: string[] };
+type FormField = { id: string; type: "text" | "textarea" | "select" | "checkbox" | "radio"; label: string; required: boolean; visible: boolean; options?: string[] };
 type FormConfig = { intro: string; fields: FormField[] };
 
 export type EventPayload = {
@@ -360,6 +360,22 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
                           <option value="">— bitte wählen —</option>
                           {(f.options ?? []).map(o => <option key={o} value={o}>{o}</option>)}
                         </select>
+                      ) : f.type === "radio" ? (
+                        <div className="space-y-2">
+                          {(f.options ?? []).map(o => (
+                            <label key={o} className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="radio"
+                                name={f.id}
+                                value={o}
+                                checked={formValues[f.id] === o}
+                                onChange={() => setFormValues(v => ({ ...v, [f.id]: o }))}
+                                style={{ accentColor: "var(--ig-gold)" }}
+                              />
+                              <span className="text-sm" style={{ color: "var(--ig-navy)" }}>{o}</span>
+                            </label>
+                          ))}
+                        </div>
                       ) : f.type === "checkbox" ? (
                         <label className="flex items-center gap-3 cursor-pointer">
                           <input
