@@ -1021,7 +1021,7 @@ export default function AdminPage() {
               </button>
             </div>
             {authError && <p className="text-sm text-red-500">{authError}</p>}
-            <BtnPrimary type="submit" className="w-full justify-center">Anmelden</BtnPrimary>
+            <div className="flex justify-end"><BtnPrimary type="submit">Anmelden</BtnPrimary></div>
           </form>
         </div>
       </main>
