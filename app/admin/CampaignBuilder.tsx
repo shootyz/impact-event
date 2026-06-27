@@ -448,15 +448,17 @@ function ModerationEditor({ block, onChange }: { block: ModerationBlock; onChang
   );
 }
 
-async function uploadImageFile(file: File, onChange: (url: string) => void, setUploading: (v: boolean) => void) {
+async function uploadImageFile(file: File, onChange: (url: string) => void, setUploading: (v: boolean) => void, adminPassword?: string) {
   setUploading(true);
   const fd = new FormData(); fd.append("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  const headers: Record<string, string> = {};
+  if (adminPassword) headers["Authorization"] = `Bearer ${adminPassword}`;
+  const res = await fetch("/api/upload", { method: "POST", body: fd, headers });
   const d = await res.json(); if (d.url) onChange(d.url);
   setUploading(false);
 }
 
-function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speaker; onChange: (s: Speaker) => void; onRemove: () => void; canRemove: boolean }) {
+function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove, adminPassword }: { sp: Speaker; onChange: (s: Speaker) => void; onRemove: () => void; canRemove: boolean; adminPassword?: string }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [photoUrlInput, setPhotoUrlInput] = useState("");
@@ -467,7 +469,7 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
     if (!imageItem) return;
     e.preventDefault();
     const file = imageItem.getAsFile(); if (!file) return;
-    await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading);
+    await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading, adminPassword);
   };
   return (
     <div className="space-y-3">
@@ -475,7 +477,7 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
         <div className="flex gap-2 items-center flex-wrap">
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async e => {
             const file = e.target.files?.[0]; if (!file) return;
-            await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading);
+            await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading, adminPassword);
           }} />
           <button onClick={() => fileRef.current?.click()}
             className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
@@ -545,7 +547,7 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
   );
 }
 
-function SpeakerEditor({ block: rawBlock, onChange }: { block: SpeakerBlock; onChange: (b: SpeakerBlock) => void }) {
+function SpeakerEditor({ block: rawBlock, onChange, adminPassword }: { block: SpeakerBlock; onChange: (b: SpeakerBlock) => void; adminPassword?: string }) {
   const legacy = rawBlock as unknown as Record<string, string>;
   const block: SpeakerBlock = rawBlock.speakers?.length
     ? rawBlock
@@ -558,7 +560,7 @@ function SpeakerEditor({ block: rawBlock, onChange }: { block: SpeakerBlock; onC
       {block.speakers.map((sp, i) => (
         <div key={sp.id}>
           {i > 0 && <div style={{ height: 1, background: "var(--ig-gray2)", margin: "4px 0 16px" }} />}
-          <SingleSpeakerEditor sp={sp} onChange={s => updateSp(i, s)} onRemove={() => removeSp(i)} canRemove={block.speakers.length > 1} />
+          <SingleSpeakerEditor sp={sp} onChange={s => updateSp(i, s)} onRemove={() => removeSp(i)} canRemove={block.speakers.length > 1} adminPassword={adminPassword} />
         </div>
       ))}
       <button onClick={addSp} className="w-full text-xs py-2 rounded-lg border border-dashed font-medium transition"
@@ -657,7 +659,7 @@ function CustomFieldsEditor({ block, onChange }: { block: CampaignBlock; onChang
   );
 }
 
-function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStart, onDragOver, onDrop, isDragOver, subject, lang }: {
+function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStart, onDragOver, onDrop, isDragOver, subject, lang, adminPassword }: {
   block: CampaignBlock;
   index: number;
   total: number;
@@ -670,6 +672,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
   isDragOver: boolean;
   subject?: string;
   lang?: Lang;
+  adminPassword?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -734,7 +737,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           {block.type === "program" && <ProgramEditor block={block} onChange={onChange as (b: ProgramBlock) => void} />}
           {block.type === "finalists" && <FinalistsEditor block={block} onChange={onChange as (b: FinalistsBlock) => void} />}
           {block.type === "moderation" && <ModerationEditor block={block} onChange={onChange as (b: ModerationBlock) => void} />}
-          {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} />}
+          {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} adminPassword={adminPassword} />}
           {block.type === "info" && <InfoEditor block={block} onChange={onChange as (b: InfoBlock) => void} />}
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
@@ -809,6 +812,7 @@ export default function CampaignBuilder({
   events,
   langSiblings,
   onSwitchLang,
+  adminPassword,
 }: {
   onSaveDraft: (subject: string, bodyHtml: string, eventUrl: string, blocks: CampaignBlock[], zielgruppeId: string | null, autoId?: string, isAutoSave?: boolean, lang?: Lang, title?: string) => Promise<string>;
   campaignId?: string;
@@ -823,6 +827,7 @@ export default function CampaignBuilder({
   events?: EventOption[];
   langSiblings?: { id: string; lang: Lang }[];
   onSwitchLang?: (id: string) => void;
+  adminPassword?: string;
 }) {
   const [lang, setLang] = useState<Lang>(initialLang ?? "en");
   const [title, setTitle] = useState(initialTitle ?? "");
@@ -1064,7 +1069,7 @@ export default function CampaignBuilder({
                 onDragOver={e => { e.preventDefault(); setOverIdx(i); }}
                 onDrop={dropBlock}
                 isDragOver={overIdx === i && dragIdx !== i}
-                subject={subject} lang={lang} />
+                subject={subject} lang={lang} adminPassword={adminPassword} />
             ))}
 
             {/* Add block */}
