@@ -448,46 +448,38 @@ function ModerationEditor({ block, onChange }: { block: ModerationBlock; onChang
   );
 }
 
+async function uploadImageFile(file: File, onChange: (url: string) => void, setUploading: (v: boolean) => void) {
+  setUploading(true);
+  const fd = new FormData(); fd.append("file", file);
+  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  const d = await res.json(); if (d.url) onChange(d.url);
+  setUploading(false);
+}
+
 function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speaker; onChange: (s: Speaker) => void; onRemove: () => void; canRemove: boolean }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [photoUrlInput, setPhotoUrlInput] = useState("");
   const [showPhotoUrl, setShowPhotoUrl] = useState(false);
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const imageItem = Array.from(e.clipboardData.items).find(i => i.type.startsWith("image/"));
+    if (!imageItem) return;
+    e.preventDefault();
+    const file = imageItem.getAsFile(); if (!file) return;
+    await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading);
+  };
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" onPaste={handlePaste}>
       <div className="flex gap-3 items-center flex-wrap">
         <div className="flex gap-2 items-center flex-wrap">
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async e => {
             const file = e.target.files?.[0]; if (!file) return;
-            setUploading(true);
-            const fd = new FormData(); fd.append("file", file);
-            const res = await fetch("/api/upload", { method: "POST", body: fd });
-            const d = await res.json(); if (d.url) onChange({ ...sp, photo_url: d.url });
-            setUploading(false);
+            await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading);
           }} />
           <button onClick={() => fileRef.current?.click()}
             className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
             disabled={uploading}>
             {uploading ? "Hochladen…" : sp.photo_url ? "Bild ersetzen" : "Bild hochladen"}
-          </button>
-          <button onClick={async () => {
-            try {
-              const items = await navigator.clipboard.read();
-              const imageItem = items.find(item => item.types.some(t => t.startsWith("image/")));
-              if (!imageItem) { alert("Kein Bild in der Zwischenablage gefunden."); return; }
-              const imageType = imageItem.types.find(t => t.startsWith("image/")) ?? "image/png";
-              const blob = await imageItem.getType(imageType);
-              const file = new File([blob], "paste.png", { type: imageType });
-              setUploading(true);
-              const fd = new FormData(); fd.append("file", file);
-              const res = await fetch("/api/upload", { method: "POST", body: fd });
-              const d = await res.json(); if (d.url) onChange({ ...sp, photo_url: d.url });
-              setUploading(false);
-            } catch { alert("Zugriff auf Zwischenablage fehlgeschlagen. Bitte Berechtigung erteilen."); }
-          }}
-            className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
-            disabled={uploading}>
-            Einfügen
           </button>
           <button onClick={() => setShowPhotoUrl(v => !v)}
             className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}>
