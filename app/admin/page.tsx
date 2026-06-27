@@ -1102,19 +1102,6 @@ export default function AdminPage() {
                   </svg>
                 </button>
               )}
-              {/* Logout */}
-              <button
-                onClick={() => { sessionStorage.removeItem("adminPw"); savedPassword.current = ""; setAuthenticated(false); setPassword(""); }}
-                title="Abmelden"
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition"
-                style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-              </button>
               {/* Global scanner button */}
               <div className="relative">
                 <button
@@ -1192,6 +1179,19 @@ export default function AdminPage() {
               >
                 <IconRefresh className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Aktualisieren</span>
+              </button>
+              {/* Logout */}
+              <button
+                onClick={() => { sessionStorage.removeItem("adminPw"); savedPassword.current = ""; setAuthenticated(false); setPassword(""); }}
+                title="Abmelden"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition"
+                style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
               </button>
             </div>
           )}
