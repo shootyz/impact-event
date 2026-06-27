@@ -997,46 +997,32 @@ export default function AdminPage() {
   // ─── LOGIN ───────────────────────────────────────────────────────────────────
   if (!authenticated) {
     return (
-      <main className="min-h-screen flex flex-col" style={{ background: "var(--ig-light)" }}>
-        {/* Navy hero */}
-        <div className="flex flex-col items-center justify-center flex-1 px-4 py-16" style={{ background: "var(--ig-navy)" }}>
-          <img src="/logo.png" alt="Impact Gstaad" className="h-12 object-contain mb-8" style={{ filter: "brightness(0) invert(1)" }} />
-          <div className="h-px w-16 mb-6" style={{ background: "var(--ig-gold)" }} />
-          <p className="text-xs font-semibold tracking-[0.25em] uppercase" style={{ color: "var(--ig-gold)" }}>Event Management</p>
-        </div>
-
-        {/* Login card */}
-        <div className="flex flex-col items-center justify-center px-4 py-12" style={{ background: "var(--ig-light)" }}>
-          <div className="w-full max-w-sm">
-            <p className="text-xs font-semibold tracking-[0.2em] uppercase text-center mb-6" style={{ color: "var(--ig-gray3)" }}>Admin-Zugang</p>
-            <Card>
-              <div className="p-6">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="Passwort"
-                      required
-                      autoFocus
-                      className={`${inputClass} pr-12`}
-                      style={inputStyle}
-                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
-                    />
-                    <button type="button" onClick={() => setShowPassword(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition"
-                      style={{ color: "var(--ig-gray3)" }}>
-                      <IconEye open={showPassword} />
-                    </button>
-                  </div>
-                  {authError && <p className="text-sm text-red-500">{authError}</p>}
-                  <BtnPrimary type="submit" className="w-full justify-center">Anmelden</BtnPrimary>
-                </form>
-              </div>
-            </Card>
-          </div>
+      <main className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--ig-light)" }}>
+        <div className="w-full max-w-xs">
+          <img src="/logo.png" alt="Impact Gstaad" className="h-8 mx-auto mb-10 object-contain" />
+          <form onSubmit={handleLogin} className="space-y-3">
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Passwort"
+                required
+                autoFocus
+                className={`${inputClass} pr-12`}
+                style={inputStyle}
+                onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+              />
+              <button type="button" onClick={() => setShowPassword(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition"
+                style={{ color: "var(--ig-gray3)" }}>
+                <IconEye open={showPassword} />
+              </button>
+            </div>
+            {authError && <p className="text-sm text-red-500">{authError}</p>}
+            <BtnPrimary type="submit" className="w-full justify-center">Anmelden</BtnPrimary>
+          </form>
         </div>
       </main>
     );
