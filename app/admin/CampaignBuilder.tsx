@@ -486,7 +486,17 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove }: { sp: Speake
             Von URL
           </button>
         </div>
-        {sp.photo_url && <img src={sp.photo_url} alt="" className="w-10 h-10 rounded-full object-cover" style={{ border: "2px solid #D28D28" }} />}
+        <div
+          tabIndex={0}
+          title="Klicken, dann Cmd+V zum Einfügen"
+          onPaste={handlePaste}
+          onClick={() => fileRef.current?.click()}
+          className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer overflow-hidden shrink-0"
+          style={{ border: `2px solid #D28D28`, background: sp.photo_url ? "transparent" : "#f3f4f6" }}>
+          {sp.photo_url
+            ? <img src={sp.photo_url} alt="" className="w-full h-full object-cover" />
+            : <span className="text-lg" style={{ color: "#D28D28" }}>+</span>}
+        </div>
         {canRemove && <button onClick={onRemove} className="ml-auto text-xs" style={{ color: "var(--ig-gray3)" }}>Entfernen</button>}
       </div>
       {showPhotoUrl && (
