@@ -999,7 +999,7 @@ export default function AdminPage() {
     return (
       <main className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--ig-light)" }}>
         <div className="w-full max-w-xs">
-          <img src="/logo.png" alt="Impact Gstaad" className="h-8 mx-auto mb-10 object-contain" />
+          <img src="/logo.png" alt="Impact Gstaad" className="h-20 mx-auto mb-10 object-contain" />
           <form onSubmit={handleLogin} className="space-y-3">
             <div className="relative">
               <input
