@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getLists, getContactsFromList } from "@/lib/hubspot";
-import { createClient } from "@supabase/supabase-js";
 import { isAdminAuthed } from "@/lib/auth";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabaseAdmin } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   if (!isAdminAuthed(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -39,11 +34,12 @@ export async function POST(req: NextRequest) {
   }
 
   const contacts = await getContactsFromList(listId);
+  const db = supabaseAdmin();
   let imported = 0;
   let duplicates = 0;
 
   for (const c of contacts) {
-    const { error } = await supabase.from("members").insert({
+    const { error } = await db.from("members").insert({
       email: c.email,
       first_name: c.first_name,
       last_name: c.last_name,
