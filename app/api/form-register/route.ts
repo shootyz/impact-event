@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { rateLimit } from '@/lib/rate-limit'
 import { sendConfirmationEmail } from '@/lib/email'
+import { upsertContact } from '@/lib/hubspot'
 import { Resend } from 'resend'
 import { randomUUID } from 'crypto'
 
@@ -56,6 +57,9 @@ export async function POST(req: NextRequest) {
       if (registration && event) {
         await sendConfirmationEmail(registration, event, 'de')
       }
+
+      // Sync to HubSpot
+      await upsertContact({ email, first_name, last_name, company: extra_fields?.firma ?? null, event_name: event?.name })
 
       // Notify admin
       const extraRows = extra_fields

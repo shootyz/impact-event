@@ -13,6 +13,13 @@ const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard"), { ssr: 
 import type { CampaignBlock } from "./campaign-renderer";
 import type { Lang } from "./i18n";
 
+type GlobalMember = {
+  id: string; first_name: string; last_name: string; email: string;
+  anrede?: string | null; sprache?: string | null; unsubscribed: boolean; created_at: string;
+  zielgruppe_id: string | null;
+  zielgruppen?: { name: string; events?: { name: string } | null } | null;
+};
+
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 type IconProps = { className?: string; style?: React.CSSProperties };
 const IconCheck = ({ className = "w-4 h-4", style }: IconProps) => (
@@ -596,7 +603,12 @@ export default function AdminPage() {
   const [eventsView, setEventsView] = useState<"grid" | "list">("grid");
   const [eventsSort, setEventsSort] = useState<"date-desc" | "date-asc" | "name-asc" | "created-desc">("date-desc");
   const [eventsCategory, setEventsCategory] = useState<string | null>(null);
-  const [eventsStatusTab, setEventsStatusTab] = useState<"aktiv" | "archiv">("aktiv");
+  const [eventsStatusTab, setEventsStatusTab] = useState<"aktiv" | "archiv" | "global">("aktiv");
+  const [globalMembers, setGlobalMembers] = useState<GlobalMember[]>([]);
+  const [globalLoading, setGlobalLoading] = useState(false);
+  const [globalLoaded, setGlobalLoaded] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [globalShowUnsub, setGlobalShowUnsub] = useState(false);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   // Event creation form
   const [showCreateEvent, setShowCreateEvent] = useState(false);
@@ -1202,26 +1214,137 @@ export default function AdminPage() {
       {!selectedEventId && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
 
-          {/* ── Aktiv / Archiv tabs ── */}
+          {/* ── Aktiv / Archiv / Global tabs ── */}
           <div className="flex items-center gap-0 mb-5 border-b" style={{ borderColor: "var(--ig-gray2)" }}>
-            {(["aktiv", "archiv"] as const).map(tab => (
-              <button key={tab} onClick={() => setEventsStatusTab(tab)}
-                className="px-5 py-3 text-sm font-semibold tracking-wide transition relative capitalize hover:opacity-70"
-                style={{ color: eventsStatusTab === tab ? "var(--ig-gold)" : "var(--ig-navy)" }}>
-                {tab === "aktiv" ? "Aktiv" : "Archiv"}
-                {eventsStatusTab === tab && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
+            {([
+              { id: "aktiv", label: "Aktiv" },
+              { id: "archiv", label: "Archiv" },
+              { id: "global", label: "Globale Zielgruppe" },
+            ] as const).map(tab => (
+              <button key={tab.id} onClick={() => setEventsStatusTab(tab.id)}
+                className="px-5 py-3 text-sm font-semibold tracking-wide transition relative hover:opacity-70"
+                style={{ color: eventsStatusTab === tab.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
+                {tab.label}
+                {eventsStatusTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: "var(--ig-gold)" }} />}
               </button>
             ))}
             <div className="flex-1" />
-            <BtnPrimary onClick={() => { setShowCreateEvent(v => !v); setNewEventResult(null); }} className="mb-3">
-              <IconPlus className="w-3.5 h-3.5" />
-              Neuer Event
-            </BtnPrimary>
+            {eventsStatusTab !== "global" && (
+              <BtnPrimary onClick={() => { setShowCreateEvent(v => !v); setNewEventResult(null); }} className="mb-3">
+                <IconPlus className="w-3.5 h-3.5" />
+                Neuer Event
+              </BtnPrimary>
+            )}
           </div>
+
+          {/* ── Global Zielgruppe ── */}
+          {eventsStatusTab === "global" && (() => {
+            if (!globalLoaded && !globalLoading) {
+              setGlobalLoading(true);
+              fetch("/api/admin/global-members", { headers: { "Authorization": `Bearer ${savedPassword.current}` } })
+                .then(r => r.json())
+                .then(d => { setGlobalMembers(d.members ?? []); setGlobalLoaded(true); setGlobalLoading(false); })
+                .catch(() => setGlobalLoading(false));
+            }
+            const q = globalSearch.toLowerCase().trim();
+            const filtered = globalMembers.filter(m => {
+              if (!globalShowUnsub && m.unsubscribed) return false;
+              if (!q) return true;
+              return [m.first_name, m.last_name, m.email,
+                m.zielgruppen?.name ?? "", m.zielgruppen?.events?.name ?? ""]
+                .join(" ").toLowerCase().includes(q);
+            });
+            function exportCsv() {
+              const headers = ["Vorname", "Nachname", "E-Mail", "Anrede", "Sprache", "Zielgruppe", "Event", "Abgemeldet", "Erstellt"];
+              const rows = filtered.map(m => [
+                m.first_name, m.last_name, m.email,
+                m.anrede ?? "", m.sprache ?? "",
+                m.zielgruppen?.name ?? "", m.zielgruppen?.events?.name ?? "",
+                m.unsubscribed ? "ja" : "nein",
+                new Date(m.created_at).toLocaleDateString("de-CH"),
+              ]);
+              const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a"); a.href = url; a.download = "kontakte.csv"; a.click();
+              URL.revokeObjectURL(url);
+            }
+            return (
+              <div className="space-y-4">
+                <div className="flex gap-2 flex-wrap items-center">
+                  <input
+                    className="flex-1 min-w-[180px] rounded-lg border px-2.5 py-1.5 text-xs outline-none transition"
+                    style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+                    placeholder="Suchen nach Name, E-Mail, Zielgruppe, Event…"
+                    value={globalSearch}
+                    onChange={e => setGlobalSearch(e.target.value)}
+                    onFocus={e => (e.currentTarget.style.borderColor = "var(--ig-navy)")}
+                    onBlur={e => (e.currentTarget.style.borderColor = "var(--ig-gray2)")}
+                  />
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none" style={{ color: "var(--ig-navy)" }}>
+                    <input type="checkbox" checked={globalShowUnsub} onChange={e => setGlobalShowUnsub(e.target.checked)} className="rounded" />
+                    Abgemeldete anzeigen
+                  </label>
+                  <button onClick={exportCsv}
+                    className="transition hover:opacity-70 active:scale-95 font-semibold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                    style={{ background: "var(--ig-navy)", color: "white" }}>
+                    <IconDownload className="w-3.5 h-3.5" />
+                    CSV Export
+                  </button>
+                </div>
+                {globalLoaded && (
+                  <div className="text-xs" style={{ color: "var(--ig-gray3)" }}>
+                    {filtered.length} Kontakte{globalSearch ? ` · Suche: "${globalSearch}"` : ""}
+                    {" · "}{globalMembers.filter(m => !m.unsubscribed).length} aktiv, {globalMembers.filter(m => m.unsubscribed).length} abgemeldet
+                  </div>
+                )}
+                <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--ig-gray2)", background: "white" }}>
+                  {globalLoading ? (
+                    <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
+                  ) : filtered.length === 0 ? (
+                    <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>
+                      {globalSearch ? "Keine Treffer." : "Noch keine Kontakte."}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr style={{ borderBottom: "1px solid var(--ig-gray2)", background: "var(--ig-light)" }}>
+                            {["Vorname", "Nachname", "E-Mail", "Zielgruppe", "Event", "Sprache", "Status"].map(h => (
+                              <th key={h} className="text-left px-3 py-2 font-semibold" style={{ color: "var(--ig-navy)" }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.map((m, i) => (
+                            <tr key={m.id}
+                              style={{ borderBottom: i < filtered.length - 1 ? "1px solid var(--ig-gray2)" : undefined }}
+                              className="hover:bg-slate-50 transition-colors">
+                              <td className="px-3 py-2" style={{ color: "var(--ig-navy)" }}>{m.first_name}</td>
+                              <td className="px-3 py-2" style={{ color: "var(--ig-navy)" }}>{m.last_name}</td>
+                              <td className="px-3 py-2" style={{ color: "var(--ig-gray3)" }}>{m.email}</td>
+                              <td className="px-3 py-2" style={{ color: "var(--ig-gray3)" }}>{m.zielgruppen?.name ?? "–"}</td>
+                              <td className="px-3 py-2" style={{ color: "var(--ig-gray3)" }}>{m.zielgruppen?.events?.name ?? "–"}</td>
+                              <td className="px-3 py-2 uppercase" style={{ color: "var(--ig-gray3)" }}>{m.sprache ?? "–"}</td>
+                              <td className="px-3 py-2">
+                                {m.unsubscribed
+                                  ? <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#FEE2E2", color: "#B91C1C" }}>Abgemeldet</span>
+                                  : <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#15803D" }}>Aktiv</span>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ── Toolbar: category filter (scrollable) + sort/view ── */}
           {/* Category pills — single scrollable row */}
-          <div className="flex gap-2 mb-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          {eventsStatusTab !== "global" && <div className="flex gap-2 mb-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             <button
               onClick={() => setEventsCategory(null)}
               className="text-xs px-3 py-1.5 rounded-full font-semibold transition border flex-shrink-0"
@@ -1283,8 +1406,9 @@ export default function AdminPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
 
+          {eventsStatusTab !== "global" && <>
           {/* Create event form */}
           {showCreateEvent && (
             <Card>
@@ -1651,6 +1775,7 @@ export default function AdminPage() {
               </div>
             );
           })()}
+          </>}
         </div>
       )}
 
