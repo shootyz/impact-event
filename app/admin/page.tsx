@@ -1343,8 +1343,9 @@ export default function AdminPage() {
           })()}
 
           {/* ── Toolbar: category filter (scrollable) + sort/view ── */}
+          {eventsStatusTab !== "global" && <>
           {/* Category pills — single scrollable row */}
-          {eventsStatusTab !== "global" && <div className="flex gap-2 mb-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          <div className="flex gap-2 mb-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
             <button
               onClick={() => setEventsCategory(null)}
               className="text-xs px-3 py-1.5 rounded-full font-semibold transition border flex-shrink-0"
@@ -1406,9 +1407,7 @@ export default function AdminPage() {
                 </button>
               ))}
             </div>
-          </div>}
-
-          {eventsStatusTab !== "global" && <>
+          </div>
           {/* Create event form */}
           {showCreateEvent && (
             <Card>
