@@ -609,6 +609,9 @@ export default function AdminPage() {
   const [globalLoaded, setGlobalLoaded] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [globalShowUnsub, setGlobalShowUnsub] = useState(false);
+  const [globalFilterEvent, setGlobalFilterEvent] = useState("");
+  const [globalFilterZg, setGlobalFilterZg] = useState("");
+  const [globalSort, setGlobalSort] = useState<{ col: string; dir: "asc" | "desc" }>({ col: "created_at", dir: "desc" });
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   // Event creation form
   const [showCreateEvent, setShowCreateEvent] = useState(false);
@@ -1246,14 +1249,43 @@ export default function AdminPage() {
                 .then(d => { setGlobalMembers(d.members ?? []); setGlobalLoaded(true); setGlobalLoading(false); })
                 .catch(() => setGlobalLoading(false));
             }
+
+            // Unique filter options derived from data
+            const eventOptions = Array.from(new Set(globalMembers.map(m => m.zielgruppen?.events?.name ?? "").filter(Boolean))).sort();
+            const zgOptions = Array.from(new Set(globalMembers.map(m => m.zielgruppen?.name ?? "").filter(Boolean))).sort();
+
             const q = globalSearch.toLowerCase().trim();
-            const filtered = globalMembers.filter(m => {
-              if (!globalShowUnsub && m.unsubscribed) return false;
-              if (!q) return true;
-              return [m.first_name, m.last_name, m.email,
-                m.zielgruppen?.name ?? "", m.zielgruppen?.events?.name ?? ""]
-                .join(" ").toLowerCase().includes(q);
-            });
+            const filtered = globalMembers
+              .filter(m => {
+                if (!globalShowUnsub && m.unsubscribed) return false;
+                if (globalFilterEvent && (m.zielgruppen?.events?.name ?? "") !== globalFilterEvent) return false;
+                if (globalFilterZg && (m.zielgruppen?.name ?? "") !== globalFilterZg) return false;
+                if (!q) return true;
+                return [m.first_name, m.last_name, m.email, m.zielgruppen?.name ?? "", m.zielgruppen?.events?.name ?? ""]
+                  .join(" ").toLowerCase().includes(q);
+              })
+              .sort((a, b) => {
+                const { col, dir } = globalSort;
+                let va = "", vb = "";
+                if (col === "first_name") { va = a.first_name; vb = b.first_name; }
+                else if (col === "last_name") { va = a.last_name; vb = b.last_name; }
+                else if (col === "email") { va = a.email; vb = b.email; }
+                else if (col === "zg") { va = a.zielgruppen?.name ?? ""; vb = b.zielgruppen?.name ?? ""; }
+                else if (col === "event") { va = a.zielgruppen?.events?.name ?? ""; vb = b.zielgruppen?.events?.name ?? ""; }
+                else if (col === "sprache") { va = a.sprache ?? ""; vb = b.sprache ?? ""; }
+                else { return dir === "asc" ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime() : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(); }
+                return dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+              });
+
+            function toggleSort(col: string) {
+              setGlobalSort(s => s.col === col ? { col, dir: s.dir === "asc" ? "desc" : "asc" } : { col, dir: "asc" });
+            }
+
+            function SortIcon({ col }: { col: string }) {
+              if (globalSort.col !== col) return <span style={{ opacity: 0.25 }}>↕</span>;
+              return <span>{globalSort.dir === "asc" ? "↑" : "↓"}</span>;
+            }
+
             function exportCsv() {
               const headers = ["Vorname", "Nachname", "E-Mail", "Anrede", "Sprache", "Zielgruppe", "Event", "Abgemeldet", "Erstellt"];
               const rows = filtered.map(m => [
@@ -1264,54 +1296,89 @@ export default function AdminPage() {
                 new Date(m.created_at).toLocaleDateString("de-CH"),
               ]);
               const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a"); a.href = url; a.download = "kontakte.csv"; a.click();
               URL.revokeObjectURL(url);
             }
+
+            const selectCls = "rounded-lg border px-2.5 py-1.5 text-xs outline-none transition";
+            const selectStyle = { borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" };
+
             return (
-              <div className="space-y-4">
+              <div className="space-y-3">
+                {/* Row 1: search + checkbox + export */}
                 <div className="flex gap-2 flex-wrap items-center">
                   <input
-                    className="flex-1 min-w-[180px] rounded-lg border px-2.5 py-1.5 text-xs outline-none transition"
+                    className="flex-1 min-w-[200px] rounded-lg border px-2.5 py-1.5 text-xs outline-none transition"
                     style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
-                    placeholder="Suchen nach Name, E-Mail, Zielgruppe, Event…"
+                    placeholder="Suchen nach Name, E-Mail…"
                     value={globalSearch}
                     onChange={e => setGlobalSearch(e.target.value)}
                     onFocus={e => (e.currentTarget.style.borderColor = "var(--ig-navy)")}
                     onBlur={e => (e.currentTarget.style.borderColor = "var(--ig-gray2)")}
                   />
-                  <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none" style={{ color: "var(--ig-navy)" }}>
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none whitespace-nowrap" style={{ color: "var(--ig-navy)" }}>
                     <input type="checkbox" checked={globalShowUnsub} onChange={e => setGlobalShowUnsub(e.target.checked)} className="rounded" />
-                    Abgemeldete anzeigen
+                    Abgemeldete
                   </label>
                   <button onClick={exportCsv}
-                    className="transition hover:opacity-70 active:scale-95 font-semibold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                    className="transition hover:opacity-70 active:scale-95 font-semibold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 whitespace-nowrap"
                     style={{ background: "var(--ig-navy)", color: "white" }}>
                     <IconDownload className="w-3.5 h-3.5" />
-                    CSV Export
+                    CSV Export ({filtered.length})
                   </button>
                 </div>
-                {globalLoaded && (
-                  <div className="text-xs" style={{ color: "var(--ig-gray3)" }}>
-                    {filtered.length} Kontakte{globalSearch ? ` · Suche: "${globalSearch}"` : ""}
-                    {" · "}{globalMembers.filter(m => !m.unsubscribed).length} aktiv, {globalMembers.filter(m => m.unsubscribed).length} abgemeldet
-                  </div>
-                )}
+                {/* Row 2: dropdowns */}
+                <div className="flex gap-2 flex-wrap">
+                  <select className={selectCls} style={selectStyle} value={globalFilterEvent} onChange={e => setGlobalFilterEvent(e.target.value)}>
+                    <option value="">Alle Events</option>
+                    {eventOptions.map(ev => <option key={ev} value={ev}>{ev}</option>)}
+                  </select>
+                  <select className={selectCls} style={selectStyle} value={globalFilterZg} onChange={e => setGlobalFilterZg(e.target.value)}>
+                    <option value="">Alle Zielgruppen</option>
+                    {zgOptions.map(zg => <option key={zg} value={zg}>{zg}</option>)}
+                  </select>
+                  {(globalFilterEvent || globalFilterZg || globalSearch) && (
+                    <button onClick={() => { setGlobalFilterEvent(""); setGlobalFilterZg(""); setGlobalSearch(""); }}
+                      className="text-xs px-2.5 py-1.5 rounded-lg transition hover:opacity-70"
+                      style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)" }}>
+                      Filter zurücksetzen
+                    </button>
+                  )}
+                  {globalLoaded && (
+                    <span className="text-xs self-center ml-auto" style={{ color: "var(--ig-gray3)" }}>
+                      {filtered.length} von {globalMembers.filter(m => globalShowUnsub || !m.unsubscribed).length}
+                      {" · "}{globalMembers.filter(m => !m.unsubscribed).length} aktiv
+                    </span>
+                  )}
+                </div>
+                {/* Table */}
                 <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--ig-gray2)", background: "white" }}>
                   {globalLoading ? (
                     <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
                   ) : filtered.length === 0 ? (
-                    <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>
-                      {globalSearch ? "Keine Treffer." : "Noch keine Kontakte."}
-                    </div>
+                    <div className="p-8 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Keine Treffer.</div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs border-collapse">
                         <thead>
                           <tr style={{ borderBottom: "1px solid var(--ig-gray2)", background: "var(--ig-light)" }}>
-                            {["Vorname", "Nachname", "E-Mail", "Zielgruppe", "Event", "Sprache", "Status"].map(h => (
-                              <th key={h} className="text-left px-3 py-2 font-semibold" style={{ color: "var(--ig-navy)" }}>{h}</th>
+                            {([
+                              { label: "Vorname", col: "first_name" },
+                              { label: "Nachname", col: "last_name" },
+                              { label: "E-Mail", col: "email" },
+                              { label: "Zielgruppe", col: "zg" },
+                              { label: "Event", col: "event" },
+                              { label: "Sprache", col: "sprache" },
+                              { label: "Status", col: "" },
+                            ]).map(({ label, col }) => (
+                              <th key={label}
+                                className={`text-left px-3 py-2 font-semibold select-none${col ? " cursor-pointer hover:opacity-70" : ""}`}
+                                style={{ color: "var(--ig-navy)" }}
+                                onClick={col ? () => toggleSort(col) : undefined}>
+                                {label}{col && <> <SortIcon col={col} /></>}
+                              </th>
                             ))}
                           </tr>
                         </thead>
