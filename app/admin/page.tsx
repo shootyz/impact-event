@@ -613,6 +613,7 @@ export default function AdminPage() {
   const [globalFilterZg, setGlobalFilterZg] = useState("");
   const [globalSort, setGlobalSort] = useState<{ col: string; dir: "asc" | "desc" }>({ col: "created_at", dir: "desc" });
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [copiedScanLink, setCopiedScanLink] = useState<string | null>(null);
   // Event creation form
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [newEventName, setNewEventName] = useState("");
@@ -1066,7 +1067,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             {/* Logo — always visible, click goes to events overview */}
             <button
-              onClick={() => { setSelectedEventId(null); setEventSection(null); stopScanner(); }}
+              onClick={() => { setSelectedEventId(null); setEventSection(null); setEventsStatusTab("aktiv"); stopScanner(); }}
               className="flex items-center shrink-0 cursor-pointer"
               title="Zur Event-Übersicht"
             >
@@ -1638,6 +1639,22 @@ export default function AdminPage() {
                           </div>
                         </button>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                          {/* Scanner-Link (list view) */}
+                          <button title="Scanner-Link kopieren"
+                            onClick={e => {
+                              e.stopPropagation();
+                              const scannerPin = prompt("Scanner-PIN eingeben (wird in den Link eingebettet):");
+                              if (!scannerPin) return;
+                              const link = `${window.location.origin}/scan/${ev.id}?pin=${encodeURIComponent(scannerPin)}`;
+                              navigator.clipboard.writeText(link).then(() => { setCopiedScanLink(ev.id); setTimeout(() => setCopiedScanLink(null), 2000); });
+                            }}
+                            className="p-1.5 rounded-lg transition" style={{ color: copiedScanLink === ev.id ? "var(--ig-gold)" : "var(--ig-gray3)" }}
+                            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"}
+                            onMouseLeave={e => { if (copiedScanLink !== ev.id) (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
+                            {copiedScanLink === ev.id
+                              ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>}
+                          </button>
                           <button title="Duplizieren" disabled={duplicatingId === ev.id}
                             onClick={e => { e.stopPropagation(); duplicateEvent(ev); }}
                             className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
@@ -1748,6 +1765,24 @@ export default function AdminPage() {
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}>
                           <IconDownload className="w-3.5 h-3.5" />
+                        </button>
+                        {/* Scanner-Link */}
+                        <button
+                          title="Scanner-Link kopieren"
+                          onClick={e => {
+                            e.stopPropagation();
+                            const scannerPin = prompt("Scanner-PIN eingeben (wird in den Link eingebettet):");
+                            if (!scannerPin) return;
+                            const link = `${window.location.origin}/scan/${ev.id}?pin=${encodeURIComponent(scannerPin)}`;
+                            navigator.clipboard.writeText(link).then(() => { setCopiedScanLink(ev.id); setTimeout(() => setCopiedScanLink(null), 2000); });
+                          }}
+                          className="p-2 rounded-lg transition flex items-center justify-center gap-1 text-xs font-medium"
+                          style={{ border: `1px solid ${copiedScanLink === ev.id ? "var(--ig-gold)" : "var(--ig-gray2)"}`, color: copiedScanLink === ev.id ? "var(--ig-gold)" : "var(--ig-navy)", background: "white" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"; }}
+                          onMouseLeave={e => { if (copiedScanLink !== ev.id) { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; } }}>
+                          {copiedScanLink === ev.id
+                            ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>}
                         </button>
                         {/* Kopie */}
                         <button title="Duplizieren" disabled={duplicatingId === ev.id}

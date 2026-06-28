@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkAdminAuth } from '@/lib/auth'
+import { checkAdminAuth, isScannerAuthed } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const auth = checkAdminAuth(req, body)
-  if (auth !== 'ok') {
+  if (auth !== 'ok' && !isScannerAuthed(body)) {
     return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
   }
 

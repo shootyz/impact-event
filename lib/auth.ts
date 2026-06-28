@@ -40,3 +40,20 @@ export function checkAdminAuth(
 export function isAdminAuthed(req: NextRequest, body?: Record<string, unknown>): boolean {
   return checkAdminAuth(req, body) === 'ok'
 }
+
+// Scanner PIN — grants access to scan + manual registration only (not full admin)
+// Accepted from: request body { scannerPin } or x-scanner-pin header (for GET requests)
+export function isScannerAuthed(body?: Record<string, unknown>, req?: NextRequest): boolean {
+  const pin = process.env.SCANNER_PIN
+  if (!pin) return false
+  const candidate =
+    (body?.scannerPin as string | undefined) ||
+    req?.headers.get('x-scanner-pin') ||
+    ''
+  return passwordsMatch(candidate, pin)
+}
+
+// Accepts either admin password OR scanner PIN
+export function isScannerOrAdminAuthed(req: NextRequest, body?: Record<string, unknown>): boolean {
+  return isAdminAuthed(req, body) || isScannerAuthed(body)
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkAdminAuth } from '@/lib/auth'
+import { checkAdminAuth, isScannerAuthed } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
 import { randomUUID } from 'crypto'
@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto'
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const auth = checkAdminAuth(req, body)
-  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
+  if (auth !== 'ok' && !isScannerAuthed(body)) return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
   const { name, email, eventId } = body
   if (!name?.trim() || !email?.trim()) return NextResponse.json({ error: 'Name und E-Mail erforderlich.' }, { status: 400 })
