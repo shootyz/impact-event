@@ -1304,7 +1304,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
             const q = globalSearch.toLowerCase().trim();
             const filtered = globalMembers
               .filter(m => {
-                if (!globalShowUnsub && m.unsubscribed) return false;
+                if (globalShowUnsub ? !m.unsubscribed : m.unsubscribed) return false;
                 if (globalFilterEvent && (m.zielgruppen?.events?.name ?? "") !== globalFilterEvent) return false;
                 if (globalFilterZg && (m.zielgruppen?.name ?? "") !== globalFilterZg) return false;
                 if (!q) return true;
@@ -1365,10 +1365,11 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                     onFocus={e => (e.currentTarget.style.borderColor = "var(--ig-navy)")}
                     onBlur={e => (e.currentTarget.style.borderColor = "var(--ig-gray2)")}
                   />
-                  <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none whitespace-nowrap" style={{ color: "var(--ig-navy)" }}>
-                    <input type="checkbox" checked={globalShowUnsub} onChange={e => setGlobalShowUnsub(e.target.checked)} className="rounded" />
-                    Abgemeldete
-                  </label>
+                  <button onClick={() => setGlobalShowUnsub(v => !v)}
+                    className="text-xs px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap"
+                    style={{ background: globalShowUnsub ? "#FEE2E2" : "var(--ig-light)", color: globalShowUnsub ? "#B91C1C" : "var(--ig-gray3)", border: `1px solid ${globalShowUnsub ? "#FECACA" : "var(--ig-gray2)"}` }}>
+                    Nur Abgemeldete
+                  </button>
                   <button onClick={exportCsv}
                     className="transition hover:opacity-70 active:scale-95 font-semibold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 whitespace-nowrap"
                     style={{ background: "var(--ig-navy)", color: "white" }}>
@@ -1395,9 +1396,23 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                   )}
                   {globalLoaded && (
                     <span className="text-xs self-center ml-auto" style={{ color: "var(--ig-gray3)" }}>
-                      {filtered.length} von {globalMembers.filter(m => globalShowUnsub || !m.unsubscribed).length}
-                      {" · "}{globalMembers.filter(m => !m.unsubscribed).length} aktiv
+                      {filtered.length} Einträge · {globalMembers.filter(m => !m.unsubscribed).length} aktiv · {globalMembers.filter(m => m.unsubscribed).length} abgemeldet
                     </span>
+                  )}
+                  {globalLoaded && filtered.length > 0 && (
+                    <button onClick={async () => {
+                      if (!confirm(`Alle ${filtered.length} angezeigten Einträge wirklich löschen?`)) return;
+                      const ids = filtered.map(m => m.id);
+                      await fetch("/api/admin/global-members", {
+                        method: "DELETE", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${savedPassword.current}` },
+                        body: JSON.stringify({ ids }),
+                      });
+                      setGlobalMembers(prev => prev.filter(m => !ids.includes(m.id)));
+                    }}
+                    className="text-xs px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap"
+                    style={{ background: "rgba(220,38,38,0.08)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>
+                      Alle löschen ({filtered.length})
+                    </button>
                   )}
                 </div>
                 {/* Table */}
@@ -1419,6 +1434,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                               { label: "Event", col: "event" },
                               { label: "Sprache", col: "sprache" },
                               { label: "Status", col: "" },
+                              { label: "", col: "" },
                             ]).map(({ label, col }) => (
                               <th key={label}
                                 className={`text-left px-3 py-2 font-semibold select-none${col ? " cursor-pointer hover:opacity-70" : ""}`}
@@ -1444,6 +1460,17 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                                 {m.unsubscribed
                                   ? <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#FEE2E2", color: "#B91C1C" }}>Abgemeldet</span>
                                   : <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#15803D" }}>Aktiv</span>}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                <button onClick={async () => {
+                                  await fetch("/api/admin/global-members", {
+                                    method: "DELETE", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${savedPassword.current}` },
+                                    body: JSON.stringify({ ids: [m.id] }),
+                                  });
+                                  setGlobalMembers(prev => prev.filter(r => r.id !== m.id));
+                                }} className="p-1 rounded transition hover:opacity-70" style={{ color: "#dc2626" }} title="Löschen">
+                                  <IconTrash className="w-3.5 h-3.5" />
+                                </button>
                               </td>
                             </tr>
                           ))}
