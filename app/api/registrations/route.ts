@@ -7,7 +7,7 @@ async function checkEventPin(eventId: string, pin: string): Promise<boolean> {
   try {
     const db = supabaseAdmin()
     const { data } = await db.from('events').select('scanner_pin').eq('id', eventId).single()
-    if (!data?.scanner_pin) return false
+    if (!data?.scanner_pin) return true  // no PIN set = open access
     const ba = Buffer.from(pin, 'utf8'), bb = Buffer.from(data.scanner_pin, 'utf8')
     if (ba.length !== bb.length) { timingSafeEqual(bb, bb); return false }
     return timingSafeEqual(ba, bb)
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const scanPin = req.headers.get('x-scanner-pin') ?? ''
 
   const _auth = checkAdminAuth(req);
-  const scannerOk = _auth !== 'ok' && scanPin && eventId
+  const scannerOk = _auth !== 'ok' && eventId
     ? await checkEventPin(eventId, scanPin)
     : false
   if (_auth !== 'ok' && !scannerOk) {

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin()
   const { data } = await db.from('events').select('scanner_pin').eq('id', eventId).single()
-  if (!data?.scanner_pin) return NextResponse.json({ ok: false }, { status: 401 })
+  if (!data?.scanner_pin) return NextResponse.json({ ok: true, pinRequired: false })
 
   return NextResponse.json({ ok: pinsMatch(pin, data.scanner_pin) })
 }

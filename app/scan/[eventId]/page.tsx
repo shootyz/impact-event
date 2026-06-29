@@ -40,12 +40,19 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   const [manualLoading, setManualLoading] = useState(false);
   const [manualMsg, setManualMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  // Resolve params and load event name immediately (public, no auth needed)
+  // Resolve params, load event name, and check if PIN is even required
   useEffect(() => {
     params.then(async p => {
       setEventId(p.eventId);
-      const res = await fetch(`/api/event?id=${p.eventId}`).catch(() => null);
-      if (res?.ok) { const d = await res.json(); setEventName(d.name ?? ""); }
+      const [evRes, authRes] = await Promise.all([
+        fetch(`/api/event?id=${p.eventId}`).catch(() => null),
+        fetch("/api/scan/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventId: p.eventId, pin: "" }) }).catch(() => null),
+      ]);
+      if (evRes?.ok) { const d = await evRes.json(); setEventName(d.name ?? ""); }
+      if (authRes?.ok) {
+        const d = await authRes.json();
+        if (d.pinRequired === false) { setAuthed(true); setPin(""); }
+      }
     });
   }, [params]);
 

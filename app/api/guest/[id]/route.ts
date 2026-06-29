@@ -9,7 +9,7 @@ async function checkEventPinForReg(regId: string, pin: string): Promise<boolean>
     const { data: reg } = await db.from('registrations').select('event_id').eq('id', regId).single()
     if (!reg?.event_id) return false
     const { data: ev } = await db.from('events').select('scanner_pin').eq('id', reg.event_id).single()
-    if (!ev?.scanner_pin) return false
+    if (!ev?.scanner_pin) return true  // no PIN set = open access
     const ba = Buffer.from(pin, 'utf8'), bb = Buffer.from(ev.scanner_pin, 'utf8')
     if (ba.length !== bb.length) { timingSafeEqual(bb, bb); return false }
     return timingSafeEqual(ba, bb)
@@ -20,8 +20,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params
   const body = await req.json()
   const auth = checkAdminAuth(req, body)
-  const scannerOk = auth !== 'ok' && body.scannerPin
-    ? await checkEventPinForReg(id, body.scannerPin as string)
+  const scannerOk = auth !== 'ok'
+    ? await checkEventPinForReg(id, (body.scannerPin as string) ?? '')
     : false
   if (auth !== 'ok' && !scannerOk) return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
@@ -33,8 +33,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params
   const body = await req.json()
   const auth = checkAdminAuth(req, body)
-  const scannerOk = auth !== 'ok' && body.scannerPin
-    ? await checkEventPinForReg(id, body.scannerPin as string)
+  const scannerOk = auth !== 'ok'
+    ? await checkEventPinForReg(id, (body.scannerPin as string) ?? '')
     : false
   if (auth !== 'ok' && !scannerOk) return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
