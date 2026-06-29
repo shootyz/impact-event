@@ -88,6 +88,11 @@ const IconLock = ({ className = "w-4 h-4", style }: IconProps) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
   </svg>
 );
+const IconPencil = ({ className = "w-4 h-4", style }: IconProps) => (
+  <svg className={className} style={style} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H7v-3.414a2 2 0 01.586-1.414z" />
+  </svg>
+);
 
 // ─── Shared input style helper ─────────────────────────────────────────────────
 const inputClass = "w-full px-4 py-3 rounded-xl text-sm outline-none bg-[#F8F9FF]";
@@ -642,6 +647,9 @@ export default function AdminPage() {
   const [formRegs, setFormRegs] = useState<FormRegistration[]>([]);
   const [formRegsLoading, setFormRegsLoading] = useState(false);
   const [formRegsLoaded, setFormRegsLoaded] = useState(false);
+  const [editRegId, setEditRegId] = useState<string | null>(null);
+  const [editRegFields, setEditRegFields] = useState<Record<string, string>>({});
+  const [editRegSaving, setEditRegSaving] = useState(false);
 
   // Mailing state
   type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; zielgruppe_id: string | null; anrede?: string | null; sprache?: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
@@ -2373,6 +2381,22 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                           ><IconCheck className="w-4 h-4" /></button>
                         )}
                         <button
+                          onClick={() => {
+                            if (editRegId === reg.id) { setEditRegId(null); return; }
+                            const fields: Record<string, string> = {
+                              vorname: reg.first_name,
+                              nachname: reg.last_name,
+                              email: reg.email,
+                              ...(reg.extra_fields as Record<string, string> ?? {}),
+                            };
+                            setEditRegFields(fields);
+                            setEditRegId(reg.id);
+                          }}
+                          className="p-1.5 rounded-lg transition"
+                          style={{ color: editRegId === reg.id ? "var(--ig-gold)" : "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}
+                          title="Bearbeiten"
+                        ><IconPencil className="w-4 h-4" /></button>
+                        <button
                           onClick={async () => {
                             if (!confirm(`${reg.first_name} ${reg.last_name} wirklich löschen?`)) return;
                             await fetch("/api/admin/form-registrations", {
@@ -2387,6 +2411,73 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                         ><IconTrash className="w-4 h-4" /></button>
                       </div>
                     </div>
+                    {editRegId === reg.id && (() => {
+                      const fields = selectedEvent?.form_config?.fields ?? [];
+                      const extraFields = fields.filter(f => f.visible && !["vorname","nachname","email"].includes(f.id));
+                      return (
+                        <div className="px-5 pb-5 border-t space-y-3 pt-4" style={{ borderColor: "var(--ig-gray2)", background: "var(--ig-light)" }}>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ig-navy)" }}>Vorname</label>
+                              <input type="text" value={editRegFields.vorname ?? ""} onChange={e => setEditRegFields(p => ({ ...p, vorname: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ig-navy)" }}>Nachname</label>
+                              <input type="text" value={editRegFields.nachname ?? ""} onChange={e => setEditRegFields(p => ({ ...p, nachname: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ig-navy)" }}>E-Mail</label>
+                            <input type="email" value={editRegFields.email ?? ""} onChange={e => setEditRegFields(p => ({ ...p, email: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                          </div>
+                          {extraFields.map(f => (
+                            <div key={f.id}>
+                              <label className="block text-xs font-semibold mb-1" style={{ color: "var(--ig-navy)" }}>{f.label}</label>
+                              {f.type === "textarea" ? (
+                                <textarea rows={2} value={editRegFields[f.id] ?? ""} onChange={e => setEditRegFields(p => ({ ...p, [f.id]: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none resize-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                              ) : f.type === "checkbox" ? (
+                                <label className="flex items-center gap-2 text-sm">
+                                  <input type="checkbox" checked={editRegFields[f.id] === "true"} onChange={e => setEditRegFields(p => ({ ...p, [f.id]: e.target.checked ? "true" : "false" }))} />
+                                  {f.label}
+                                </label>
+                              ) : (
+                                <input type="text" value={editRegFields[f.id] ?? ""} onChange={e => setEditRegFields(p => ({ ...p, [f.id]: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                              )}
+                            </div>
+                          ))}
+                          <div className="flex justify-end gap-2 pt-1">
+                            <button onClick={() => setEditRegId(null)} className="px-4 py-2 rounded-xl text-sm" style={{ color: "var(--ig-gray3)" }}>Abbrechen</button>
+                            <BtnPrimary disabled={editRegSaving} onClick={async () => {
+                              setEditRegSaving(true);
+                              const extraPayload: Record<string, string> = {};
+                              extraFields.forEach(f => { if (editRegFields[f.id] !== undefined) extraPayload[f.id] = editRegFields[f.id]; });
+                              const res = await fetch("/api/admin/form-registrations", {
+                                method: "PATCH", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  adminPassword: savedPassword.current,
+                                  id: reg.id,
+                                  first_name: editRegFields.vorname ?? reg.first_name,
+                                  last_name: editRegFields.nachname ?? reg.last_name,
+                                  email: editRegFields.email ?? reg.email,
+                                  extra_fields: extraPayload,
+                                }),
+                              });
+                              setEditRegSaving(false);
+                              if (res.ok) {
+                                setFormRegs(prev => prev.map(r => r.id === reg.id ? {
+                                  ...r,
+                                  first_name: editRegFields.vorname ?? r.first_name,
+                                  last_name: editRegFields.nachname ?? r.last_name,
+                                  email: editRegFields.email ?? r.email,
+                                  extra_fields: extraPayload,
+                                } : r));
+                                setEditRegId(null);
+                              }
+                            }}>{editRegSaving ? "Speichert…" : "Speichern"}</BtnPrimary>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </Card>
                 ))}
               </div>

@@ -54,12 +54,40 @@ export async function PATCH(req: NextRequest) {
   const auth = checkAdminAuth(req, body)
   if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
-  const { id, status } = body
-  const validStatuses = ['pending', 'confirmed', 'rejected', 'waitlisted']
-  if (!validStatuses.includes(status)) return NextResponse.json({ error: 'Ungültiger Status.' }, { status: 400 })
+  const { id, status, first_name, last_name, email, company, extra_fields } = body
+  const db = supabaseAdmin()
 
-  const { error } = await supabaseAdmin().from('form_registrations').update({ status }).eq('id', id)
+  // Status-only update
+  if (status !== undefined) {
+    const validStatuses = ['pending', 'confirmed', 'rejected', 'waitlisted']
+    if (!validStatuses.includes(status)) return NextResponse.json({ error: 'Ungültiger Status.' }, { status: 400 })
+    const { error } = await db.from('form_registrations').update({ status }).eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  }
+
+  // Full field update
+  const updates: Record<string, unknown> = {}
+  if (first_name !== undefined) updates.first_name = first_name
+  if (last_name !== undefined) updates.last_name = last_name
+  if (email !== undefined) updates.email = email
+  if (company !== undefined) updates.company = company
+  if (extra_fields !== undefined) updates.extra_fields = extra_fields
+
+  if (Object.keys(updates).length === 0) return NextResponse.json({ error: 'Keine Felder angegeben.' }, { status: 400 })
+
+  const { error } = await db.from('form_registrations').update(updates).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Sync email in linked registrations row if email changed
+  if (email !== undefined) {
+    const { data: fr } = await db.from('form_registrations').select('event_id').eq('id', id).single()
+    if (fr?.event_id) {
+      // find old email to update
+      await db.from('registrations').update({ email, name: `${first_name ?? ''} ${last_name ?? ''}`.trim() }).eq('id', id)
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }
 
