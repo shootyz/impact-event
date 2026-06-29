@@ -592,6 +592,7 @@ export default function AdminPage() {
   const [scannerPinLoading, setScannerPinLoading] = useState<Record<string, boolean>>({});
   const [scannerPinResult, setScannerPinResult] = useState<Record<string, { ok: boolean; msg: string } | null>>({});
   const [showScannerPin, setShowScannerPin] = useState<Record<string, boolean>>({});
+  const [copiedScannerPin, setCopiedScannerPin] = useState<string | null>(null);
   const [slugInput, setSlugInput] = useState("");
   const [slugStatus, setSlugStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [slugSaving, setSlugSaving] = useState(false);
@@ -2539,12 +2540,23 @@ export default function AdminPage() {
                     </p>
                   </div>
                   {ev.scanner_pin && (
-                    <button onClick={() => setShowScannerPin(prev => ({ ...prev, [ev.id]: !prev[ev.id] }))}
-                      className="p-1 rounded transition" style={{ color: "var(--ig-gray3)" }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
-                      <IconEye open={!showScannerPin[ev.id]} className="w-4 h-4" />
-                    </button>
+                    <>
+                      <button onClick={() => { navigator.clipboard.writeText(ev.scanner_pin!); setCopiedScannerPin(ev.id); setTimeout(() => setCopiedScannerPin(null), 2000); }}
+                        className="p-1 rounded transition text-xs font-semibold" style={{ color: copiedScannerPin === ev.id ? "var(--ig-gold)" : "var(--ig-gray3)", flexShrink: 0 }}
+                        onMouseEnter={e => { if (copiedScannerPin !== ev.id) (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
+                        onMouseLeave={e => { if (copiedScannerPin !== ev.id) (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
+                        title="PIN kopieren">
+                        {copiedScannerPin === ev.id
+                          ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>}
+                      </button>
+                      <button onClick={() => setShowScannerPin(prev => ({ ...prev, [ev.id]: !prev[ev.id] }))}
+                        className="p-1 rounded transition" style={{ color: "var(--ig-gray3)" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                        <IconEye open={!showScannerPin[ev.id]} className="w-4 h-4" />
+                      </button>
+                    </>
                   )}
                 </div>
                 {ev.scanner_pin && (
