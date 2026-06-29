@@ -998,6 +998,23 @@ export default function AdminPage() {
     }
   };
 
+  const deleteScannerPin = async (eventId: string) => {
+    if (!confirm("Scanner-PIN wirklich löschen? Der Scanner ist danach ohne PIN zugänglich.")) return;
+    setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
+    setScannerPinResult(prev => ({ ...prev, [eventId]: null }));
+    const res = await fetch(`/api/admin/events/${eventId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${savedPassword.current}` },
+      body: JSON.stringify({ adminPassword: savedPassword.current, scanner_pin: "" }),
+    });
+    setScannerPinLoading(prev => ({ ...prev, [eventId]: false }));
+    if (!res.ok) {
+      setScannerPinResult(prev => ({ ...prev, [eventId]: { ok: false, msg: "Fehler beim Löschen." } }));
+    } else {
+      setAllEventCards(prev => prev.map(ev => ev.id === eventId ? { ...ev, scanner_pin: null } : ev));
+      setScannerPinResult(prev => ({ ...prev, [eventId]: { ok: true, msg: "PIN gelöscht." } }));
+    }
+  };
+
   const generateScannerPin = async (eventId: string) => {
     const pin = String(Math.floor(100000 + Math.random() * 900000));
     setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
@@ -2596,7 +2613,14 @@ export default function AdminPage() {
                 {scannerPinResult[ev.id] && (
                   <p className={`text-xs ${scannerPinResult[ev.id]!.ok ? "text-green-600" : "text-red-500"}`}>{scannerPinResult[ev.id]!.msg}</p>
                 )}
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  {ev.scanner_pin && (
+                    <button onClick={() => deleteScannerPin(ev.id)} disabled={!!scannerPinLoading[ev.id]}
+                      className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                      style={{ background: "rgba(220,38,38,0.08)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>
+                      PIN löschen
+                    </button>
+                  )}
                   <BtnPrimary onClick={() => generateScannerPin(ev.id)} disabled={!!scannerPinLoading[ev.id]}>
                     {scannerPinLoading[ev.id] ? "Generiert…" : ev.scanner_pin ? "Neu generieren" : "PIN generieren"}
                   </BtnPrimary>
