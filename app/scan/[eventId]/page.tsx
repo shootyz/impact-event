@@ -13,6 +13,7 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState("");
   const [eventName, setEventName] = useState("");
+  const [registrationType, setRegistrationType] = useState<"invite" | "form">("invite");
 
   // Scanner
   const [scanning, setScanning] = useState(false);
@@ -48,7 +49,7 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
         fetch(`/api/event?id=${p.eventId}`).catch(() => null),
         fetch("/api/scan/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventId: p.eventId, pin: "" }) }).catch(() => null),
       ]);
-      if (evRes?.ok) { const d = await evRes.json(); setEventName(d.name ?? ""); }
+      if (evRes?.ok) { const d = await evRes.json(); setEventName(d.name ?? ""); setRegistrationType(d.registration_type === "form" ? "form" : "invite"); }
       if (authRes?.ok) {
         const d = await authRes.json();
         if (d.pinRequired === false) { setAuthed(true); setPin(""); }
@@ -175,10 +176,13 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   async function submitManual() {
     if (!manualFirst.trim() || !manualLast.trim()) { setManualMsg({ ok: false, text: "Vor- und Nachname erforderlich." }); return; }
     setManualLoading(true); setManualMsg(null);
-    const res = await fetch("/api/admin/register", {
+    const isForm = registrationType === "form";
+    const res = await fetch(isForm ? "/api/form-register" : "/api/admin/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: `${manualFirst.trim()} ${manualLast.trim()}`, email: manualEmail.trim() || undefined, eventId, scannerPin: pin }),
+      body: isForm
+        ? JSON.stringify({ event_id: eventId, first_name: manualFirst.trim(), last_name: manualLast.trim(), email: manualEmail.trim() || `scanner-${Date.now()}@noemail.local` })
+        : JSON.stringify({ name: `${manualFirst.trim()} ${manualLast.trim()}`, email: manualEmail.trim() || `scanner-${Date.now()}@noemail.local`, eventId, scannerPin: pin }),
     });
     const d = await res.json();
     if (res.ok) {
