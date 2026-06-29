@@ -1400,14 +1400,16 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                     </span>
                   )}
                   {globalLoaded && filtered.length > 0 && (
-                    <button onClick={async () => {
-                      if (!confirm(`Alle ${filtered.length} angezeigten Einträge wirklich löschen?`)) return;
+                    <button onClick={() => {
                       const ids = filtered.map(m => m.id);
-                      await fetch("/api/admin/global-members", {
-                        method: "DELETE", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${savedPassword.current}` },
-                        body: JSON.stringify({ ids }),
+                      showConfirm("Einträge löschen", `Alle ${filtered.length} angezeigten Einträge wirklich löschen?`, true, async () => {
+                        await fetch("/api/admin/global-members", {
+                          method: "DELETE", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${savedPassword.current}` },
+                          body: JSON.stringify({ ids }),
+                        });
+                        setGlobalMembers(prev => prev.filter(m => !ids.includes(m.id)));
+                        setDialog(null);
                       });
-                      setGlobalMembers(prev => prev.filter(m => !ids.includes(m.id)));
                     }}
                     className="text-xs px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap"
                     style={{ background: "rgba(220,38,38,0.08)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>
@@ -2425,12 +2427,14 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                         ><IconPencil className="w-4 h-4" /></button>
                         <button
                           onClick={async () => {
-                            if (!confirm(`${reg.first_name} ${reg.last_name} wirklich löschen?`)) return;
-                            await fetch("/api/admin/form-registrations", {
-                              method: "DELETE", headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ adminPassword: savedPassword.current, id: reg.id }),
-                            });
-                            setFormRegs(prev => prev.filter(r => r.id !== reg.id));
+                            showConfirm("Anmeldung löschen", `${reg.first_name} ${reg.last_name} wirklich löschen?`, true, async () => {
+                              await fetch("/api/admin/form-registrations", {
+                                method: "DELETE", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ adminPassword: savedPassword.current, id: reg.id }),
+                              });
+                              setFormRegs(prev => prev.filter(r => r.id !== reg.id));
+                              setDialog(null);
+                            }); return;
                           }}
                           className="p-1.5 rounded-lg transition"
                           style={{ color: "#dc2626" }}
