@@ -173,7 +173,7 @@ type Registration = {
   checked_in: boolean; checked_in_at: string | null; created_at: string;
 };
 type Event = { id: string; name: string; date: string; location: string; };
-type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; registration_type: "invite" | "form"; max_capacity: number | null; form_config?: FormConfig | null; };
+type EventCard = { id: string; name: string; date: string; location: string; description: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; registration_type: "invite" | "form"; max_capacity: number | null; form_config?: FormConfig | null; scanner_pin?: string | null; };
 type FormRegistration = { id: string; first_name: string; last_name: string; email: string; company: string | null; message: string | null; extra_fields?: Record<string, string> | null; status: "pending" | "confirmed" | "rejected" | "waitlisted"; created_at: string; checked_in?: boolean; checked_in_at?: string | null; qr_token?: string | null; };
 type FormField = { id: string; type: "text" | "textarea" | "select" | "checkbox" | "radio"; label: string; required: boolean; visible: boolean; options?: string[] };
 type FormConfig = { intro: string; fields: FormField[] };
@@ -589,6 +589,9 @@ export default function AdminPage() {
   const [eventPwInputs, setEventPwInputs] = useState<Record<string, string>>({});
   const [eventPwResults, setEventPwResults] = useState<Record<string, { ok: boolean; msg: string } | null>>({});
   const [eventPwLoading, setEventPwLoading] = useState<Record<string, boolean>>({});
+  const [scannerPinLoading, setScannerPinLoading] = useState<Record<string, boolean>>({});
+  const [scannerPinResult, setScannerPinResult] = useState<Record<string, { ok: boolean; msg: string } | null>>({});
+  const [showScannerPin, setShowScannerPin] = useState<Record<string, boolean>>({});
   const [slugInput, setSlugInput] = useState("");
   const [slugStatus, setSlugStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [slugSaving, setSlugSaving] = useState(false);
@@ -990,6 +993,23 @@ export default function AdminPage() {
       setAllEventCards(prev => prev.map(ev => ev.id === eventId ? { ...ev, registration_password: pw || null } : ev));
       setEventPwInputs(prev => ({ ...prev, [eventId]: "" }));
       setEventPwResults(prev => ({ ...prev, [eventId]: { ok: true, msg: pw ? `Code gesetzt: „${pw}"` : "Schutz entfernt." } }));
+    }
+  };
+
+  const generateScannerPin = async (eventId: string) => {
+    const pin = String(Math.floor(100000 + Math.random() * 900000));
+    setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
+    setScannerPinResult(prev => ({ ...prev, [eventId]: null }));
+    const res = await fetch(`/api/admin/events/${eventId}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${savedPassword.current}` },
+      body: JSON.stringify({ adminPassword: savedPassword.current, scanner_pin: pin }),
+    });
+    setScannerPinLoading(prev => ({ ...prev, [eventId]: false }));
+    if (!res.ok) {
+      setScannerPinResult(prev => ({ ...prev, [eventId]: { ok: false, msg: "Fehler beim Speichern." } }));
+    } else {
+      setAllEventCards(prev => prev.map(ev => ev.id === eventId ? { ...ev, scanner_pin: pin } : ev));
+      setScannerPinResult(prev => ({ ...prev, [eventId]: { ok: true, msg: `PIN gesetzt: ${pin}` } }));
     }
   };
 
@@ -1643,9 +1663,7 @@ export default function AdminPage() {
                           <button title="Scanner-Link kopieren"
                             onClick={e => {
                               e.stopPropagation();
-                              const scannerPin = prompt("Scanner-PIN eingeben (wird in den Link eingebettet):");
-                              if (!scannerPin) return;
-                              const link = `${window.location.origin}/scan/${ev.id}?pin=${encodeURIComponent(scannerPin)}`;
+                              const link = `${window.location.origin}/scan/${ev.id}`;
                               navigator.clipboard.writeText(link).then(() => { setCopiedScanLink(ev.id); setTimeout(() => setCopiedScanLink(null), 2000); });
                             }}
                             className="p-1.5 rounded-lg transition" style={{ color: copiedScanLink === ev.id ? "var(--ig-gold)" : "var(--ig-gray3)" }}
@@ -1771,9 +1789,7 @@ export default function AdminPage() {
                           title="Scanner-Link kopieren"
                           onClick={e => {
                             e.stopPropagation();
-                            const scannerPin = prompt("Scanner-PIN eingeben (wird in den Link eingebettet):");
-                            if (!scannerPin) return;
-                            const link = `${window.location.origin}/scan/${ev.id}?pin=${encodeURIComponent(scannerPin)}`;
+                            const link = `${window.location.origin}/scan/${ev.id}`;
                             navigator.clipboard.writeText(link).then(() => { setCopiedScanLink(ev.id); setTimeout(() => setCopiedScanLink(null), 2000); });
                           }}
                           className="p-2 rounded-lg transition flex items-center justify-center gap-1 text-xs font-medium"
@@ -2503,6 +2519,55 @@ export default function AdminPage() {
                   </div>
                 </div>
               </Card>
+            ); })()}
+
+            {/* Scanner-PIN */}
+            {(() => { const ev = allEventCards.find(e => e.id === selectedEventId); if (!ev) return null; return (
+            <Card key={ev.id + "-scanpin"}>
+              <div className="h-0.5" style={{ background: "var(--ig-navy)" }} />
+              <CardHeader title="Scanner-PIN" subtitle="PIN für die Empfangs-Scanner-Seite" />
+              <div className="p-5 space-y-4">
+                <div className="px-4 py-3 rounded-xl flex items-center gap-3"
+                  style={{ background: ev.scanner_pin ? "rgba(30,50,99,0.06)" : "var(--ig-light)", border: `1px solid ${ev.scanner_pin ? "rgba(30,50,99,0.2)" : "var(--ig-gray2)"}` }}>
+                  <IconCamera className="w-4 h-4 flex-shrink-0" style={{ color: ev.scanner_pin ? "var(--ig-navy)" : "var(--ig-gray3)" }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>Aktueller PIN</p>
+                    <p className="text-sm font-semibold font-mono" style={{ color: ev.scanner_pin ? "var(--ig-navy)" : "var(--ig-gray3)" }}>
+                      {ev.scanner_pin
+                        ? (showScannerPin[ev.id] ? ev.scanner_pin : "••••••")
+                        : "Kein PIN gesetzt"}
+                    </p>
+                  </div>
+                  {ev.scanner_pin && (
+                    <button onClick={() => setShowScannerPin(prev => ({ ...prev, [ev.id]: !prev[ev.id] }))}
+                      className="p-1 rounded transition" style={{ color: "var(--ig-gray3)" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
+                      <IconEye open={!showScannerPin[ev.id]} className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {ev.scanner_pin && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono" style={{ background: "var(--ig-light)", border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)" }}>
+                    <span className="truncate flex-1">{typeof window !== "undefined" ? `${window.location.origin}/scan/${ev.id}` : `/scan/${ev.id}`}</span>
+                    <button onClick={() => {
+                      const link = `${window.location.origin}/scan/${ev.id}`;
+                      navigator.clipboard.writeText(link).then(() => { setCopiedScanLink(ev.id); setTimeout(() => setCopiedScanLink(null), 2000); });
+                    }} className="flex-shrink-0 transition" style={{ color: copiedScanLink === ev.id ? "var(--ig-gold)" : "var(--ig-navy)" }}>
+                      {copiedScanLink === ev.id ? "✓ Kopiert" : "Link kopieren"}
+                    </button>
+                  </div>
+                )}
+                {scannerPinResult[ev.id] && (
+                  <p className={`text-xs ${scannerPinResult[ev.id]!.ok ? "text-green-600" : "text-red-500"}`}>{scannerPinResult[ev.id]!.msg}</p>
+                )}
+                <div className="flex justify-end">
+                  <BtnPrimary onClick={() => generateScannerPin(ev.id)} disabled={!!scannerPinLoading[ev.id]}>
+                    {scannerPinLoading[ev.id] ? "Generiert…" : ev.scanner_pin ? "Neu generieren" : "PIN generieren"}
+                  </BtnPrimary>
+                </div>
+              </div>
+            </Card>
             ); })()}
 
             {/* Portal-URL */}

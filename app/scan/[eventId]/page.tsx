@@ -40,27 +40,15 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
     params.then(p => setEventId(p.eventId));
   }, [params]);
 
-  // Read PIN from URL on load
-  useEffect(() => {
-    if (!eventId) return;
-    const urlPin = new URLSearchParams(window.location.search).get("pin") ?? "";
-    if (urlPin) { setPin(urlPin); tryAuth(urlPin); }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventId]);
-
   async function tryAuth(p: string) {
     setAuthError("");
-    const res = await fetch(`/api/events?id=${eventId}`, {
-      headers: { "x-scanner-pin": p },
-    });
-    // Use scan endpoint to validate PIN (cheap check)
-    const testRes = await fetch("/api/scan", {
+    const res = await fetch("/api/scan/auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: "__ping__", scannerPin: p }),
+      body: JSON.stringify({ eventId, pin: p }),
     });
-    // 401 = wrong PIN, anything else (404 = token not found) = PIN valid
-    if (testRes.status === 401) { setAuthError("Falscher PIN."); return; }
+    const data = await res.json();
+    if (!data.ok) { setAuthError("Falscher PIN."); return; }
     setAuthed(true);
     setPin(p);
     // Load event name

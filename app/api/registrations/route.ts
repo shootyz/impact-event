@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkAdminAuth, isScannerAuthed } from '@/lib/auth'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { timingSafeEqual } from 'crypto'
+
+async function checkEventPin(eventId: string, pin: string): Promise<boolean> {
+  try {
+    const db = supabaseAdmin()
+    const { data } = await db.from('events').select('scanner_pin').eq('id', eventId).single()
+    if (!data?.scanner_pin) return false
+    const ba = Buffer.from(pin, 'utf8'), bb = Buffer.from(data.scanner_pin, 'utf8')
+    if (ba.length !== bb.length) { timingSafeEqual(bb, bb); return false }
+    return timingSafeEqual(ba, bb)
+  } catch { return false }
+}
 
 export async function GET(req: NextRequest) {
   const eventId = req.nextUrl.searchParams.get('eventId')
+  const scanPin = req.headers.get('x-scanner-pin') ?? ''
 
   const _auth = checkAdminAuth(req);
-  if (_auth !== 'ok' && !isScannerAuthed(undefined, req)) {
+  const scannerOk = _auth !== 'ok' && scanPin && eventId
+    ? await checkEventPin(eventId, scanPin)
+    : false
+  if (_auth !== 'ok' && !scannerOk) {
     return NextResponse.json({ error: _auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: _auth === 'rate_limited' ? 429 : 401 })
   }
 

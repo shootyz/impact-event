@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkAdminAuth, isScannerAuthed } from '@/lib/auth'
+import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
-import { randomUUID } from 'crypto'
+import { randomUUID, timingSafeEqual } from 'crypto'
+
+async function checkEventPin(eventId: string, pin: string): Promise<boolean> {
+  try {
+    const db = supabaseAdmin()
+    const { data } = await db.from('events').select('scanner_pin').eq('id', eventId).single()
+    if (!data?.scanner_pin) return false
+    const ba = Buffer.from(pin, 'utf8'), bb = Buffer.from(data.scanner_pin, 'utf8')
+    if (ba.length !== bb.length) { timingSafeEqual(bb, bb); return false }
+    return timingSafeEqual(ba, bb)
+  } catch { return false }
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const auth = checkAdminAuth(req, body)
-  if (auth !== 'ok' && !isScannerAuthed(body)) return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
+  const scannerOk = auth !== 'ok' && body.scannerPin && body.eventId
+    ? await checkEventPin(body.eventId as string, body.scannerPin as string)
+    : false
+  if (auth !== 'ok' && !scannerOk) return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
   const { name, email, eventId } = body
   if (!name?.trim() || !email?.trim()) return NextResponse.json({ error: 'Name und E-Mail erforderlich.' }, { status: 400 })

@@ -11,7 +11,7 @@ export async function PATCH(
   const auth = checkAdminAuth(req, body)
   if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
-  const { active, name, date, location, description, slug, category, registration_type, max_capacity, form_config } = body
+  const { active, name, date, location, description, slug, category, registration_type, max_capacity, form_config, scanner_pin } = body
 
   const updates: Record<string, unknown> = {}
   if (active !== undefined) updates.active = active
@@ -24,6 +24,7 @@ export async function PATCH(
   if (registration_type !== undefined) updates.registration_type = registration_type
   if (max_capacity !== undefined) updates.max_capacity = max_capacity ? Number(max_capacity) : null
   if (form_config !== undefined) updates.form_config = form_config
+  if (scanner_pin !== undefined) updates.scanner_pin = scanner_pin || null
 
   const { error } = await supabaseAdmin()
     .from('events')
