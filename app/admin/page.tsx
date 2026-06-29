@@ -999,8 +999,7 @@ export default function AdminPage() {
   };
 
   const deleteScannerPin = async (eventId: string) => {
-    if (!confirm("Scanner-PIN wirklich löschen? Der Scanner ist danach ohne PIN zugänglich.")) return;
-    setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
+setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
     setScannerPinResult(prev => ({ ...prev, [eventId]: null }));
     const res = await fetch(`/api/admin/events/${eventId}`, {
       method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${savedPassword.current}` },
