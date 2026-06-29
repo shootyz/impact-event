@@ -569,6 +569,7 @@ export default function AdminPage() {
   const [manualVorname, setManualVorname] = useState("");
   const [manualNachname, setManualNachname] = useState("");
   const [manualEmail, setManualEmail] = useState("");
+  const [manualExtraFields, setManualExtraFields] = useState<Record<string, string>>({});
   const [manualStatus, setManualStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [manualLoading, setManualLoading] = useState(false);
   const [sendingQR, setSendingQR] = useState<string | null>(null);
@@ -2270,13 +2271,15 @@ export default function AdminPage() {
                   e.preventDefault();
                   if (!manualVorname.trim() || !manualNachname.trim()) { setManualStatus({ ok: false, msg: "Vor- und Nachname erforderlich." }); return; }
                   setManualLoading(true);
+                  const extraPayload: Record<string, string> = {};
+                  (selectedEvent?.form_config?.fields ?? []).filter(f => f.visible && !["vorname","nachname","email"].includes(f.id)).forEach(f => { if (manualExtraFields[f.id] !== undefined) extraPayload[f.id] = manualExtraFields[f.id]; });
                   const res = await fetch("/api/form-register", {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ event_id: selectedEventId, first_name: manualVorname.trim(), last_name: manualNachname.trim(), email: manualEmail.trim() || `manuell-${Date.now()}@noemail.local` }),
+                    body: JSON.stringify({ event_id: selectedEventId, first_name: manualVorname.trim(), last_name: manualNachname.trim(), email: manualEmail.trim() || `manuell-${Date.now()}@noemail.local`, extra_fields: extraPayload }),
                   });
                   const d = await res.json();
                   setManualLoading(false);
-                  if (d.ok) { setManualStatus({ ok: true, msg: `${manualVorname} ${manualNachname} eingetragen.` }); setManualVorname(""); setManualNachname(""); setManualEmail(""); setFormRegsLoaded(false); setManualForm(false); }
+                  if (d.ok) { setManualStatus({ ok: true, msg: `${manualVorname} ${manualNachname} eingetragen.` }); setManualVorname(""); setManualNachname(""); setManualEmail(""); setManualExtraFields({}); setFormRegsLoaded(false); setManualForm(false); }
                   else { setManualStatus({ ok: false, msg: d.error ?? "Fehler." }); }
                 }}>
                   <div className="grid grid-cols-2 gap-2">
@@ -2284,6 +2287,26 @@ export default function AdminPage() {
                     <input placeholder="Nachname *" value={manualNachname} onChange={e => setManualNachname(e.target.value)} required className="rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
                   </div>
                   <input placeholder="E-Mail (optional)" value={manualEmail} onChange={e => setManualEmail(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                  {(selectedEvent?.form_config?.fields ?? []).filter(f => f.visible && !["vorname","nachname","email"].includes(f.id)).map(f => (
+                    <div key={f.id}>
+                      <label className="block text-xs font-medium mb-1" style={{ color: "var(--ig-gray3)" }}>{f.label}{f.required ? " *" : ""}</label>
+                      {f.type === "textarea" ? (
+                        <textarea rows={2} value={manualExtraFields[f.id] ?? ""} onChange={e => setManualExtraFields(p => ({ ...p, [f.id]: e.target.value }))} required={f.required} className="w-full rounded-lg border px-3 py-2 text-sm outline-none resize-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                      ) : f.type === "checkbox" ? (
+                        <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "var(--ig-navy)" }}>
+                          <input type="checkbox" checked={manualExtraFields[f.id] === "true"} onChange={e => setManualExtraFields(p => ({ ...p, [f.id]: e.target.checked ? "true" : "false" }))} />
+                          {f.label}
+                        </label>
+                      ) : f.type === "select" && f.options?.length ? (
+                        <select value={manualExtraFields[f.id] ?? ""} onChange={e => setManualExtraFields(p => ({ ...p, [f.id]: e.target.value }))} required={f.required} className="w-full rounded-lg border px-3 py-2 text-sm outline-none bg-white" style={{ borderColor: "var(--ig-gray2)" }}>
+                          <option value="">— wählen —</option>
+                          {f.options!.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      ) : (
+                        <input type="text" value={manualExtraFields[f.id] ?? ""} onChange={e => setManualExtraFields(p => ({ ...p, [f.id]: e.target.value }))} required={f.required} className="w-full rounded-lg border px-3 py-2 text-sm outline-none" style={{ borderColor: "var(--ig-gray2)" }} />
+                      )}
+                    </div>
+                  ))}
                   {manualStatus && <p className={`text-xs ${manualStatus.ok ? "text-green-600" : "text-red-500"}`}>{manualStatus.msg}</p>}
                   <div className="flex justify-end"><BtnPrimary type="submit" disabled={manualLoading}>{manualLoading ? "Wird gespeichert…" : "Speichern"}</BtnPrimary></div>
                 </form>
