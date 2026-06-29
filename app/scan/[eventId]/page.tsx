@@ -72,7 +72,7 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
 
   // Load registrations
   const loadRegs = useCallback(async () => {
-    if (!authed || !eventId || !pin) return;
+    if (!authed || !eventId) return;
     setRegsLoading(true);
     const res = await fetch(`/api/registrations?eventId=${eventId}`, {
       headers: { "x-scanner-pin": pin },
