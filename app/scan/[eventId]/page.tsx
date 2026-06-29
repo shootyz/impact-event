@@ -40,9 +40,13 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   const [manualLoading, setManualLoading] = useState(false);
   const [manualMsg, setManualMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  // Resolve params
+  // Resolve params and load event name immediately (public, no auth needed)
   useEffect(() => {
-    params.then(p => setEventId(p.eventId));
+    params.then(async p => {
+      setEventId(p.eventId);
+      const res = await fetch(`/api/event?id=${p.eventId}`).catch(() => null);
+      if (res?.ok) { const d = await res.json(); setEventName(d.name ?? ""); }
+    });
   }, [params]);
 
   async function tryAuth(p: string) {
@@ -56,8 +60,6 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
     if (!data.ok) { setAuthError("Falscher PIN."); return; }
     setAuthed(true);
     setPin(p);
-    const evRes = await fetch(`/api/event?id=${eventId}`).catch(() => null);
-    if (evRes?.ok) { const d = await evRes.json(); setEventName(d.name ?? ""); }
   }
 
   // Load registrations
@@ -189,7 +191,10 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   // ── PIN screen ──
   if (!authed) return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ background: light }}>
-      <img src="/logo.png" alt="Impact Gstaad" className="h-14 mb-8 object-contain" />
+      <img src="/logo.png" alt="Impact Gstaad" className="h-14 mb-6 object-contain" />
+      {eventName && (
+        <p className="text-center text-base font-bold mb-6 px-4" style={{ color: navy }}>{eventName}</p>
+      )}
       <div className="w-full max-w-xs space-y-4">
         <p className="text-center text-sm font-semibold" style={{ color: navy }}>Scanner-PIN eingeben</p>
         <input
