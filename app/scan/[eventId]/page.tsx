@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type jsQRType from "jsqr";
 
 type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: string; message?: string };
-type Registration = { id: string; name: string; email: string; checked_in: boolean; checked_in_at?: string; qr_token?: string };
+type Registration = { id: string | null; form_reg_id?: string; name: string; email: string; checked_in: boolean; checked_in_at?: string; qr_token?: string };
 
 export default function ScannerPage({ params }: { params: Promise<{ eventId: string }> }) {
   const [eventId, setEventId] = useState("");
@@ -149,6 +149,7 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   }, [tick]);
 
   async function handleCheckin(r: Registration) {
+    if (!r.id) return; // no registrations row yet (edge case)
     setActionLoading(r.id + "-checkin");
     await fetch(`/api/guest/${r.id}`, {
       method: "PATCH",
@@ -161,12 +162,22 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
 
   async function handleDelete(r: Registration) {
     if (!confirm(`${r.name} wirklich löschen?`)) return;
-    setActionLoading(r.id + "-delete");
-    await fetch(`/api/guest/${r.id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scannerPin: pin }),
-    });
+    const key = (r.form_reg_id ?? r.id) + "-delete";
+    setActionLoading(key);
+    if (r.form_reg_id) {
+      // Form event: delete form_registration (cascade deletes registrations row too)
+      await fetch("/api/admin/form-registrations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: r.form_reg_id, scannerPin: pin }),
+      });
+    } else if (r.id) {
+      await fetch(`/api/guest/${r.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scannerPin: pin }),
+      });
+    }
     setExpandedId(null);
     await loadRegs();
     setActionLoading(null);
@@ -382,7 +393,7 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
                   <div className="flex gap-2 px-4 pb-3" style={{ background: light }}>
                     <button
                       onClick={() => handleCheckin(r)}
-                      disabled={actionLoading === r.id + "-checkin"}
+                      disabled={actionLoading === (r.id ?? "") + "-checkin"}
                       className="flex-1 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-40"
                       style={{ background: r.checked_in ? "white" : navy, color: r.checked_in ? navy : "white", border: `1.5px solid ${r.checked_in ? gray2 : navy}` }}>
                       {actionLoading === r.id + "-checkin" ? "…" : r.checked_in ? "✓ Eingecheckt" : "Einchecken"}

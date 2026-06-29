@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { timingSafeEqual } from 'crypto'
+
+async function checkEventPinForFormReg(formRegId: string, pin: string): Promise<boolean> {
+  try {
+    const db = supabaseAdmin()
+    const { data: fr } = await db.from('form_registrations').select('event_id').eq('id', formRegId).single()
+    if (!fr?.event_id) return false
+    const { data: ev } = await db.from('events').select('scanner_pin').eq('id', fr.event_id).single()
+    if (!ev?.scanner_pin) return true
+    const ba = Buffer.from(pin, 'utf8'), bb = Buffer.from(ev.scanner_pin, 'utf8')
+    if (ba.length !== bb.length) { timingSafeEqual(bb, bb); return false }
+    return timingSafeEqual(ba, bb)
+  } catch { return false }
+}
 
 export async function GET(req: NextRequest) {
   const auth = checkAdminAuth(req)
@@ -52,7 +66,10 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const body = await req.json()
   const auth = checkAdminAuth(req, body)
-  if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
+  const scannerOk = auth !== 'ok' && body.id
+    ? await checkEventPinForFormReg(body.id as string, (body.scannerPin as string) ?? '')
+    : false
+  if (auth !== 'ok' && !scannerOk) return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
   const { id } = body
   if (!id) return NextResponse.json({ error: 'id fehlt.' }, { status: 400 })
