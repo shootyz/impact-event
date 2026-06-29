@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Zu viele Versuche.' }, { status: 429 })
 
   const { eventId, pin } = await req.json()
-  if (!eventId || !pin) return NextResponse.json({ ok: false }, { status: 400 })
+  if (!eventId) return NextResponse.json({ ok: false }, { status: 400 })
 
   const db = supabaseAdmin()
   const { data } = await db.from('events').select('scanner_pin').eq('id', eventId).single()
