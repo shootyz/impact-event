@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type jsQRType from "jsqr";
 
 type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: string; message?: string };
-type Registration = { id: string; name: string; email: string; checked_in: boolean; checked_in_at?: string };
+type Registration = { id: string; name: string; email: string; checked_in: boolean; checked_in_at?: string; qr_token?: string };
 
 export default function ScannerPage({ params }: { params: Promise<{ eventId: string }> }) {
   const [eventId, setEventId] = useState("");
@@ -28,12 +28,17 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   const [tab, setTab] = useState<"scanner" | "list">("scanner");
   const [regs, setRegs] = useState<Registration[]>([]);
   const [regsLoading, setRegsLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Manual registration
+  const [showManual, setShowManual] = useState(false);
   const [manualFirst, setManualFirst] = useState("");
   const [manualLast, setManualLast] = useState("");
   const [manualEmail, setManualEmail] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
   const [manualMsg, setManualMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [search, setSearch] = useState("");
 
   // Resolve params
   useEffect(() => {
@@ -51,7 +56,6 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
     if (!data.ok) { setAuthError("Falscher PIN."); return; }
     setAuthed(true);
     setPin(p);
-    // Load event name
     const evRes = await fetch(`/api/event?id=${eventId}`).catch(() => null);
     if (evRes?.ok) { const d = await evRes.json(); setEventName(d.name ?? ""); }
   }
@@ -83,7 +87,7 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
     const res = await fetch("/api/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: clean, scannerPin: pin }),
+      body: JSON.stringify({ token: clean, scannerPin: pin, eventId }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -93,7 +97,7 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
       if (data.status === "success") loadRegs();
     }
     setTimeout(() => setScanResult(null), 2500);
-  }, [pin, loadRegs]);
+  }, [pin, eventId, loadRegs]);
 
   const tick = useCallback(() => {
     const video = videoRef.current;
@@ -133,6 +137,30 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
       setScanResult({ status: "error", message: "Kamera konnte nicht gestartet werden." });
     }
   }, [tick]);
+
+  async function handleCheckin(r: Registration) {
+    setActionLoading(r.id + "-checkin");
+    await fetch(`/api/guest/${r.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ checked_in: !r.checked_in, scannerPin: pin }),
+    });
+    await loadRegs();
+    setActionLoading(null);
+  }
+
+  async function handleDelete(r: Registration) {
+    if (!confirm(`${r.name} wirklich löschen?`)) return;
+    setActionLoading(r.id + "-delete");
+    await fetch(`/api/guest/${r.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scannerPin: pin }),
+    });
+    setExpandedId(null);
+    await loadRegs();
+    setActionLoading(null);
+  }
 
   // Manual registration
   async function submitManual() {
@@ -213,10 +241,9 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
       {/* Scanner tab */}
       {tab === "scanner" && (
         <div className="flex-1 flex flex-col max-w-sm mx-auto w-full px-4 py-4 gap-4">
-          {/* Camera card */}
           <div className="rounded-2xl overflow-hidden border shadow-sm" style={{ background: "white", borderColor: gray2 }}>
             <div className="h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${gold}, transparent)` }} />
-            <div className="relative overflow-hidden" style={{ aspectRatio: "1", maxHeight: "calc(100svh - 280px)" }}>
+            <div className="relative overflow-hidden" style={{ aspectRatio: "1", maxHeight: "calc(100svh - 220px)" }}>
               <video ref={videoRef} playsInline muted className={`w-full h-full object-cover ${scanning ? "block" : "hidden"}`} />
               <canvas ref={canvasRef} className="hidden" />
               {!scanning && (
@@ -265,28 +292,38 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
                   </button>}
             </div>
           </div>
-
-          {/* Manual registration */}
-          <div className="rounded-2xl border p-4 space-y-3" style={{ background: "white", borderColor: gray2 }}>
-            <p className="text-xs font-semibold tracking-wide" style={{ color: gray3 }}>MANUELLE ANMELDUNG</p>
-            <div className="flex gap-2">
-              <input className={inputCls} style={inputStyle} placeholder="Vorname *" value={manualFirst} onChange={e => setManualFirst(e.target.value)} onFocus={e => (e.currentTarget.style.borderColor = navy)} onBlur={e => (e.currentTarget.style.borderColor = gray2)} />
-              <input className={inputCls} style={inputStyle} placeholder="Nachname *" value={manualLast} onChange={e => setManualLast(e.target.value)} onFocus={e => (e.currentTarget.style.borderColor = navy)} onBlur={e => (e.currentTarget.style.borderColor = gray2)} />
-            </div>
-            <input className={inputCls} style={inputStyle} placeholder="E-Mail (optional)" type="email" value={manualEmail} onChange={e => setManualEmail(e.target.value)} onFocus={e => (e.currentTarget.style.borderColor = navy)} onBlur={e => (e.currentTarget.style.borderColor = gray2)} />
-            {manualMsg && <p className="text-xs" style={{ color: manualMsg.ok ? "#16a34a" : "#dc2626" }}>{manualMsg.text}</p>}
-            <button onClick={submitManual} disabled={manualLoading}
-              className="w-full py-2.5 rounded-xl font-semibold text-sm text-white transition hover:opacity-90 disabled:opacity-40"
-              style={{ background: navy }}>
-              {manualLoading ? "Wird eingetragen…" : "Eintragen"}
-            </button>
-          </div>
         </div>
       )}
 
-      {/* List tab */}
+      {/* Anmeldungen tab */}
       {tab === "list" && (
         <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-4 gap-3">
+          {/* Manual registration toggle */}
+          <button
+            onClick={() => { setShowManual(o => !o); setManualMsg(null); }}
+            className="flex items-center gap-2 px-4 py-3 rounded-2xl border w-full text-left transition"
+            style={{ background: "white", borderColor: showManual ? navy : gray2, color: navy }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span className="text-sm font-semibold">Gast manuell erfassen</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="ml-auto transition-transform" style={{ transform: showManual ? "rotate(180deg)" : "none" }}><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+
+          {showManual && (
+            <div className="rounded-2xl border p-4 space-y-3" style={{ background: "white", borderColor: gray2 }}>
+              <div className="flex gap-2">
+                <input className={inputCls} style={inputStyle} placeholder="Vorname *" value={manualFirst} onChange={e => setManualFirst(e.target.value)} onFocus={e => (e.currentTarget.style.borderColor = navy)} onBlur={e => (e.currentTarget.style.borderColor = gray2)} />
+                <input className={inputCls} style={inputStyle} placeholder="Nachname *" value={manualLast} onChange={e => setManualLast(e.target.value)} onFocus={e => (e.currentTarget.style.borderColor = navy)} onBlur={e => (e.currentTarget.style.borderColor = gray2)} />
+              </div>
+              <input className={inputCls} style={inputStyle} placeholder="E-Mail (optional)" type="email" value={manualEmail} onChange={e => setManualEmail(e.target.value)} onFocus={e => (e.currentTarget.style.borderColor = navy)} onBlur={e => (e.currentTarget.style.borderColor = gray2)} />
+              {manualMsg && <p className="text-xs" style={{ color: manualMsg.ok ? "#16a34a" : "#dc2626" }}>{manualMsg.text}</p>}
+              <button onClick={submitManual} disabled={manualLoading}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm text-white transition hover:opacity-90 disabled:opacity-40"
+                style={{ background: navy }}>
+                {manualLoading ? "Wird eingetragen…" : "Eintragen"}
+              </button>
+            </div>
+          )}
+
           <input
             className={inputCls} style={inputStyle}
             placeholder="Name oder E-Mail suchen…"
@@ -295,30 +332,58 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
             onBlur={e => (e.currentTarget.style.borderColor = gray2)}
           />
           <p className="text-xs" style={{ color: gray3 }}>{checkedIn} eingecheckt · {regs.length - checkedIn} ausstehend</p>
+
           <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: gray2 }}>
             {regsLoading ? (
               <div className="p-8 text-center text-sm" style={{ color: gray3 }}>Lädt…</div>
             ) : filteredRegs.length === 0 ? (
               <div className="p-8 text-center text-sm" style={{ color: gray3 }}>Keine Einträge.</div>
             ) : filteredRegs.map((r, i) => (
-              <div key={r.id} className="flex items-center gap-3 px-4 py-3"
-                style={{ borderBottom: i < filteredRegs.length - 1 ? `1px solid ${gray2}` : undefined }}>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ background: r.checked_in ? "#DCFCE7" : light, border: `1px solid ${r.checked_in ? "#86EFAC" : gray2}` }}>
-                  {r.checked_in && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: navy }}>{r.name}</p>
-                  <p className="text-xs truncate" style={{ color: gray3 }}>{r.email}</p>
-                </div>
-                {r.checked_in && r.checked_in_at && (
-                  <p className="text-xs flex-shrink-0" style={{ color: gray3 }}>
-                    {new Date(r.checked_in_at).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
+              <div key={r.id} style={{ borderBottom: i < filteredRegs.length - 1 ? `1px solid ${gray2}` : undefined }}>
+                {/* Row */}
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition"
+                  onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
+                  style={{ background: expandedId === r.id ? light : "white" }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: r.checked_in ? "#DCFCE7" : light, border: `1px solid ${r.checked_in ? "#86EFAC" : gray2}` }}>
+                    {r.checked_in && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: navy }}>{r.name}</p>
+                    <p className="text-xs truncate" style={{ color: gray3 }}>{r.email || "—"}</p>
+                  </div>
+                  {r.checked_in && r.checked_in_at && (
+                    <p className="text-xs flex-shrink-0 mr-1" style={{ color: gray3 }}>
+                      {new Date(r.checked_in_at).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  )}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={gray3} strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, transform: expandedId === r.id ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+
+                {/* Actions */}
+                {expandedId === r.id && (
+                  <div className="flex gap-2 px-4 pb-3" style={{ background: light }}>
+                    <button
+                      onClick={() => handleCheckin(r)}
+                      disabled={actionLoading === r.id + "-checkin"}
+                      className="flex-1 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-40"
+                      style={{ background: r.checked_in ? "white" : navy, color: r.checked_in ? navy : "white", border: `1.5px solid ${r.checked_in ? gray2 : navy}` }}>
+                      {actionLoading === r.id + "-checkin" ? "…" : r.checked_in ? "✓ Eingecheckt" : "Einchecken"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(r)}
+                      disabled={actionLoading === r.id + "-delete"}
+                      className="py-2 px-4 rounded-xl text-sm font-semibold transition disabled:opacity-40"
+                      style={{ background: "white", color: "#dc2626", border: "1.5px solid #fca5a5" }}>
+                      {actionLoading === r.id + "-delete" ? "…" : "Löschen"}
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
           </div>
+
           <button onClick={loadRegs} className="text-xs self-center transition hover:opacity-70" style={{ color: gray3 }}>
             Aktualisieren
           </button>

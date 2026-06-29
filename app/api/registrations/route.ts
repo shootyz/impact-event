@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
   const { data: registrations } = await db
     .from('registrations')
-    .select('id, name, email, checked_in, checked_in_at, created_at')
+    .select('id, name, email, checked_in, checked_in_at, created_at, qr_token')
     .eq('event_id', event.id)
     .order('created_at', { ascending: false })
 
