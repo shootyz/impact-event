@@ -10,6 +10,7 @@ const CampaignBuilder = dynamic(() => import("./CampaignBuilder"), { ssr: false 
 const PreviewPanel = dynamic(() => import("./PreviewPanel"), { ssr: false });
 const ZielgruppenDashboard = dynamic(() => import("./ZielgruppenDashboard"), { ssr: false });
 const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard"), { ssr: false });
+import { supabase } from "@/lib/supabase";
 import type { CampaignBlock } from "./campaign-renderer";
 import type { Lang } from "./i18n";
 
@@ -772,6 +773,31 @@ export default function AdminPage() {
       });
     }
   }, [eventSection, selectedEventId, membersLoaded]);
+
+  // Realtime: reload registrations on INSERT/UPDATE when Anmeldungen tab is open
+  useEffect(() => {
+    if (eventSection !== "management" || !selectedEventId) return;
+    const isForm = selectedEvent?.registration_type === "form";
+    const relevantTabs = isForm ? ["list", "form-regs"] : ["list"];
+    if (!relevantTabs.includes(activeTab)) return;
+
+    const channel = supabase()
+      .channel(`regs-${selectedEventId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "registrations", filter: `event_id=eq.${selectedEventId}` }, () => {
+        if (isForm) {
+          authFetch(`/api/admin/form-registrations?eventId=${selectedEventId}`)
+            .then(r => r.json()).then(d => { if (Array.isArray(d)) setFormRegs(d); });
+        } else {
+          loadRegistrations(savedPassword.current, selectedEventId);
+        }
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "registrations", filter: `event_id=eq.${selectedEventId}` }, () => {
+        loadRegistrations(savedPassword.current, selectedEventId);
+      })
+      .subscribe();
+
+    return () => { supabase().removeChannel(channel); };
+  }, [eventSection, activeTab, selectedEventId, selectedEvent?.registration_type, loadRegistrations]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("adminPw");
