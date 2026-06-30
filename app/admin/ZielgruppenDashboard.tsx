@@ -54,6 +54,12 @@ export default function ZielgruppenDashboard({
   const [searchQuery, setSearchQuery] = useState<Record<string, string>>({});
   const [showUnsub, setShowUnsub] = useState<Record<string, boolean>>({});
   const csvRef = useRef<HTMLInputElement>(null);
+  const [hsLists, setHsLists] = useState<{ id: string; name: string }[]>([]);
+  const [hsLoading, setHsLoading] = useState(false);
+  const [hsZgId, setHsZgId] = useState<string | null>(null);
+  const [hsSelectedList, setHsSelectedList] = useState("");
+  const [hsImporting, setHsImporting] = useState(false);
+  const [hsResult, setHsResult] = useState<{ zgId: string; imported: number; duplicates: number } | null>(null);
 
   const groupMembers = (zgId: string) => {
     const q = (searchQuery[zgId] ?? "").toLowerCase().trim();
@@ -153,6 +159,35 @@ export default function ZielgruppenDashboard({
     setCsvImporting(false);
     setCsvZgId(null);
     if (csvRef.current) csvRef.current.value = "";
+  }
+
+  async function openHubSpot(zgId: string) {
+    setHsZgId(zgId); setHsSelectedList(""); setHsResult(null);
+    if (hsLists.length > 0) return;
+    setHsLoading(true);
+    const res = await fetch("/api/admin/hubspot?action=lists", { headers: { "Authorization": `Bearer ${adminPassword}` } });
+    const d = await res.json();
+    setHsLists(d.lists ?? []);
+    setHsLoading(false);
+  }
+
+  async function importFromHubSpot(zgId: string) {
+    if (!hsSelectedList) return;
+    setHsImporting(true);
+    const res = await fetch("/api/admin/hubspot", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminPassword, listId: hsSelectedList, zielgruppe_id: zgId }),
+    });
+    const d = await res.json();
+    setHsImporting(false);
+    if (res.ok) {
+      setHsResult({ zgId, imported: d.imported, duplicates: d.duplicates });
+      // Reload members
+      const mr = await fetch("/api/members", { headers: { "Authorization": `Bearer ${adminPassword}` } });
+      const md = await mr.json();
+      if (Array.isArray(md)) onMembersChange(md);
+      setHsZgId(null);
+    }
   }
 
   async function createZG() {
@@ -450,7 +485,37 @@ export default function ZielgruppenDashboard({
                           {csvResult.inserted < 0 ? "Spalten fehlen (first_name, last_name, email)" : `✓ ${csvResult.inserted} importiert`}
                         </span>
                       )}
+                      <span style={{ color: "var(--ig-gray2)" }}>|</span>
+                      <button
+                        onClick={() => hsZgId === zg.id ? setHsZgId(null) : openHubSpot(zg.id)}
+                        className="text-xs font-medium flex items-center gap-1.5 transition active:scale-95 opacity-90 hover:opacity-100"
+                        style={{ color: "var(--ig-gold)" }}>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h8M12 8v8" /></svg>
+                        HubSpot importieren
+                      </button>
+                      {hsResult?.zgId === zg.id && (
+                        <span className="text-xs" style={{ color: "#16a34a" }}>✓ {hsResult.imported} importiert, {hsResult.duplicates} Duplikate</span>
+                      )}
                     </div>
+                    {hsZgId === zg.id && (
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        {hsLoading ? (
+                          <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>Lädt Listen…</span>
+                        ) : (
+                          <>
+                            <select value={hsSelectedList} onChange={e => setHsSelectedList(e.target.value)}
+                              className={inputCls} style={{ ...inputStyle, maxWidth: 260 }}>
+                              <option value="">Liste auswählen…</option>
+                              {hsLists.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                            </select>
+                            <button disabled={!hsSelectedList || hsImporting} onClick={() => importFromHubSpot(zg.id)}
+                              className={btnPrimary} style={{ background: "var(--ig-navy)", color: "white" }}>
+                              {hsImporting ? "Importiert…" : "Importieren"}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                     </div>
                   )}
                 </div>
