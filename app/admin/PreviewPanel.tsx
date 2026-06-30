@@ -182,7 +182,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
       <div style={{ background: "#faf8f4", borderLeft: `3px solid ${D.gold}`, padding: "12px 16px", marginBottom: 14, display: "flex", flexDirection: "column", gap: 6 }}>
         {formattedDate && <span style={{ color: D.navy, fontSize: 14, fontWeight: 700 }}>{formattedDate}</span>}
         {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.navy, fontSize: 14, fontWeight: 700 }} />}
-        {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.black, fontSize: 14 }} />}
+        {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.navy, fontSize: 14 }} />}
       </div>
       {block.date && (
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8 }}>
