@@ -490,6 +490,12 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove, adminPassword 
             className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}>
             Von URL
           </button>
+          {sp.photo_url?.startsWith("http") && (
+            <button type="button" onClick={() => onChange({ ...sp, photo_url: "" })}
+              className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#fecaca", color: "#dc2626" }}>
+              Bild entfernen
+            </button>
+          )}
         </div>
         {canRemove && <button onClick={onRemove} className="ml-auto text-xs" style={{ color: "var(--ig-gray3)" }}>Entfernen</button>}
       </div>
