@@ -448,14 +448,23 @@ function ModerationEditor({ block, onChange }: { block: ModerationBlock; onChang
   );
 }
 
-async function uploadImageFile(file: File, onChange: (url: string) => void, setUploading: (v: boolean) => void, adminPassword?: string) {
+async function uploadImageFile(file: File, onChange: (url: string) => void, setUploading: (v: boolean) => void, adminPassword?: string): Promise<string | null> {
   setUploading(true);
-  const fd = new FormData(); fd.append("file", file);
-  const headers: Record<string, string> = {};
-  if (adminPassword) headers["Authorization"] = `Bearer ${adminPassword}`;
-  const res = await fetch("/api/upload", { method: "POST", body: fd, headers });
-  const d = await res.json(); if (d.url) onChange(d.url);
-  setUploading(false);
+  try {
+    const fd = new FormData(); fd.append("file", file);
+    const headers: Record<string, string> = {};
+    if (adminPassword) headers["Authorization"] = `Bearer ${adminPassword}`;
+    const res = await fetch("/api/upload", { method: "POST", body: fd, headers });
+    const d = await res.json();
+    if (d.url) { onChange(d.url); return d.url; }
+    alert(d.error ?? "Upload fehlgeschlagen.");
+    return null;
+  } catch (e) {
+    alert("Upload fehlgeschlagen: " + (e instanceof Error ? e.message : String(e)));
+    return null;
+  } finally {
+    setUploading(false);
+  }
 }
 
 function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove, adminPassword }: { sp: Speaker; onChange: (s: Speaker) => void; onRemove: () => void; canRemove: boolean; adminPassword?: string }) {
@@ -470,13 +479,14 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove, adminPassword 
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async e => {
             const file = e.target.files?.[0]; if (!file) return;
             await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading, adminPassword);
+            if (fileRef.current) fileRef.current.value = "";
           }} />
-          <button onClick={() => fileRef.current?.click()}
+          <button type="button" onClick={() => fileRef.current?.click()}
             className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
             disabled={uploading}>
-            {uploading ? "Hochladen…" : sp.photo_url ? "Bild ersetzen" : "Bild hochladen"}
+            {uploading ? "Hochladen…" : (sp.photo_url?.startsWith("http")) ? "Bild ersetzen" : "Bild hochladen"}
           </button>
-          <button onClick={() => setShowPhotoUrl(v => !v)}
+          <button type="button" onClick={() => setShowPhotoUrl(v => !v)}
             className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}>
             Von URL
           </button>
