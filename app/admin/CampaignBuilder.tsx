@@ -547,14 +547,23 @@ function SpeakerEditor({ block: rawBlock, onChange, adminPassword }: { block: Sp
   const addSp = () => onChange({ ...block, speakers: [...block.speakers, { id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "", link_url: undefined }] });
   const removeSp = (i: number) => onChange({ ...block, speakers: block.speakers.filter((_, j) => j !== i) });
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {block.speakers.map((sp, i) => (
-        <div key={sp.id}>
-          {i > 0 && <div style={{ height: 1, background: "var(--ig-gray2)", margin: "4px 0 16px" }} />}
-          <SingleSpeakerEditor sp={sp} onChange={s => updateSp(i, s)} onRemove={() => removeSp(i)} canRemove={block.speakers.length > 1} adminPassword={adminPassword} />
+        <div key={sp.id} className="rounded-xl border overflow-hidden" style={{ borderColor: "#e5e7eb" }}>
+          <div className="flex items-center justify-between px-4 py-2" style={{ background: "#f8f9fb", borderBottom: "1px solid #e5e7eb" }}>
+            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#1E3263" }}>
+              Speaker {i + 1}{sp.name ? ` — ${sp.name}` : ""}
+            </span>
+            {block.speakers.length > 1 && (
+              <button type="button" onClick={() => removeSp(i)} className="text-xs transition hover:opacity-70" style={{ color: "#dc2626" }}>Entfernen</button>
+            )}
+          </div>
+          <div className="p-4">
+            <SingleSpeakerEditor sp={sp} onChange={s => updateSp(i, s)} onRemove={() => removeSp(i)} canRemove={false} adminPassword={adminPassword} />
+          </div>
         </div>
       ))}
-      <button onClick={addSp} className="w-full text-xs py-2 rounded-lg border border-dashed font-medium transition"
+      <button type="button" onClick={addSp} className="w-full text-xs py-2 rounded-lg border border-dashed font-medium transition"
         style={{ borderColor: "#D28D28", color: "#D28D28" }}>
         + Speaker hinzufügen
       </button>
