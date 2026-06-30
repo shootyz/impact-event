@@ -1441,7 +1441,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                               { label: "", col: "" },
                             ]).map(({ label, col }) => (
                               <th key={label}
-                                className={`text-left px-3 py-2 font-semibold select-none${col ? " cursor-pointer hover:opacity-70" : ""}`}
+                                className={`text-left px-3 py-2 font-semibold select-none whitespace-nowrap${col ? " cursor-pointer hover:opacity-70" : ""}`}
                                 style={{ color: "var(--ig-navy)" }}
                                 onClick={col ? () => toggleSort(col) : undefined}>
                                 {label}{col && <> <SortIcon col={col} /></>}
