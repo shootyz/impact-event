@@ -258,11 +258,13 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                 if (!lang) return null;
                 return <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)", flexShrink: 0 }}>{lang.toUpperCase()}</span>;
               })()}
-              {zielgruppeName && !c.sent_at && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(210,141,40,0.1)", color: "var(--ig-gold)", border: "1px solid rgba(210,141,40,0.2)", flexShrink: 0 }}>{zielgruppeName}</span>}
+              {!c.sent_at && (zielgruppeName
+                ? <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(210,141,40,0.1)", color: "var(--ig-gold)", border: "1px solid rgba(210,141,40,0.2)", flexShrink: 0 }}>{zielgruppeName}</span>
+                : <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)", flexShrink: 0 }}>Alle Mitglieder</span>
+              )}
             </div>
             <p className="text-xs" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
               {statusText}
-              {!c.sent_at && !zielgruppeName && <span style={{ color: "var(--ig-gray3)" }}> · <span style={{ fontStyle: "italic" }}>Keine Zielgruppe</span></span>}
               {" · "}
               <button
                 onClick={() => { navigator.clipboard.writeText(c.id); setIdCopied(true); setTimeout(() => setIdCopied(false), 2000); }}
