@@ -705,6 +705,7 @@ export default function AdminPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
   const lastScanRef = useRef<string>("");
+  const handleScanRef = useRef<(token: string) => void>(() => {});
   const savedPassword = useRef("");
   const authHeaders = () => ({ "Authorization": `Bearer ${savedPassword.current}` });
   const authFetch = (url: string, init?: RequestInit) =>
@@ -829,7 +830,7 @@ export default function AdminPage() {
     src.start();
   };
 
-  const handleScan = async (token: string) => {
+  const handleScan = (handleScanRef.current = async (token: string) => {
     const clean = token.includes("/ticket/") ? token.split("/ticket/")[1] : token;
     const res = await fetch("/api/scan", {
       method: "POST",
@@ -855,7 +856,7 @@ export default function AdminPage() {
       setScanResult({ status: data.status, name: data.name });
     }
     setTimeout(() => setScanResult(null), 1000);
-  };
+  });
 
   const stopScanner = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -880,7 +881,7 @@ export default function AdminPage() {
       const code = jsQR(imageData.data, imageData.width, imageData.height);
       if (code && code.data && code.data !== lastScanRef.current) {
         lastScanRef.current = code.data;
-        handleScan(code.data);
+        handleScanRef.current(code.data);
         setTimeout(() => { lastScanRef.current = ""; }, 4000);
       }
     }
