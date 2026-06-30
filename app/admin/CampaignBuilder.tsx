@@ -822,8 +822,18 @@ export default function CampaignBuilder({
   const normalizeBlocks = (bs: CampaignBlock[]): CampaignBlock[] => bs.map(b => {
     const raw = b as Record<string, unknown>;
     if (typeof raw.type === "string" && ["keynote_speaker", "keynote speaker", "speaker_block"].includes(raw.type))
-      return { ...b, type: "speaker" } as CampaignBlock;
-    return b;
+      raw.type = "speaker";
+    // Ensure arrays are never undefined
+    if (raw.type === "program" && !Array.isArray(raw.slots)) raw.slots = [];
+    if (raw.type === "finalists" && !Array.isArray(raw.items)) raw.items = [];
+    if (raw.type === "speaker" && !Array.isArray(raw.speakers)) raw.speakers = [];
+    if (raw.type === "program" && Array.isArray(raw.slots)) {
+      raw.slots = (raw.slots as Record<string, unknown>[]).map(s => ({
+        ...s,
+        sub_items: Array.isArray(s.sub_items) ? s.sub_items : [],
+      }));
+    }
+    return raw as unknown as CampaignBlock;
   });
   const [blocks, setBlocks] = useState<CampaignBlock[]>(
     initialBlocks && initialBlocks.length > 0 ? normalizeBlocks(initialBlocks) : [{ type: "intro", text: "" }]
