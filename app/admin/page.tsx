@@ -841,7 +841,16 @@ export default function AdminPage() {
       playSound("wrong");
       setScanResult({ status: "error", message: data.error });
     } else {
-      if (data.status === "success") { playSound("correct"); loadRegistrations(savedPassword.current); }
+      if (data.status === "success") {
+        playSound("correct");
+        // Optimistic update: mark guest as checked in immediately
+        if (data.email) {
+          setRegistrations(prev => prev.map(r =>
+            r.email === data.email ? { ...r, checked_in: true, checked_in_at: new Date().toISOString() } : r
+          ));
+        }
+        loadRegistrations(savedPassword.current, selectedEventId);
+      }
       else playSound("wrong");
       setScanResult({ status: data.status, name: data.name });
     }
