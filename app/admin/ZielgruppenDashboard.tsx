@@ -48,6 +48,7 @@ export default function ZielgruppenDashboard({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renamingName, setRenamingName] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [zgDeleteConfirm, setZgDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
   const [csvZgId, setCsvZgId] = useState<string | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvResult, setCsvResult] = useState<{ zgId: string; inserted: number } | null>(null);
@@ -236,6 +237,26 @@ export default function ZielgruppenDashboard({
           </div>
         </div>
       )}
+      {/* Zielgruppe delete confirm dialog */}
+      {zgDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+            <div className="h-0.5" style={{ background: "#dc2626" }} />
+            <div className="px-6 pt-6 pb-4">
+              <p className="font-bold text-sm mb-1" style={{ color: "var(--ig-navy)" }}>Zielgruppe löschen</p>
+              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{`„${zgDeleteConfirm.name}“ wirklich löschen? Mitglieder werden nicht gelöscht, aber aus dieser Zielgruppe entfernt.`}</p>
+            </div>
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={() => setZgDeleteConfirm(null)}
+                className={`${btnSecondary} flex-1 py-2`}
+                style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)" }}>Abbrechen</button>
+              <button onClick={() => { deleteZG(zgDeleteConfirm.id); setZgDeleteConfirm(null); }}
+                className={`${btnPrimary} flex-1 py-2`}
+                style={{ background: "#dc2626", color: "white" }}>Löschen</button>
+            </div>
+          </div>
+        </div>
+      )}
       <input ref={csvRef} type="file" accept=".csv" className="hidden"
         onChange={e => {
           const file = e.target.files?.[0];
@@ -295,7 +316,7 @@ export default function ZielgruppenDashboard({
                   <button title="Umbenennen" onClick={() => { setRenamingId(zg.id); setRenamingName(zg.name); }}
                     className={`${btnIcon} opacity-60 hover:opacity-100`}
                     style={{ color: isOpen ? "white" : "var(--ig-gray3)" }}>✎</button>
-                  <button title="Löschen" onClick={() => deleteZG(zg.id)}
+                  <button title="Löschen" aria-label="Zielgruppe löschen" onClick={() => setZgDeleteConfirm({ id: zg.id, name: zg.name })}
                     className={`${btnIcon} opacity-60 hover:opacity-100`}
                     style={{ color: isOpen ? "white" : "var(--ig-gray3)" }}>
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>

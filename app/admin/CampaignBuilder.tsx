@@ -683,6 +683,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
   const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [renameVal, setRenameVal] = useState("");
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const renameRef = useRef<HTMLInputElement>(null);
 
   function startRename(e: React.MouseEvent) {
@@ -730,11 +731,30 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           <button disabled={index === total - 1} onClick={() => onMove(1)}
             className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-65"
             style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↓</button>
-          <button onClick={onRemove}
+          <button onClick={() => setConfirmRemove(true)} aria-label="Block entfernen"
             className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 hover:opacity-65"
             style={{ borderColor: "#fecaca", color: "#dc2626" }}>✕</button>
         </div>
       </div>
+      {confirmRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+            <div className="h-0.5" style={{ background: "#dc2626" }} />
+            <div className="px-6 pt-6 pb-4">
+              <p className="font-bold text-sm mb-1" style={{ color: "#1E3263" }}>Block entfernen</p>
+              <p className="text-xs" style={{ color: "#6b7280" }}>{`„${block.label || getBlockLabel(block.type, "de")}“ wirklich entfernen? (Mit ⌘Z rückgängig zu machen.)`}</p>
+            </div>
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={() => setConfirmRemove(false)}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                style={{ border: "1.5px solid #d1d5db", color: "#1E3263", background: "white" }}>Abbrechen</button>
+              <button onClick={() => { setConfirmRemove(false); onRemove(); }}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
+                style={{ background: "#dc2626" }}>Entfernen</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Body */}
       {open && (
         <div className="p-4">

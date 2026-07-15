@@ -223,6 +223,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
   const [confirmSend, setConfirmSend] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [scheduling, setScheduling] = useState(false);
   const [scheduleValue, setScheduleValue] = useState("");
   const [showTestPanel, setShowTestPanel] = useState(false);
@@ -472,11 +473,20 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                 {duplicating ? "Wird dupliziert…" : "Duplizieren"}
               </button>
             )}
-            <button onClick={() => onDelete(c.id)} className="p-1.5 rounded-lg" style={{ color: "var(--ig-gray3)" }}
+            <button onClick={() => setConfirmDelete(true)} aria-label="Kampagne löschen" className="p-1.5 rounded-lg" style={{ color: "var(--ig-gray3)" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
               <IconTrash className="w-3.5 h-3.5" />
             </button>
+            {confirmDelete && (
+              <ConfirmDialog
+                title="Kampagne löschen"
+                message="Diese Kampagne wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+                danger
+                onConfirm={() => { setConfirmDelete(false); onDelete(c.id); }}
+                onCancel={() => setConfirmDelete(false)}
+              />
+            )}
           </div>
         </div>
         {/* Schedule picker */}
