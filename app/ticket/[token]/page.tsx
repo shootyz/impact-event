@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import QRCode from "qrcode";
 import { T, getLang } from "@/lib/i18n";
 
@@ -17,12 +18,20 @@ function TicketContent() {
   const t = T[lang];
   const [qrUrl, setQrUrl] = useState("");
   const [info, setInfo] = useState<TicketInfo | null>(null);
+  const [status, setStatus] = useState<"loading" | "ready" | "notFound">("loading");
 
   useEffect(() => {
     if (!token) return;
     const ticketUrl = `${window.location.origin}/ticket/${token}`;
     QRCode.toDataURL(ticketUrl, { width: 340, margin: 2, color: { dark: "#1E3263", light: "#FFFFFF" } }).then(setQrUrl);
-    fetch(`/api/ticket/${token}`).then((r) => r.json()).then((d) => { if (!d.error) setInfo(d); });
+    fetch(`/api/ticket/${token}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.error) { setStatus("notFound"); return; }
+        setInfo(d);
+        setStatus("ready");
+      })
+      .catch(() => setStatus("notFound"));
   }, [token]);
 
   const eventDate = info?.event?.date
@@ -47,6 +56,25 @@ function TicketContent() {
         className="min-h-screen flex flex-col items-center justify-center px-4 py-12 no-print-bg"
         style={{ background: "var(--ig-light)" }}
       >
+        {status === "notFound" ? (
+          <div className="w-full max-w-xs sm:max-w-md text-center">
+            <div
+              className="rounded-2xl border p-8 shadow-sm"
+              style={{ background: "white", borderColor: "var(--ig-gray2)" }}
+            >
+              <img src="/logo.png" alt="Impact Gstaad" className="h-8 object-contain mx-auto mb-6" />
+              <h1 className="text-lg font-bold mb-2" style={{ color: "var(--ig-navy)" }}>{t.ticketNotFound}</h1>
+              <p className="text-sm mb-6" style={{ color: "var(--ig-gray3)" }}>{t.ticketNotFoundHint}</p>
+              <Link
+                href="/"
+                className="inline-block py-3 px-6 rounded-xl font-semibold text-sm tracking-widest uppercase"
+                style={{ background: "var(--ig-navy)", color: "white", textDecoration: "none" }}
+              >
+                {t.backToHome}
+              </Link>
+            </div>
+          </div>
+        ) : (
         <div className="w-full max-w-xs sm:max-w-2xl">
 
           {/* Ticket card */}
@@ -167,6 +195,7 @@ function TicketContent() {
             {t.savePdf}
           </a>
         </div>
+        )}
       </main>
     </>
   );

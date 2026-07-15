@@ -559,9 +559,11 @@ export default function AdminPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
   const [event, setEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(false);
   const [eventSection, setEventSection] = useState<null | "mailing" | "management" | "formular">(null);
@@ -592,6 +594,7 @@ export default function AdminPage() {
 
   const [allEventCards, setAllEventCards] = useState<EventCard[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsLoadError, setEventsLoadError] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   // Declared here (not after render vars) so useEffect closures don't create TDZ in minified bundle
   const selectedEvent = allEventCards.find(e => e.id === selectedEventId) ?? null;
@@ -726,20 +729,34 @@ export default function AdminPage() {
 
   const loadRegistrations = useCallback(async (pw: string, evId?: string | null) => {
     setLoading(true);
-    const url = `/api/registrations${evId ? `?eventId=${evId}` : ''}`;
-    const res = await authFetch(url);
-    const data = await res.json();
-    if (data.registrations) { setRegistrations(data.registrations); setEvent(data.event); }
-    setLoading(false);
+    setLoadError(false);
+    try {
+      const url = `/api/registrations${evId ? `?eventId=${evId}` : ''}`;
+      const res = await authFetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.registrations) { setRegistrations(data.registrations); setEvent(data.event); }
+    } catch {
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const loadAllEvents = useCallback(async () => {
     if (!savedPassword.current) return;
     setEventsLoading(true);
-    const res = await authFetch(`/api/admin/events`);
-    const data = await res.json();
-    if (Array.isArray(data)) setAllEventCards(data);
-    setEventsLoading(false);
+    setEventsLoadError(false);
+    try {
+      const res = await authFetch(`/api/admin/events`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data)) setAllEventCards(data);
+    } catch {
+      setEventsLoadError(true);
+    } finally {
+      setEventsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -804,25 +821,34 @@ export default function AdminPage() {
     if (!stored) return;
     fetch("/api/registrations", { headers: { "Authorization": `Bearer ${stored}` } }).then(async (res) => {
       if (res.status === 401) { sessionStorage.removeItem("adminPw"); return; }
+      if (!res.ok) return;
       const data = await res.json();
       savedPassword.current = stored;
       setAuthenticated(true);
       setRegistrations(data.registrations || []);
       setEvent(data.event || null);
-    });
+    }).catch(() => {});
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
-    const res = await fetch("/api/registrations", { headers: { "Authorization": `Bearer ${password}` } });
-    if (res.status === 401) { setAuthError("Falsches Passwort."); return; }
-    savedPassword.current = password;
-    sessionStorage.setItem("adminPw", password);
-    setAuthenticated(true);
-    const data = await res.json();
-    setRegistrations(data.registrations || []);
-    setEvent(data.event || null);
+    setLoginLoading(true);
+    try {
+      const res = await fetch("/api/registrations", { headers: { "Authorization": `Bearer ${password}` } });
+      if (res.status === 401) { setAuthError("Falsches Passwort."); return; }
+      if (!res.ok) { setAuthError("Verbindung fehlgeschlagen. Bitte erneut versuchen."); return; }
+      savedPassword.current = password;
+      sessionStorage.setItem("adminPw", password);
+      setAuthenticated(true);
+      const data = await res.json();
+      setRegistrations(data.registrations || []);
+      setEvent(data.event || null);
+    } catch {
+      setAuthError("Verbindung fehlgeschlagen. Bitte erneut versuchen.");
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   const unlockAndLoadAudio = async () => {
@@ -1121,7 +1147,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
               </button>
             </div>
             {authError && <p className="text-sm text-red-500">{authError}</p>}
-            <div className="flex justify-end"><BtnPrimary type="submit">Anmelden</BtnPrimary></div>
+            <div className="flex justify-end"><BtnPrimary type="submit" disabled={loginLoading}>{loginLoading ? "Anmelden…" : "Anmelden"}</BtnPrimary></div>
           </form>
         </div>
       </main>
@@ -1675,7 +1701,12 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
           )}
 
           {/* Event list / grid */}
-          {eventsLoading ? (
+          {eventsLoadError ? (
+            <div className="py-12 text-center">
+              <p className="text-sm mb-4" style={{ color: "var(--ig-gray3)" }}>Events konnten nicht geladen werden.</p>
+              <BtnPrimary onClick={() => loadAllEvents()}>Erneut versuchen</BtnPrimary>
+            </div>
+          ) : eventsLoading ? (
             <div className="py-12 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div>
           ) : (() => {
             const now = new Date();
@@ -2611,7 +2642,12 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
             />
             {/* Guest list */}
             <Card>
-              {loading ? (
+              {loadError ? (
+                <div className="p-10 text-center">
+                  <p className="text-sm mb-4" style={{ color: "var(--ig-gray3)" }}>Anmeldungen konnten nicht geladen werden.</p>
+                  <BtnPrimary onClick={() => loadRegistrations(savedPassword.current, selectedEventId)}>Erneut versuchen</BtnPrimary>
+                </div>
+              ) : loading ? (
                 <div className="p-10 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Lädt…</div>
               ) : filteredGuests.length === 0 ? (
                 <div className="p-10 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>

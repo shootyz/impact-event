@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { T, getLang } from "@/lib/i18n";
 
 type TicketInfo = {
@@ -19,6 +20,7 @@ function SuccessPageInner() {
   const [info, setInfo] = useState<TicketInfo | null>(null);
   const [resending, setResending] = useState(false);
   const [resendDone, setResendDone] = useState(false);
+  const [status, setStatus] = useState<"loading" | "ready" | "notFound">("loading");
 
   const resendEmail = async () => {
     setResending(true);
@@ -29,8 +31,36 @@ function SuccessPageInner() {
 
   useEffect(() => {
     if (!token) return;
-    fetch(`/api/ticket/${token}`).then(r => r.json()).then(d => { if (!d.error) setInfo(d); });
+    fetch(`/api/ticket/${token}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { setStatus("notFound"); return; }
+        setInfo(d);
+        setStatus("ready");
+      })
+      .catch(() => setStatus("notFound"));
   }, [token]);
+
+  if (status === "notFound") {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "var(--ig-light)" }}>
+        <div className="w-full max-w-md text-center">
+          <div className="rounded-2xl border p-8 shadow-sm" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
+            <img src="/logo.png" alt="Impact Gstaad" className="h-8 object-contain mx-auto mb-6" />
+            <h1 className="text-lg font-bold mb-2" style={{ color: "var(--ig-navy)" }}>{t.ticketNotFound}</h1>
+            <p className="text-sm mb-6" style={{ color: "var(--ig-gray3)" }}>{t.ticketNotFoundHint}</p>
+            <Link
+              href="/"
+              className="inline-block py-3 px-6 rounded-xl font-semibold text-sm tracking-widest uppercase"
+              style={{ background: "var(--ig-navy)", color: "white", textDecoration: "none" }}
+            >
+              {t.backToHome}
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "var(--ig-light)" }}>

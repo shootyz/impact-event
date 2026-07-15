@@ -95,18 +95,38 @@ function HourChart({ data }: { data: { hour: number; count: number }[] }) {
 export default function AnalyticsDashboard({ eventId, adminPassword }: { eventId: string; adminPassword: string }) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    setLoadError(false);
+    fetch(`/api/analytics?eventId=${eventId}`, { headers: { "Authorization": `Bearer ${adminPassword}` } })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(d => setData(d))
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/analytics?eventId=${eventId}`, { headers: { "Authorization": `Bearer ${adminPassword}` } })
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); });
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId, adminPassword]);
 
   if (loading) return (
     <div className="py-16 text-center text-sm" style={{ color: "var(--ig-gray3)" }}>Statistiken werden geladen…</div>
   );
-  if (!data) return null;
+  if (loadError || !data) return (
+    <div className="py-16 text-center">
+      <p className="text-sm mb-4" style={{ color: "var(--ig-gray3)" }}>Statistiken konnten nicht geladen werden.</p>
+      <button
+        onClick={load}
+        className="px-4 py-2 rounded-lg text-sm font-semibold"
+        style={{ background: "var(--ig-navy)", color: "white" }}
+      >
+        Erneut versuchen
+      </button>
+    </div>
+  );
 
   const codeRate = data.inviteCodes.total > 0 ? Math.round((data.inviteCodes.used / data.inviteCodes.total) * 100) : 0;
   const checkinRate = data.registrations.total > 0 ? Math.round((data.registrations.checkedIn / data.registrations.total) * 100) : 0;
