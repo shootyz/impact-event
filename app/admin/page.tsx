@@ -473,7 +473,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                 {duplicating ? "Wird dupliziert…" : "Duplizieren"}
               </button>
             )}
-            <button onClick={() => setConfirmDelete(true)} aria-label="Kampagne löschen" className="p-1.5 rounded-lg" style={{ color: "var(--ig-gray3)" }}
+            <button onClick={() => setConfirmDelete(true)} aria-label="Kampagne löschen" className="w-11 h-11 flex items-center justify-center rounded-lg" style={{ color: "var(--ig-gray3)" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
               <IconTrash className="w-3.5 h-3.5" />
@@ -1792,48 +1792,48 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                             <p className="text-base font-bold" style={{ color: "var(--ig-gold)" }}>{ev.checked_in}<span className="text-xs font-normal" style={{ color: "var(--ig-gray3)" }}>/{ev.total}</span></p>
                           </div>
                         </button>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                        <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition flex-shrink-0">
                           {/* Scanner-Link (list view) */}
-                          <button title="Scanner-Link kopieren"
+                          <button title="Scanner-Link kopieren" aria-label="Scanner-Link kopieren"
                             onClick={e => {
                               e.stopPropagation();
                               const link = `${window.location.origin}/scan/${ev.id}`;
                               navigator.clipboard.writeText(link).then(() => { setCopiedScanLink(ev.id); setTimeout(() => setCopiedScanLink(null), 2000); });
                             }}
-                            className="p-1.5 rounded-lg transition" style={{ color: copiedScanLink === ev.id ? "var(--ig-gold)" : "var(--ig-gray3)" }}
+                            className="w-11 h-11 flex items-center justify-center rounded-lg transition" style={{ color: copiedScanLink === ev.id ? "var(--ig-gold)" : "var(--ig-gray3)" }}
                             onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"}
                             onMouseLeave={e => { if (copiedScanLink !== ev.id) (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}>
                             {copiedScanLink === ev.id
                               ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                               : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>}
                           </button>
-                          <button title="Duplizieren" disabled={duplicatingId === ev.id}
+                          <button title="Duplizieren" aria-label="Event duplizieren" disabled={duplicatingId === ev.id}
                             onClick={e => { e.stopPropagation(); duplicateEvent(ev); }}
-                            className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
+                            className="w-11 h-11 flex items-center justify-center rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
                             onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
                             onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                           </button>
                           {ev.active ? (
-                            <button title="Archivieren"
+                            <button title="Archivieren" aria-label="Event archivieren"
                               onClick={e => { e.stopPropagation(); showConfirm("Event archivieren", `„${ev.name}" archivieren?`, false, async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: false }) }); setDialog(null); loadAllEvents(); }); }}
-                              className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
+                              className="w-11 h-11 flex items-center justify-center rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
                               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"}
                               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
                             </button>
                           ) : (
-                            <button title="Reaktivieren"
+                            <button title="Reaktivieren" aria-label="Event reaktivieren"
                               onClick={e => { e.stopPropagation(); fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: true }) }).then(() => loadAllEvents()); }}
-                              className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
+                              className="w-11 h-11 flex items-center justify-center rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
                               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#16a34a"}
                               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             </button>
                           )}
-                          <button title="Löschen"
+                          <button title="Löschen" aria-label="Event löschen"
                             onClick={e => { e.stopPropagation(); showConfirm("Event löschen", `„${ev.name}" und alle zugehörigen Daten löschen? Nicht rückgängig zu machen.`, true, async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setDialog(null); loadAllEvents(); }); }}
-                            className="p-1.5 rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
+                            className="w-11 h-11 flex items-center justify-center rounded-lg transition" style={{ color: "var(--ig-gray3)" }}
                             onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
                             onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -2483,9 +2483,10 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                               });
                               setFormRegs(prev => prev.map(r => r.id === reg.id ? { ...r, checked_in: newVal } : r));
                             }}
-                            className="p-1.5 rounded-lg transition"
+                            className="w-11 h-11 flex items-center justify-center rounded-lg transition"
                             style={{ color: reg.checked_in ? "#16a34a" : "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}
                             title={reg.checked_in ? "Check-in rückgängig" : "Einchecken"}
+                            aria-label={reg.checked_in ? "Check-in rückgängig" : "Einchecken"}
                           ><IconCheck className="w-4 h-4" /></button>
                         )}
                         <button
@@ -2500,9 +2501,10 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                             setEditRegFields(fields);
                             setEditRegId(reg.id);
                           }}
-                          className="p-1.5 rounded-lg transition"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg transition"
                           style={{ color: editRegId === reg.id ? "var(--ig-gold)" : "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}
                           title="Bearbeiten"
+                          aria-label="Anmeldung bearbeiten"
                         ><IconPencil className="w-4 h-4" /></button>
                         <button
                           onClick={async () => {
@@ -2515,9 +2517,10 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                               setDialog(null);
                             }); return;
                           }}
-                          className="p-1.5 rounded-lg transition"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg transition"
                           style={{ color: "#dc2626" }}
                           title="Löschen"
+                          aria-label="Anmeldung löschen"
                         ><IconTrash className="w-4 h-4" /></button>
                       </div>
                     </div>

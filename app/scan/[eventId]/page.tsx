@@ -220,11 +220,11 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
       <div className="w-full max-w-xs space-y-4">
         <p className="text-center text-sm font-semibold" style={{ color: navy }}>Scanner-PIN eingeben</p>
         <input
-          type="number" inputMode="numeric" pattern="[0-9]*"
+          type="text" inputMode="numeric" pattern="[0-9]*"
           className={inputCls} style={inputStyle}
           placeholder="PIN"
           value={pinInput}
-          onChange={e => setPinInput(e.target.value)}
+          onChange={e => setPinInput(e.target.value.replace(/[^0-9]/g, ""))}
           onKeyDown={e => e.key === "Enter" && tryAuth(pinInput)}
         />
         {authError && <p className="text-sm text-center" style={{ color: "#dc2626" }}>{authError}</p>}
