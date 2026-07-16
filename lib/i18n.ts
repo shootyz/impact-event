@@ -2,8 +2,8 @@ export type Lang = "en" | "de" | "fr";
 
 export function getLang(searchParams: URLSearchParams | { get: (k: string) => string | null }): Lang {
   const l = searchParams.get("lang");
-  if (l === "de" || l === "fr") return l;
-  return "en";
+  if (l === "en" || l === "fr") return l;
+  return "de";
 }
 
 export const T = {
@@ -45,6 +45,8 @@ export const T = {
     backToHome: "Back to homepage",
     loadError: "Something went wrong while loading.",
     retry: "Try again",
+    unsubscribedTitle: "Unsubscribed",
+    unsubscribedMessage: "You have been removed from our mailing list. You will no longer receive event invitations.",
   },
   de: {
     eventRegistration: "Event-Anmeldung",
@@ -84,6 +86,8 @@ export const T = {
     backToHome: "Zurück zur Startseite",
     loadError: "Beim Laden ist etwas schiefgelaufen.",
     retry: "Erneut versuchen",
+    unsubscribedTitle: "Abgemeldet",
+    unsubscribedMessage: "Du wurdest von unserem Mailing entfernt. Du erhältst keine Event-Einladungen mehr.",
   },
   fr: {
     eventRegistration: "Inscription à l'événement",
@@ -123,5 +127,7 @@ export const T = {
     backToHome: "Retour à l'accueil",
     loadError: "Une erreur s'est produite lors du chargement.",
     retry: "Réessayer",
+    unsubscribedTitle: "Désinscrit(e)",
+    unsubscribedMessage: "Vous avez été retiré(e) de notre liste de diffusion. Vous ne recevrez plus d'invitations à des événements.",
   },
 } as const;

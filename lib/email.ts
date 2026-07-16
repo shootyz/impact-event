@@ -34,7 +34,7 @@ const STRINGS = {
 export async function sendConfirmationEmail(
   registration: Registration,
   event: Event,
-  lang: 'en' | 'de' | 'fr' = 'en'
+  lang: 'en' | 'de' | 'fr' = 'de'
 ) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!
   const s = STRINGS[lang] ?? STRINGS.en
@@ -108,7 +108,7 @@ export async function sendConfirmationEmail(
         <!-- Buttons outside card -->
         <tr>
           <td style="padding-bottom:10px;">
-            <a href="${appUrl}/ticket/${registration.qr_token}"
+            <a href="${appUrl}/ticket/${registration.qr_token}?lang=${lang}"
                style="display:block;background:#D28D28;color:#ffffff;text-decoration:none;padding:15px 32px;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-align:center;">
               ${s.showOnline}
             </a>

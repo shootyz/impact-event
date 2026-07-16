@@ -1,4 +1,11 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
+import type { Lang } from "@/lib/i18n";
+
+const PDF_STRINGS = {
+  en: { date: "Date", location: "Location", guest: "Guest", scanHint: "Please show this QR code at the entrance · impactgstaad.ch", placeholder: "The programme for this event will be announced shortly." },
+  de: { date: "Datum", location: "Ort", guest: "Gast", scanHint: "Bitte zeige diesen QR-Code am Eingang · impactgstaad.ch", placeholder: "Das Programm für diesen Event wird in Kürze bekannt gegeben." },
+  fr: { date: "Date", location: "Lieu", guest: "Invité", scanHint: "Veuillez montrer ce QR code à l'entrée · impactgstaad.ch", placeholder: "Le programme de cet événement sera annoncé prochainement." },
+} as const;
 
 const C = {
   navy:  "#1E3263",
@@ -165,6 +172,7 @@ type Props = {
   token: string;
   qrDataUrl: string;
   logoUrl: string;
+  lang?: Lang;
   event: {
     name: string;
     date: string;
@@ -174,9 +182,12 @@ type Props = {
   };
 };
 
+const DATE_LOCALE: Record<Lang, string> = { en: "en-GB", de: "de-DE", fr: "fr-FR" };
+
 // ── PDF Document ──────────────────────────────────────────────────────────────
-export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props) {
-  const eventDate = new Date(event.date).toLocaleDateString("en-GB", {
+export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event, lang = "de" }: Props) {
+  const t = PDF_STRINGS[lang];
+  const eventDate = new Date(event.date).toLocaleDateString(DATE_LOCALE[lang], {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 
@@ -206,15 +217,15 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
 
           <View style={s.infoRow}>
             <View style={s.infoCell}>
-              <Text style={s.infoLabel}>Date</Text>
+              <Text style={s.infoLabel}>{t.date}</Text>
               <Text style={s.infoValue}>{eventDate}</Text>
             </View>
             <View style={s.infoCell}>
-              <Text style={s.infoLabel}>Location</Text>
+              <Text style={s.infoLabel}>{t.location}</Text>
               <Text style={s.infoValue}>{event.location}</Text>
             </View>
             <View style={s.infoCellLast}>
-              <Text style={s.infoLabel}>Guest</Text>
+              <Text style={s.infoLabel}>{t.guest}</Text>
               <Text style={s.infoValueLarge}>{guestName}</Text>
             </View>
             <View style={s.qrBlock}>
@@ -223,7 +234,7 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
           </View>
 
           <View style={s.scanHint}>
-            <Text style={s.scanHintText}>Please show this QR code at the entrance · impactgstaad.ch</Text>
+            <Text style={s.scanHintText}>{t.scanHint}</Text>
           </View>
         </View>
 
@@ -235,7 +246,7 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event }: Props
           {event.program ? (
             <ProgramContent description={event.program} />
           ) : (
-            <Text style={s.placeholder}>The programme for this event will be announced shortly.</Text>
+            <Text style={s.placeholder}>{t.placeholder}</Text>
           )}
         </View>
 

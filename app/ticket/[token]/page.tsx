@@ -182,7 +182,7 @@ function TicketContent() {
 
           {/* Save as PDF button */}
           <a
-            href={`/api/ticket/${token}/pdf`}
+            href={`/api/ticket/${token}/pdf?lang=${lang}`}
             download
             className="no-print mt-5 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
             style={{ background: "var(--ig-gold)", color: "white", border: "1px solid var(--ig-gold)", textDecoration: "none" }}

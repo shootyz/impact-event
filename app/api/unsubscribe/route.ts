@@ -3,6 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
+  const lang = req.nextUrl.searchParams.get('lang')
+  const langSuffix = lang ? `&lang=${lang}` : ''
   if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 })
 
   const db = supabaseAdmin()
@@ -14,7 +16,7 @@ export async function GET(req: NextRequest) {
     .eq('unsubscribe_token', token)
     .single()
 
-  if (!member) return NextResponse.redirect(new URL('/unsubscribe?success=1', req.url))
+  if (!member) return NextResponse.redirect(new URL(`/unsubscribe?success=1${langSuffix}`, req.url))
 
   // Unsubscribe globally — all member rows with this email across all events
   const { error } = await db
@@ -23,5 +25,5 @@ export async function GET(req: NextRequest) {
     .eq('email', member.email)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.redirect(new URL('/unsubscribe?success=1', req.url))
+  return NextResponse.redirect(new URL(`/unsubscribe?success=1${langSuffix}`, req.url))
 }

@@ -1,6 +1,14 @@
 "use client";
 
-export default function UnsubscribePage() {
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { T, getLang } from "@/lib/i18n";
+
+function UnsubscribeContent() {
+  const searchParams = useSearchParams();
+  const lang = getLang(searchParams);
+  const t = T[lang];
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "var(--ig-light)" }}>
       <div className="w-full max-w-md text-center">
@@ -11,15 +19,23 @@ export default function UnsubscribePage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold mb-3" style={{ color: "var(--ig-navy)" }}>Unsubscribed</h1>
+          <h1 className="text-xl font-bold mb-3" style={{ color: "var(--ig-navy)" }}>{t.unsubscribedTitle}</h1>
           <p className="text-sm" style={{ color: "var(--ig-navy)" }}>
-            You have been removed from our mailing list. You will no longer receive event invitations.
+            {t.unsubscribedMessage}
           </p>
           <p className="text-xs mt-4" style={{ color: "var(--ig-gray3)" }}>
-            Questions? <a href="mailto:info@impactgstaad.ch" style={{ color: "var(--ig-navy)", textDecoration: "underline" }}>info@impactgstaad.ch</a>
+            {t.questions} <a href="mailto:info@impactgstaad.ch" style={{ color: "var(--ig-navy)", textDecoration: "underline" }}>info@impactgstaad.ch</a>
           </p>
         </div>
       </div>
     </main>
+  );
+}
+
+export default function UnsubscribePage() {
+  return (
+    <Suspense>
+      <UnsubscribeContent />
+    </Suspense>
   );
 }

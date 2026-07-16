@@ -37,7 +37,7 @@ function buildCampaignHtml({
   bodyHtml,
   eventUrl,
   inviteCode,
-  lang = 'en',
+  lang = 'de',
   campaignId,
 }: {
   appUrl: string
@@ -50,7 +50,7 @@ function buildCampaignHtml({
   lang?: Lang
   campaignId?: string
 }) {
-  const unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${member.unsubscribe_token}`
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe?token=${member.unsubscribe_token}&lang=${lang}`
   const viewInBrowserUrl = campaignId ? `${appUrl}/api/campaigns/${campaignId}/view?token=${member.unsubscribe_token}` : null
   const fullBody = bodyHtml.trimStart().startsWith('<') ? bodyHtml : plainTextToHtml(bodyHtml)
 

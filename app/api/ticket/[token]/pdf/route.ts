@@ -12,6 +12,8 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params;
+  const langParam = req.nextUrl.searchParams.get("lang");
+  const lang = langParam === "en" || langParam === "fr" ? langParam : "de";
 
   const db = supabaseAdmin();
   const { data: reg } = await db
@@ -51,6 +53,7 @@ export async function GET(
     token,
     qrDataUrl,
     logoUrl: logoDataUrl,
+    lang,
     event: { name: event.name, date: event.date, location: event.location, description: event.description, program: event.program },
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
