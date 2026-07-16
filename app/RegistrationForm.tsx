@@ -207,6 +207,7 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
                 value={gateCode}
                 onChange={(e) => setGateCode(e.target.value)}
                 placeholder={t.codePlaceholder}
+                aria-label={t.codePlaceholder}
                 autoFocus
                 className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition text-center tracking-widest uppercase font-semibold"
                 style={inputStyle}
@@ -284,14 +285,15 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
               <form onSubmit={event?.registration_type === "form" ? handleFormSubmit : handleSubmit} className="space-y-4" noValidate>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: t.firstName, value: vorname, set: setVorname, placeholder: t.firstNamePlaceholder, locked: nameLocked, autoComplete: "given-name" },
-                    { label: t.lastName, value: nachname, set: setNachname, placeholder: t.lastNamePlaceholder, locked: nameLocked, autoComplete: "family-name" },
-                  ].map(({ label, value, set, placeholder, locked, autoComplete }) => (
-                    <div key={label}>
-                      <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
+                    { id: "vorname", label: t.firstName, value: vorname, set: setVorname, placeholder: t.firstNamePlaceholder, locked: nameLocked, autoComplete: "given-name" },
+                    { id: "nachname", label: t.lastName, value: nachname, set: setNachname, placeholder: t.lastNamePlaceholder, locked: nameLocked, autoComplete: "family-name" },
+                  ].map(({ id, label, value, set, placeholder, locked, autoComplete }) => (
+                    <div key={id}>
+                      <label htmlFor={id} className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
                         {label} <span style={{ color: "var(--ig-gold)" }}>*</span>
                       </label>
                       <input
+                        id={id}
                         type="text"
                         autoComplete={autoComplete}
                         value={value}
@@ -307,10 +309,11 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
                   ))}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
+                  <label htmlFor="email" className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
                     {t.email} <span style={{ color: "var(--ig-gold)" }}>*</span>
                   </label>
                   <input
+                    id="email"
                     type="email"
                     inputMode="email"
                     autoComplete="email"
@@ -335,12 +338,13 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
                   return fields.map(f => (
                     <div key={f.id}>
                       {f.type !== "checkbox" && (
-                        <label className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
+                        <label htmlFor={f.id} className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
                           {f.label} {f.required && <span style={{ color: "var(--ig-gold)" }}>*</span>}
                         </label>
                       )}
                       {f.type === "textarea" ? (
                         <textarea
+                          id={f.id}
                           value={formValues[f.id] ?? ""}
                           onChange={e => setFormValues(v => ({ ...v, [f.id]: e.target.value }))}
                           placeholder={f.required ? "" : "Optional"}
@@ -352,6 +356,7 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
                         />
                       ) : f.type === "select" ? (
                         <select
+                          id={f.id}
                           value={formValues[f.id] ?? ""}
                           onChange={e => setFormValues(v => ({ ...v, [f.id]: e.target.value }))}
                           className="w-full px-4 py-3 rounded-xl text-sm outline-none"
@@ -391,6 +396,7 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
                         </label>
                       ) : (
                         <input
+                          id={f.id}
                           type="text"
                           value={formValues[f.id] ?? ""}
                           onChange={e => setFormValues(v => ({ ...v, [f.id]: e.target.value }))}

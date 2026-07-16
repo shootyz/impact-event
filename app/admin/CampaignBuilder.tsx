@@ -336,7 +336,7 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
                   <FocusInput value={sub.title} onChange={v => updateSubItem(slot.id, sub.id, { title: v })} placeholder="The New Nature of Business" />
                   <div className="flex gap-2">
                     <FocusInput value={sub.speaker} onChange={v => updateSubItem(slot.id, sub.id, { speaker: v })} placeholder="André Hoffmann · Roche" />
-                    <button onClick={() => removeSubItem(slot.id, sub.id)} className="text-xs px-2 rounded shrink-0" style={{ color: "#dc2626" }}>✕</button>
+                    <button onClick={() => removeSubItem(slot.id, sub.id)} aria-label="Programmpunkt entfernen" className="text-xs px-2 rounded shrink-0" style={{ color: "#dc2626" }}>✕</button>
                   </div>
                 </div>
               ))}
@@ -725,10 +725,10 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           </span>
         )}
         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-          <button disabled={index === 0} onClick={() => onMove(-1)}
+          <button disabled={index === 0} onClick={() => onMove(-1)} aria-label="Block nach oben verschieben"
             className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-65"
             style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↑</button>
-          <button disabled={index === total - 1} onClick={() => onMove(1)}
+          <button disabled={index === total - 1} onClick={() => onMove(1)} aria-label="Block nach unten verschieben"
             className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-65"
             style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↓</button>
           <button onClick={() => setConfirmRemove(true)} aria-label="Block entfernen"
@@ -1141,7 +1141,7 @@ export default function CampaignBuilder({
             {result ? result.msg : autoSaveStatus ?? ""}
           </div>
           <div className="flex items-center gap-2">
-          <button onClick={undo} disabled={!canUndo} title="Rückgängig (⌘Z)"
+          <button onClick={undo} disabled={!canUndo} title="Rückgängig (⌘Z)" aria-label="Letzte Änderung rückgängig machen"
             className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-65 flex items-center justify-center"
             style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↩</button>
           <button disabled={!canSave || saving}

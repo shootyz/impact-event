@@ -1190,6 +1190,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
               onClick={() => { setSelectedEventId(null); setEventSection(null); setEventsStatusTab("aktiv"); stopScanner(); }}
               className="flex items-center shrink-0 cursor-pointer"
               title="Zur Event-Übersicht"
+              aria-label="Zur Event-Übersicht"
             >
               <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
             </button>
@@ -1228,6 +1229,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                 <button
                   onClick={() => { setEventSection(null); stopScanner(); }}
                   title="Bereich wechseln"
+                  aria-label="Bereich wechseln"
                   className="w-8 h-8 rounded-lg flex items-center justify-center transition"
                   style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
@@ -1243,6 +1245,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                 <button
                   onClick={() => setShowScannerPicker(v => !v)}
                   title="Scanner öffnen"
+                  aria-label="Scanner öffnen"
                   className="w-8 h-8 rounded-lg flex items-center justify-center transition"
                   style={{ background: showScannerPicker ? "var(--ig-navy)" : "var(--ig-light)", color: showScannerPicker ? "white" : "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
@@ -1320,6 +1323,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
               <button
                 onClick={() => { sessionStorage.removeItem("adminPw"); savedPassword.current = ""; setAuthenticated(false); setPassword(""); }}
                 title="Abmelden"
+                aria-label="Abmelden"
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition"
                 style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
@@ -1544,7 +1548,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                                     body: JSON.stringify({ ids: [m.id] }),
                                   });
                                   setGlobalMembers(prev => prev.filter(r => r.id !== m.id));
-                                }} className="p-1 rounded transition hover:opacity-70" style={{ color: "#dc2626" }} title="Löschen">
+                                }} className="p-1 rounded transition hover:opacity-70" style={{ color: "#dc2626" }} title="Löschen" aria-label="Mitglied löschen">
                                   <IconTrash className="w-3.5 h-3.5" />
                                 </button>
                               </td>
@@ -1892,7 +1896,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                       </button>
                       <div className="px-4 pb-3 pt-2.5 flex items-center gap-1.5 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
                         {/* Edit */}
-                        <button title="Bearbeiten"
+                        <button title="Bearbeiten" aria-label="Event bearbeiten"
                           onClick={e => { e.stopPropagation(); setEditingEventId(editingEventId === ev.id ? null : ev.id); setEditEvName(ev.name); setEditEvDate(ev.date?.slice(0,16) ?? ""); setEditEvLocation(ev.location); setEditEvDesc(ev.description ?? ""); setEditEvCategory(ev.category ?? ""); setEditEvResult(null); }}
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: `1px solid ${editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-gray2)"}`, color: editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-navy)", background: editingEventId === ev.id ? "var(--ig-light)" : "white" }}
@@ -1902,7 +1906,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                         </button>
                         {/* Portal */}
                         <a href={portalUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                          title="Portal öffnen"
+                          title="Portal öffnen" aria-label="Registrierungsportal öffnen"
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.color = "var(--ig-gold)"; }}
@@ -1911,7 +1915,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                         </a>
                         {/* CSV */}
                         <button onClick={e => { e.stopPropagation(); downloadExport(`/api/export?type=all&eventId=${ev.id}`, `export-${ev.id}.csv`); }}
-                          title="CSV exportieren"
+                          title="CSV exportieren" aria-label="CSV exportieren"
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
@@ -1920,7 +1924,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                         </button>
                         {/* Scanner-Link */}
                         <button
-                          title="Scanner-Link kopieren"
+                          title="Scanner-Link kopieren" aria-label="Scanner-Link kopieren"
                           onClick={e => {
                             e.stopPropagation();
                             const link = `${window.location.origin}/scan/${ev.id}`;
@@ -1935,7 +1939,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                             : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>}
                         </button>
                         {/* Kopie */}
-                        <button title="Duplizieren" disabled={duplicatingId === ev.id}
+                        <button title="Duplizieren" aria-label="Event duplizieren" disabled={duplicatingId === ev.id}
                           onClick={e => { e.stopPropagation(); duplicateEvent(ev); }}
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
@@ -1952,6 +1956,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                             async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current, active: !ev.active }) }); setDialog(null); loadAllEvents(); }
                           ); }}
                           title={ev.active ? "Archivieren" : "Reaktivieren"}
+                          aria-label={ev.active ? "Event archivieren" : "Event reaktivieren"}
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = ev.active ? "var(--ig-gold)" : "#16a34a"; (e.currentTarget as HTMLElement).style.color = ev.active ? "var(--ig-gold)" : "#16a34a"; }}
@@ -1962,7 +1967,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                         </button>
                         {/* Löschen */}
                         <button onClick={e => { e.stopPropagation(); showConfirm("Event löschen", `„${ev.name}" und alle Daten löschen? Nicht rückgängig zu machen.`, true, async () => { await fetch(`/api/admin/events/${ev.id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setDialog(null); loadAllEvents(); }); }}
-                          title="Löschen"
+                          title="Löschen" aria-label="Event löschen"
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: "1px solid var(--ig-gray2)", color: "var(--ig-gray3)", background: "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#fecaca"; (e.currentTarget as HTMLElement).style.color = "#dc2626"; }}
@@ -2793,13 +2798,14 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                         className="p-1 rounded transition text-xs font-semibold" style={{ color: copiedScannerPin === ev.id ? "var(--ig-gold)" : "var(--ig-gray3)", flexShrink: 0 }}
                         onMouseEnter={e => { if (copiedScannerPin !== ev.id) (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"; }}
                         onMouseLeave={e => { if (copiedScannerPin !== ev.id) (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"; }}
-                        title="PIN kopieren">
+                        title="PIN kopieren" aria-label="PIN kopieren">
                         {copiedScannerPin === ev.id
                           ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                           : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>}
                       </button>
                       <button onClick={() => setShowScannerPin(prev => ({ ...prev, [ev.id]: !prev[ev.id] }))}
                         className="p-1 rounded transition" style={{ color: "var(--ig-gray3)" }}
+                        aria-label={showScannerPin[ev.id] ? "PIN verbergen" : "PIN anzeigen"}
                         onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-navy)"}
                         onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
                         <IconEye open={!showScannerPin[ev.id]} className="w-4 h-4" />

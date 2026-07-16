@@ -313,7 +313,7 @@ export default function ZielgruppenDashboard({
                     </span>
                     <svg className="ml-auto w-4 h-4 transition-transform" style={{ color: isOpen ? "white" : "var(--ig-gray3)", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                   </button>
-                  <button title="Umbenennen" onClick={() => { setRenamingId(zg.id); setRenamingName(zg.name); }}
+                  <button title="Umbenennen" aria-label="Zielgruppe umbenennen" onClick={() => { setRenamingId(zg.id); setRenamingName(zg.name); }}
                     className={`${btnIcon} opacity-60 hover:opacity-100`}
                     style={{ color: isOpen ? "white" : "var(--ig-gray3)" }}>✎</button>
                   <button title="Löschen" aria-label="Zielgruppe löschen" onClick={() => setZgDeleteConfirm({ id: zg.id, name: zg.name })}
@@ -398,8 +398,8 @@ export default function ZielgruppenDashboard({
                               <td className="px-3 py-2" />
                               <td className="px-3 py-2">
                                 <div className="flex gap-1.5">
-                                  <button disabled={saving} onClick={saveEdit} className={`${btnPrimary} disabled:opacity-50`} style={{ background: "var(--ig-navy)", color: "white" }}>{saving ? "…" : "✓"}</button>
-                                  <button onClick={() => setEditing(null)} className={btnSecondary} style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>✕</button>
+                                  <button disabled={saving} onClick={saveEdit} aria-label="Änderungen speichern" className={`${btnPrimary} disabled:opacity-50`} style={{ background: "var(--ig-navy)", color: "white" }}>{saving ? "…" : "✓"}</button>
+                                  <button onClick={() => setEditing(null)} aria-label="Bearbeiten abbrechen" className={btnSecondary} style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>✕</button>
                                 </div>
                               </td>
                             </>
@@ -429,8 +429,10 @@ export default function ZielgruppenDashboard({
                               <td className="px-3 py-2">
                                 <div className="flex gap-1.5 justify-end">
                                   <button onClick={() => setEditing({ id: m.id, first_name: m.first_name, last_name: m.last_name, email: m.email, anrede: m.anrede || "", sprache: m.sprache || "de" })}
+                                    aria-label="Mitglied bearbeiten"
                                     className={`${btnSecondary} hover:border-[var(--ig-navy)] hover:text-[var(--ig-navy)]`} style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>✎</button>
                                   <button onClick={() => setDeleteConfirm({ id: m.id, name: `${m.first_name} ${m.last_name}` })}
+                                    aria-label="Mitglied löschen"
                                     className={`${btnSecondary} hover:bg-red-50`} style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid var(--ig-gray2)" }}>
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                   </button>
