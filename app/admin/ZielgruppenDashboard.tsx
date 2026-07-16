@@ -25,6 +25,15 @@ type EditingMember = {
 type NewMember = { first_name: string; last_name: string; email: string; anrede: string; sprache: string };
 const emptyNew = (): NewMember => ({ first_name: "", last_name: "", email: "", anrede: "", sprache: "de" });
 
+type CsvRow = { first_name: string; last_name: string; email: string; anrede: string; sprache: string | null };
+type CsvPreview = {
+  zgId: string;
+  file: File;
+  rows: CsvRow[];
+  detectedColumns: string[];
+  missingColumns: string[];
+};
+
 export default function ZielgruppenDashboard({
   zielgruppen, members, eventId, adminPassword,
   onMembersChange, onZielgruppeChange,
@@ -52,6 +61,7 @@ export default function ZielgruppenDashboard({
   const [csvZgId, setCsvZgId] = useState<string | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvResult, setCsvResult] = useState<{ zgId: string; inserted: number } | null>(null);
+  const [csvPreview, setCsvPreview] = useState<CsvPreview | null>(null);
   const [searchQuery, setSearchQuery] = useState<Record<string, string>>({});
   const [showUnsub, setShowUnsub] = useState<Record<string, boolean>>({});
   const csvRef = useRef<HTMLInputElement>(null);
@@ -119,8 +129,7 @@ export default function ZielgruppenDashboard({
     setAdding(false);
   }
 
-  async function importCsv(zgId: string, file: File) {
-    setCsvImporting(true);
+  async function prepareCsvImport(zgId: string, file: File) {
     setCsvResult(null);
     const text = await file.text();
     const lines = text.trim().split(/\r?\n/);
@@ -132,12 +141,13 @@ export default function ZielgruppenDashboard({
     const iEmail = headers.findIndex(h => h === "email" || h === "e-mail");
     const iAnrede = headers.findIndex(h => h === "anrede");
     const iSprache = headers.findIndex(h => h === "sprache");
-    if (iFirst < 0 || iLast < 0 || iEmail < 0) {
-      setCsvResult({ zgId, inserted: -1 });
-      setCsvImporting(false);
-      return;
-    }
-    const rows = lines.slice(1).filter(l => l.trim()).map(l => {
+    const missingColumns = [
+      iFirst < 0 ? "Vorname" : null,
+      iLast < 0 ? "Nachname" : null,
+      iEmail < 0 ? "E-Mail" : null,
+    ].filter((x): x is string => x !== null);
+
+    const rows = missingColumns.length > 0 ? [] : lines.slice(1).filter(l => l.trim()).map(l => {
       const cols = splitLine(l);
       const spracheRaw = iSprache >= 0 ? (cols[iSprache] ?? "").toLowerCase() : "";
       return {
@@ -148,6 +158,22 @@ export default function ZielgruppenDashboard({
         sprache: spracheRaw || null,
       };
     }).filter(r => r.email);
+
+    const detectedColumns = [
+      iFirst >= 0 && "Vorname",
+      iLast >= 0 && "Nachname",
+      iEmail >= 0 && "E-Mail",
+      iAnrede >= 0 && "Anrede",
+      iSprache >= 0 && "Sprache",
+    ].filter((x): x is string => Boolean(x));
+
+    setCsvPreview({ zgId, file, rows, detectedColumns, missingColumns });
+  }
+
+  async function confirmCsvImport() {
+    if (!csvPreview) return;
+    const { zgId, rows } = csvPreview;
+    setCsvImporting(true);
     const res = await fetch("/api/members", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -158,6 +184,13 @@ export default function ZielgruppenDashboard({
     const updated = await fetch(`/api/members?eventId=${eventId}`, { headers: { "Authorization": `Bearer ${adminPassword}` } }).then(r => r.json());
     if (Array.isArray(updated)) onMembersChange(updated);
     setCsvImporting(false);
+    setCsvZgId(null);
+    setCsvPreview(null);
+    if (csvRef.current) csvRef.current.value = "";
+  }
+
+  function cancelCsvImport() {
+    setCsvPreview(null);
     setCsvZgId(null);
     if (csvRef.current) csvRef.current.value = "";
   }
@@ -257,10 +290,64 @@ export default function ZielgruppenDashboard({
           </div>
         </div>
       )}
+      {/* CSV import preview dialog */}
+      {csvPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
+          <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+            <div className="h-0.5" style={{ background: csvPreview.missingColumns.length > 0 ? "#dc2626" : "var(--ig-gold)" }} />
+            <div className="px-6 pt-6 pb-4">
+              <p className="font-bold text-sm mb-1" style={{ color: "var(--ig-navy)" }}>CSV-Import prüfen</p>
+              <p className="text-xs mb-3" style={{ color: "var(--ig-gray3)" }}>{csvPreview.file.name}</p>
+
+              {csvPreview.missingColumns.length > 0 ? (
+                <p className="text-xs" style={{ color: "#dc2626" }}>
+                  {`Pflichtspalten fehlen: ${csvPreview.missingColumns.join(", ")}. Erwartet werden Spalten für Vorname, Nachname und E-Mail (z.B. „first_name“/„vorname“, „last_name“/„name“, „email“).`}
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs mb-3" style={{ color: "var(--ig-navy)" }}>
+                    <span className="font-semibold">{csvPreview.rows.length}</span> Zeilen erkannt · Spalten: {csvPreview.detectedColumns.join(", ")}
+                  </p>
+                  {csvPreview.rows.length > 0 && (
+                    <div className="rounded-lg border overflow-hidden mb-1" style={{ borderColor: "var(--ig-gray2)" }}>
+                      <table className="w-full text-xs">
+                        <tbody>
+                          {csvPreview.rows.slice(0, 5).map((r, i) => (
+                            <tr key={i} className="border-t first:border-t-0" style={{ borderColor: "var(--ig-gray2)" }}>
+                              <td className="px-2.5 py-1.5" style={{ color: "var(--ig-navy)" }}>{r.first_name} {r.last_name}</td>
+                              <td className="px-2.5 py-1.5" style={{ color: "var(--ig-gray3)" }}>{r.email}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {csvPreview.rows.length > 5 && (
+                        <p className="text-xs px-2.5 py-1.5 border-t" style={{ color: "var(--ig-gray3)", borderColor: "var(--ig-gray2)" }}>
+                          … und {csvPreview.rows.length - 5} weitere
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={cancelCsvImport}
+                className={`${btnSecondary} flex-1 py-2`}
+                style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)" }}>Abbrechen</button>
+              <button onClick={confirmCsvImport}
+                disabled={csvPreview.missingColumns.length > 0 || csvPreview.rows.length === 0 || csvImporting}
+                className={`${btnPrimary} flex-1 py-2`}
+                style={{ background: "var(--ig-navy)", color: "white" }}>
+                {csvImporting ? "Importiert…" : `Import starten (${csvPreview.rows.length})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <input ref={csvRef} type="file" accept=".csv" className="hidden"
         onChange={e => {
           const file = e.target.files?.[0];
-          if (file && csvZgId) importCsv(csvZgId, file);
+          if (file && csvZgId) prepareCsvImport(csvZgId, file);
         }} />
 
       {/* Create new Zielgruppe — top */}
