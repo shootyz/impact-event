@@ -473,10 +473,10 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                 {duplicating ? "Wird dupliziert…" : "Duplizieren"}
               </button>
             )}
-            <button onClick={() => setConfirmDelete(true)} aria-label="Kampagne löschen" className="w-11 h-11 flex items-center justify-center rounded-lg" style={{ color: "var(--ig-gray3)" }}
+            <button onClick={() => setConfirmDelete(true)} aria-label="Kampagne löschen" className="h-11 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-all active:scale-95" style={{ color: "var(--ig-gray3)" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
-              <IconTrash className="w-3.5 h-3.5" />
+              <IconTrash className="w-3.5 h-3.5" /> Löschen
             </button>
             {confirmDelete && (
               <ConfirmDialog
@@ -608,6 +608,9 @@ export default function AdminPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   // Declared here (not after render vars) so useEffect closures don't create TDZ in minified bundle
   const selectedEvent = allEventCards.find(e => e.id === selectedEventId) ?? null;
+  useEffect(() => {
+    document.title = selectedEvent ? `${selectedEvent.name} – Impact Gstaad Admin` : "Admin – Impact Gstaad";
+  }, [selectedEvent]);
   const [eventPwInputs, setEventPwInputs] = useState<Record<string, string>>({});
   const [eventPwResults, setEventPwResults] = useState<Record<string, { ok: boolean; msg: string } | null>>({});
   const [eventPwLoading, setEventPwLoading] = useState<Record<string, boolean>>({});

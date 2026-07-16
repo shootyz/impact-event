@@ -41,6 +41,10 @@ function SuccessPageInner() {
       .catch(() => setStatus("notFound"));
   }, [token]);
 
+  useEffect(() => {
+    document.title = "Anmeldung bestätigt – Impact Gstaad";
+  }, []);
+
   if (status === "notFound") {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "var(--ig-light)" }}>

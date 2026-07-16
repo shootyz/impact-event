@@ -22,6 +22,13 @@ function getBlockLabel(type: CampaignBlock["type"], lang: Lang): string {
   return BLOCK_LABEL_TRANSLATIONS[lang][type] ?? type;
 }
 
+const IconXSmall = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+);
+const IconPencilSmall = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+);
+
 // ── Sub-editors ───────────────────────────────────────────────────────────────
 
 const inputCls = "w-full rounded-lg border px-3 py-2 text-sm outline-none transition";
@@ -56,6 +63,9 @@ function FocusInput({ value, onChange, placeholder, multiline, rows }: {
 function RichTextEditor({ value, onChange, minHeight = 120 }: {
   value: string; onChange: (v: string) => void; minHeight?: number;
 }) {
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUrlInput, setLinkUrlInput] = useState("https://");
+
   const editor = useEditor({
     extensions: [StarterKit, Link.configure({ openOnClick: false, autolink: true })],
     content: value || "",
@@ -97,10 +107,8 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
         <button type="button" onMouseDown={e => {
           e.preventDefault();
           if (editor.isActive("link")) { editor.chain().focus().unsetLink().run(); return; }
-          const url = window.prompt("URL oder E-Mail eingeben:", "https://");
-          if (!url) return;
-          const href = url.includes("@") && !url.startsWith("http") ? `mailto:${url}` : url;
-          editor.chain().focus().setLink({ href }).run();
+          setLinkUrlInput("https://");
+          setLinkDialogOpen(true);
         }} style={editor.isActive("link") ? btnActive : btnBase}>🔗 Link</button>
       </div>
       {/* Editor */}
@@ -115,6 +123,45 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
         `}</style>
         <EditorContent editor={editor} />
       </div>
+      {linkDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+            <div className="px-6 pt-6 pb-4">
+              <p className="font-bold text-sm mb-3" style={{ color: "#1E3263" }}>Link einfügen</p>
+              <input
+                autoFocus
+                value={linkUrlInput}
+                onChange={e => setLinkUrlInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!linkUrlInput.trim()) return;
+                    const href = linkUrlInput.includes("@") && !linkUrlInput.startsWith("http") ? `mailto:${linkUrlInput}` : linkUrlInput;
+                    editor.chain().focus().setLink({ href }).run();
+                    setLinkDialogOpen(false);
+                  }
+                }}
+                placeholder="https://... oder name@example.com"
+                className={inputCls}
+                style={inputSty}
+              />
+            </div>
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={() => setLinkDialogOpen(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
+                style={{ border: "1.5px solid #d1d5db", color: "#1E3263", background: "white" }}>Abbrechen</button>
+              <button onClick={() => {
+                if (!linkUrlInput.trim()) return;
+                const href = linkUrlInput.includes("@") && !linkUrlInput.startsWith("http") ? `mailto:${linkUrlInput}` : linkUrlInput;
+                editor.chain().focus().setLink({ href }).run();
+                setLinkDialogOpen(false);
+              }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
+                style={{ background: "#1E3263" }}>Einfügen</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -336,7 +383,7 @@ function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b:
                   <FocusInput value={sub.title} onChange={v => updateSubItem(slot.id, sub.id, { title: v })} placeholder="The New Nature of Business" />
                   <div className="flex gap-2">
                     <FocusInput value={sub.speaker} onChange={v => updateSubItem(slot.id, sub.id, { speaker: v })} placeholder="André Hoffmann · Roche" />
-                    <button onClick={() => removeSubItem(slot.id, sub.id)} aria-label="Programmpunkt entfernen" className="text-xs px-2 rounded shrink-0" style={{ color: "#dc2626" }}>✕</button>
+                    <button onClick={() => removeSubItem(slot.id, sub.id)} aria-label="Programmpunkt entfernen" className="text-xs px-2 rounded shrink-0 flex items-center" style={{ color: "#dc2626" }}><IconXSmall className="w-3 h-3" /></button>
                   </div>
                 </div>
               ))}
@@ -448,7 +495,7 @@ function ModerationEditor({ block, onChange }: { block: ModerationBlock; onChang
   );
 }
 
-async function uploadImageFile(file: File, onChange: (url: string) => void, setUploading: (v: boolean) => void, adminPassword?: string): Promise<string | null> {
+async function uploadImageFile(file: File, onChange: (url: string) => void, setUploading: (v: boolean) => void, adminPassword?: string, onError?: (msg: string) => void): Promise<string | null> {
   setUploading(true);
   try {
     const fd = new FormData(); fd.append("file", file);
@@ -457,10 +504,10 @@ async function uploadImageFile(file: File, onChange: (url: string) => void, setU
     const res = await fetch("/api/upload", { method: "POST", body: fd, headers });
     const d = await res.json();
     if (d.url) { onChange(d.url); return d.url; }
-    alert(d.error ?? "Upload fehlgeschlagen.");
+    onError?.(d.error ?? "Upload fehlgeschlagen.");
     return null;
   } catch (e) {
-    alert("Upload fehlgeschlagen: " + (e instanceof Error ? e.message : String(e)));
+    onError?.("Upload fehlgeschlagen: " + (e instanceof Error ? e.message : String(e)));
     return null;
   } finally {
     setUploading(false);
@@ -472,13 +519,15 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove, adminPassword 
   const [uploading, setUploading] = useState(false);
   const [photoUrlInput, setPhotoUrlInput] = useState("");
   const [showPhotoUrl, setShowPhotoUrl] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   return (
     <div className="space-y-3">
       <div className="flex gap-3 items-center flex-wrap">
         <div className="flex gap-2 items-center flex-wrap">
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async e => {
             const file = e.target.files?.[0]; if (!file) return;
-            await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading, adminPassword);
+            setUploadError(null);
+            await uploadImageFile(file, url => onChange({ ...sp, photo_url: url }), setUploading, adminPassword, setUploadError);
             if (fileRef.current) fileRef.current.value = "";
           }} />
           <button type="button" onClick={() => fileRef.current?.click()}
@@ -499,6 +548,7 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove, adminPassword 
         </div>
         {canRemove && <button onClick={onRemove} className="ml-auto text-xs" style={{ color: "var(--ig-gray3)" }}>Entfernen</button>}
       </div>
+      {uploadError && <p className="text-xs" style={{ color: "#dc2626" }}>{uploadError}</p>}
       {showPhotoUrl && (
         <div className="flex gap-2">
           <FocusInput value={photoUrlInput} onChange={setPhotoUrlInput} placeholder="https://…/portrait.jpg" />
@@ -653,9 +703,9 @@ function CustomFieldsEditor({ block, onChange }: { block: CampaignBlock; onChang
           <input value={f.value} onChange={e => update(f.id, { value: e.target.value })}
             placeholder="Inhalt" className="flex-1 rounded-lg border px-2 py-1.5 text-xs"
             style={{ borderColor: "#d1d5db", color: "#1E3263", outline: "none" }} />
-          <button onClick={() => remove(f.id)}
-            className="w-6 h-6 rounded border text-xs font-bold flex-shrink-0"
-            style={{ borderColor: "#fecaca", color: "#dc2626" }}>✕</button>
+          <button onClick={() => remove(f.id)} aria-label="Feld entfernen"
+            className="w-6 h-6 rounded border text-xs font-bold flex-shrink-0 flex items-center justify-center"
+            style={{ borderColor: "#fecaca", color: "#dc2626" }}><IconXSmall className="w-3 h-3" /></button>
         </div>
       ))}
       <button onClick={add}
@@ -721,7 +771,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           <span className="font-semibold text-sm flex-1 flex items-center gap-1.5 group/title" style={{ color: "#1E3263" }}
             onDoubleClick={startRename}>
             {block.label || getBlockLabel(block.type, "de")}
-            <span onClick={startRename} className="opacity-0 group-hover/title:opacity-60 transition cursor-pointer text-xs" title="Umbenennen" style={{ color: "#9ca3af" }}>✎</span>
+            <span onClick={startRename} className="opacity-0 group-hover/title:opacity-60 transition cursor-pointer" title="Umbenennen" style={{ color: "#9ca3af" }}><IconPencilSmall className="w-3 h-3" /></span>
           </span>
         )}
         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
@@ -732,8 +782,8 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
             className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 disabled:opacity-30 hover:opacity-65"
             style={{ borderColor: "#d1d5db", color: "#6b7280" }}>↓</button>
           <button onClick={() => setConfirmRemove(true)} aria-label="Block entfernen"
-            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 hover:opacity-65"
-            style={{ borderColor: "#fecaca", color: "#dc2626" }}>✕</button>
+            className="w-7 h-7 rounded-lg border text-xs font-bold transition active:scale-95 hover:opacity-65 flex items-center justify-center"
+            style={{ borderColor: "#fecaca", color: "#dc2626" }}><IconXSmall className="w-3.5 h-3.5" /></button>
         </div>
       </div>
       {confirmRemove && (
@@ -855,7 +905,7 @@ export default function CampaignBuilder({
   onSwitchLang?: (id: string) => void;
   adminPassword?: string;
 }) {
-  const [lang, setLang] = useState<Lang>(initialLang ?? "en");
+  const [lang, setLang] = useState<Lang>(initialLang ?? "de");
   const [title, setTitle] = useState(initialTitle ?? "");
   const [subject, setSubject] = useState(initialSubject ?? "");
   const [eventUrl, setEventUrl] = useState(() => {

@@ -34,6 +34,10 @@ function TicketContent() {
       .catch(() => setStatus("notFound"));
   }, [token]);
 
+  useEffect(() => {
+    document.title = info?.event?.name ? `Ticket: ${info.event.name} – Impact Gstaad` : "Ticket – Impact Gstaad";
+  }, [info?.event?.name]);
+
   const eventDate = info?.event?.date
     ? new Date(info.event.date).toLocaleDateString(t.dateLocale, {
         weekday: "long", day: "numeric", month: "long", year: "numeric",
@@ -166,9 +170,6 @@ function TicketContent() {
                 ) : (
                   <div className="w-full aspect-square rounded-xl animate-pulse" style={{ background: "var(--ig-light)" }} />
                 )}
-                <p className="text-xs mt-3 font-mono text-center break-all" style={{ color: "var(--ig-gray3)" }}>
-                  {token?.substring(0, 8)}…
-                </p>
               </div>
 
               {/* Footer */}

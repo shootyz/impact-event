@@ -17,6 +17,13 @@ const btnPrimary = "transition hover:opacity-70 active:scale-95 disabled:opacity
 const btnSecondary = "transition hover:opacity-65 active:scale-95 text-xs px-3 py-1.5 rounded-lg";
 const btnIcon = "transition hover:opacity-100 active:scale-95 p-2 rounded-lg min-w-11 min-h-11 flex items-center justify-center";
 
+const IconPencilSmall = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+);
+const IconXSmall = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+);
+
 type EditingMember = {
   id: string; first_name: string; last_name: string;
   email: string; anrede: string; sprache: string;
@@ -402,7 +409,7 @@ export default function ZielgruppenDashboard({
                   </button>
                   <button title="Umbenennen" aria-label="Zielgruppe umbenennen" onClick={() => { setRenamingId(zg.id); setRenamingName(zg.name); }}
                     className={`${btnIcon} opacity-60 hover:opacity-100`}
-                    style={{ color: isOpen ? "white" : "var(--ig-gray3)" }}>✎</button>
+                    style={{ color: isOpen ? "white" : "var(--ig-gray3)" }}><IconPencilSmall /></button>
                   <button title="Löschen" aria-label="Zielgruppe löschen" onClick={() => setZgDeleteConfirm({ id: zg.id, name: zg.name })}
                     className={`${btnIcon} opacity-60 hover:opacity-100`}
                     style={{ color: isOpen ? "white" : "var(--ig-gray3)" }}>
@@ -451,6 +458,8 @@ export default function ZielgruppenDashboard({
                 </div>
 
                 {list.length > 0 ? (
+                  <>
+                  <p className="sm:hidden text-xs px-4 pt-2" style={{ color: "var(--ig-gray3)" }}>→ Nach rechts wischen für weitere Spalten</p>
                   <div className="overflow-x-auto">
                   <table className="w-full text-xs" style={{ borderCollapse: "collapse", minWidth: 560 }}>
                     <thead>
@@ -486,7 +495,7 @@ export default function ZielgruppenDashboard({
                               <td className="px-3 py-2">
                                 <div className="flex gap-1.5">
                                   <button disabled={saving} onClick={saveEdit} aria-label="Änderungen speichern" className={`${btnPrimary} disabled:opacity-50`} style={{ background: "var(--ig-navy)", color: "white" }}>{saving ? "…" : "✓"}</button>
-                                  <button onClick={() => setEditing(null)} aria-label="Bearbeiten abbrechen" className={btnSecondary} style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}>✕</button>
+                                  <button onClick={() => setEditing(null)} aria-label="Bearbeiten abbrechen" className={btnSecondary} style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1.5px solid var(--ig-gray2)" }}><IconXSmall className="w-3 h-3" /></button>
                                 </div>
                               </td>
                             </>
@@ -517,7 +526,7 @@ export default function ZielgruppenDashboard({
                                 <div className="flex gap-1.5 justify-end">
                                   <button onClick={() => setEditing({ id: m.id, first_name: m.first_name, last_name: m.last_name, email: m.email, anrede: m.anrede || "", sprache: m.sprache || "de" })}
                                     aria-label="Mitglied bearbeiten"
-                                    className={`${btnSecondary} hover:border-[var(--ig-navy)] hover:text-[var(--ig-navy)]`} style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>✎</button>
+                                    className={`${btnSecondary} hover:border-[var(--ig-navy)] hover:text-[var(--ig-navy)]`} style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}><IconPencilSmall className="w-3 h-3" /></button>
                                   <button onClick={() => setDeleteConfirm({ id: m.id, name: `${m.first_name} ${m.last_name}` })}
                                     aria-label="Mitglied löschen"
                                     className={`${btnSecondary} hover:bg-red-50`} style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid var(--ig-gray2)" }}>
@@ -532,6 +541,7 @@ export default function ZielgruppenDashboard({
                     </tbody>
                   </table>
                   </div>
+                  </>
                 ) : (
                   <div className="flex flex-col items-center py-8 gap-2">
                     <svg className="w-8 h-8 opacity-20" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" style={{ color: "var(--ig-navy)" }}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>

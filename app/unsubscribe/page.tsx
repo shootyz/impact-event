@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { T, getLang } from "@/lib/i18n";
 
@@ -8,6 +8,10 @@ function UnsubscribeContent() {
   const searchParams = useSearchParams();
   const lang = getLang(searchParams);
   const t = T[lang];
+
+  useEffect(() => {
+    document.title = "Abgemeldet – Impact Gstaad";
+  }, []);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-6 py-12" style={{ background: "var(--ig-light)" }}>

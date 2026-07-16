@@ -32,6 +32,7 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmDeleteReg, setConfirmDeleteReg] = useState<Registration | null>(null);
 
   // Manual registration
   const [showManual, setShowManual] = useState(false);
@@ -56,6 +57,10 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
       }
     });
   }, [params]);
+
+  useEffect(() => {
+    document.title = eventName ? `Scanner: ${eventName} – Impact Gstaad` : "Scanner – Impact Gstaad";
+  }, [eventName]);
 
   async function tryAuth(p: string) {
     setAuthError("");
@@ -161,7 +166,6 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   }
 
   async function handleDelete(r: Registration) {
-    if (!confirm(`${r.name} wirklich löschen?`)) return;
     const key = (r.form_reg_id ?? r.id) + "-delete";
     setActionLoading(key);
     if (r.form_reg_id) {
@@ -244,6 +248,26 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
   // ── Main scanner UI ──
   return (
     <div className="min-h-screen flex flex-col" style={{ background: light }}>
+      {/* Delete confirm dialog */}
+      {confirmDeleteReg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+            <div className="h-0.5" style={{ background: "#dc2626" }} />
+            <div className="px-6 pt-6 pb-4">
+              <p className="font-bold text-sm mb-1" style={{ color: navy }}>Anmeldung löschen</p>
+              <p className="text-xs" style={{ color: gray3 }}>{`${confirmDeleteReg.name} wirklich löschen?`}</p>
+            </div>
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={() => setConfirmDeleteReg(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
+                style={{ border: `1.5px solid ${gray2}`, color: navy, background: "white" }}>Abbrechen</button>
+              <button onClick={() => { const r = confirmDeleteReg; setConfirmDeleteReg(null); handleDelete(r); }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
+                style={{ background: "#dc2626" }}>Löschen</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ background: "white", borderColor: gray2 }}>
         <img src="/logo.png" alt="Impact Gstaad" className="h-7 object-contain" />
@@ -399,7 +423,7 @@ export default function ScannerPage({ params }: { params: Promise<{ eventId: str
                       {actionLoading === r.id + "-checkin" ? "…" : r.checked_in ? "✓ Eingecheckt" : "Einchecken"}
                     </button>
                     <button
-                      onClick={() => handleDelete(r)}
+                      onClick={() => setConfirmDeleteReg(r)}
                       disabled={actionLoading === r.id + "-delete"}
                       className="py-2 px-4 rounded-xl text-sm font-semibold transition disabled:opacity-40"
                       style={{ background: "white", color: "#dc2626", border: "1.5px solid #fca5a5" }}>
