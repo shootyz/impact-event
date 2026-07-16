@@ -1545,12 +1545,15 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                                   : <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#15803D" }}>Aktiv</span>}
                               </td>
                               <td className="px-3 py-2 text-right">
-                                <button onClick={async () => {
-                                  await fetch("/api/admin/global-members", {
-                                    method: "DELETE", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${savedPassword.current}` },
-                                    body: JSON.stringify({ ids: [m.id] }),
+                                <button onClick={() => {
+                                  showConfirm("Mitglied löschen", `${m.first_name} ${m.last_name} wirklich löschen?`, true, async () => {
+                                    await fetch("/api/admin/global-members", {
+                                      method: "DELETE", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${savedPassword.current}` },
+                                      body: JSON.stringify({ ids: [m.id] }),
+                                    });
+                                    setGlobalMembers(prev => prev.filter(r => r.id !== m.id));
+                                    setDialog(null);
                                   });
-                                  setGlobalMembers(prev => prev.filter(r => r.id !== m.id));
                                 }} className="p-1 rounded transition hover:opacity-70" style={{ color: "#dc2626" }} title="Löschen" aria-label="Mitglied löschen">
                                   <IconTrash className="w-3.5 h-3.5" />
                                 </button>
