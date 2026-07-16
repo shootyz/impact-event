@@ -41,6 +41,6 @@ export async function POST(req: NextRequest) {
 
   if (error || !registration) return NextResponse.json({ error: 'Fehler beim Speichern.' }, { status: 500 })
 
-  try { await sendConfirmationEmail(registration, event, 'de') } catch (e) { console.error('E-Mail-Fehler:', e) }
+  try { await sendConfirmationEmail(registration, event, 'en') } catch (e) { console.error('E-Mail-Fehler:', e) }
   return NextResponse.json({ ok: true })
 }

@@ -2,8 +2,8 @@ export type Lang = "en" | "de" | "fr";
 
 export function getLang(searchParams: URLSearchParams | { get: (k: string) => string | null }): Lang {
   const l = searchParams.get("lang");
-  if (l === "en" || l === "fr") return l;
-  return "de";
+  if (l === "de" || l === "fr") return l;
+  return "en";
 }
 
 export const T = {

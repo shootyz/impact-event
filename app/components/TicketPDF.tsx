@@ -185,7 +185,7 @@ type Props = {
 const DATE_LOCALE: Record<Lang, string> = { en: "en-GB", de: "de-DE", fr: "fr-FR" };
 
 // ── PDF Document ──────────────────────────────────────────────────────────────
-export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event, lang = "de" }: Props) {
+export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event, lang = "en" }: Props) {
   const t = PDF_STRINGS[lang];
   const eventDate = new Date(event.date).toLocaleDateString(DATE_LOCALE[lang], {
     weekday: "long", day: "numeric", month: "long", year: "numeric",

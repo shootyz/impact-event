@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const { data: event } = await db.from('events').select('*').eq('id', result.event_id!).single()
     const { data: registration } = await db.from('registrations').select('*').eq('id', result.id!).single()
     if (event && registration) {
-      const emailLang = lang === 'en' ? 'en' : lang === 'fr' ? 'fr' : 'de'
+      const emailLang = lang === 'de' ? 'de' : lang === 'fr' ? 'fr' : 'en'
       await sendConfirmationEmail(registration, event, emailLang)
     }
   } catch (emailError) {

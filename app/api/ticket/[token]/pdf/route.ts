@@ -13,7 +13,7 @@ export async function GET(
 ) {
   const { token } = await params;
   const langParam = req.nextUrl.searchParams.get("lang");
-  const lang = langParam === "en" || langParam === "fr" ? langParam : "de";
+  const lang = langParam === "de" || langParam === "fr" ? langParam : "en";
 
   const db = supabaseAdmin();
   const { data: reg } = await db

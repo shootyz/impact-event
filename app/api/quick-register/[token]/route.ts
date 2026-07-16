@@ -17,7 +17,7 @@ export async function GET(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!
   const lang = req.nextUrl.searchParams.get('lang') ?? ''
   const eventId = req.nextUrl.searchParams.get('event') ?? ''
-  const langSuffix = lang && lang !== 'de' ? `?lang=${lang}` : ''
+  const langSuffix = lang && lang !== 'en' ? `?lang=${lang}` : ''
   const db = supabaseAdmin()
 
   const inviteResult = await db
@@ -86,7 +86,7 @@ export async function GET(
     return NextResponse.redirect(`${appUrl}/${langSuffix}`)
   }
 
-  const emailLang = lang === 'en' ? 'en' : lang === 'fr' ? 'fr' : 'de'
+  const emailLang = lang === 'de' ? 'de' : lang === 'fr' ? 'fr' : 'en'
   after(async () => {
     await db.from('invite_codes').update({ used: true }).eq('id', invite.id)
     try {

@@ -14,7 +14,7 @@ Eine vorgelagerte UI/UX-Analyse (`ui-ux-befund.md` im Projektroot) hat konkrete 
 - **Keine neuen Dependencies ohne Rückfrage** (z.B. kein Toast-Library, kein neues Icon-Set, keine Virtualisierungs-Library — auch wenn im Befund als mögliche Zukunftsoption erwähnt).
 - **"Bleibt so"-Liste beachten** (siehe unten) — diese Punkte NICHT anfassen, auch nicht "im Vorbeigehen verbessern".
 - **Performance:** Jede Änderung, die die App langsamer machen könnte, braucht vorherige Rückfrage/Freigabe.
-- Sprache der App bleibt primär Deutsch (mit EN/FR-Unterstützung wo bereits vorhanden) — bei Zweifel an bestehender i18n-Konvention orientieren (`lib/i18n.ts`).
+- **Sprachkonvention (verbindlich, vom Auftraggeber bestätigt):** Impact-Circle-Mitglieder (Invite-Code-Flow: `app/api/register`, `app/api/quick-register`, `app/api/admin/register`) werden auf **Englisch** angesprochen — das ist der korrekte App-Default (`lib/i18n.ts` `getLang()` fällt auf `"en"` zurück, `lib/email.ts` `sendConfirmationEmail` default `"en"`) und darf **nicht** auf Deutsch geändert werden. Die Öffentlichkeit (Formular-Events, allgemeine Kampagnen) ist **dreisprachig** (DE/EN/FR nach expliziter Wahl über `?lang=`) — diese explizite Auswahl muss weiterhin korrekt durchgereicht werden. Das Backend/Admin-UI selbst ist und bleibt **Deutsch** (hartkodierte Strings in `app/admin/*.tsx`, unabhängig vom `lib/i18n.ts`-System). Bei Zweifel an der i18n-Konvention: EN-Default für Guest-facing-Flows ohne expliziten `lang`-Parameter, nicht DE.
 
 ## "Bleibt so" — nicht verändern
 
@@ -78,24 +78,25 @@ Eine vorgelagerte UI/UX-Analyse (`ui-ux-befund.md` im Projektroot) hat konkrete 
 
 ## Arbeitspaket 3 — Sprachkonsistenz (Priorität: hoch/mittel)
 
-**Ziel:** Gäste, die eine deutsche (oder französische) Bestätigungsmail erhalten, landen auch auf einer Ticket-Seite/PDF in derselben Sprache.
+**Ziel:** Gäste landen auf einer Ticket-Seite/PDF in derselben Sprache wie ihre Bestätigungsmail — unabhängig davon, welche Sprache das im Einzelfall ist.
+
+**Wichtig — Sprachkonvention (siehe Leitplanken oben):** Impact-Circle-Mitglieder werden auf Englisch angesprochen (App-Default `"en"` ist korrekt, NICHT ändern), die Öffentlichkeit wählt explizit DE/EN/FR. Dieses Paket behebt nur das **Weiterreichen** des tatsächlich gewählten `lang`-Werts durch die Kette — es ändert **nicht**, was der Default ist, wenn kein Wert vorhanden ist.
 
 **Betroffene Dateien:**
 - `lib/email.ts:111` — Ticket-Link ohne `?lang=`-Parameter.
-- `lib/i18n.ts:3–7` — `getLang()`-Fallback auf `"en"`.
-- `app/unsubscribe/page.tsx:14–19` — hartkodiertes Englisch.
-- `app/components/TicketPDF.tsx:209–226, 238` — hartkodiertes Englisch, unabhängig von Sprache.
+- `app/unsubscribe/page.tsx:14–19` — hartkodiertes Englisch, unabhängig vom tatsächlichen Kampagnen-/Mitglieder-Kontext.
+- `app/components/TicketPDF.tsx:209–226, 238` — hartkodiertes Englisch, unabhängig von der tatsächlich gewählten Sprache.
 
 **Vorgehen:**
-1. In `lib/email.ts:111` den `lang`-Parameter (bereits als Funktionsargument in `sendConfirmationEmail` vorhanden, Zeile 37) an die Ticket-URL anhängen: `${appUrl}/ticket/${registration.qr_token}?lang=${lang}`.
-2. `lib/i18n.ts` Default-Fallback prüfen/auf `"de"` setzen, sofern das mit der übrigen App-Konvention (DE als Primärsprache) übereinstimmt — falls unklar, kurz mit Nutzer klären statt anzunehmen.
-3. `app/unsubscribe/page.tsx` an das bestehende `lib/i18n.ts`-System anschliessen, analog zu `ticket/[token]/page.tsx` oder `success/[token]/page.tsx`.
-4. `TicketPDF.tsx`: Sprachparameter durchreichen (er wird bereits an anderer Stelle für Ticket/E-Mail geführt) und die hartkodierten Strings ("Date", "Location", "Guest", Programm-Platzhalter) durch die i18n-Übersetzungsfunktion ersetzen, analog zu `lib/i18n.ts:39,41`.
+1. In `lib/email.ts:111` den `lang`-Parameter (bereits als Funktionsargument in `sendConfirmationEmail` vorhanden, Zeile 37) an die Ticket-URL anhängen: `${appUrl}/ticket/${registration.qr_token}?lang=${lang}`. **`lib/i18n.ts`s `getLang()`-Fallback auf `"en"` NICHT ändern** — das ist der korrekte Default für Impact-Circle-Mitglieder.
+2. `app/unsubscribe/page.tsx` an das bestehende `lib/i18n.ts`-System anschliessen, analog zu `ticket/[token]/page.tsx` oder `success/[token]/page.tsx`. Den Unsubscribe-Link (`lib/campaign-email.ts`) um `&lang=${lang}` ergänzen, damit die tatsächliche Kampagnen-/Mitgliedersprache ankommt.
+3. `TicketPDF.tsx`: Sprachparameter durchreichen (er wird bereits an anderer Stelle für Ticket/E-Mail geführt) und die hartkodierten Strings ("Date", "Location", "Guest", Programm-Platzhalter) durch eine sprachabhängige Übersetzungsfunktion ersetzen — Default-Parameter bleibt `"en"`, analog zu `sendConfirmationEmail`.
 
 **Akzeptanzkriterien:**
-- Eine Registrierung mit `sprache: "de"` erzeugt eine Bestätigungsmail, deren Ticket-Link `?lang=de` enthält, und die Ticket-Seite zeigt deutsche Labels ("ALS PDF SPEICHERN" o.ä. statt "SAVE AS PDF").
+- Eine Registrierung mit explizit gewähltem `lang=de` (Formular-Event) erzeugt eine Bestätigungsmail, deren Ticket-Link `?lang=de` enthält, und die Ticket-Seite zeigt deutsche Labels.
+- Eine Impact-Circle-Registrierung ohne explizite Sprachwahl bleibt Englisch (Ticket-Link, Ticket-Seite, PDF) — **keine Regression auf Deutsch**.
 - Das generierte PDF-Ticket zeigt Feldbezeichnungen in derselben Sprache wie die Registrierung.
-- `/unsubscribe` zeigt deutschen Text, wenn über einen deutschen Kontext aufgerufen (bzw. konsistent mit der gewählten i18n-Strategie).
+- `/unsubscribe` zeigt die Sprache des jeweiligen Mitglieds/der Kampagne, nicht mehr pauschal Englisch unabhängig vom Kontext.
 - Bestehende EN/FR-Kampagnen und -Ticket-Ansichten funktionieren unverändert weiter.
 
 ---
@@ -194,4 +195,4 @@ Für dieses Paket **keine Akzeptanzkriterien-Pflicht pro Einzelpunkt** — als B
 2. **Nach jedem Paket verifizieren:** Dev-Server starten, betroffene Flows manuell durchklicken (inkl. mobiler Viewport bei Paket 4), bestehende Tests laufen lassen (`npm run test`, `npm run lint`).
 3. **Ein Commit pro Paket**, mit Bezug auf das Arbeitspaket in der Commit-Message.
 4. **Nach Abschluss der Hoch-Prio-Pakete (1–3) anhalten und Freigabe einholen**, bevor mit Paket 4 ff. fortgefahren wird.
-5. Bei Unklarheiten zu einem Befund (z.B. ob Default-Sprache global auf `de` geändert werden soll) — nachfragen statt raten.
+5. Bei Unklarheiten zu einem Befund — nachfragen statt raten. Die Sprachkonvention (Impact Circle = Englisch, Öffentlichkeit = dreisprachig, Backend = Deutsch) ist geklärt und in den Leitplanken oben festgehalten, nicht erneut zur Diskussion stellen.

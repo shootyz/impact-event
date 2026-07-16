@@ -4,15 +4,15 @@ import { getLang, T } from './i18n'
 const params = (lang: string | null) => ({ get: (k: string) => (k === 'lang' ? lang : null) })
 
 describe('getLang', () => {
-  it('returns en / fr when explicitly requested', () => {
-    expect(getLang(params('en'))).toBe('en')
+  it('returns de / fr when explicitly requested', () => {
+    expect(getLang(params('de'))).toBe('de')
     expect(getLang(params('fr'))).toBe('fr')
   })
 
-  it('falls back to de for missing, unknown, or de', () => {
-    expect(getLang(params(null))).toBe('de')
-    expect(getLang(params('de'))).toBe('de')
-    expect(getLang(params('es'))).toBe('de')
+  it('falls back to en for missing, unknown, or en', () => {
+    expect(getLang(params(null))).toBe('en')
+    expect(getLang(params('en'))).toBe('en')
+    expect(getLang(params('es'))).toBe('en')
   })
 })
 

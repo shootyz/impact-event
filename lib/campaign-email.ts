@@ -37,7 +37,7 @@ function buildCampaignHtml({
   bodyHtml,
   eventUrl,
   inviteCode,
-  lang = 'de',
+  lang = 'en',
   campaignId,
 }: {
   appUrl: string

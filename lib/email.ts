@@ -34,7 +34,7 @@ const STRINGS = {
 export async function sendConfirmationEmail(
   registration: Registration,
   event: Event,
-  lang: 'en' | 'de' | 'fr' = 'de'
+  lang: 'en' | 'de' | 'fr' = 'en'
 ) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!
   const s = STRINGS[lang] ?? STRINGS.en

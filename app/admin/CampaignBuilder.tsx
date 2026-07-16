@@ -905,7 +905,7 @@ export default function CampaignBuilder({
   onSwitchLang?: (id: string) => void;
   adminPassword?: string;
 }) {
-  const [lang, setLang] = useState<Lang>(initialLang ?? "de");
+  const [lang, setLang] = useState<Lang>(initialLang ?? "en");
   const [title, setTitle] = useState(initialTitle ?? "");
   const [subject, setSubject] = useState(initialSubject ?? "");
   const [eventUrl, setEventUrl] = useState(() => {

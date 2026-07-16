@@ -14,7 +14,7 @@ Die drei wirksamsten Verbesserungen:
 
 1. **Fehlende Error-States beheben** (Ticket-Seite, Admin-Ladefunktionen): Aktuell hängt die UI bei einem Serverfehler oder ungültigen Token dauerhaft im Lade-Skeleton — ohne jede Nutzerrückmeldung. Das betrifft potenziell jeden Gast mit einem kaputten Ticket-Link und jeden Admin bei einem Netzwerk-Hänger.
 2. **Destruktive Aktionen ohne Bestätigung absichern**: Kampagnen und ganze Zielgruppen lassen sich mit einem einzigen Klick unwiderruflich löschen, obwohl das passende `ConfirmDialog`-Pattern im selben Projekt bereits existiert und woanders korrekt verwendet wird.
-3. **Sprachbruch beheben**: Deutschsprachige Gäste erhalten eine deutsche Bestätigungsmail, landen aber auf einer komplett englischen Ticket-Seite (Ursache: fehlender `lang`-Parameter im E-Mail-Link + Default-Sprache „en"). Das PDF-Ticket ist zusätzlich komplett hartkodiert Englisch.
+3. **Sprachbruch beheben**: Der Ticket-Link in der Bestätigungsmail gab die tatsächlich gewählte Sprache nicht weiter — ein Gast, der z.B. eine französische Bestätigungsmail erhielt, landete trotzdem auf einer englischen Ticket-Seite, weil der `lang`-Parameter im Link fehlte. Das PDF-Ticket war zusätzlich komplett hartkodiert Englisch, unabhängig von der gewählten Sprache. **Wichtig — Korrektur:** Der ursprüngliche Befund ging fälschlich davon aus, Deutsch sei die App-weite Primärsprache, und empfahl einen globalen Default-Wechsel von „en" auf „de". Das ist falsch: Die Kommunikation gegenüber Impact-Circle-Mitgliedern (Invite-Code-Flow) ist bewusst Englisch, gegenüber der Öffentlichkeit dreisprachig (DE/EN/FR nach Wahl), nur das Backend/Admin-UI ist Deutsch. Der Default-Fallback („en", wenn kein `lang`-Parameter vorhanden ist) muss so bleiben — behoben wurde nur das Weiterreichen des tatsächlich gewählten Werts.
 
 ---
 
@@ -46,11 +46,12 @@ Die drei wirksamsten Verbesserungen:
 - Auswirkung: Eine ganze Empfängerliste ist mit einem Klick weg.
 - Empfehlung: Gleiches `ConfirmDialog`-Pattern anwenden.
 
-**5. Sprachbruch: Deutsche Bestätigungsmail → englische Ticket-Seite**
-- Fundstelle: `lib/i18n.ts:3–7` (`getLang()` fällt ohne `?lang=`-Parameter auf `"en"` zurück), `lib/email.ts:111` (Ticket-Link ohne `?lang=`-Parameter gebaut), obwohl `sendConfirmationEmail(..., lang)` (`lib/email.ts:37`) die tatsächliche Sprache der Anmeldung kennt.
-- Problem: Ticket-Link in der E-Mail gibt die Sprache nicht weiter; Ticket-Seite fällt auf Englisch zurück ("SAVE AS PDF", "Show this QR code at the entrance", `lib/i18n.ts:39,41`).
-- Auswirkung: Deutschsprachige Gäste (die Mehrheit) landen auf einer für sie fremdsprachigen Ticket-Seite — live im Dev-Server bestätigt.
-- Empfehlung: `?lang=${lang}` in den E-Mail-Link einbauen; zusätzlich Default-Sprache der App generell auf `de` prüfen.
+**5. Sprachbruch: Ticket-Link in der Bestätigungsmail gibt die gewählte Sprache nicht weiter**
+- Fundstelle: `lib/email.ts:111` (Ticket-Link ohne `?lang=`-Parameter gebaut), obwohl `sendConfirmationEmail(..., lang)` (`lib/email.ts:37`) die tatsächliche Sprache der Anmeldung kennt.
+- Problem: Ticket-Link in der E-Mail gibt die Sprache nicht weiter; Ticket-Seite fällt in diesem Fall auf den App-Default zurück statt auf die tatsächlich gewählte Sprache.
+- Auswirkung: Gäste landen ggf. auf einer Ticket-Seite in der falschen Sprache — live im Dev-Server bestätigt.
+- Empfehlung: `?lang=${lang}` in den E-Mail-Link einbauen (Fix umgesetzt).
+- **Korrektur (nachträglich vom Auftraggeber bestätigt):** Der App-Default `"en"` (`lib/i18n.ts:3–7`, `getLang()`) ist **korrekt und muss so bleiben** — Impact-Circle-Mitglieder (Invite-Code-Flow) werden bewusst auf Englisch angesprochen, die Öffentlichkeit dreisprachig nach eigener Wahl, nur das Backend/Admin-UI ist Deutsch. Ein früherer Zwischenstand dieses Fixes hatte den Default fälschlich auf „de" gedreht — das wurde zurückgenommen; nur das Weiterreichen des `lang`-Werts bleibt als Fix bestehen.
 
 **6. Ticket-Seite als Sackgasse (Navigations-Perspektive derselben Ursache wie #1)**
 - Fundstelle: `app/ticket/[token]/page.tsx` — kein Error-Branch, kein Link zurück zur Startseite, kein Kontakthinweis.
