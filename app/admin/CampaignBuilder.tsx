@@ -184,16 +184,10 @@ function MapsLookupButton({ venueName, onResult }: { venueName: string; onResult
   const lookup = async () => {
     setLoading(true); setError(false);
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(venueName)}&format=json&limit=1`, {
-        headers: { "Accept-Language": "de", "User-Agent": "ImpactGstaad/1.0" }
-      });
-      const data = await res.json();
-      if (data?.[0]) {
-        const { lat, lon } = data[0];
-        onResult(`https://www.google.com/maps?q=${lat},${lon}`);
-      } else {
-        setError(true);
-      }
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(venueName)}`);
+      if (!res.ok) { setError(true); setLoading(false); return; }
+      const { lat, lon } = await res.json();
+      onResult(`https://www.google.com/maps?q=${lat},${lon}`);
     } catch { setError(true); }
     setLoading(false);
   };
