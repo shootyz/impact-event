@@ -14,10 +14,6 @@ function SectionHead({ label }: { label: string }) {
   );
 }
 
-function Divider() {
-  return <div style={{ height: 1, background: D.gray2, margin: "20px 0" }} />;
-}
-
 function labelFor(type: CampaignBlock["type"]): string {
   const m: Partial<Record<CampaignBlock["type"], string>> = {
     event_details: "Event Details",
@@ -95,9 +91,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
 
       return (
         <div>
-          <Divider />
-          <SectionHead label={block.label || "Event Details"} />
-          {block.category && <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.category}</p>}
+          <SectionHead label={block.category || block.label || "Event Details"} />
           {block.event_title && <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, margin: "0 0 18px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.event_title}</p>}
           <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: 16 }}>
             <tbody><tr><td style={{ background: "#faf8f4", padding: "18px 22px", borderLeft: `3px solid ${D.gold}`, borderRadius: "0 14px 14px 0" }}>
@@ -127,7 +121,6 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
     case "program": {
       return (
         <div>
-          <Divider />
           <SectionHead label={(block as ProgramBlock).title || block.label || t.program} />
           {block.slots.map((slot, si) => (
             <div key={slot.id} style={{ padding: slot.is_break ? 0 : (si === 0 ? "0 0 18px" : "18px 0") }}>
@@ -139,10 +132,10 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
               ) : (
                 <>
                   {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
-                  {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, margin: slot.sub_items.filter(s => s.title).length ? "0 0 16px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
-                  {slot.sub_items.filter(s => s.title).map(sub => (
+                  {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, margin: slot.sub_items.filter(s => s.title || s.speaker).length ? "0 0 16px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
+                  {slot.sub_items.filter(s => s.title || s.speaker).map(sub => (
                     <div key={sub.id} style={{ marginTop: 10, marginBottom: 10, paddingTop: 12, paddingBottom: 12, paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
-                      <p style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75, margin: "0 0 3px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.title}</p>
+                      {sub.title && <p style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75, margin: sub.speaker ? "0 0 3px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.title}</p>}
                       {sub.speaker && <p style={{ color: D.gray, fontSize: 13, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.speaker}</p>}
                     </div>
                   ))}
@@ -159,7 +152,6 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
     case "finalists": {
       return (
         <div>
-          <Divider />
           <SectionHead label={block.label || labelFor(block.type)} />
           {block.title && <p style={{ color: D.navy, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 16px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
           {block.intro && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 24px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.intro}</p>}
@@ -183,7 +175,6 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
     case "speaker":
       return (
         <div>
-          <Divider />
           <SectionHead label={block.label || t.speaker} />
           {(block.speakers ?? [(block as unknown as Record<string,unknown>)].map(b => ({ id: "legacy", photo_url: (b as Record<string,string>).photo_url ?? "", name: (b as Record<string,string>).name ?? "", title: (b as Record<string,string>).title ?? "", bio: (b as Record<string,string>).bio ?? "", book: (b as Record<string,string>).book ?? "" }))).map((sp, i) => (
             <div key={sp.id} style={i > 0 ? { marginTop: 28 } : {}}>
@@ -201,7 +192,6 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
     case "moderation":
       return (
         <div>
-          <Divider />
           <SectionHead label={block.label || t.moderation} />
           <p style={{ color: D.black, fontSize: 15, fontWeight: 600, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.name}</p>
           {block.title?.trim() && <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}

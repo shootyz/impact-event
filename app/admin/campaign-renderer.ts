@@ -145,11 +145,9 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
         : "";
       const dateStr = formattedDate + (block.time ? `, ${esc(block.time)}${block.end_time ? ` – ${esc(block.end_time)}` : ""}` : "");
 
-      const lines: string[] = [];
-      if (block.category)
-        lines.push(`<p style="color:${D.gold};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">${esc(block.category)}</p>`);
-      if (block.event_title)
-        lines.push(`<p style="color:${D.navy};font-size:19px;font-weight:700;line-height:1.75;margin:0 0 18px;font-family:Arial,sans-serif;">${esc(block.event_title)}</p>`);
+      const eventTitleHtml = block.event_title
+        ? `<p style="color:${D.navy};font-size:19px;font-weight:700;line-height:1.75;margin:0 0 18px;font-family:Arial,sans-serif;">${esc(block.event_title)}</p>`
+        : "";
 
       const calMapsLinks: string[] = [];
       if (block.date && ctx?.campaignId && ctx?.appUrl)
@@ -161,9 +159,8 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
       if (dateStr) boxLines.push(`<p style="color:${D.black};font-size:15.5px;font-weight:700;line-height:1.75;margin:0 0 8px;font-family:Arial,sans-serif;">${dateStr}</p>`);
       if (block.venue_name) boxLines.push(`<p style="color:${D.black};font-size:14.5px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(block.venue_name)}</p>`);
 
-      return `${dividerHtml()}
-${sectionHeadHtml(block.label || "Event Details")}
-${lines.join("\n")}
+      return `${sectionHeadHtml(block.category || block.label || "Event Details")}
+${eventTitleHtml}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
 <tr><td style="background:#faf8f4;padding:18px 22px;border-left:3px solid ${D.gold};border-radius:0 14px 14px 0;">
 ${boxLines.join("\n")}
@@ -177,7 +174,7 @@ ${extra}`;
       const slotHtmls = block.slots.map((slot, i) => {
         const isFirst = i === 0;
         const isLast = i === block.slots.length - 1;
-        const subItems = slot.sub_items.filter(s => s.title);
+        const subItems = slot.sub_items.filter(s => s.title || s.speaker);
         if (slot.is_break) {
           return `<tr><td style="padding:18px 0;background:#faf8f4;text-align:center;border-radius:12px;">
   <p style="color:${D.navy};font-size:12.5px;font-weight:700;line-height:1.75;margin:0 0 6px;text-align:center;font-family:Arial,sans-serif;">${esc(slot.time)}</p>
@@ -186,19 +183,18 @@ ${extra}`;
         }
         const pad = isFirst ? "0 0 18px" : isLast ? "18px 0 0" : "18px 0";
         return `<tr><td style="padding:${pad};">
-  <p style="color:${D.navy};font-size:12.5px;font-weight:700;line-height:1.75;margin:0 0 6px;font-family:Arial,sans-serif;">${esc(slot.time)}</p>
-  <p style="color:${D.black};font-size:15px;font-weight:400;line-height:1.75;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${esc(slot.title)}</p>
+  ${slot.time?.trim() ? `<p style="color:${D.navy};font-size:12.5px;font-weight:700;line-height:1.75;margin:0 0 6px;font-family:Arial,sans-serif;">${esc(slot.time)}</p>` : ""}
+  ${slot.title?.trim() ? `<p style="color:${D.black};font-size:15px;font-weight:400;line-height:1.75;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${esc(slot.title)}</p>` : ""}
   ${subItems.length ? `<table width="100%" cellpadding="0" cellspacing="0">
     ${subItems.map(s => `<tr><td style="padding:12px 0 12px 18px;border-left:3px solid ${D.gold};">
-      <p style="color:${D.black};font-size:14px;font-weight:600;line-height:1.75;margin:0 0 2px;font-family:Arial,sans-serif;">${esc(s.title)}</p>
+      ${s.title ? `<p style="color:${D.black};font-size:14px;font-weight:600;line-height:1.75;margin:${s.speaker ? "0 0 2px" : "0"};font-family:Arial,sans-serif;">${esc(s.title)}</p>` : ""}
       ${s.speaker ? `<p style="color:${D.gray};font-size:13px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(s.speaker)}</p>` : ""}
     </td></tr>`).join("\n")}
   </table>` : ""}
   ${slot.note?.trim() ? `<p style="color:${D.gray};font-size:13px;line-height:1.75;margin:12px 0 0;font-family:Arial,sans-serif;">${esc(slot.note)}</p>` : ""}
 </td></tr>`;
       });
-      return `${dividerHtml()}
-${sectionHeadHtml(block.title || block.label || t.program)}
+      return `${sectionHeadHtml(block.title || block.label || t.program)}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
 ${slotHtmls.join("\n")}
 </table>${extra}`;
@@ -206,8 +202,7 @@ ${slotHtmls.join("\n")}
 
     case "finalists": {
       const items = block.items.filter(f => f.name);
-      return `${dividerHtml()}
-${sectionHeadHtml(block.label || "Award")}
+      return `${sectionHeadHtml(block.label || "Award")}
 ${block.title ? `<p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;font-family:Arial,sans-serif;">${esc(block.title)}</p>` : ""}
 ${block.intro ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 24px;font-family:Arial,sans-serif;">${esc(block.intro)}</p>` : ""}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">

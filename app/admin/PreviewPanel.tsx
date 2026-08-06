@@ -150,9 +150,6 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
 
   return (
     <div>
-      {block.category && (
-        <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{block.category}</p>
-      )}
       {block.event_title && (
         <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, margin: "0 0 18px" }}>{block.event_title}</p>
       )}
@@ -390,19 +387,18 @@ export default function PreviewPanel({
           {blocks.map((block, i) => (
             <div key={i} style={{ marginTop: 24 }}>
               {block.type !== "intro" && block.type !== "text" && block.type !== "info" && block.type !== "divider" && block.type !== "register_button" && block.type !== "deadline" && (
-                <>
-                  <div style={{ height: 1, background: D.gray2, marginBottom: 20 }} />
-                  {block.type === "program" ? (
-                    <Editable
-                      value={(block as ProgramBlock).title || block.label || labelFor(block.type)}
-                      onChange={v => updateBlock(i, { ...block, title: v } as ProgramBlock)}
-                      placeholder="ZEITPLAN"
-                      style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 16 }}
-                    />
-                  ) : (
-                    <SectionHead label={block.label || labelFor(block.type)} />
-                  )}
-                </>
+                block.type === "program" ? (
+                  <Editable
+                    value={(block as ProgramBlock).title || block.label || labelFor(block.type)}
+                    onChange={v => updateBlock(i, { ...block, title: v } as ProgramBlock)}
+                    placeholder="ZEITPLAN"
+                    style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 16 }}
+                  />
+                ) : block.type === "event_details" ? (
+                  <SectionHead label={block.category || block.label || "Event Details"} />
+                ) : (
+                  <SectionHead label={block.label || labelFor(block.type)} />
+                )
               )}
               {block.type === "intro" && (
                 <IntroPreview block={block} onChange={b => updateBlock(i, b)} />
