@@ -148,51 +148,28 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
     return block.date;
   })() + (block.time ? `, ${block.time}${block.end_time ? ` – ${block.end_time}` : ""}` : "") : null;
 
-  const rows: { label: string; content: React.ReactNode }[] = [];
-  if (formattedDate) rows.push({ label: tl.date, content: <span style={{ color: D.black, fontSize: 15, fontWeight: 400 }}>{formattedDate}</span> });
-  else if (block.time) rows.push({ label: tl.time, content: <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
-  if (block.venue_name !== undefined) rows.push({ label: tl.venue, content: <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} /> });
-  if (block.date) rows.push({ label: "", content: (
-    <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-      <button onClick={downloadIcs}
-        style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        {tl.addToCalendar}
-      </button>
-      {block.venue_maps_url && (
-        <a href={block.venue_maps_url}
-          target="_blank" rel="noopener noreferrer"
-          style={{ display: "flex", alignItems: "center", gap: 6, color: D.gold, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-          Maps
-        </a>
-      )}
-    </div>
-  ) });
-
   return (
     <div>
       {block.category && (
         <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{block.category}</p>
       )}
       {block.event_title && (
-        <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 14px" }}>{block.event_title}</p>
+        <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, margin: "0 0 18px" }}>{block.event_title}</p>
       )}
-      <div style={{ background: "#faf8f4", borderLeft: `3px solid ${D.gold}`, padding: "12px 16px", marginBottom: 14, display: "flex", flexDirection: "column", gap: 6 }}>
-        {formattedDate && <span style={{ color: D.navy, fontSize: 14, fontWeight: 700 }}>{formattedDate}</span>}
-        {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.navy, fontSize: 14, fontWeight: 700 }} />}
-        {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.navy, fontSize: 14 }} />}
+      <div style={{ background: "#faf8f4", borderLeft: `3px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "18px 22px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+        {formattedDate && <span style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }}>{formattedDate}</span>}
+        {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }} />}
+        {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.black, fontSize: 14.5, lineHeight: 1.75 }} />}
       </div>
       {block.date && (
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 8 }}>
           <button onClick={downloadIcs}
-            style={{ color: D.gold, fontSize: 13, fontWeight: 400, background: "none", border: "none", cursor: "pointer", padding: 0, letterSpacing: 0.2 }}>
+            style={{ color: D.gold, fontSize: 13, fontWeight: 400, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
             {tl.addToCalendar}
           </button>
           {block.venue_maps_url && (
             <a href={block.venue_maps_url} target="_blank" rel="noopener noreferrer"
-              style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "underline", letterSpacing: 0.2 }}>
+              style={{ color: D.gold, fontSize: 13, fontWeight: 400, textDecoration: "none" }}>
               Maps
             </a>
           )}
@@ -209,38 +186,38 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
   return (
     <div>
       {block.slots.map((slot, si) => (
-        <div key={slot.id} style={{ borderBottom: si < block.slots.length - 1 && !slot.is_break && !block.slots[si + 1]?.is_break ? `1px solid ${D.gray2}` : "none" }}>
+        <div key={slot.id}>
           {slot.is_break ? (
-            <div style={{ background: "#faf8f4", padding: "14px 0", textAlign: "center" }}>
+            <div style={{ background: "#faf8f4", padding: "18px 0", textAlign: "center", borderRadius: 12 }}>
               <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
-                placeholder="Zeit" style={{ color: D.navy, fontSize: 12, fontWeight: 700, marginBottom: 4, textAlign: "center" }} />
+                placeholder="Zeit" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, marginBottom: 6, textAlign: "center" }} />
               <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
-                placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, textAlign: "center" }} />
+                placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, textAlign: "center" }} />
             </div>
           ) : (
-            <div style={{ padding: "14px 0" }}>
+            <div style={{ padding: si === 0 ? "0 0 18px" : "18px 0" }}>
               <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
-                placeholder="Zeit" style={{ color: D.navy, fontSize: 12, fontWeight: 700, marginBottom: 4 }} />
+                placeholder="Zeit" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, marginBottom: 6 }} />
               <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
-                placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} />
+                placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75 }} />
               {slot.sub_items.map((sub, i) => (
-                <div key={sub.id} style={{ marginTop: 8, paddingLeft: 12, borderLeft: `3px solid ${D.gold}` }}>
+                <div key={sub.id} style={{ marginTop: 10, paddingTop: 12, paddingBottom: 12, paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
                   <Editable value={sub.title} onChange={v => {
                     const sub_items = slot.sub_items.map((s, j) => j === i ? { ...s, title: v } : s);
                     updateSlot(slot.id, { sub_items });
-                  }} placeholder="Sub-Titel" style={{ color: D.black, fontSize: 14, fontWeight: 600 }} />
+                  }} placeholder="Sub-Titel" style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75 }} />
                   {sub.speaker !== undefined && (
                     <Editable value={sub.speaker ?? ""} onChange={v => {
                       const sub_items = slot.sub_items.map((s, j) => j === i ? { ...s, speaker: v } : s);
                       updateSlot(slot.id, { sub_items });
-                    }} placeholder="Speaker" style={{ color: D.gray, fontSize: 13 }} />
+                    }} placeholder="Speaker" style={{ color: D.gray, fontSize: 13, lineHeight: 1.75 }} />
                   )}
                 </div>
               ))}
               {slot.note?.trim() && (
                 <Editable value={slot.note} onChange={v => updateSlot(slot.id, { note: v })}
                   placeholder="Hinweis…" multiline
-                  style={{ color: D.gray, fontSize: 13, marginTop: 8, display: "block" }} />
+                  style={{ color: D.gray, fontSize: 13, lineHeight: 1.75, marginTop: 12, display: "block" }} />
               )}
             </div>
           )}
@@ -292,8 +269,7 @@ function ModerationPreview({ block, onChange }: { block: ModerationBlock & { lab
   );
 }
 
-function SpeakerPreview({ block: rawBlock, onChange, lang = "de" }: { block: SpeakerBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof rawBlock) => void; lang?: Lang }) {
-  const tl = T[lang];
+function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof rawBlock) => void; lang?: Lang }) {
   const block = rawBlock.speakers ? rawBlock : { ...rawBlock, speakers: [{ id: "legacy", photo_url: (rawBlock as unknown as Record<string,string>).photo_url ?? "", name: (rawBlock as unknown as Record<string,string>).name ?? "", title: (rawBlock as unknown as Record<string,string>).title ?? "", bio: (rawBlock as unknown as Record<string,string>).bio ?? "", book: (rawBlock as unknown as Record<string,string>).book ?? "" }] };
   const updateSpeaker = (i: number, patch: Partial<Speaker>) =>
     onChange({ ...block, speakers: block.speakers.map((s, j) => j === i ? { ...s, ...patch } : s) });
@@ -303,24 +279,16 @@ function SpeakerPreview({ block: rawBlock, onChange, lang = "de" }: { block: Spe
   return (
     <div>
       {(block.speakers ?? []).map((sp, i) => (
-        <div key={sp.id} style={i > 0 ? { borderTop: `1px solid ${D.gray2}`, marginTop: 20, paddingTop: 20 } : {}}>
-          {sp.photo_url && <img src={sp.photo_url} alt={sp.name} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 8 }} />}
+        <div key={sp.id} style={i > 0 ? { marginTop: 28 } : {}}>
+          {sp.photo_url && <img src={sp.photo_url} alt={sp.name} style={{ width: 108, height: 108, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 16 }} />}
           <Editable value={sp.name} onChange={v => updateSpeaker(i, { name: v })}
-            placeholder="Name" style={{ color: D.navy, fontSize: 16, fontWeight: 700, marginBottom: 2 }} />
+            placeholder="Name" style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.75, marginBottom: 6 }} />
           {sp.title?.trim() && <Editable value={sp.title} onChange={v => updateSpeaker(i, { title: v })}
-            placeholder="Titel" style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }} />}
+            placeholder="Titel" style={{ color: D.gold, fontSize: 11.5, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 12 }} />}
           {sp.book?.trim() && <Editable value={sp.book} onChange={v => updateSpeaker(i, { book: v })}
-            placeholder="Buch / Kurzbeschrieb" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 8, whiteSpace: "pre-wrap" }} />}
+            placeholder="Buch / Kurzbeschrieb" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 10, whiteSpace: "pre-wrap" }} />}
           {sp.bio?.trim() && <Editable value={sp.bio} onChange={v => updateSpeaker(i, { bio: v })}
             placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 12, whiteSpace: "pre-wrap" }} />}
-          {sp.link_url?.trim() && (
-            <div style={{ textAlign: "right", marginTop: 8 }}>
-              <a href={sp.link_url} target="_blank" rel="noreferrer"
-                style={{ display: "inline-block", background: D.gold, color: "#ffffff", textDecoration: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700 }}>
-                {sp.link_label?.trim() || tl.moreInfo}
-              </a>
-            </div>
-          )}
         </div>
       ))}
     </div>

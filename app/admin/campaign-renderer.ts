@@ -149,7 +149,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
       if (block.category)
         lines.push(`<p style="color:${D.gold};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px;font-family:Arial,sans-serif;">${esc(block.category)}</p>`);
       if (block.event_title)
-        lines.push(`<p style="color:${D.navy};font-size:16px;font-weight:700;margin:0 0 14px;font-family:Arial,sans-serif;">${esc(block.event_title)}</p>`);
+        lines.push(`<p style="color:${D.navy};font-size:19px;font-weight:700;line-height:1.75;margin:0 0 18px;font-family:Arial,sans-serif;">${esc(block.event_title)}</p>`);
 
       const calMapsLinks: string[] = [];
       if (block.date && ctx?.campaignId && ctx?.appUrl)
@@ -158,14 +158,14 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
         calMapsLinks.push(`<a href="${block.venue_maps_url}" style="color:${D.gold};font-size:13px;font-weight:400;text-decoration:none;font-family:Arial,sans-serif;">Maps</a>`);
 
       const boxLines: string[] = [];
-      if (dateStr) boxLines.push(`<p style="color:${D.black};font-size:14px;font-weight:700;margin:0 0 6px;font-family:Arial,sans-serif;">${dateStr}</p>`);
-      if (block.venue_name) boxLines.push(`<p style="color:${D.black};font-size:14px;margin:0;font-family:Arial,sans-serif;">${esc(block.venue_name)}</p>`);
+      if (dateStr) boxLines.push(`<p style="color:${D.black};font-size:15.5px;font-weight:700;line-height:1.75;margin:0 0 8px;font-family:Arial,sans-serif;">${dateStr}</p>`);
+      if (block.venue_name) boxLines.push(`<p style="color:${D.black};font-size:14.5px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(block.venue_name)}</p>`);
 
       return `${dividerHtml()}
 ${sectionHeadHtml(block.label || "Event Details")}
 ${lines.join("\n")}
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
-<tr><td style="background:#faf8f4;padding:12px 16px;border-left:3px solid ${D.gold};">
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+<tr><td style="background:#faf8f4;padding:18px 22px;border-left:3px solid ${D.gold};border-radius:0 14px 14px 0;">
 ${boxLines.join("\n")}
 </td></tr>
 </table>
@@ -177,27 +177,24 @@ ${extra}`;
       const slotHtmls = block.slots.map((slot, i) => {
         const isFirst = i === 0;
         const isLast = i === block.slots.length - 1;
-        const nextIsBreak = block.slots[i + 1]?.is_break;
-        const prevIsBreak = block.slots[i - 1]?.is_break;
         const subItems = slot.sub_items.filter(s => s.title);
         if (slot.is_break) {
-          return `<tr><td style="padding:14px 0;background:#faf8f4;text-align:center;">
-  <p style="color:${D.navy};font-size:12px;font-weight:700;margin:0 0 4px;text-align:center;font-family:Arial,sans-serif;">${esc(slot.time)}</p>
-  <p style="color:${D.black};font-size:15px;margin:0;text-align:center;font-family:Arial,sans-serif;">${esc(slot.title)}</p>
+          return `<tr><td style="padding:18px 0;background:#faf8f4;text-align:center;border-radius:12px;">
+  <p style="color:${D.navy};font-size:12.5px;font-weight:700;line-height:1.75;margin:0 0 6px;text-align:center;font-family:Arial,sans-serif;">${esc(slot.time)}</p>
+  <p style="color:${D.black};font-size:15px;line-height:1.75;margin:0;text-align:center;font-family:Arial,sans-serif;">${esc(slot.title)}</p>
 </td></tr>`;
         }
-        const pad = isFirst ? "0 0 14px" : isLast ? "14px 0 0" : "14px 0";
-        const border = !isLast && !nextIsBreak ? `border-bottom:1px solid ${D.gray2};` : "";
-        return `<tr><td style="padding:${pad};${border}">
-  <p style="color:${D.navy};font-size:12px;font-weight:700;margin:0 0 4px;font-family:Arial,sans-serif;">${esc(slot.time)}</p>
-  <p style="color:${D.black};font-size:15px;font-weight:400;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${esc(slot.title)}</p>
+        const pad = isFirst ? "0 0 18px" : isLast ? "18px 0 0" : "18px 0";
+        return `<tr><td style="padding:${pad};">
+  <p style="color:${D.navy};font-size:12.5px;font-weight:700;line-height:1.75;margin:0 0 6px;font-family:Arial,sans-serif;">${esc(slot.time)}</p>
+  <p style="color:${D.black};font-size:15px;font-weight:400;line-height:1.75;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${esc(slot.title)}</p>
   ${subItems.length ? `<table width="100%" cellpadding="0" cellspacing="0">
-    ${subItems.map(s => `<tr><td style="padding:10px 0 10px 16px;border-left:3px solid ${D.gold};">
-      <p style="color:${D.black};font-size:14px;font-weight:600;margin:0 0 2px;font-family:Arial,sans-serif;">${esc(s.title)}</p>
-      ${s.speaker ? `<p style="color:${D.gray};font-size:13px;margin:0;font-family:Arial,sans-serif;">${esc(s.speaker)}</p>` : ""}
+    ${subItems.map(s => `<tr><td style="padding:12px 0 12px 18px;border-left:3px solid ${D.gold};">
+      <p style="color:${D.black};font-size:14px;font-weight:600;line-height:1.75;margin:0 0 2px;font-family:Arial,sans-serif;">${esc(s.title)}</p>
+      ${s.speaker ? `<p style="color:${D.gray};font-size:13px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(s.speaker)}</p>` : ""}
     </td></tr>`).join("\n")}
   </table>` : ""}
-  ${slot.note?.trim() ? `<p style="color:${D.gray};font-size:13px;margin:12px 0 0;font-family:Arial,sans-serif;">${esc(slot.note)}</p>` : ""}
+  ${slot.note?.trim() ? `<p style="color:${D.gray};font-size:13px;line-height:1.75;margin:12px 0 0;font-family:Arial,sans-serif;">${esc(slot.note)}</p>` : ""}
 </td></tr>`;
       });
       return `${dividerHtml()}
@@ -231,13 +228,11 @@ ${block.website_url ? `<table width="100%" cellpadding="0" cellspacing="0" style
     case "speaker": {
       const legacyBlock = block as unknown as Record<string, string>;
       const speakers = block.speakers ?? [{ id: "legacy", photo_url: legacyBlock.photo_url ?? "", name: legacyBlock.name ?? "", title: legacyBlock.title ?? "", bio: legacyBlock.bio ?? "", book: legacyBlock.book ?? "" }];
-      const speakerHtmls = speakers.map((sp, i) => `${i > 0 ? `<div style="height:1px;background:${D.gray2};margin:20px 0;"></div>` : ""}
-${sp.photo_url ? `<img src="${sp.photo_url}" alt="${esc(sp.name)}" width="100" style="display:block;width:100px;height:100px;object-fit:cover;border-radius:50%;border:3px solid ${D.gold};margin:0 0 16px;" />` : ""}
-<p style="color:${D.navy};font-size:16px;font-weight:700;margin:0 0 7px;font-family:Arial,sans-serif;">${esc(sp.name)}</p>
-${sp.title ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;line-height:1.5;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">${esc(sp.title)}</p>` : ""}
+      const speakerHtmls = speakers.map((sp, i) => `${sp.photo_url ? `<img src="${sp.photo_url}" alt="${esc(sp.name)}" width="108" style="display:block;width:108px;height:108px;object-fit:cover;border-radius:50%;border:3px solid ${D.gold};margin:${i > 0 ? "28px" : "0"} 0 16px;" />` : ""}
+<p style="color:${D.navy};font-size:17px;font-weight:700;line-height:1.75;margin:0 0 6px;font-family:Arial,sans-serif;">${esc(sp.name)}</p>
+${sp.title ? `<p style="color:${D.gold};font-size:11.5px;font-weight:700;letter-spacing:1.4px;line-height:1.5;text-transform:uppercase;margin:0 0 12px;font-family:Arial,sans-serif;">${esc(sp.title)}</p>` : ""}
 ${sp.book?.trim() ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${esc(sp.book)}</p>` : ""}
-${sp.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 12px;font-family:Arial,sans-serif;">${esc(sp.bio)}</p>` : ""}
-${sp.link_url?.trim() ? `<p style="text-align:right;margin:8px 0 0;"><a href="${sp.link_url}" style="display:inline-block;background:${D.gold};color:#ffffff;text-decoration:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;font-family:Arial,sans-serif;">${esc(sp.link_label?.trim() || t.moreInfo)}</a></p>` : ""}`);
+${sp.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 12px;font-family:Arial,sans-serif;">${esc(sp.bio)}</p>` : ""}`);
       return `${sectionHeadHtml(block.label || t.speaker)}
 ${speakerHtmls.join("\n")}${extra}`;
     }

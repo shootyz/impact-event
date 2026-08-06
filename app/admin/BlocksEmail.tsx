@@ -98,11 +98,11 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <Divider />
           <SectionHead label={block.label || "Event Details"} />
           {block.category && <p style={{ color: D.gold, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.category}</p>}
-          {block.event_title && <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 14px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.event_title}</p>}
-          <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: 14 }}>
-            <tbody><tr><td style={{ background: "#faf8f4", padding: "12px 16px", borderLeft: `3px solid ${D.gold}` }}>
-              {formattedDate && <p style={{ color: D.black, fontSize: 14, fontWeight: 700, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</p>}
-              {block.venue_name && <p style={{ color: D.black, fontSize: 14, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_name}</p>}
+          {block.event_title && <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, margin: "0 0 18px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.event_title}</p>}
+          <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: 16 }}>
+            <tbody><tr><td style={{ background: "#faf8f4", padding: "18px 22px", borderLeft: `3px solid ${D.gold}`, borderRadius: "0 14px 14px 0" }}>
+              {formattedDate && <p style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</p>}
+              {block.venue_name && <p style={{ color: D.black, fontSize: 14.5, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_name}</p>}
             </td></tr></tbody>
           </table>
           {(block.date || block.venue_maps_url) && (
@@ -130,23 +130,23 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <Divider />
           <SectionHead label={(block as ProgramBlock).title || block.label || t.program} />
           {block.slots.map((slot, si) => (
-            <div key={slot.id} style={{ padding: slot.is_break ? 0 : (si === 0 ? "0 0 14px" : "14px 0"), borderBottom: si < block.slots.length - 1 && !slot.is_break && !block.slots[si + 1]?.is_break ? `1px solid ${D.gray2}` : "none" }}>
+            <div key={slot.id} style={{ padding: slot.is_break ? 0 : (si === 0 ? "0 0 18px" : "18px 0") }}>
               {slot.is_break ? (
-                <div style={{ background: "#faf8f4", padding: "14px 0", textAlign: "center" }}>
-                  {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12, fontWeight: 700, margin: "0 0 4px", textAlign: "center", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
-                  {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, margin: 0, textAlign: "center", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
+                <div style={{ background: "#faf8f4", padding: "18px 0", textAlign: "center", borderRadius: 12 }}>
+                  {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, margin: "0 0 6px", textAlign: "center", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
+                  {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: 0, textAlign: "center", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
                 </div>
               ) : (
                 <>
-                  {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12, fontWeight: 700, margin: "0 0 4px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
-                  {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, margin: slot.sub_items.filter(s => s.title).length ? "0 0 16px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
+                  {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
+                  {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, margin: slot.sub_items.filter(s => s.title).length ? "0 0 16px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
                   {slot.sub_items.filter(s => s.title).map(sub => (
-                    <div key={sub.id} style={{ marginTop: 10, marginBottom: 10, paddingTop: 10, paddingBottom: 10, paddingLeft: 12, borderLeft: `3px solid ${D.gold}` }}>
-                      <p style={{ color: D.black, fontSize: 14, fontWeight: 600, margin: "0 0 3px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.title}</p>
-                      {sub.speaker && <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.speaker}</p>}
+                    <div key={sub.id} style={{ marginTop: 10, marginBottom: 10, paddingTop: 12, paddingBottom: 12, paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
+                      <p style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75, margin: "0 0 3px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.title}</p>
+                      {sub.speaker && <p style={{ color: D.gray, fontSize: 13, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.speaker}</p>}
                     </div>
                   ))}
-                  {slot.note?.trim() && <p style={{ color: D.gray, fontSize: 13, margin: "12px 0 0", fontFamily: "'Helvetice Neue',Helvetica,Arial,sans-serif" }}>{slot.note}</p>}
+                  {slot.note?.trim() && <p style={{ color: D.gray, fontSize: 13, lineHeight: 1.75, margin: "12px 0 0", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.note}</p>}
                 </>
               )}
             </div>
@@ -186,13 +186,12 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <Divider />
           <SectionHead label={block.label || t.speaker} />
           {(block.speakers ?? [(block as unknown as Record<string,unknown>)].map(b => ({ id: "legacy", photo_url: (b as Record<string,string>).photo_url ?? "", name: (b as Record<string,string>).name ?? "", title: (b as Record<string,string>).title ?? "", bio: (b as Record<string,string>).bio ?? "", book: (b as Record<string,string>).book ?? "" }))).map((sp, i) => (
-            <div key={sp.id} style={i > 0 ? { borderTop: `1px solid ${D.gray2}`, marginTop: 20, paddingTop: 20 } : {}}>
-              {sp.photo_url && <img src={sp.photo_url} alt={sp.name} width={80} style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 12, display: "block" }} />}
-              <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, margin: "0 0 7px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.name}</p>
-              {sp.title && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, lineHeight: 1.5, textTransform: "uppercase", margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.title}</p>}
-              {sp.book?.trim() && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.book}</p>}
+            <div key={sp.id} style={i > 0 ? { marginTop: 28 } : {}}>
+              {sp.photo_url && <img src={sp.photo_url} alt={sp.name} width={108} style={{ width: 108, height: 108, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 16, display: "block" }} />}
+              <p style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.75, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.name}</p>
+              {sp.title && <p style={{ color: D.gold, fontSize: 11.5, fontWeight: 700, letterSpacing: 1.4, lineHeight: 1.5, textTransform: "uppercase", margin: "0 0 12px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.title}</p>}
+              {sp.book?.trim() && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 10px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.book}</p>}
               {sp.bio && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 12px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.bio}</p>}
-              {sp.link_url?.trim() && <p style={{ textAlign: "right", margin: "8px 0 0" }}><a href={sp.link_url} style={{ display: "inline-block", background: D.gold, color: "#ffffff", textDecoration: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.link_label?.trim() || t.moreInfo}</a></p>}
             </div>
           ))}
           <CustomFields block={block} />
