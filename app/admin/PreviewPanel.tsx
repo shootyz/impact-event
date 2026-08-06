@@ -206,11 +206,11 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
                 placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75 }} />
               {slot.sub_items.map((sub, i) => (
                 <div key={sub.id} style={{ marginTop: 10, paddingTop: 12, paddingBottom: 12, paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
-                  <Editable value={sub.title} onChange={v => {
+                  {sub.title?.trim() && <Editable value={sub.title} onChange={v => {
                     const sub_items = slot.sub_items.map((s, j) => j === i ? { ...s, title: v } : s);
                     updateSlot(slot.id, { sub_items });
-                  }} placeholder="Sub-Titel" style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75 }} />
-                  {sub.speaker !== undefined && (
+                  }} placeholder="Sub-Titel" style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75 }} />}
+                  {sub.speaker?.trim() && (
                     <Editable value={sub.speaker ?? ""} onChange={v => {
                       const sub_items = slot.sub_items.map((s, j) => j === i ? { ...s, speaker: v } : s);
                       updateSlot(slot.id, { sub_items });
