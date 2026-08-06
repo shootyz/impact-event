@@ -183,10 +183,9 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
   return (
     <div>
       {block.slots.map((slot, si) => {
-        const gapAbove = slot.time?.trim() ? 18 : 6;
         const isLast = si === block.slots.length - 1;
         return (
-        <div key={slot.id} style={{ padding: `${si === 0 ? 0 : gapAbove}px 0 ${isLast ? 0 : 18}px` }}>
+        <div key={slot.id} style={{ padding: `${si === 0 ? 0 : 18}px 0 ${isLast ? 0 : 18}px` }}>
           {slot.is_break ? (
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <div style={{ flex: 1, height: 1, background: D.gray2 }} />

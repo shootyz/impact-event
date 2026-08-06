@@ -123,10 +123,9 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
         <div>
           <SectionHead label={(block as ProgramBlock).title || block.label || t.program} />
           {block.slots.map((slot, si) => {
-            const gapAbove = slot.time?.trim() ? 18 : 6;
             const isLast = si === block.slots.length - 1;
             return (
-            <div key={slot.id} style={{ padding: `${si === 0 ? 0 : gapAbove}px 0 ${isLast ? 0 : 18}px` }}>
+            <div key={slot.id} style={{ padding: `${si === 0 ? 0 : 18}px 0 ${isLast ? 0 : 18}px` }}>
               {slot.is_break ? (
                 <table width="100%" cellPadding={0} cellSpacing={0}><tbody><tr>
                   <td style={{ borderTop: `1px solid ${D.gray2}`, lineHeight: 0, fontSize: 0 }}>&nbsp;</td>
