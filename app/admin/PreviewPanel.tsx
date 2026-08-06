@@ -182,17 +182,25 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
 
   return (
     <div>
-      {block.slots.map((slot, si) => (
-        <div key={slot.id}>
+      {block.slots.map((slot, si) => {
+        const gapAbove = slot.time?.trim() ? 18 : 6;
+        const isLast = si === block.slots.length - 1;
+        return (
+        <div key={slot.id} style={{ padding: `${si === 0 ? 0 : gapAbove}px 0 ${isLast ? 0 : 18}px` }}>
           {slot.is_break ? (
-            <div style={{ background: "#faf8f4", padding: "18px 0", textAlign: "center", borderRadius: 12 }}>
-              <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
-                placeholder="Zeit" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, marginBottom: 6, textAlign: "center" }} />
-              <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
-                placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, textAlign: "center" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ flex: 1, height: 1, background: D.gray2 }} />
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, whiteSpace: "nowrap" }}>
+                <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
+                  placeholder="Titel" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700 }} />
+                <span style={{ color: D.gray, fontSize: 12.5 }}>·</span>
+                <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
+                  placeholder="Zeit" style={{ color: D.gray, fontSize: 12.5 }} />
+              </div>
+              <div style={{ flex: 1, height: 1, background: D.gray2 }} />
             </div>
           ) : (
-            <div style={{ padding: si === 0 ? "0 0 18px" : "18px 0" }}>
+            <div>
               <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
                 placeholder="Zeit" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, marginBottom: 6 }} />
               <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
@@ -219,7 +227,8 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
             </div>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

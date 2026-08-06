@@ -122,13 +122,21 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
       return (
         <div>
           <SectionHead label={(block as ProgramBlock).title || block.label || t.program} />
-          {block.slots.map((slot, si) => (
-            <div key={slot.id} style={{ padding: slot.is_break ? 0 : (si === 0 ? "0 0 18px" : "18px 0") }}>
+          {block.slots.map((slot, si) => {
+            const gapAbove = slot.time?.trim() ? 18 : 6;
+            const isLast = si === block.slots.length - 1;
+            return (
+            <div key={slot.id} style={{ padding: `${si === 0 ? 0 : gapAbove}px 0 ${isLast ? 0 : 18}px` }}>
               {slot.is_break ? (
-                <div style={{ background: "#faf8f4", padding: "18px 0", textAlign: "center", borderRadius: 12 }}>
-                  {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, margin: "0 0 6px", textAlign: "center", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
-                  {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: 0, textAlign: "center", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
-                </div>
+                <table width="100%" cellPadding={0} cellSpacing={0}><tbody><tr>
+                  <td style={{ borderTop: `1px solid ${D.gray2}`, lineHeight: 0, fontSize: 0 }}>&nbsp;</td>
+                  <td style={{ whiteSpace: "nowrap", padding: "0 14px", fontSize: 12.5, color: D.gray, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
+                    {slot.title?.trim() && <span style={{ color: D.navy, fontWeight: 700 }}>{slot.title}</span>}
+                    {slot.title?.trim() && slot.time?.trim() && " · "}
+                    {slot.time}
+                  </td>
+                  <td style={{ borderTop: `1px solid ${D.gray2}`, lineHeight: 0, fontSize: 0 }}>&nbsp;</td>
+                </tr></tbody></table>
               ) : (
                 <>
                   {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
@@ -143,7 +151,8 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
                 </>
               )}
             </div>
-          ))}
+            );
+          })}
           <CustomFields block={block} />
         </div>
       );

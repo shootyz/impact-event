@@ -175,13 +175,18 @@ ${extra}`;
         const isFirst = i === 0;
         const isLast = i === block.slots.length - 1;
         const subItems = slot.sub_items.filter(s => s.title || s.speaker);
+        const gapAbove = slot.time?.trim() ? 18 : 6;
         if (slot.is_break) {
-          return `<tr><td style="padding:18px 0;background:#faf8f4;text-align:center;border-radius:12px;">
-  <p style="color:${D.navy};font-size:12.5px;font-weight:700;line-height:1.75;margin:0 0 6px;text-align:center;font-family:Arial,sans-serif;">${esc(slot.time)}</p>
-  <p style="color:${D.black};font-size:15px;line-height:1.75;margin:0;text-align:center;font-family:Arial,sans-serif;">${esc(slot.title)}</p>
+          const label = `${slot.title ? `<span style="color:${D.navy};font-weight:700;">${esc(slot.title)}</span>` : ""}${slot.title && slot.time?.trim() ? " &middot; " : ""}${esc(slot.time)}`;
+          return `<tr><td style="padding:${isFirst ? 0 : gapAbove}px 0 ${isLast ? 0 : 18}px;">
+  <table width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td style="border-top:1px solid ${D.gray2};line-height:0;font-size:0;">&nbsp;</td>
+    <td style="white-space:nowrap;padding:0 14px;font-size:12.5px;color:${D.gray};font-family:Arial,sans-serif;">${label}</td>
+    <td style="border-top:1px solid ${D.gray2};line-height:0;font-size:0;">&nbsp;</td>
+  </tr></table>
 </td></tr>`;
         }
-        const pad = isFirst ? "0 0 18px" : isLast ? "18px 0 0" : "18px 0";
+        const pad = `${isFirst ? 0 : gapAbove}px 0 ${isLast ? 0 : 18}px`;
         return `<tr><td style="padding:${pad};">
   ${slot.time?.trim() ? `<p style="color:${D.navy};font-size:12.5px;font-weight:700;line-height:1.75;margin:0 0 6px;font-family:Arial,sans-serif;">${esc(slot.time)}</p>` : ""}
   ${slot.title?.trim() ? `<p style="color:${D.black};font-size:15px;font-weight:400;line-height:1.75;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${esc(slot.title)}</p>` : ""}
