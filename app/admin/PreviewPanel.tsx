@@ -200,8 +200,8 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
             </div>
           ) : (
             <div>
-              <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
-                placeholder="Zeit" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, marginBottom: 6 }} />
+              {slot.time?.trim() && <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
+                placeholder="Zeit" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, marginBottom: 6 }} />}
               <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
                 placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75 }} />
               {slot.sub_items.map((sub, i) => (
