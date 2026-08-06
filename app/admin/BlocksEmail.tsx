@@ -128,13 +128,13 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
             <div key={slot.id} style={{ padding: `${si === 0 ? 0 : 18}px 0 ${isLast ? 0 : 18}px` }}>
               {slot.is_break ? (
                 <table width="100%" cellPadding={0} cellSpacing={0}><tbody><tr>
-                  <td style={{ borderTop: `1px solid ${D.gray2}`, lineHeight: 0, fontSize: 0 }}>&nbsp;</td>
+                  <td width="45%" style={{ borderTop: `1px solid ${D.gray2}`, fontSize: 1, lineHeight: "1px" }}>&nbsp;</td>
                   <td style={{ whiteSpace: "nowrap", padding: "0 14px", fontSize: 12.5, color: D.gray, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
                     {slot.title?.trim() && <span style={{ color: D.navy, fontWeight: 700 }}>{slot.title}</span>}
                     {slot.title?.trim() && slot.time?.trim() && " · "}
                     {slot.time}
                   </td>
-                  <td style={{ borderTop: `1px solid ${D.gray2}`, lineHeight: 0, fontSize: 0 }}>&nbsp;</td>
+                  <td width="45%" style={{ borderTop: `1px solid ${D.gray2}`, fontSize: 1, lineHeight: "1px" }}>&nbsp;</td>
                 </tr></tbody></table>
               ) : (
                 <>

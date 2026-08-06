@@ -179,9 +179,9 @@ ${extra}`;
           const label = `${slot.title ? `<span style="color:${D.navy};font-weight:700;">${esc(slot.title)}</span>` : ""}${slot.title && slot.time?.trim() ? " &middot; " : ""}${esc(slot.time)}`;
           return `<tr><td style="padding:${isFirst ? 0 : 18}px 0 ${isLast ? 0 : 18}px;">
   <table width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td style="border-top:1px solid ${D.gray2};line-height:0;font-size:0;">&nbsp;</td>
+    <td width="45%" style="border-top:1px solid ${D.gray2};font-size:1px;line-height:1px;">&nbsp;</td>
     <td style="white-space:nowrap;padding:0 14px;font-size:12.5px;color:${D.gray};font-family:Arial,sans-serif;">${label}</td>
-    <td style="border-top:1px solid ${D.gray2};line-height:0;font-size:0;">&nbsp;</td>
+    <td width="45%" style="border-top:1px solid ${D.gray2};font-size:1px;line-height:1px;">&nbsp;</td>
   </tr></table>
 </td></tr>`;
         }
