@@ -190,12 +190,12 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
           {slot.is_break ? (
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <div style={{ flex: 1, height: 1, background: D.gray2 }} />
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6, whiteSpace: "nowrap" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: slot.time?.trim() ? 6 : 0, whiteSpace: "nowrap" }}>
                 <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
                   placeholder="Titel" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700 }} />
-                <span style={{ color: D.gray, fontSize: 12.5 }}>·</span>
-                <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
-                  placeholder="Zeit" style={{ color: D.gray, fontSize: 12.5 }} />
+                {slot.time?.trim() && <span style={{ color: D.gray, fontSize: 12.5 }}>·</span>}
+                {slot.time?.trim() && <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
+                  placeholder="Zeit" style={{ color: D.gray, fontSize: 12.5 }} />}
               </div>
               <div style={{ flex: 1, height: 1, background: D.gray2 }} />
             </div>
