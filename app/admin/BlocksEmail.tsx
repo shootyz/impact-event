@@ -29,11 +29,11 @@ function CustomFields({ block }: { block: CampaignBlock }) {
   const fields = (block.custom_fields ?? []).filter(f => f.label || f.value);
   if (!fields.length) return null;
   return (
-    <div style={{ marginTop: 12 }}>
-      {fields.map(f => (
-        <div key={f.id} style={{ padding: "10px 0", borderTop: `1px solid ${D.gray2}` }}>
-          <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 3px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{f.label}</p>
-          <p style={{ color: D.black, fontSize: 15, fontWeight: 600, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{f.value}</p>
+    <div style={{ marginTop: 24 }}>
+      {fields.map((f, i) => (
+        <div key={f.id} style={{ marginTop: i === 0 ? 0 : 20 }}>
+          <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 16px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{f.label}</p>
+          <RichContent html={f.value} />
         </div>
       ))}
     </div>

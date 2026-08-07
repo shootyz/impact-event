@@ -106,11 +106,11 @@ function sectionHeadHtml(label: string) {
 function renderCustomFields(block: CampaignBlock): string {
   const fields = (block.custom_fields ?? []).filter(f => f.label || f.value);
   if (!fields.length) return "";
-  const rows = fields.map(f => `<tr><td style="padding:16px 0;">
-  <p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px;font-family:Arial,sans-serif;">${esc(f.label)}</p>
-  <p style="color:${D.black};font-size:16px;font-weight:600;margin:0;font-family:Arial,sans-serif;">${esc(f.value)}</p>
+  const rows = fields.map((f, i) => `<tr><td style="padding:${i === 0 ? 0 : 20}px 0 0;">
+  <p style="color:#6b7280;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 16px;font-family:Arial,sans-serif;">${esc(f.label)}</p>
+  ${richHtmlToEmail(f.value, D.black)}
 </td></tr>`).join("\n");
-  return `\n<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">${rows}</table>`;
+  return `\n<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">${rows}</table>`;
 }
 
 export function richHtmlToEmail(html: string, color: string): string {
