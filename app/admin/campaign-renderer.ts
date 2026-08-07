@@ -63,13 +63,11 @@ export type SpeakerBlock = {
   speakers: Speaker[];
 };
 
-export type TextBlock = { type: "text"; content: string };
+export type TextBlock = { type: "text"; title?: string; content: string };
 export type InfoBlock = { type: "info"; title: string; content: string };
 export type DeadlineBlock = { type: "deadline"; date: string };
 export type DividerBlock = { type: "divider" };
 export type RegisterButtonBlock = { type: "register_button"; url: string; deadline?: string };
-
-export type CustomField = { id: string; label: string; value: string };
 
 export type CampaignBlock = (
   | IntroBlock
@@ -84,7 +82,7 @@ export type CampaignBlock = (
   | DeadlineBlock
   | DividerBlock
   | RegisterButtonBlock
-) & { label?: string; custom_fields?: CustomField[] };
+) & { label?: string };
 
 // ── HTML renderer ─────────────────────────────────────────────────────────────
 
@@ -101,16 +99,6 @@ function dividerHtml() {
 
 function sectionHeadHtml(label: string) {
   return `<p style="color:#6b7280;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 16px;font-family:Arial,sans-serif;">${label}</p>`;
-}
-
-function renderCustomFields(block: CampaignBlock): string {
-  const fields = (block.custom_fields ?? []).filter(f => f.label || f.value);
-  if (!fields.length) return "";
-  const rows = fields.map((f, i) => `<tr><td style="padding:${i === 0 ? 0 : 20}px 0 0;">
-  <p style="color:#6b7280;font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 16px;font-family:Arial,sans-serif;">${esc(f.label)}</p>
-  ${richHtmlToEmail(f.value, D.black)}
-</td></tr>`).join("\n");
-  return `\n<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">${rows}</table>`;
 }
 
 export function richHtmlToEmail(html: string, color: string): string {
@@ -136,7 +124,6 @@ export function richHtmlToEmail(html: string, color: string): string {
 
 function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?: string; lang?: Lang; registerUrl?: string }): string {
   const t = T[ctx?.lang ?? "en"];
-  const extra = renderCustomFields(block);
   switch (block.type) {
     case "intro":
       return `<div style="line-height:1.75;font-size:15px;color:${D.black};font-family:Arial,sans-serif;">${richHtmlToEmail(block.text, D.black)}</div>`;
@@ -175,8 +162,7 @@ ${eventTitleHtml}
 ${boxLines.join("\n")}
 </td></tr>
 </table>
-${calMapsLinks.length ? `<table cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr>${calMapsLinks.map(l => `<td style="padding-right:20px;">${l}</td>`).join("")}</tr></table>` : ""}
-${extra}`;
+${calMapsLinks.length ? `<table cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr>${calMapsLinks.map(l => `<td style="padding-right:20px;">${l}</td>`).join("")}</tr></table>` : ""}`;
     }
 
     case "program": {
@@ -217,7 +203,7 @@ ${extra}`;
       return `${sectionHeadHtml(block.title || block.label || t.program)}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
 ${slotHtmls.join("\n")}
-</table>${extra}`;
+</table>`;
     }
 
     case "finalists": {
@@ -249,16 +235,17 @@ ${sp.title ? `<p style="color:${D.gold};font-size:11.5px;font-weight:700;letter-
 ${sp.book?.trim() ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${esc(sp.book)}</p>` : ""}
 ${sp.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 12px;font-family:Arial,sans-serif;">${esc(sp.bio)}</p>` : ""}`);
       return `${sectionHeadHtml(block.label || t.speaker)}
-${speakerHtmls.join("\n")}${extra}`;
+${speakerHtmls.join("\n")}`;
     }
 
     case "moderation":
       return `${sectionHeadHtml(block.label || t.moderation)}
 <p style="color:${D.black};font-size:15px;font-weight:600;margin:0 0 2px;font-family:Arial,sans-serif;">${esc(block.name)}</p>
-${block.title?.trim() ? `<p style="color:${D.gray};font-size:13px;margin:0;font-family:Arial,sans-serif;">${esc(block.title)}</p>` : ""}${extra}`;
+${block.title?.trim() ? `<p style="color:${D.gray};font-size:13px;margin:0;font-family:Arial,sans-serif;">${esc(block.title)}</p>` : ""}`;
 
     case "text":
-      return richHtmlToEmail(block.content, D.black);
+      if (!block.title?.trim() && !block.content?.trim()) return "";
+      return `${block.title?.trim() ? sectionHeadHtml(block.title) : ""}${richHtmlToEmail(block.content, D.black)}`;
 
     case "info": {
       const body = richHtmlToEmail(block.content, D.black);

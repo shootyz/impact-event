@@ -103,11 +103,11 @@ function RichPreview({ value, onChange, placeholder }: { value: string; onChange
   );
 }
 
-function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: string }; onChange: (b: typeof block) => void }) {
   return <RichPreview value={block.text} onChange={v => onChange({ ...block, text: v })} placeholder="Intro-Text eingeben…" />;
 }
 
-function LeadPreview({ block, onChange }: { block: LeadBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+function LeadPreview({ block, onChange }: { block: LeadBlock & { label?: string }; onChange: (b: typeof block) => void }) {
   return (
     <div style={{ borderLeft: `2px solid ${D.gold}`, padding: "2px 0 2px 20px" }}>
       <Editable value={block.text} onChange={v => onChange({ ...block, text: v })}
@@ -117,7 +117,7 @@ function LeadPreview({ block, onChange }: { block: LeadBlock & { label?: string;
   );
 }
 
-function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
+function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
   const tl = T[lang];
   const field = (label: string, value: string, key: keyof EventDetailsBlock) => (
     <div style={{ padding: "10px 0" }}>
@@ -186,7 +186,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
   );
 }
 
-function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: string }; onChange: (b: typeof block) => void }) {
   const updateSlot = (id: string, patch: Partial<typeof block.slots[0]>) =>
     onChange({ ...block, slots: block.slots.map(s => s.id === id ? { ...s, ...patch } : s) });
 
@@ -249,7 +249,7 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
   );
 }
 
-function FinalistsPreview({ block, onChange }: { block: FinalistsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+function FinalistsPreview({ block, onChange }: { block: FinalistsBlock & { label?: string }; onChange: (b: typeof block) => void }) {
   return (
     <div>
       <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
@@ -291,7 +291,7 @@ function ModerationPreview({ block, onChange }: { block: ModerationBlock & { lab
   );
 }
 
-function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof rawBlock) => void; lang?: Lang }) {
+function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & { label?: string }; onChange: (b: typeof rawBlock) => void; lang?: Lang }) {
   const block = rawBlock.speakers ? rawBlock : { ...rawBlock, speakers: [{ id: "legacy", photo_url: (rawBlock as unknown as Record<string,string>).photo_url ?? "", name: (rawBlock as unknown as Record<string,string>).name ?? "", title: (rawBlock as unknown as Record<string,string>).title ?? "", bio: (rawBlock as unknown as Record<string,string>).bio ?? "", book: (rawBlock as unknown as Record<string,string>).book ?? "" }] };
   const updateSpeaker = (i: number, patch: Partial<Speaker>) =>
     onChange({ ...block, speakers: block.speakers.map((s, j) => j === i ? { ...s, ...patch } : s) });
@@ -317,11 +317,17 @@ function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & {
   );
 }
 
-function TextPreview({ block, onChange }: { block: TextBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
-  return <RichPreview value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Text eingeben…" />;
+function TextPreview({ block, onChange }: { block: TextBlock & { label?: string }; onChange: (b: typeof block) => void }) {
+  return (
+    <div>
+      <Editable value={block.title ?? ""} onChange={v => onChange({ ...block, title: v })}
+        placeholder="ÜBERSCHRIFT (OPTIONAL)" style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 16 }} />
+      <RichPreview value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Text eingeben…" />
+    </div>
+  );
 }
 
-function InfoPreview({ block, onChange }: { block: InfoBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+function InfoPreview({ block, onChange }: { block: InfoBlock & { label?: string }; onChange: (b: typeof block) => void }) {
   return (
     <div style={{ background: "#f5f5f5", padding: "16px 18px", borderRadius: 6 }}>
       {(block.title !== undefined) && (
@@ -354,21 +360,6 @@ function SectionHead({ label }: { label: string }) {
     <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 16px" }}>
       {label}
     </p>
-  );
-}
-
-function CustomFieldsPreview({ block }: { block: CampaignBlock }) {
-  const fields = (block.custom_fields ?? []).filter(f => f.label || f.value);
-  if (!fields.length) return null;
-  return (
-    <div style={{ marginTop: 24 }}>
-      {fields.map((f, i) => (
-        <div key={f.id} style={{ marginTop: i === 0 ? 0 : 20 }}>
-          <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 16px" }}>{f.label}</p>
-          <div style={{ color: D.black, fontSize: 15, lineHeight: 1.75 }} dangerouslySetInnerHTML={{ __html: f.value }} />
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -461,7 +452,6 @@ export default function PreviewPanel({
               {block.type === "register_button" && (
                 <RegisterButtonPreview block={block as RegisterButtonBlock} lang={lang} />
               )}
-              {block.type !== "register_button" && <CustomFieldsPreview block={block} />}
             </div>
           ))}
 

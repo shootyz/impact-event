@@ -6,9 +6,9 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import PreviewPanel from "./PreviewPanel";
 import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATIONS } from "./i18n";
-export type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
+export type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CampaignBlock } from "./campaign-renderer";
 export { renderBlocksToHtml, richHtmlToEmail } from "./campaign-renderer";
-import type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
+import type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CampaignBlock } from "./campaign-renderer";
 import { richHtmlToEmail, renderBlocksToHtml } from "./campaign-renderer";
 
 
@@ -655,9 +655,15 @@ function InfoEditor({ block, onChange }: { block: InfoBlock; onChange: (b: InfoB
 
 function TextEditor({ block, onChange }: { block: TextBlock; onChange: (b: TextBlock) => void }) {
   return (
-    <div>
-      <label className={labelCls} style={labelSty}>Text</label>
-      <RichTextEditor value={block.content} onChange={v => onChange({ ...block, content: v })} minHeight={96} />
+    <div className="space-y-3">
+      <div>
+        <label className={labelCls} style={labelSty}>Überschrift (optional)</label>
+        <FocusInput value={block.title ?? ""} onChange={v => onChange({ ...block, title: v })} placeholder="z.B. Event Infos" />
+      </div>
+      <div>
+        <label className={labelCls} style={labelSty}>Text</label>
+        <RichTextEditor value={block.content} onChange={v => onChange({ ...block, content: v })} minHeight={96} />
+      </div>
     </div>
   );
 }
@@ -689,37 +695,6 @@ function DeadlineEditor({ block, onChange }: { block: DeadlineBlock; onChange: (
 }
 
 // ── Block card ────────────────────────────────────────────────────────────────
-
-function CustomFieldsEditor({ block, onChange }: { block: CampaignBlock; onChange: (b: CampaignBlock) => void }) {
-  const fields = block.custom_fields ?? [];
-  const update = (id: string, patch: Partial<CustomField>) =>
-    onChange({ ...block, custom_fields: fields.map(f => f.id === id ? { ...f, ...patch } : f) });
-  const add = () =>
-    onChange({ ...block, custom_fields: [...fields, { id: uid(), label: "", value: "" }] });
-  const remove = (id: string) =>
-    onChange({ ...block, custom_fields: fields.filter(f => f.id !== id) });
-
-  return (
-    <div className="mt-4 pt-4 space-y-4" style={{ borderTop: "1px dashed #e5e7eb" }}>
-      {fields.map(f => (
-        <div key={f.id} className="space-y-1.5">
-          <div className="flex gap-2 items-center">
-            <input value={f.label} onChange={e => update(f.id, { label: e.target.value })}
-              placeholder="Titel" className="flex-1 rounded-lg border px-2 py-1.5 text-xs"
-              style={{ borderColor: "#d1d5db", color: "#1E3263", outline: "none" }} />
-            <button onClick={() => remove(f.id)} aria-label="Feld entfernen"
-              className="w-6 h-6 rounded border text-xs font-bold flex-shrink-0 flex items-center justify-center"
-              style={{ borderColor: "#fecaca", color: "#dc2626" }}><IconXSmall className="w-3 h-3" /></button>
-          </div>
-          <RichTextEditor value={f.value} onChange={v => update(f.id, { value: v })} minHeight={60} />
-        </div>
-      ))}
-      <button onClick={add}
-        className="px-3 py-1.5 rounded-lg border text-xs font-medium transition"
-        style={{ borderColor: "#d1d5db", color: "#6b7280" }}>+ Feld hinzufügen</button>
-    </div>
-  );
-}
 
 function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStart, onDragOver, onDrop, isDragOver, subject, lang, adminPassword }: {
   block: CampaignBlock;
@@ -837,7 +812,6 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
               </div>
             </div>
           )}
-          {block.type !== "divider" && block.type !== "register_button" && <CustomFieldsEditor block={block} onChange={onChange} />}
         </div>
       )}
     </div>
@@ -870,7 +844,7 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
     case "program": return { type, slots: [{ id: uid(), time: "", title: "", sub_items: [], note: "" }] };
     case "finalists": return { type, title: "Green Business Award", intro: "", items: [{ id: uid(), name: "", category: "", description: "" }], video_url: "", website_url: "", website_label: "" };
     case "speaker": return { type, speakers: [{ id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] };
-    case "text": return { type, content: "" };
+    case "text": return { type, title: "", content: "" };
     case "info": return { type, title: "", content: "" };
     case "deadline": return { type, date: "" };
     case "divider": return { type: "divider" };

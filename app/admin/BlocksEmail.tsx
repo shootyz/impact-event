@@ -25,21 +25,6 @@ function labelFor(type: CampaignBlock["type"]): string {
   return m[type] ?? type;
 }
 
-function CustomFields({ block }: { block: CampaignBlock }) {
-  const fields = (block.custom_fields ?? []).filter(f => f.label || f.value);
-  if (!fields.length) return null;
-  return (
-    <div style={{ marginTop: 24 }}>
-      {fields.map((f, i) => (
-        <div key={f.id} style={{ marginTop: i === 0 ? 0 : 20 }}>
-          <p style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 16px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{f.label}</p>
-          <RichContent html={f.value} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function sanitizeHtml(raw: string): string {
   // Strip dangerous tags and event attributes before rendering
   return raw
@@ -123,7 +108,6 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
               )}
             </tr></tbody></table>
           )}
-          <CustomFields block={block} />
         </div>
       );
     }
@@ -176,7 +160,6 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
             </div>
             );
           })}
-          <CustomFields block={block} />
         </div>
       );
     }
@@ -217,7 +200,6 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
               {sp.bio && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 12px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.bio}</p>}
             </div>
           ))}
-          <CustomFields block={block} />
         </div>
       );
 
@@ -227,12 +209,17 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <SectionHead label={block.label || t.moderation} />
           <p style={{ color: D.black, fontSize: 15, fontWeight: 600, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.name}</p>
           {block.title?.trim() && <p style={{ color: D.gray, fontSize: 13, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
-          <CustomFields block={block} />
         </div>
       );
 
     case "text":
-      return <RichContent html={block.content} />;
+      if (!block.title?.trim() && (!block.content || block.content === "<p></p>")) return null;
+      return (
+        <div>
+          {block.title?.trim() && <SectionHead label={block.title} />}
+          <RichContent html={block.content} />
+        </div>
+      );
 
     case "info": {
       const body = block.content && block.content !== "<p></p>" ? block.content : null;
