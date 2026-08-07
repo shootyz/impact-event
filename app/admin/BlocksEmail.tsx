@@ -138,13 +138,17 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
             <div key={slot.id} style={{ padding: `${si === 0 ? 0 : 18}px 0 ${isLast ? 0 : 18}px` }}>
               {slot.is_break ? (
                 <table width="100%" cellPadding={0} cellSpacing={0}><tbody><tr>
-                  <td width="45%" valign="middle" style={{ borderTop: `1px solid ${D.gray2}`, fontSize: 1, lineHeight: "1px", verticalAlign: "middle" }}>&nbsp;</td>
-                  <td valign="middle" style={{ whiteSpace: "nowrap", padding: "0 14px", fontSize: 12.5, color: D.gray, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif", verticalAlign: "middle" }}>
+                  <td width="45%" style={{ fontSize: 0, lineHeight: 0 }}>
+                    <div style={{ height: 0, overflow: "hidden", marginTop: 11, borderTop: `1px solid ${D.gray2}`, fontSize: 0, lineHeight: 0 }}>&nbsp;</div>
+                  </td>
+                  <td style={{ whiteSpace: "nowrap", padding: "0 14px", fontSize: 12.5, color: D.gray, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
                     {slot.title?.trim() && <span style={{ color: D.navy, fontWeight: 700 }}>{slot.title}</span>}
                     {slot.title?.trim() && slot.time?.trim() && " · "}
                     {slot.time}
                   </td>
-                  <td width="45%" valign="middle" style={{ borderTop: `1px solid ${D.gray2}`, fontSize: 1, lineHeight: "1px", verticalAlign: "middle" }}>&nbsp;</td>
+                  <td width="45%" style={{ fontSize: 0, lineHeight: 0 }}>
+                    <div style={{ height: 0, overflow: "hidden", marginTop: 11, borderTop: `1px solid ${D.gray2}`, fontSize: 0, lineHeight: 0 }}>&nbsp;</div>
+                  </td>
                 </tr></tbody></table>
               ) : (
                 <>
