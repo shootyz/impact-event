@@ -230,6 +230,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
   const [showTestPanel, setShowTestPanel] = useState(false);
   const [testSelected, setTestSelected] = useState<string[]>([]);
   const [testCustomList, setTestCustomList] = useState<string[]>([""]);
+  const [testNote, setTestNote] = useState("");
   const testRecipients = Array.from(new Set([...testSelected, ...testCustomList.map(e => e.trim()).filter(Boolean)]));
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -410,6 +411,17 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                                 + Weitere Adresse
                               </button>
                             </div>
+                            <div>
+                              <label className="text-xs font-semibold block mb-1" style={{ color: "var(--ig-navy)" }}>Notiz für Empfänger <span style={{ color: "var(--ig-gray3)", fontWeight: 400 }}>(optional)</span></label>
+                              <textarea value={testNote} onChange={e => setTestNote(e.target.value)}
+                                placeholder="z.B. Entwurf v3 — bitte neue Speaker-Fotos prüfen"
+                                rows={2}
+                                className="w-full rounded-lg border px-2 py-1.5 text-xs outline-none resize-none"
+                                style={{ borderColor: "var(--ig-gray2)" }}
+                                onFocus={e => (e.currentTarget as HTMLTextAreaElement).style.borderColor = "var(--ig-navy)"}
+                                onBlur={e => (e.currentTarget as HTMLTextAreaElement).style.borderColor = "var(--ig-gray2)"} />
+                              <p className="text-xs mt-1" style={{ color: "var(--ig-gray3)" }}>Erscheint als Hinweisleiste oberhalb der Mail — nur im Testversand.</p>
+                            </div>
                             {testResult && (
                               <p className="text-xs" style={{ color: testResult.ok ? "#16a34a" : "#dc2626" }}>{testResult.msg}</p>
                             )}
@@ -422,7 +434,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                                 const res = await fetch("/api/campaigns/test", {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ adminPassword, campaign_id: c.id, subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, recipients: testRecipients }),
+                                  body: JSON.stringify({ adminPassword, campaign_id: c.id, subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, recipients: testRecipients, note: testNote.trim() || null }),
                                 });
                                 const d = await res.json();
                                 setTestSending(false);
