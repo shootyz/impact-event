@@ -203,6 +203,7 @@ const TEST_EMAILS = [
   "andreas.wandfluh@impactgstaad.ch",
   "michel.hediger@impactgstaad.ch",
   "chantal.reichenbach@impactgstaad.ch",
+  "simon.neuhaus@impactgstaad.ch",
 ];
 
 function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zielgruppeName, adminPassword }: {
@@ -228,7 +229,8 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
   const [scheduleValue, setScheduleValue] = useState("");
   const [showTestPanel, setShowTestPanel] = useState(false);
   const [testSelected, setTestSelected] = useState<string[]>([]);
-  const [testCustom, setTestCustom] = useState("");
+  const [testCustomList, setTestCustomList] = useState<string[]>([""]);
+  const testRecipients = Array.from(new Set([...testSelected, ...testCustomList.map(e => e.trim()).filter(Boolean)]));
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const testBtnRef = useRef<HTMLButtonElement>(null);
@@ -388,29 +390,31 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                                   {email}
                                 </label>
                               ))}
-                              <div className="flex gap-2 items-center">
-                                <input type="checkbox" checked={!!testCustom && testSelected.includes(testCustom)}
-                                  onChange={e => {
-                                    if (e.target.checked && testCustom) setTestSelected(prev => [...prev.filter(x => x !== testCustom), testCustom]);
-                                    else setTestSelected(prev => prev.filter(x => x !== testCustom));
-                                  }} className="rounded shrink-0" />
-                                <input className="flex-1 rounded-lg border px-2 py-1 text-xs outline-none"
-                                  style={{ borderColor: "var(--ig-gray2)" }} placeholder="Weitere E-Mail-Adresse"
-                                  value={testCustom}
-                                  onChange={e => {
-                                    const old = testCustom;
-                                    setTestCustom(e.target.value);
-                                    setTestSelected(prev => prev.filter(x => x !== old));
-                                  }}
-                                  onFocus={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--ig-navy)"}
-                                  onBlur={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--ig-gray2)"} />
-                              </div>
+                              {testCustomList.map((email, idx) => (
+                                <div key={idx} className="flex gap-2 items-center">
+                                  <input className="flex-1 rounded-lg border px-2 py-1 text-xs outline-none"
+                                    style={{ borderColor: "var(--ig-gray2)" }} placeholder="Weitere E-Mail-Adresse"
+                                    value={email}
+                                    onChange={e => setTestCustomList(prev => prev.map((x, i) => i === idx ? e.target.value : x))}
+                                    onFocus={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--ig-navy)"}
+                                    onBlur={e => (e.currentTarget as HTMLInputElement).style.borderColor = "var(--ig-gray2)"} />
+                                  {testCustomList.length > 1 && (
+                                    <button type="button" aria-label="Adresse entfernen"
+                                      onClick={() => setTestCustomList(prev => prev.filter((_, i) => i !== idx))}
+                                      className="text-xs shrink-0 px-1" style={{ color: "var(--ig-gray3)" }}>×</button>
+                                  )}
+                                </div>
+                              ))}
+                              <button type="button" onClick={() => setTestCustomList(prev => [...prev, ""])}
+                                className="text-xs font-medium transition hover:opacity-70" style={{ color: "var(--ig-navy)" }}>
+                                + Weitere Adresse
+                              </button>
                             </div>
                             {testResult && (
                               <p className="text-xs" style={{ color: testResult.ok ? "#16a34a" : "#dc2626" }}>{testResult.msg}</p>
                             )}
                             <button
-                              disabled={testSending || testSelected.length === 0}
+                              disabled={testSending || testRecipients.length === 0}
                               className="w-full py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-40"
                               style={{ background: "var(--ig-navy)", color: "white" }}
                               onClick={async () => {
@@ -418,13 +422,13 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
                                 const res = await fetch("/api/campaigns/test", {
                                   method: "POST",
                                   headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ adminPassword, campaign_id: c.id, subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, recipients: testSelected }),
+                                  body: JSON.stringify({ adminPassword, campaign_id: c.id, subject: c.subject, body_html: c.body_html, event_url: c.event_url || null, recipients: testRecipients }),
                                 });
                                 const d = await res.json();
                                 setTestSending(false);
                                 setTestResult(res.ok ? { ok: true, msg: `✓ An ${d.sent} gesendet` } : { ok: false, msg: d.error || "Fehler" });
                               }}>
-                              {testSending ? "Wird gesendet…" : `Senden (${testSelected.length})`}
+                              {testSending ? "Wird gesendet…" : `Senden (${testRecipients.length})`}
                             </button>
                           </div>
                         </>

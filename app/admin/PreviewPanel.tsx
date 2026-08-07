@@ -124,13 +124,6 @@ function LeadPreview({ block, onChange }: { block: LeadBlock & { label?: string 
 
 function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
   const tl = T[lang];
-  const field = (label: string, value: string, key: keyof EventDetailsBlock) => (
-    <div style={{ padding: "10px 0" }}>
-      <p style={{ color: D.navy, fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 4px" }}>{label}</p>
-      <Editable value={value} onChange={v => onChange({ ...block, [key]: v })}
-        placeholder="—" style={{ color: D.black, fontSize: 15, fontWeight: 400 }} />
-    </div>
-  );
 
   function downloadIcs() {
     if (!block.date) return;
@@ -165,12 +158,14 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
 
   return (
     <div>
-      {block.event_title && (
-        <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, margin: "0 0 18px" }}>{block.event_title}</p>
-      )}
+      <Editable value={block.event_title} onChange={v => onChange({ ...block, event_title: v })}
+        placeholder="Event-Titel" style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, marginBottom: 18, display: "block" }} />
       <div style={{ background: "#F8F9FF", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "18px 22px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-        {formattedDate && <span style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }}>{formattedDate}</span>}
-        {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }} />}
+        <div style={{ display: "flex", gap: 6, alignItems: "baseline", flexWrap: "wrap" }}>
+          <Editable value={block.date} onChange={v => onChange({ ...block, date: v })} placeholder="JJJJ-MM-TT" style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }} />
+          <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="Zeit" style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }} />
+        </div>
+        {formattedDate && <span style={{ color: D.gray, fontSize: 12 }}>{formattedDate}</span>}
         {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.black, fontSize: 14.5, lineHeight: 1.75 }} />}
       </div>
       {block.date && (
@@ -414,7 +409,12 @@ export default function PreviewPanel({
                     style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 16 }}
                   />
                 ) : block.type === "event_details" ? (
-                  <SectionHead label={block.category || block.label || "Event Details"} />
+                  <Editable
+                    value={block.category || block.label || "Event Details"}
+                    onChange={v => updateBlock(i, { ...block, category: v } as EventDetailsBlock)}
+                    placeholder="EVENT DETAILS"
+                    style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 16 }}
+                  />
                 ) : (
                   <SectionHead label={block.label || labelFor(block.type)} />
                 )
