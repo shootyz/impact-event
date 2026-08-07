@@ -103,7 +103,7 @@ function sectionHeadHtml(label: string) {
 
 export function richHtmlToEmail(html: string, color: string): string {
   if (!html || html === "<p></p>") return "";
-  const trimmed = html.replace(/(<p>(\s|<br\s*\/?>)*<\/p>)+$/gi, '');
+  const trimmed = html.replace(/(<p[^>]*>(\s|<br[^>]*>)*<\/p>\s*)+$/gi, '');
   if (!trimmed.trim()) return "";
   const sanitized = trimmed
     .replace(/<script[\s\S]*?<\/script>/gi, '')

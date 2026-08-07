@@ -39,7 +39,7 @@ function sanitizeHtml(raw: string): string {
 }
 
 function RichContent({ html }: { html: string }) {
-  const trimmed = (html ?? "").replace(/(<p>(\s|<br\s*\/?>)*<\/p>)+$/gi, '');
+  const trimmed = (html ?? "").replace(/(<p[^>]*>(\s|<br[^>]*>)*<\/p>\s*)+$/gi, '');
   if (!trimmed.trim() || trimmed === "<p></p>") return null;
   // Inject inline styles into the HTML tags
   const styled = sanitizeHtml(trimmed)

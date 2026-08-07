@@ -91,6 +91,8 @@ function RichPreview({ value, onChange, placeholder }: { value: string; onChange
         .rp-wrap .tiptap li{margin-bottom:3px;}
         .rp-wrap .tiptap li:last-child{margin-bottom:0;}
         .rp-wrap .tiptap p:empty:last-child{display:none;}
+        .rp-wrap .tiptap p:last-child:has(> br:only-child){display:none;}
+        .rp-wrap .tiptap ul + p:last-child,.rp-wrap .tiptap ol + p:last-child{display:none;}
         .rp-wrap .tiptap a{color:#D28D28;text-decoration:underline;}
         .rp-wrap .tiptap p.is-editor-empty:first-child::before{content:attr(data-placeholder);color:#9ca3af;pointer-events:none;float:left;height:0;}
       `}</style>
