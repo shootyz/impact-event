@@ -106,7 +106,7 @@ function buildCampaignHtml({
           <img src="${appUrl.replace(/\/$/, '')}/logo.png" alt="Impact Gstaad" height="48"
             style="display:block;margin:0 auto 28px;" />
           <div style="height:1px;background:#e8e8e8;margin-bottom:28px;"></div>
-          <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${buildSalutation(member, lang)},</p>
+          <p style="color:#1E3263;font-size:16px;font-weight:700;margin:0;font-family:Arial,sans-serif;">${buildSalutation(member, lang)}</p>
         </td></tr>
 
         <!-- Body: intro (before CTA marker) -->

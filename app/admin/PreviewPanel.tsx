@@ -112,7 +112,7 @@ function LeadPreview({ block, onChange }: { block: LeadBlock & { label?: string;
     <div style={{ borderLeft: `3px solid ${D.gold}`, padding: "2px 0 2px 20px" }}>
       <Editable value={block.text} onChange={v => onChange({ ...block, text: v })}
         placeholder="Lead-Statement eingeben…" multiline
-        style={{ color: D.navy, fontSize: 16, fontWeight: 700, lineHeight: 1.5, display: "block" }} />
+        style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.5, display: "block" }} />
     </div>
   );
 }
@@ -212,22 +212,29 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
             <div>
               {slot.time?.trim() && <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
                 placeholder="Zeit" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, marginBottom: 6 }} />}
-              <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
-                placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75 }} />
-              {slot.sub_items.map((sub, i) => (
-                <div key={sub.id} style={{ marginTop: 10, paddingTop: 12, paddingBottom: 12, paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
-                  {sub.title?.trim() && <Editable value={sub.title} onChange={v => {
-                    const sub_items = slot.sub_items.map((s, j) => j === i ? { ...s, title: v } : s);
-                    updateSlot(slot.id, { sub_items });
-                  }} placeholder="Sub-Titel" style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75 }} />}
-                  {sub.speaker?.trim() && (
-                    <Editable value={sub.speaker ?? ""} onChange={v => {
-                      const sub_items = slot.sub_items.map((s, j) => j === i ? { ...s, speaker: v } : s);
-                      updateSlot(slot.id, { sub_items });
-                    }} placeholder="Speaker" style={{ color: D.gray, fontSize: 13, lineHeight: 1.75 }} />
-                  )}
+              {slot.sub_items.length > 0 ? (
+                <div style={{ paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
+                  <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
+                    placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, marginBottom: 12 }} />
+                  {slot.sub_items.map((sub, i) => (
+                    <div key={sub.id} style={{ marginTop: i === 0 ? 0 : 10, marginBottom: i === slot.sub_items.length - 1 ? 0 : 10 }}>
+                      {sub.title?.trim() && <Editable value={sub.title} onChange={v => {
+                        const sub_items = slot.sub_items.map((s, j) => j === i ? { ...s, title: v } : s);
+                        updateSlot(slot.id, { sub_items });
+                      }} placeholder="Sub-Titel" style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75 }} />}
+                      {sub.speaker?.trim() && (
+                        <Editable value={sub.speaker ?? ""} onChange={v => {
+                          const sub_items = slot.sub_items.map((s, j) => j === i ? { ...s, speaker: v } : s);
+                          updateSlot(slot.id, { sub_items });
+                        }} placeholder="Speaker" style={{ color: D.gray, fontSize: 13, lineHeight: 1.75 }} />
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
+                  placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75 }} />
+              )}
               {slot.note?.trim() && (
                 <Editable value={slot.note} onChange={v => updateSlot(slot.id, { note: v })}
                   placeholder="Hinweis…" multiline

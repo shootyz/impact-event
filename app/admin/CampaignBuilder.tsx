@@ -184,7 +184,7 @@ function LeadEditor({ block, onChange }: { block: LeadBlock; onChange: (b: LeadB
       <div>
         <label className={labelCls} style={labelSty}>Lead-Statement</label>
         <FocusInput value={block.text} onChange={v => onChange({ ...block, text: v })} placeholder="Ein kurzer, prägnanter Satz…" multiline rows={2} />
-        <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Wird hervorgehoben dargestellt — nicht grösser als die Anrede. Für kurze, prägnante Aussagen gedacht.</p>
+        <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Wird hervorgehoben dargestellt, gleiche Grösse wie der Event-Titel. Für kurze, prägnante Aussagen gedacht.</p>
       </div>
     </div>
   );

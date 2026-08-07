@@ -144,7 +144,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
     case "lead":
       if (!block.text?.trim()) return "";
       return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="border-left:3px solid ${D.gold};padding:2px 0 2px 20px;">
-  <p style="color:${D.navy};font-size:16px;font-weight:700;line-height:1.5;margin:0;font-family:Arial,sans-serif;">${esc(block.text).replace(/\n/g, "<br>")}</p>
+  <p style="color:${D.navy};font-size:19px;font-weight:700;line-height:1.5;margin:0;font-family:Arial,sans-serif;">${esc(block.text).replace(/\n/g, "<br>")}</p>
 </td></tr></table>`;
 
     case "event_details": {
@@ -188,22 +188,25 @@ ${extra}`;
           const label = `${slot.title ? `<span style="color:${D.navy};font-weight:700;">${esc(slot.title)}</span>` : ""}${slot.title && slot.time?.trim() ? " &middot; " : ""}${esc(slot.time)}`;
           return `<tr><td style="padding:${isFirst ? 0 : 18}px 0 ${isLast ? 0 : 18}px;">
   <table width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td width="45%" style="border-top:1px solid ${D.gray2};font-size:1px;line-height:1px;">&nbsp;</td>
-    <td style="white-space:nowrap;padding:0 14px;font-size:12.5px;color:${D.gray};font-family:Arial,sans-serif;">${label}</td>
-    <td width="45%" style="border-top:1px solid ${D.gray2};font-size:1px;line-height:1px;">&nbsp;</td>
+    <td width="45%" valign="middle" style="border-top:1px solid ${D.gray2};font-size:1px;line-height:1px;vertical-align:middle;">&nbsp;</td>
+    <td valign="middle" style="white-space:nowrap;padding:0 14px;font-size:12.5px;color:${D.gray};font-family:Arial,sans-serif;vertical-align:middle;">${label}</td>
+    <td width="45%" valign="middle" style="border-top:1px solid ${D.gray2};font-size:1px;line-height:1px;vertical-align:middle;">&nbsp;</td>
   </tr></table>
 </td></tr>`;
         }
         const pad = `${isFirst ? 0 : 18}px 0 ${isLast ? 0 : 18}px`;
-        return `<tr><td style="padding:${pad};">
-  ${slot.time?.trim() ? `<p style="color:${D.navy};font-size:12.5px;font-weight:700;line-height:1.75;margin:0 0 6px;font-family:Arial,sans-serif;">${esc(slot.time)}</p>` : ""}
-  ${slot.title?.trim() ? `<p style="color:${D.black};font-size:15px;font-weight:400;line-height:1.75;margin:0${subItems.length ? " 0 16px" : ""};font-family:Arial,sans-serif;">${esc(slot.title)}</p>` : ""}
-  ${subItems.length ? `<table width="100%" cellpadding="0" cellspacing="0">
-    ${subItems.map(s => `<tr><td style="padding:12px 0 12px 18px;border-left:3px solid ${D.gold};">
+        const titleAndSubItems = subItems.length
+          ? `<table width="100%" cellpadding="0" cellspacing="0">
+    ${slot.title?.trim() ? `<tr><td style="padding:0 0 12px 18px;border-left:3px solid ${D.gold};"><p style="color:${D.black};font-size:15px;font-weight:400;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(slot.title)}</p></td></tr>` : ""}
+    ${subItems.map((s, si) => `<tr><td style="padding:${si === 0 ? 0 : 10}px 0 ${si === subItems.length - 1 ? 0 : 10}px 18px;border-left:3px solid ${D.gold};">
       ${s.title ? `<p style="color:${D.black};font-size:14px;font-weight:600;line-height:1.75;margin:${s.speaker ? "0 0 2px" : "0"};font-family:Arial,sans-serif;">${esc(s.title)}</p>` : ""}
       ${s.speaker ? `<p style="color:${D.gray};font-size:13px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(s.speaker)}</p>` : ""}
     </td></tr>`).join("\n")}
-  </table>` : ""}
+  </table>`
+          : (slot.title?.trim() ? `<p style="color:${D.black};font-size:15px;font-weight:400;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(slot.title)}</p>` : "");
+        return `<tr><td style="padding:${pad};">
+  ${slot.time?.trim() ? `<p style="color:${D.navy};font-size:12.5px;font-weight:700;line-height:1.75;margin:0 0 6px;font-family:Arial,sans-serif;">${esc(slot.time)}</p>` : ""}
+  ${titleAndSubItems}
   ${slot.note?.trim() ? `<p style="color:${D.gray};font-size:13px;line-height:1.75;margin:12px 0 0;font-family:Arial,sans-serif;">${esc(slot.note)}</p>` : ""}
 </td></tr>`;
       });

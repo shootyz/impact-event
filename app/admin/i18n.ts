@@ -62,7 +62,7 @@ export const BLOCK_LABEL_TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
 export const T = {
   en: {
-    greeting: "Dear [name],",
+    greeting: "Dear [name]",
     date: "Date",
     time: "Time",
     venue: "Venue",
@@ -81,7 +81,7 @@ export const T = {
     selectCategory: "— Select —",
   },
   de: {
-    greeting: "Sehr geehrte/r [name],",
+    greeting: "Sehr geehrte/r [name]",
     date: "Datum",
     time: "Uhrzeit",
     venue: "Veranstaltungsort",
@@ -100,7 +100,7 @@ export const T = {
     selectCategory: "— Wählen —",
   },
   fr: {
-    greeting: "Cher/Chère [name],",
+    greeting: "Cher/Chère [name]",
     date: "Date",
     time: "Heure",
     venue: "Lieu",

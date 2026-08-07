@@ -85,7 +85,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
       return (
         <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "0 0 24px" }}><tbody><tr>
           <td style={{ borderLeft: `3px solid ${D.gold}`, padding: "2px 0 2px 20px" }}>
-            <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, lineHeight: 1.5, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif", whiteSpace: "pre-line" }}>{block.text}</p>
+            <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.5, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif", whiteSpace: "pre-line" }}>{block.text}</p>
           </td>
         </tr></tbody></table>
       );
@@ -138,24 +138,34 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
             <div key={slot.id} style={{ padding: `${si === 0 ? 0 : 18}px 0 ${isLast ? 0 : 18}px` }}>
               {slot.is_break ? (
                 <table width="100%" cellPadding={0} cellSpacing={0}><tbody><tr>
-                  <td width="45%" style={{ borderTop: `1px solid ${D.gray2}`, fontSize: 1, lineHeight: "1px" }}>&nbsp;</td>
-                  <td style={{ whiteSpace: "nowrap", padding: "0 14px", fontSize: 12.5, color: D.gray, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
+                  <td width="45%" valign="middle" style={{ borderTop: `1px solid ${D.gray2}`, fontSize: 1, lineHeight: "1px", verticalAlign: "middle" }}>&nbsp;</td>
+                  <td valign="middle" style={{ whiteSpace: "nowrap", padding: "0 14px", fontSize: 12.5, color: D.gray, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif", verticalAlign: "middle" }}>
                     {slot.title?.trim() && <span style={{ color: D.navy, fontWeight: 700 }}>{slot.title}</span>}
                     {slot.title?.trim() && slot.time?.trim() && " · "}
                     {slot.time}
                   </td>
-                  <td width="45%" style={{ borderTop: `1px solid ${D.gray2}`, fontSize: 1, lineHeight: "1px" }}>&nbsp;</td>
+                  <td width="45%" valign="middle" style={{ borderTop: `1px solid ${D.gray2}`, fontSize: 1, lineHeight: "1px", verticalAlign: "middle" }}>&nbsp;</td>
                 </tr></tbody></table>
               ) : (
                 <>
                   {slot.time?.trim() && <p style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.time}</p>}
-                  {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, margin: slot.sub_items.filter(s => s.title || s.speaker).length ? "0 0 16px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
-                  {slot.sub_items.filter(s => s.title || s.speaker).map(sub => (
-                    <div key={sub.id} style={{ marginTop: 10, marginBottom: 10, paddingTop: 12, paddingBottom: 12, paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
-                      {sub.title && <p style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75, margin: sub.speaker ? "0 0 3px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.title}</p>}
-                      {sub.speaker && <p style={{ color: D.gray, fontSize: 13, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.speaker}</p>}
-                    </div>
-                  ))}
+                  {(() => {
+                    const subItems = slot.sub_items.filter(s => s.title || s.speaker);
+                    if (subItems.length) {
+                      return (
+                        <div style={{ paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
+                          {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, margin: "0 0 12px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
+                          {subItems.map((sub, si) => (
+                            <div key={sub.id} style={{ marginTop: si === 0 ? 0 : 10, marginBottom: si === subItems.length - 1 ? 0 : 10 }}>
+                              {sub.title && <p style={{ color: D.black, fontSize: 14, fontWeight: 600, lineHeight: 1.75, margin: sub.speaker ? "0 0 3px" : 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.title}</p>}
+                              {sub.speaker && <p style={{ color: D.gray, fontSize: 13, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sub.speaker}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>;
+                  })()}
                   {slot.note?.trim() && <p style={{ color: D.gray, fontSize: 13, lineHeight: 1.75, margin: "12px 0 0", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.note}</p>}
                 </>
               )}
