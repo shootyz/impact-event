@@ -39,9 +39,10 @@ function sanitizeHtml(raw: string): string {
 }
 
 function RichContent({ html }: { html: string }) {
-  if (!html || html === "<p></p>") return null;
+  const trimmed = (html ?? "").replace(/(<p>(\s|<br\s*\/?>)*<\/p>)+$/gi, '');
+  if (!trimmed.trim() || trimmed === "<p></p>") return null;
   // Inject inline styles into the HTML tags
-  const styled = sanitizeHtml(html)
+  const styled = sanitizeHtml(trimmed)
     .replace(/<p( [^>]*)?>/g, (_, attrs) => `<p${attrs ?? ""} style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
     .replace(/<ul>/g, `<ul style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;list-style-type:disc;font-family:Arial,sans-serif;">`)
     .replace(/<ol>/g, `<ol style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;font-family:Arial,sans-serif;">`)

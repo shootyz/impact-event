@@ -87,7 +87,10 @@ function RichPreview({ value, onChange, placeholder }: { value: string; onChange
         .rp-wrap .tiptap p:last-child{margin-bottom:0;}
         .rp-wrap .tiptap ul{list-style-type:disc;padding-left:20px;margin:0 0 10px;font-size:15px;line-height:1.75;color:${D.black};}
         .rp-wrap .tiptap ol{list-style-type:decimal;padding-left:20px;margin:0 0 10px;font-size:15px;}
+        .rp-wrap .tiptap ul:last-child,.rp-wrap .tiptap ol:last-child{margin-bottom:0;}
         .rp-wrap .tiptap li{margin-bottom:3px;}
+        .rp-wrap .tiptap li:last-child{margin-bottom:0;}
+        .rp-wrap .tiptap p:empty:last-child{display:none;}
         .rp-wrap .tiptap a{color:#D28D28;text-decoration:underline;}
         .rp-wrap .tiptap p.is-editor-empty:first-child::before{content:attr(data-placeholder);color:#9ca3af;pointer-events:none;float:left;height:0;}
       `}</style>
@@ -320,8 +323,8 @@ function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & {
 function TextPreview({ block, onChange }: { block: TextBlock & { label?: string }; onChange: (b: typeof block) => void }) {
   return (
     <div>
-      <Editable value={block.title ?? ""} onChange={v => onChange({ ...block, title: v })}
-        placeholder="ÜBERSCHRIFT (OPTIONAL)" style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 16 }} />
+      {block.title?.trim() && <Editable value={block.title ?? ""} onChange={v => onChange({ ...block, title: v })}
+        placeholder="ÜBERSCHRIFT (OPTIONAL)" style={{ color: D.gray, fontSize: 11, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 16 }} />}
       <RichPreview value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Text eingeben…" />
     </div>
   );
