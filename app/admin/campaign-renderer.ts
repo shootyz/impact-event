@@ -143,7 +143,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
 
     case "lead":
       if (!block.text?.trim()) return "";
-      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="border-left:3px solid ${D.gold};padding:2px 0 2px 20px;">
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="border-left:2px solid ${D.gold};padding:2px 0 2px 20px;">
   <p style="color:${D.navy};font-size:19px;font-weight:700;line-height:1.5;margin:0;font-family:Arial,sans-serif;">${esc(block.text).replace(/\n/g, "<br>")}</p>
 </td></tr></table>`;
 
@@ -171,7 +171,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
       return `${sectionHeadHtml(block.category || block.label || "Event Details")}
 ${eventTitleHtml}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
-<tr><td style="background:#faf8f4;padding:18px 22px;border-left:3px solid ${D.gold};border-radius:0 14px 14px 0;">
+<tr><td style="background:#faf8f4;padding:18px 22px;border-left:2px solid ${D.gold};border-radius:0 14px 14px 0;">
 ${boxLines.join("\n")}
 </td></tr>
 </table>
@@ -201,8 +201,8 @@ ${extra}`;
         const pad = `${isFirst ? 0 : 18}px 0 ${isLast ? 0 : 18}px`;
         const titleAndSubItems = subItems.length
           ? `<table width="100%" cellpadding="0" cellspacing="0">
-    ${slot.title?.trim() ? `<tr><td style="padding:0 0 12px 18px;border-left:3px solid ${D.gold};"><p style="color:${D.black};font-size:15px;font-weight:400;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(slot.title)}</p></td></tr>` : ""}
-    ${subItems.map((s, si) => `<tr><td style="padding:${si === 0 ? 0 : 10}px 0 ${si === subItems.length - 1 ? 0 : 10}px 18px;border-left:3px solid ${D.gold};">
+    ${slot.title?.trim() ? `<tr><td style="padding:0 0 12px 18px;border-left:2px solid ${D.gold};"><p style="color:${D.black};font-size:15px;font-weight:400;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(slot.title)}</p></td></tr>` : ""}
+    ${subItems.map((s, si) => `<tr><td style="padding:${si === 0 ? 0 : 10}px 0 ${si === subItems.length - 1 ? 0 : 10}px 18px;border-left:2px solid ${D.gold};">
       ${s.title ? `<p style="color:${D.black};font-size:14px;font-weight:600;line-height:1.75;margin:${s.speaker ? "0 0 2px" : "0"};font-family:Arial,sans-serif;">${esc(s.title)}</p>` : ""}
       ${s.speaker ? `<p style="color:${D.gray};font-size:13px;line-height:1.75;margin:0;font-family:Arial,sans-serif;">${esc(s.speaker)}</p>` : ""}
     </td></tr>`).join("\n")}
@@ -226,7 +226,7 @@ ${slotHtmls.join("\n")}
 ${block.title ? `<p style="color:${D.navy};font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;font-family:Arial,sans-serif;">${esc(block.title)}</p>` : ""}
 ${block.intro ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 24px;font-family:Arial,sans-serif;">${esc(block.intro)}</p>` : ""}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
-${items.map(f => `  <tr><td style="padding:12px 0 12px 16px;border-left:3px solid ${D.gold};">
+${items.map(f => `  <tr><td style="padding:12px 0 12px 16px;border-left:2px solid ${D.gold};">
     <p style="color:${D.black};font-size:15px;font-weight:700;margin:0 0 4px;font-family:Arial,sans-serif;">${esc(f.name)}</p>
     ${f.category ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 10px;font-family:Arial,sans-serif;">${esc(f.category)}</p>` : ""}
     ${f.description ? `<p style="color:${D.gray};font-size:14px;line-height:1.6;margin:0;font-family:Arial,sans-serif;">${esc(f.description)}</p>` : ""}

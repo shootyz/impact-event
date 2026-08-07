@@ -84,7 +84,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
       if (!block.text?.trim()) return null;
       return (
         <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "0 0 24px" }}><tbody><tr>
-          <td style={{ borderLeft: `3px solid ${D.gold}`, padding: "2px 0 2px 20px" }}>
+          <td style={{ borderLeft: `2px solid ${D.gold}`, padding: "2px 0 2px 20px" }}>
             <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.5, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif", whiteSpace: "pre-line" }}>{block.text}</p>
           </td>
         </tr></tbody></table>
@@ -104,7 +104,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <SectionHead label={block.category || block.label || "Event Details"} />
           {block.event_title && <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, margin: "0 0 18px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.event_title}</p>}
           <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: 16 }}>
-            <tbody><tr><td style={{ background: "#faf8f4", padding: "18px 22px", borderLeft: `3px solid ${D.gold}`, borderRadius: "0 14px 14px 0" }}>
+            <tbody><tr><td style={{ background: "#faf8f4", padding: "18px 22px", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0" }}>
               {formattedDate && <p style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</p>}
               {block.venue_name && <p style={{ color: D.black, fontSize: 14.5, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_name}</p>}
             </td></tr></tbody>
@@ -157,7 +157,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
                     const subItems = slot.sub_items.filter(s => s.title || s.speaker);
                     if (subItems.length) {
                       return (
-                        <div style={{ paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
+                        <div style={{ paddingLeft: 18, borderLeft: `2px solid ${D.gold}` }}>
                           {slot.title?.trim() && <p style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, margin: "0 0 12px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{slot.title}</p>}
                           {subItems.map((sub, si) => (
                             <div key={sub.id} style={{ marginTop: si === 0 ? 0 : 10, marginBottom: si === subItems.length - 1 ? 0 : 10 }}>
@@ -188,7 +188,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           {block.title && <p style={{ color: D.navy, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 16px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
           {block.intro && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 24px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.intro}</p>}
           {block.items.filter(f => f.name).map(item => (
-            <div key={item.id} style={{ padding: "10px 0 10px 12px", borderLeft: `3px solid ${D.gold}`, marginBottom: 8 }}>
+            <div key={item.id} style={{ padding: "10px 0 10px 12px", borderLeft: `2px solid ${D.gold}`, marginBottom: 8 }}>
               <p style={{ color: D.black, fontSize: 15, fontWeight: 700, margin: "0 0 2px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{item.name}</p>
               {item.category && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{item.category}</p>}
               {item.description && <p style={{ color: D.gray, fontSize: 14, lineHeight: 1.6, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{item.description}</p>}

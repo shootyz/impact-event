@@ -109,7 +109,7 @@ function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: strin
 
 function LeadPreview({ block, onChange }: { block: LeadBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
   return (
-    <div style={{ borderLeft: `3px solid ${D.gold}`, padding: "2px 0 2px 20px" }}>
+    <div style={{ borderLeft: `2px solid ${D.gold}`, padding: "2px 0 2px 20px" }}>
       <Editable value={block.text} onChange={v => onChange({ ...block, text: v })}
         placeholder="Lead-Statement eingeben…" multiline
         style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.5, display: "block" }} />
@@ -163,7 +163,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
       {block.event_title && (
         <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, margin: "0 0 18px" }}>{block.event_title}</p>
       )}
-      <div style={{ background: "#faf8f4", borderLeft: `3px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "18px 22px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ background: "#faf8f4", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "18px 22px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
         {formattedDate && <span style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }}>{formattedDate}</span>}
         {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }} />}
         {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.black, fontSize: 14.5, lineHeight: 1.75 }} />}
@@ -213,7 +213,7 @@ function ProgramPreview({ block, onChange }: { block: ProgramBlock & { label?: s
               {slot.time?.trim() && <Editable value={slot.time} onChange={v => updateSlot(slot.id, { time: v })}
                 placeholder="Zeit" style={{ color: D.navy, fontSize: 12.5, fontWeight: 700, lineHeight: 1.75, marginBottom: 6 }} />}
               {slot.sub_items.length > 0 ? (
-                <div style={{ paddingLeft: 18, borderLeft: `3px solid ${D.gold}` }}>
+                <div style={{ paddingLeft: 18, borderLeft: `2px solid ${D.gold}` }}>
                   <Editable value={slot.title} onChange={v => updateSlot(slot.id, { title: v })}
                     placeholder="Titel" style={{ color: D.black, fontSize: 15, fontWeight: 400, lineHeight: 1.75, marginBottom: 12 }} />
                   {slot.sub_items.map((sub, i) => (
@@ -259,7 +259,7 @@ function FinalistsPreview({ block, onChange }: { block: FinalistsBlock & { label
           placeholder="Intro…" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 12, whiteSpace: "pre-wrap" }} />
       )}
       {block.items.map((item, i) => (
-        <div key={item.id} style={{ padding: "10px 0 10px 12px", borderLeft: `3px solid ${D.gold}`, marginBottom: 8 }}>
+        <div key={item.id} style={{ padding: "10px 0 10px 12px", borderLeft: `2px solid ${D.gold}`, marginBottom: 8 }}>
           <Editable value={item.name} onChange={v => onChange({ ...block, items: block.items.map((it, j) => j === i ? { ...it, name: v } : it) })}
             placeholder="Name" style={{ color: D.black, fontSize: 15, fontWeight: 700 }} />
           <Editable value={item.category} onChange={v => onChange({ ...block, items: block.items.map((it, j) => j === i ? { ...it, category: v } : it) })}
