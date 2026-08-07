@@ -80,6 +80,16 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
     case "intro":
       return <RichContent html={block.text} />;
 
+    case "lead":
+      if (!block.text?.trim()) return null;
+      return (
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "0 0 24px" }}><tbody><tr>
+          <td style={{ borderLeft: `3px solid ${D.gold}`, padding: "2px 0 2px 20px" }}>
+            <p style={{ color: D.navy, fontSize: 16, fontWeight: 700, lineHeight: 1.5, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif", whiteSpace: "pre-line" }}>{block.text}</p>
+          </td>
+        </tr></tbody></table>
+      );
+
     case "event_details": {
       const formattedDate = block.date ? (() => {
         try {

@@ -21,6 +21,7 @@ export const DATE_LOCALE: Record<Lang, string> = {
 export const BLOCK_LABEL_TRANSLATIONS: Record<Lang, Record<string, string>> = {
   en: {
     intro: "Intro Text",
+    lead: "Lead Statement",
     event_details: "Event Details",
     program: "Schedule",
     finalists: "Finalists / Award",
@@ -33,6 +34,7 @@ export const BLOCK_LABEL_TRANSLATIONS: Record<Lang, Record<string, string>> = {
   },
   de: {
     intro: "Intro-Text",
+    lead: "Lead-Statement",
     event_details: "Event Details",
     program: "Zeitplan",
     finalists: "Finalisten / Award",
@@ -45,6 +47,7 @@ export const BLOCK_LABEL_TRANSLATIONS: Record<Lang, Record<string, string>> = {
   },
   fr: {
     intro: "Texte d'intro",
+    lead: "Déclaration principale",
     event_details: "Détails de l'événement",
     program: "Horaire",
     finalists: "Finalistes / Prix",

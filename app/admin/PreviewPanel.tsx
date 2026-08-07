@@ -5,7 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import type {
-  CampaignBlock, IntroBlock, EventDetailsBlock, ModerationBlock, ProgramBlock,
+  CampaignBlock, IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramBlock,
   FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, RegisterButtonBlock,
 } from "./CampaignBuilder";
 import { type Lang, T, DATE_LOCALE } from "./i18n";
@@ -105,6 +105,16 @@ function RichPreview({ value, onChange, placeholder }: { value: string; onChange
 
 function IntroPreview({ block, onChange }: { block: IntroBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
   return <RichPreview value={block.text} onChange={v => onChange({ ...block, text: v })} placeholder="Intro-Text eingeben…" />;
+}
+
+function LeadPreview({ block, onChange }: { block: LeadBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void }) {
+  return (
+    <div style={{ borderLeft: `3px solid ${D.gold}`, padding: "2px 0 2px 20px" }}>
+      <Editable value={block.text} onChange={v => onChange({ ...block, text: v })}
+        placeholder="Lead-Statement eingeben…" multiline
+        style={{ color: D.navy, fontSize: 16, fontWeight: 700, lineHeight: 1.5, display: "block" }} />
+    </div>
+  );
 }
 
 function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string; custom_fields?: { id: string; label: string; value: string }[] }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
@@ -394,7 +404,7 @@ export default function PreviewPanel({
         <div style={{ padding: "0 32px 32px" }}>
           {blocks.map((block, i) => (
             <div key={i} style={{ marginTop: 24 }}>
-              {block.type !== "intro" && block.type !== "text" && block.type !== "info" && block.type !== "divider" && block.type !== "register_button" && block.type !== "deadline" && (
+              {block.type !== "intro" && block.type !== "lead" && block.type !== "text" && block.type !== "info" && block.type !== "divider" && block.type !== "register_button" && block.type !== "deadline" && (
                 block.type === "program" ? (
                   <Editable
                     value={(block as ProgramBlock).title || block.label || labelFor(block.type)}
@@ -410,6 +420,9 @@ export default function PreviewPanel({
               )}
               {block.type === "intro" && (
                 <IntroPreview block={block} onChange={b => updateBlock(i, b)} />
+              )}
+              {block.type === "lead" && (
+                <LeadPreview block={block} onChange={b => updateBlock(i, b)} />
               )}
               {block.type === "event_details" && (
                 <EventDetailsPreview block={block} onChange={b => updateBlock(i, b)} subject={subject} lang={lang} />

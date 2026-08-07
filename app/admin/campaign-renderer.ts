@@ -5,6 +5,8 @@ import { type Lang, DATE_LOCALE, T } from "./i18n";
 
 export type IntroBlock = { type: "intro"; text: string };
 
+export type LeadBlock = { type: "lead"; text: string };
+
 export type EventDetailsBlock = {
   type: "event_details";
   category: string;
@@ -71,6 +73,7 @@ export type CustomField = { id: string; label: string; value: string };
 
 export type CampaignBlock = (
   | IntroBlock
+  | LeadBlock
   | EventDetailsBlock
   | ModerationBlock
   | ProgramBlock
@@ -137,6 +140,12 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
   switch (block.type) {
     case "intro":
       return `<div style="line-height:1.75;font-size:15px;color:${D.black};font-family:Arial,sans-serif;">${richHtmlToEmail(block.text, D.black)}</div>`;
+
+    case "lead":
+      if (!block.text?.trim()) return "";
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;"><tr><td style="border-left:3px solid ${D.gold};padding:2px 0 2px 20px;">
+  <p style="color:${D.navy};font-size:16px;font-weight:700;line-height:1.5;margin:0;font-family:Arial,sans-serif;">${esc(block.text).replace(/\n/g, "<br>")}</p>
+</td></tr></table>`;
 
     case "event_details": {
       const locale = DATE_LOCALE[ctx?.lang ?? "en"];

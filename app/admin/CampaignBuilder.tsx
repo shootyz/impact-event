@@ -6,9 +6,9 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import PreviewPanel from "./PreviewPanel";
 import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATIONS } from "./i18n";
-export type { IntroBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
+export type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
 export { renderBlocksToHtml, richHtmlToEmail } from "./campaign-renderer";
-import type { IntroBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
+import type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CustomField, CampaignBlock } from "./campaign-renderer";
 import { richHtmlToEmail, renderBlocksToHtml } from "./campaign-renderer";
 
 
@@ -173,6 +173,18 @@ function IntroEditor({ block, onChange }: { block: IntroBlock; onChange: (b: Int
         <label className={labelCls} style={labelSty}>Text</label>
         <RichTextEditor value={block.text} onChange={v => onChange({ ...block, text: v })} minHeight={120} />
         <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Register Now Button wird automatisch darunter eingefügt.</p>
+      </div>
+    </div>
+  );
+}
+
+function LeadEditor({ block, onChange }: { block: LeadBlock; onChange: (b: LeadBlock) => void }) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className={labelCls} style={labelSty}>Lead-Statement</label>
+        <FocusInput value={block.text} onChange={v => onChange({ ...block, text: v })} placeholder="Ein kurzer, prägnanter Satz…" multiline rows={2} />
+        <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Wird hervorgehoben dargestellt — nicht grösser als die Anrede. Für kurze, prägnante Aussagen gedacht.</p>
       </div>
     </div>
   );
@@ -803,6 +815,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
       {open && (
         <div className="p-4">
           {block.type === "intro" && <IntroEditor block={block} onChange={onChange as (b: IntroBlock) => void} />}
+          {block.type === "lead" && <LeadEditor block={block} onChange={onChange as (b: LeadBlock) => void} />}
           {block.type === "event_details" && <EventDetailsEditor block={block} onChange={onChange as (b: EventDetailsBlock) => void} subject={subject} lang={lang} />}
           {block.type === "program" && <ProgramEditor block={block} onChange={onChange as (b: ProgramBlock) => void} />}
           {block.type === "finalists" && <FinalistsEditor block={block} onChange={onChange as (b: FinalistsBlock) => void} />}
@@ -835,6 +848,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
 
 const ADDABLE_BLOCK_TYPES: { type: CampaignBlock["type"]; icon: string }[] = [
   { type: "intro", icon: "✍️" },
+  { type: "lead", icon: "💬" },
   { type: "event_details", icon: "📅" },
   { type: "program", icon: "📋" },
   { type: "finalists", icon: "🏆" },
@@ -850,6 +864,7 @@ const ADDABLE_BLOCK_TYPES: { type: CampaignBlock["type"]; icon: string }[] = [
 function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
   switch (type) {
     case "intro": return { type, text: "" };
+    case "lead": return { type, text: "" };
     case "event_details": return { type, category: "", event_title: "", date: "", time: "13:00", venue_name: "", venue_maps_url: "" };
     case "moderation": return { type, name: "", title: "" };
     case "program": return { type, slots: [{ id: uid(), time: "", title: "", sub_items: [], note: "" }] };
