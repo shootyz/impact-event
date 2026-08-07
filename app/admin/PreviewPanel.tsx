@@ -168,7 +168,7 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
       {block.event_title && (
         <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, margin: "0 0 18px" }}>{block.event_title}</p>
       )}
-      <div style={{ background: "#faf8f4", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "18px 22px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ background: "#F8F9FF", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "18px 22px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
         {formattedDate && <span style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }}>{formattedDate}</span>}
         {!block.date && block.time && <Editable value={block.time} onChange={v => onChange({ ...block, time: v })} placeholder="—" style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75 }} />}
         {block.venue_name !== undefined && <Editable value={block.venue_name} onChange={v => onChange({ ...block, venue_name: v })} placeholder="Venue" style={{ color: D.black, fontSize: 14.5, lineHeight: 1.75 }} />}
@@ -312,10 +312,8 @@ function SpeakerPreview({ block: rawBlock, onChange }: { block: SpeakerBlock & {
             placeholder="Name" style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.75, marginBottom: 6 }} />
           {sp.title?.trim() && <Editable value={sp.title} onChange={v => updateSpeaker(i, { title: v })}
             placeholder="Titel" style={{ color: D.gold, fontSize: 11.5, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", marginBottom: 12 }} />}
-          {sp.book?.trim() && <Editable value={sp.book} onChange={v => updateSpeaker(i, { book: v })}
-            placeholder="Buch / Kurzbeschrieb" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 10, whiteSpace: "pre-wrap" }} />}
-          {sp.bio?.trim() && <Editable value={sp.bio} onChange={v => updateSpeaker(i, { bio: v })}
-            placeholder="Bio" multiline style={{ color: D.black, fontSize: 15, lineHeight: 1.75, marginBottom: 12, whiteSpace: "pre-wrap" }} />}
+          {sp.book?.trim() && <RichPreview value={sp.book} onChange={v => updateSpeaker(i, { book: v })} placeholder="Buch / Kurzbeschrieb" />}
+          {sp.bio?.trim() && <RichPreview value={sp.bio} onChange={v => updateSpeaker(i, { bio: v })} placeholder="Bio" />}
         </div>
       ))}
     </div>

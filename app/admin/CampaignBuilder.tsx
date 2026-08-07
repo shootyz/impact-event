@@ -577,24 +577,16 @@ function SingleSpeakerEditor({ sp, onChange, onRemove, canRemove, adminPassword 
       {sp.book ? (
         <div>
           <label className={labelCls} style={labelSty}>Buch / Vortrag</label>
-          <FocusInput value={sp.book} onChange={v => onChange({ ...sp, book: v })} placeholder="André will present his new book…" />
+          <RichTextEditor value={sp.book} onChange={v => onChange({ ...sp, book: v })} minHeight={60} />
+          <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Text markieren, um einen Teil zu verlinken.</p>
         </div>
       ) : (
         <button className="text-xs" style={{ color: "var(--ig-gray3)" }} onClick={() => onChange({ ...sp, book: " " })}>+ Buch / Vortrag hinzufügen</button>
       )}
       <div>
         <label className={labelCls} style={labelSty}>Bio</label>
-        <FocusInput multiline rows={3} value={sp.bio} onChange={v => onChange({ ...sp, bio: v })} placeholder="A groundbreaking work on how business leaders…" />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelCls} style={labelSty}>Mehr Infos — URL <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
-          <FocusInput value={sp.link_url ?? ""} onChange={v => onChange({ ...sp, link_url: v || undefined })} placeholder="https://…" />
-        </div>
-        <div>
-          <label className={labelCls} style={labelSty}>Button-Text <span style={{ color: "#9ca3af", fontWeight: 400 }}>(leer = Standard)</span></label>
-          <FocusInput value={sp.link_label ?? ""} onChange={v => onChange({ ...sp, link_label: v || undefined })} placeholder="Mehr Infos" />
-        </div>
+        <RichTextEditor value={sp.bio} onChange={v => onChange({ ...sp, bio: v })} minHeight={90} />
+        <p className="text-xs mt-1" style={{ color: "#9ca3af" }}>Text markieren, um einen Teil zu verlinken.</p>
       </div>
     </div>
   );

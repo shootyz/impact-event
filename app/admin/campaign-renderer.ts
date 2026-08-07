@@ -93,6 +93,12 @@ function esc(s: string | null | undefined): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+// Legacy speaker bios/books were stored as plain strings; wrap them so richHtmlToEmail can style them
+function toHtml(s: string | null | undefined): string {
+  if (!s?.trim()) return "";
+  return s.trim().startsWith("<") ? s : `<p>${esc(s)}</p>`;
+}
+
 function dividerHtml() {
   return `<div style="height:1px;background:${D.gray2};margin:20px 0;"></div>`;
 }
@@ -160,7 +166,7 @@ function renderBlock(block: CampaignBlock, ctx?: { campaignId?: string; appUrl?:
       return `${sectionHeadHtml(block.category || block.label || "Event Details")}
 ${eventTitleHtml}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
-<tr><td style="background:#faf8f4;padding:18px 22px;border-left:2px solid ${D.gold};border-radius:0 14px 14px 0;">
+<tr><td style="background:#F8F9FF;padding:18px 22px;border-left:2px solid ${D.gold};border-radius:0 14px 14px 0;">
 ${boxLines.join("\n")}
 </td></tr>
 </table>
@@ -234,8 +240,8 @@ ${block.website_url ? `<table width="100%" cellpadding="0" cellspacing="0" style
       const speakerHtmls = speakers.map((sp, i) => `${sp.photo_url ? `<img src="${sp.photo_url}" alt="${esc(sp.name)}" width="108" style="display:block;width:108px;height:108px;object-fit:cover;border-radius:50%;border:3px solid ${D.gold};margin:${i > 0 ? "28px" : "0"} 0 16px;" />` : ""}
 <p style="color:${D.navy};font-size:17px;font-weight:700;line-height:1.75;margin:0 0 6px;font-family:Arial,sans-serif;">${esc(sp.name)}</p>
 ${sp.title ? `<p style="color:${D.gold};font-size:11.5px;font-weight:700;letter-spacing:1.4px;line-height:1.5;text-transform:uppercase;margin:0 0 12px;font-family:Arial,sans-serif;">${esc(sp.title)}</p>` : ""}
-${sp.book?.trim() ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 10px;font-family:Arial,sans-serif;">${esc(sp.book)}</p>` : ""}
-${sp.bio ? `<p style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 12px;font-family:Arial,sans-serif;">${esc(sp.bio)}</p>` : ""}`);
+${richHtmlToEmail(toHtml(sp.book), D.black)}
+${richHtmlToEmail(toHtml(sp.bio), D.black)}`);
       return `${sectionHeadHtml(block.label || t.speaker)}
 ${speakerHtmls.join("\n")}`;
     }

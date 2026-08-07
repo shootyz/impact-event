@@ -38,6 +38,14 @@ function sanitizeHtml(raw: string): string {
     .replace(/data\s*:/gi, '')
 }
 
+// Legacy speaker bios/books were stored as plain strings; wrap them so RichContent can style them
+function toHtml(s: string | null | undefined): string {
+  if (!s?.trim()) return "";
+  if (s.trim().startsWith("<")) return s;
+  const esc = s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `<p>${esc}</p>`;
+}
+
 function RichContent({ html }: { html: string }) {
   const trimmed = (html ?? "").replace(/(<p[^>]*>(\s|<br[^>]*>)*<\/p>\s*)+$/gi, '');
   if (!trimmed.trim() || trimmed === "<p></p>") return null;
@@ -90,7 +98,7 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
           <SectionHead label={block.category || block.label || "Event Details"} />
           {block.event_title && <p style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, margin: "0 0 18px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.event_title}</p>}
           <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: 16 }}>
-            <tbody><tr><td style={{ background: "#faf8f4", padding: "18px 22px", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0" }}>
+            <tbody><tr><td style={{ background: "#F8F9FF", padding: "18px 22px", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0" }}>
               {formattedDate && <p style={{ color: D.black, fontSize: 15.5, fontWeight: 700, lineHeight: 1.75, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{formattedDate}</p>}
               {block.venue_name && <p style={{ color: D.black, fontSize: 14.5, lineHeight: 1.75, margin: 0, fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.venue_name}</p>}
             </td></tr></tbody>
@@ -197,8 +205,8 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
               {sp.photo_url && <img src={sp.photo_url} alt={sp.name} width={108} style={{ width: 108, height: 108, borderRadius: "50%", objectFit: "cover", border: `3px solid ${D.gold}`, marginBottom: 16, display: "block" }} />}
               <p style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.75, margin: "0 0 6px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.name}</p>
               {sp.title && <p style={{ color: D.gold, fontSize: 11.5, fontWeight: 700, letterSpacing: 1.4, lineHeight: 1.5, textTransform: "uppercase", margin: "0 0 12px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.title}</p>}
-              {sp.book?.trim() && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 10px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.book}</p>}
-              {sp.bio && <p style={{ color: D.black, fontSize: 15, lineHeight: 1.75, margin: "0 0 12px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{sp.bio}</p>}
+              <RichContent html={toHtml(sp.book)} />
+              <RichContent html={toHtml(sp.bio)} />
             </div>
           ))}
         </div>
