@@ -52,17 +52,19 @@ export async function GET(req: NextRequest) {
   })
 
   const csv = [header, ...lines].join('\r\n')
-  const filename =
-    type === 'checkedin'
-      ? `eingecheckt_${event.name.replace(/\s+/g, '_')}.csv`
-      : type === 'noshows'
-      ? `noshows_${event.name.replace(/\s+/g, '_')}.csv`
-      : `gaesteliste_${event.name.replace(/\s+/g, '_')}.csv`
+  const prefix = type === 'checkedin' ? 'eingecheckt' : type === 'noshows' ? 'noshows' : 'gaesteliste'
+  const baseName = `${prefix}_${event.name}`
+  // Content-Disposition must be a ByteString (Latin-1) — event names routinely contain
+  // en-dashes/umlauts that aren't, which throws a 500. ASCII-fold for the plain filename
+  // and additionally offer the exact UTF-8 name via filename* for browsers that support it.
+  const asciiName = baseName
+    .normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^\x20-\x7E]/g, '_').replace(/\s+/g, '_').replace(/_+/g, '_')
 
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Disposition': `attachment; filename="${asciiName}.csv"; filename*=UTF-8''${encodeURIComponent(baseName.replace(/\s+/g, '_'))}.csv`,
     },
   })
 }
