@@ -23,6 +23,32 @@ const IconPencilSmall = ({ className = "w-3.5 h-3.5" }: { className?: string }) 
 const IconXSmall = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
 );
+const IconDownloadSmall = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+);
+
+// Column header aliases, matched after stripping everything but letters/digits — so
+// "Last Name", "last_name" and "Nachname" all normalize to the same key.
+const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+const HEADER_ALIASES: Record<"first_name" | "last_name" | "email" | "anrede" | "sprache", string[]> = {
+  first_name: ["vorname", "firstname", "givenname", "forename", "prenom"],
+  last_name: ["name", "nachname", "lastname", "surname", "familyname", "nom"],
+  email: ["email", "mail", "emailadresse", "emailaddress", "courriel"],
+  anrede: ["anrede", "salutation", "title", "titre", "anspracheform"],
+  sprache: ["sprache", "language", "langue", "lang", "locale"],
+};
+// Free-text language values → canonical 2-letter code, so "Englisch"/"English"/"anglais" all become "en".
+// Keys are already run through norm() (lowercased, diacritics stripped) — "französisch" → "franzosisch".
+const SPRACHE_VALUE_ALIASES: Record<string, string> = {
+  de: "de", deutsch: "de", german: "de", allemand: "de", ger: "de", deu: "de",
+  en: "en", englisch: "en", english: "en", anglais: "en", eng: "en",
+  fr: "fr", franzosisch: "fr", french: "fr", francais: "fr", fra: "fr",
+};
+function normalizeSprache(raw: string): string | null {
+  const key = norm(raw);
+  if (!key) return null;
+  return SPRACHE_VALUE_ALIASES[key] ?? raw.toLowerCase().trim();
+}
 
 type EditingMember = {
   id: string; first_name: string; last_name: string;
@@ -213,14 +239,15 @@ export default function ZielgruppenDashboard({
     const lines = text.trim().split(/\r?\n/);
     const delim = lines[0].includes(";") ? ";" : ",";
     const splitLine = (l: string) => l.split(delim).map(c => c.trim().replace(/^"|"$/g, ""));
-    const headers = splitLine(lines[0]).map(h => h.toLowerCase());
-    // Canonical rule: Anrede, Name, Vorname, E-Mail, Sprache — "Name" ist der
-    // Nachname. Ältere Synonyme (first_name/last_name/email) bleiben kompatibel.
-    const iFirst = headers.findIndex(h => h === "vorname" || h === "first_name");
-    const iLast = headers.findIndex(h => h === "name" || h === "nachname" || h === "last_name");
-    const iEmail = headers.findIndex(h => h === "e-mail" || h === "email");
-    const iAnrede = headers.findIndex(h => h === "anrede");
-    const iSprache = headers.findIndex(h => h === "sprache");
+    // Fuzzy header matching: normalize (lowercase, strip spaces/underscores/diacritics)
+    // and match against a synonym list, so "Last Name", "last_name", "Nachname" and
+    // "salutation"/"Anrede" are all recognized regardless of exact spelling.
+    const headers = splitLine(lines[0]).map(norm);
+    const iFirst = headers.findIndex(h => HEADER_ALIASES.first_name.includes(h));
+    const iLast = headers.findIndex(h => HEADER_ALIASES.last_name.includes(h));
+    const iEmail = headers.findIndex(h => HEADER_ALIASES.email.includes(h));
+    const iAnrede = headers.findIndex(h => HEADER_ALIASES.anrede.includes(h));
+    const iSprache = headers.findIndex(h => HEADER_ALIASES.sprache.includes(h));
     const missingColumns = [
       iFirst < 0 ? "Vorname" : null,
       iLast < 0 ? "Name" : null,
@@ -229,13 +256,13 @@ export default function ZielgruppenDashboard({
 
     const rows = missingColumns.length > 0 ? [] : lines.slice(1).filter(l => l.trim()).map(l => {
       const cols = splitLine(l);
-      const spracheRaw = iSprache >= 0 ? (cols[iSprache] ?? "").toLowerCase() : "";
+      const spracheRaw = iSprache >= 0 ? (cols[iSprache] ?? "") : "";
       return {
         first_name: cols[iFirst] ?? "",
         last_name: cols[iLast] ?? "",
         email: cols[iEmail] ?? "",
         anrede: iAnrede >= 0 ? (cols[iAnrede] ?? "") : "",
-        sprache: spracheRaw || null,
+        sprache: normalizeSprache(spracheRaw),
       };
     }).filter(r => r.email);
 
@@ -273,6 +300,26 @@ export default function ZielgruppenDashboard({
     setCsvPreview(null);
     setCsvZgId(null);
     if (csvRef.current) csvRef.current.value = "";
+  }
+
+  function exportZielgruppeCsv(zg: Zielgruppe) {
+    const list = groupMembers(zg.id);
+    const esc = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const header = ["Anrede", "Vorname", "Name", "E-Mail", "Sprache", "Code"].map(esc).join(",");
+    const lines = list.map(m => {
+      const ic = Array.isArray(m.invite_codes) ? m.invite_codes[0] : m.invite_codes;
+      return [m.anrede ?? "", m.first_name, m.last_name, m.email, m.sprache ? m.sprache.toUpperCase() : "", ic?.code ?? ""]
+        .map(esc).join(",");
+    });
+    // Leading BOM so Excel recognizes UTF-8 and renders umlauts correctly on open.
+    const blob = new Blob(["﻿" + [header, ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `zielgruppe_${zg.name.replace(/\s+/g, "_")}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
   }
 
   async function openHubSpot(zgId: string) {
@@ -401,7 +448,7 @@ export default function ZielgruppenDashboard({
 
               {csvPreview.missingColumns.length > 0 ? (
                 <p className="text-xs" style={{ color: "#dc2626" }}>
-                  {`Pflichtspalten fehlen: ${csvPreview.missingColumns.join(", ")}. Erwartete Spalten: Anrede, Name, Vorname, E-Mail, Sprache (Anrede und Sprache optional).`}
+                  {`Pflichtspalten fehlen: ${csvPreview.missingColumns.join(", ")}. Erwartete Spalten (Schreibweise flexibel): Anrede, Name, Vorname, E-Mail, Sprache — z.B. auch „Last Name", „Salutation" oder „Language" werden erkannt. Anrede und Sprache sind optional.`}
                 </p>
               ) : (
                 <>
@@ -771,6 +818,18 @@ export default function ZielgruppenDashboard({
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h8M12 8v8" /></svg>
                         HubSpot importieren
                       </button>
+                      {list.length > 0 && (
+                        <>
+                          <span style={{ color: "var(--ig-gray2)" }}>|</span>
+                          <button
+                            onClick={() => exportZielgruppeCsv(zg)}
+                            className="text-xs font-medium flex items-center gap-1.5 transition active:scale-95 opacity-90 hover:opacity-100"
+                            style={{ color: "var(--ig-gold)" }}>
+                            <IconDownloadSmall />
+                            CSV exportieren
+                          </button>
+                        </>
+                      )}
                       {hsResult?.zgId === zg.id && (
                         <span className="text-xs" style={{ color: "#16a34a" }}>✓ {hsResult.imported} importiert, {hsResult.duplicates} Duplikate</span>
                       )}
