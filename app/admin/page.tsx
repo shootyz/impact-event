@@ -241,6 +241,16 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
   const [recipients, setRecipients] = useState<{ email: string; first_name: string; last_name: string }[] | null>(null);
   const recipientsBtnRef = useRef<HTMLButtonElement>(null);
   const [recipientsPos, setRecipientsPos] = useState({ top: 0, left: 0 });
+  const [draftRecipientCount, setDraftRecipientCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (c.sent_at || !adminPassword) return;
+    let cancelled = false;
+    fetch(`/api/campaigns/${c.id}/recipient-count`, { headers: { Authorization: `Bearer ${adminPassword}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (!cancelled && d) setDraftRecipientCount(d.count); });
+    return () => { cancelled = true; };
+  }, [c.id, c.sent_at, adminPassword]);
 
   const sentDateText = c.sent_at
     ? `Gesendet am ${new Date(c.sent_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
@@ -267,6 +277,11 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
               {!c.sent_at && (zielgruppeName
                 ? <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(210,141,40,0.1)", color: "var(--ig-gold)", border: "1px solid rgba(210,141,40,0.2)", flexShrink: 0 }}>{zielgruppeName}</span>
                 : <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)", flexShrink: 0 }}>Alle Mitglieder</span>
+              )}
+              {!c.sent_at && draftRecipientCount != null && (
+                <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)", flexShrink: 0 }}>
+                  {draftRecipientCount} Empfänger
+                </span>
               )}
             </div>
             <p className="text-xs" style={{ color: c.scheduled_at && !c.sent_at ? "var(--ig-gold)" : "var(--ig-gray3)" }}>
@@ -462,7 +477,12 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
                   const bj = c.blocks_json as { lang?: string } | null;
                   const lang = bj && !Array.isArray(bj) ? bj.lang?.toUpperCase() : null;
                   if (!lang) return null;
-                  return <p className="w-full text-right text-xs order-first m-0" style={{ color: "var(--ig-gray3)" }}>Wird nur an <strong style={{ color: "var(--ig-navy)" }}>{lang}</strong>-Mitglieder gesendet</p>;
+                  const countText = draftRecipientCount != null ? `${draftRecipientCount} ` : "";
+                  return (
+                    <p className="w-full text-right text-xs order-first m-0" style={{ color: "var(--ig-gray3)" }}>
+                      Wird an {zielgruppeName ? "die" : "alle"} <strong style={{ color: "var(--ig-navy)" }}>{countText}{lang}</strong>-Mitglieder{zielgruppeName ? <> der Zielgruppe <strong style={{ color: "var(--ig-navy)" }}>{zielgruppeName}</strong></> : ""} gesendet
+                    </p>
+                  );
                 })()}
                 <button onClick={async () => {
                   setSending(true);
