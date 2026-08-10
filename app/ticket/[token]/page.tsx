@@ -202,34 +202,34 @@ function TicketContent() {
             </div>
           </div>
 
-          {/* Save as PDF + Send via WhatsApp */}
-          <div className="no-print mt-5 flex gap-2">
-            <a
-              href={`/api/ticket/${token}/pdf?lang=${lang}`}
-              download
-              className="flex-1 py-3.5 rounded-xl font-semibold text-xs sm:text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
-              style={{ background: "var(--ig-gold)", color: "white", border: "1px solid var(--ig-gold)", textDecoration: "none" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#B8791F"; (e.currentTarget as HTMLElement).style.borderColor = "#B8791F"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; }}
-            >
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-              </svg>
-              {t.savePdf}
-            </a>
+          {/* Save as PDF button */}
+          <a
+            href={`/api/ticket/${token}/pdf?lang=${lang}`}
+            download
+            className="no-print mt-5 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
+            style={{ background: "var(--ig-gold)", color: "white", border: "1px solid var(--ig-gold)", textDecoration: "none" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#B8791F"; (e.currentTarget as HTMLElement).style.borderColor = "#B8791F"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--ig-gold)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gold)"; }}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            </svg>
+            {t.savePdf}
+          </a>
+
+          {/* Send via WhatsApp */}
+          {!showWhatsApp ? (
             <button
-              onClick={() => setShowWhatsApp(v => !v)}
-              className="flex-1 py-3.5 rounded-xl font-semibold text-xs sm:text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
+              onClick={() => setShowWhatsApp(true)}
+              className="no-print mt-3 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
               style={{ background: "transparent", color: "var(--ig-navy)", border: "1.5px solid var(--ig-navy)" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(30,50,99,0.06)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
-              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-1.742-.87-2.883-1.553-4.03-3.522-.305-.526.305-.489.87-1.628.098-.198.049-.371-.05-.52-.099-.148-.669-1.61-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.05 3.133 4.999 4.27 2.949 1.14 2.949.76 3.42.712.47-.05 1.758-.719 2.006-1.412.248-.694.248-1.29.173-1.412-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5.003L2 22l5.184-1.312A9.94 9.94 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.062a8.05 8.05 0 01-4.108-1.13l-.294-.175-3.06.775.82-2.978-.19-.306A8.06 8.06 0 013.938 12c0-4.452 3.61-8.062 8.062-8.062S20.062 7.548 20.062 12 16.452 20.062 12 20.062z"/></svg>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-1.742-.87-2.883-1.553-4.03-3.522-.305-.526.305-.489.87-1.628.098-.198.049-.371-.05-.52-.099-.148-.669-1.61-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.05 3.133 4.999 4.27 2.949 1.14 2.949.76 3.42.712.47-.05 1.758-.719 2.006-1.412.248-.694.248-1.29.173-1.412-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5.003L2 22l5.184-1.312A9.94 9.94 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.062a8.05 8.05 0 01-4.108-1.13l-.294-.175-3.06.775.82-2.978-.19-.306A8.06 8.06 0 013.938 12c0-4.452 3.61-8.062 8.062-8.062S20.062 7.548 20.062 12 16.452 20.062 12 20.062z"/></svg>
               {lang === "de" ? "Per WhatsApp senden" : lang === "fr" ? "Envoyer par WhatsApp" : "Send via WhatsApp"}
             </button>
-          </div>
-
-          {showWhatsApp && (
+          ) : (
             <div className="no-print mt-3 flex gap-2">
               <input
                 type="tel"
