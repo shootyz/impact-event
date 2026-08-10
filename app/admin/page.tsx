@@ -702,6 +702,7 @@ export default function AdminPage() {
   const [editEvName, setEditEvName] = useState("");
   const [editEvNameEn, setEditEvNameEn] = useState("");
   const [editEvNameFr, setEditEvNameFr] = useState("");
+  const [showDeFields, setShowDeFields] = useState(false);
   const [showEnFields, setShowEnFields] = useState(false);
   const [showFrFields, setShowFrFields] = useState(false);
   const [editEvDate, setEditEvDate] = useState("");
@@ -1965,7 +1966,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                       <div className="px-4 pb-3 pt-2.5 flex items-center gap-1.5 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
                         {/* Edit */}
                         <button title="Bearbeiten" aria-label="Event bearbeiten"
-                          onClick={e => { e.stopPropagation(); setEditingEventId(editingEventId === ev.id ? null : ev.id); setEditEvName(ev.name); setEditEvNameEn(ev.name_en ?? ""); setEditEvNameFr(ev.name_fr ?? ""); setEditEvDate(ev.date?.slice(0,10) ?? ""); setEditEvLocation(ev.location); setEditEvLocationEn(ev.location_en ?? ""); setEditEvLocationFr(ev.location_fr ?? ""); setEditEvDesc(ev.description ?? ""); setEditEvDescEn(ev.description_en ?? ""); setEditEvDescFr(ev.description_fr ?? ""); setEditEvCategory(ev.category ?? ""); setEditEvResult(null); setShowEnFields(!!(ev.name_en || ev.location_en || ev.description_en)); setShowFrFields(!!(ev.name_fr || ev.location_fr || ev.description_fr)); }}
+                          onClick={e => { e.stopPropagation(); setEditingEventId(editingEventId === ev.id ? null : ev.id); setEditEvName(ev.name); setEditEvNameEn(ev.name_en ?? ""); setEditEvNameFr(ev.name_fr ?? ""); setEditEvDate(ev.date?.slice(0,10) ?? ""); setEditEvLocation(ev.location); setEditEvLocationEn(ev.location_en ?? ""); setEditEvLocationFr(ev.location_fr ?? ""); setEditEvDesc(ev.description ?? ""); setEditEvDescEn(ev.description_en ?? ""); setEditEvDescFr(ev.description_fr ?? ""); setEditEvCategory(ev.category ?? ""); setEditEvResult(null); setShowDeFields(false); setShowEnFields(false); setShowFrFields(false); }}
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: `1px solid ${editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-gray2)"}`, color: editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-navy)", background: editingEventId === ev.id ? "var(--ig-light)" : "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
@@ -2047,48 +2048,54 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                       {editingEventId === ev.id && (
                         <div className="px-4 pb-4 pt-3 border-t space-y-3" style={{ borderColor: "var(--ig-gray2)", background: "var(--ig-light)" }}>
                           {/* Deutsch — Basis (required) */}
-                          <div className="rounded-xl border p-3 space-y-2.5" style={{ borderColor: "var(--ig-gray2)", background: "white" }}>
-                            <p className="text-xs font-semibold flex items-center gap-1.5" style={{ color: "var(--ig-navy)" }}>
+                          <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--ig-gray2)", background: "white" }}>
+                            <button type="button" onClick={() => setShowDeFields(v => !v)}
+                              className="w-full text-xs font-semibold flex items-center gap-1.5 p-3" style={{ color: "var(--ig-navy)" }}>
                               <span>🇩🇪</span> Deutsch <span className="font-normal" style={{ color: "var(--ig-gray3)" }}>(Basis)</span>
-                            </p>
-                            <div>
-                              <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Name <span style={{ color: "var(--ig-gold)" }}>*</span></label>
-                              <input type="text" value={editEvName} onChange={e => setEditEvName(e.target.value)}
-                                className={inputClass} style={inputStyle}
-                                onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                                onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                            </div>
-                            <div>
-                              <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Kategorie</label>
-                              <select value={editEvCategory} onChange={e => setEditEvCategory(e.target.value)}
-                                className={inputClass} style={inputStyle}
-                                onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                                onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
-                                <option value="">Keine Kategorie</option>
-                                {EVENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Datum <span style={{ color: "var(--ig-gold)" }}>*</span></label>
-                              <input type="date" value={editEvDate} onChange={e => setEditEvDate(e.target.value)}
-                                className={inputClass} style={inputStyle}
-                                onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                                onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                            </div>
-                            <div>
-                              <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Ort <span style={{ color: "var(--ig-gold)" }}>*</span></label>
-                              <input type="text" value={editEvLocation} onChange={e => setEditEvLocation(e.target.value)}
-                                className={inputClass} style={inputStyle}
-                                onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                                onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                            </div>
-                            <div>
-                              <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Beschreibung</label>
-                              <input type="text" value={editEvDesc} onChange={e => setEditEvDesc(e.target.value)}
-                                className={inputClass} style={inputStyle}
-                                onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
-                                onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
-                            </div>
+                              <svg className="ml-auto w-3.5 h-3.5 transition-transform" style={{ color: "var(--ig-gray3)", transform: showDeFields ? "rotate(180deg)" : "rotate(0deg)" }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            {showDeFields && (
+                              <div className="px-3 pb-3 space-y-2.5">
+                                <div>
+                                  <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Name <span style={{ color: "var(--ig-gold)" }}>*</span></label>
+                                  <input type="text" value={editEvName} onChange={e => setEditEvName(e.target.value)}
+                                    className={inputClass} style={inputStyle}
+                                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                                </div>
+                                <div>
+                                  <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Kategorie</label>
+                                  <select value={editEvCategory} onChange={e => setEditEvCategory(e.target.value)}
+                                    className={inputClass} style={inputStyle}
+                                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}>
+                                    <option value="">Keine Kategorie</option>
+                                    {EVENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Datum <span style={{ color: "var(--ig-gold)" }}>*</span></label>
+                                  <input type="date" value={editEvDate} onChange={e => setEditEvDate(e.target.value)}
+                                    className={inputClass} style={inputStyle}
+                                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                                </div>
+                                <div>
+                                  <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Ort <span style={{ color: "var(--ig-gold)" }}>*</span></label>
+                                  <input type="text" value={editEvLocation} onChange={e => setEditEvLocation(e.target.value)}
+                                    className={inputClass} style={inputStyle}
+                                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                                </div>
+                                <div>
+                                  <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Beschreibung</label>
+                                  <input type="text" value={editEvDesc} onChange={e => setEditEvDesc(e.target.value)}
+                                    className={inputClass} style={inputStyle}
+                                    onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                                    onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Englisch — optional override */}
