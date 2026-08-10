@@ -50,6 +50,31 @@ function normalizeSprache(raw: string): string | null {
   return SPRACHE_VALUE_ALIASES[key] ?? raw.toLowerCase().trim();
 }
 
+// Fallback for columns whose header doesn't match any known label at all: sniff the
+// actual values. E-Mail and Anrede/Sprache have a fairly constrained shape, so this
+// catches headers we never anticipated (e.g. "Nom de famille") without a code change.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const SALUTATION_VALUES = new Set([
+  "herr", "frau", "fraulein", "mr", "mrs", "ms", "miss", "mx",
+  "monsieur", "madame", "mademoiselle", "mme", "mlle", "m", "dr", "prof",
+]);
+function detectColumnsByContent(
+  sampleRows: string[][],
+  numCols: number,
+  claimed: Set<number>
+): { email: number; anrede: number; sprache: number } {
+  let email = -1, anrede = -1, sprache = -1;
+  for (let c = 0; c < numCols; c++) {
+    if (claimed.has(c)) continue;
+    const vals = sampleRows.map(r => (r[c] ?? "").trim()).filter(Boolean);
+    if (vals.length === 0) continue;
+    if (email < 0 && vals.every(v => EMAIL_RE.test(v))) { email = c; claimed.add(c); continue; }
+    if (anrede < 0 && vals.every(v => SALUTATION_VALUES.has(norm(v)))) { anrede = c; claimed.add(c); continue; }
+    if (sprache < 0 && vals.every(v => ["de", "en", "fr"].includes(normalizeSprache(v) ?? ""))) { sprache = c; claimed.add(c); continue; }
+  }
+  return { email, anrede, sprache };
+}
+
 type EditingMember = {
   id: string; first_name: string; last_name: string;
   email: string; anrede: string; sprache: string;
@@ -245,9 +270,22 @@ export default function ZielgruppenDashboard({
     const headers = splitLine(lines[0]).map(norm);
     const iFirst = headers.findIndex(h => HEADER_ALIASES.first_name.includes(h));
     const iLast = headers.findIndex(h => HEADER_ALIASES.last_name.includes(h));
-    const iEmail = headers.findIndex(h => HEADER_ALIASES.email.includes(h));
-    const iAnrede = headers.findIndex(h => HEADER_ALIASES.anrede.includes(h));
-    const iSprache = headers.findIndex(h => HEADER_ALIASES.sprache.includes(h));
+    let iEmail = headers.findIndex(h => HEADER_ALIASES.email.includes(h));
+    let iAnrede = headers.findIndex(h => HEADER_ALIASES.anrede.includes(h));
+    let iSprache = headers.findIndex(h => HEADER_ALIASES.sprache.includes(h));
+
+    // Fallback: for columns whose header didn't match anything, sniff the actual
+    // values (does it look like an email? a salutation? a language?) — catches
+    // headers we never listed without needing a code change for every new wording.
+    const claimed = new Set([iFirst, iLast, iEmail, iAnrede, iSprache].filter(i => i >= 0));
+    if (iEmail < 0 || iAnrede < 0 || iSprache < 0) {
+      const sampleRows = lines.slice(1, 21).filter(l => l.trim()).map(splitLine);
+      const byContent = detectColumnsByContent(sampleRows, headers.length, claimed);
+      if (iEmail < 0) iEmail = byContent.email;
+      if (iAnrede < 0) iAnrede = byContent.anrede;
+      if (iSprache < 0) iSprache = byContent.sprache;
+    }
+
     const missingColumns = [
       iFirst < 0 ? "Vorname" : null,
       iLast < 0 ? "Name" : null,
