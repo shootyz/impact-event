@@ -3241,7 +3241,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ adminPassword: savedPassword.current, subject: `${c.subject} (Kopie)`, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null, zielgruppe_id: c.zielgruppe_id || null, event_id: c.event_id, send_now: false }),
+                        body: JSON.stringify({ adminPassword: savedPassword.current, subject: `${c.subject} (Kopie)`, body_html: c.body_html, event_url: c.event_url || null, blocks_json: c.blocks_json || null, zielgruppe_id: c.zielgruppe_id || null, event_id: c.event_id, lang_group_id: c.lang_group_id || null, send_now: false }),
                       });
                       const d = await res.json();
                       if (res.ok) {
