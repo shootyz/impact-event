@@ -1049,7 +1049,7 @@ export default function AdminPage() {
     await fetch(`/api/guest/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: pw }) });
     setExpandedGuest(null);
     setDialog(null);
-    loadRegistrations(pw);
+    loadRegistrations(pw, selectedEventId);
   };
 
   const guestAction = async (id: string, action: "delete" | "checkin" | "uncheckin") => {
@@ -1061,7 +1061,7 @@ export default function AdminPage() {
     }
     await fetch(`/api/guest/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: pw, checked_in: action === "checkin" }) });
     setExpandedGuest(null);
-    loadRegistrations(pw);
+    loadRegistrations(pw, selectedEventId);
   };
 
   const sendQRToGuest = async (reg: Registration) => {
