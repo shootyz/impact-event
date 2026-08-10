@@ -206,13 +206,14 @@ const TEST_EMAILS = [
   "simon.neuhaus@impactgstaad.ch",
 ];
 
-function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zielgruppeName, adminPassword }: {
+function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, duplicateBlockedReason, zielgruppeName, adminPassword }: {
   c: CampaignType;
   onSend: (id: string, sent: number) => void;
   onDelete: (id: string) => void;
   onSchedule?: (id: string, scheduled_at: string | null) => void;
   onEdit?: () => void;
   onDuplicate?: () => Promise<void>;
+  duplicateBlockedReason?: string;
   zielgruppeName?: string;
   adminPassword?: string;
 }) {
@@ -482,8 +483,12 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
             )}
             {onDuplicate && (
               <button
-                disabled={duplicating}
-                onClick={async () => { setDuplicating(true); await onDuplicate(); setDuplicating(false); }}
+                disabled={duplicating || !!duplicateBlockedReason}
+                title={duplicateBlockedReason}
+                onClick={async () => {
+                  if (duplicateBlockedReason) return;
+                  setDuplicating(true); await onDuplicate(); setDuplicating(false);
+                }}
                 className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all active:scale-95 disabled:opacity-50"
                 style={{ background: duplicating ? "var(--ig-navy)" : "var(--ig-light)", color: duplicating ? "#fff" : "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                 {duplicating ? "Wird dupliziert…" : "Duplizieren"}
@@ -505,6 +510,9 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, zi
             )}
           </div>
         </div>
+        {onDuplicate && duplicateBlockedReason && (
+          <p className="text-xs mt-1" style={{ color: "var(--ig-gold)" }}>⚠ {duplicateBlockedReason}</p>
+        )}
         {/* Schedule picker */}
         {scheduling && (
           <div className="flex items-center gap-2 mt-2 mb-1">
@@ -3224,6 +3232,16 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
             {/* ── Campaign Archive (sent only) ── */}
             {mailingTab === "campaigns" && (() => {
               const sent = campaigns.filter(c => !!c.sent_at);
+              const campaignLang = (x: CampaignType) => {
+                const bj = x.blocks_json as { lang?: string } | null;
+                return (bj && !Array.isArray(bj) ? bj.lang : null) ?? "de";
+              };
+              const findDuplicateBlockedReason = (c: CampaignType): string | undefined => {
+                if (!c.lang_group_id) return undefined;
+                const lang = campaignLang(c);
+                const sibling = campaigns.find(x => x.id !== c.id && x.lang_group_id === c.lang_group_id && !x.sent_at && campaignLang(x) === lang);
+                return sibling ? `Es gibt bereits einen ${lang.toUpperCase()}-Entwurf in dieser Sprachgruppe — bitte diesen zuerst versenden oder löschen.` : undefined;
+              };
               return (
               <div className="space-y-3">
                 {campaignsLoading ? (
@@ -3234,10 +3252,12 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                   <CampaignCard key={c.id} c={c}
                     adminPassword={savedPassword.current}
                     zielgruppeName={zielgruppen.find(z => z.id === c.zielgruppe_id)?.name}
+                    duplicateBlockedReason={findDuplicateBlockedReason(c)}
                     onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
                     onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                     onSchedule={(id, scheduled_at) => { setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x)); }}
                     onDuplicate={async () => {
+                      if (findDuplicateBlockedReason(c)) return;
                       const res = await fetch("/api/campaigns", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
