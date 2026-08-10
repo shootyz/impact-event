@@ -1712,7 +1712,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                   <option value="">Kategorie (optional)</option>
                   {EVENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
-                <input type="datetime-local" value={newEventDate} onChange={e => setNewEventDate(e.target.value)}
+                <input type="date" value={newEventDate} onChange={e => setNewEventDate(e.target.value)}
                   className={inputClass} style={inputStyle}
                   onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                   onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
@@ -1963,7 +1963,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                       <div className="px-4 pb-3 pt-2.5 flex items-center gap-1.5 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
                         {/* Edit */}
                         <button title="Bearbeiten" aria-label="Event bearbeiten"
-                          onClick={e => { e.stopPropagation(); setEditingEventId(editingEventId === ev.id ? null : ev.id); setEditEvName(ev.name); setEditEvNameEn(ev.name_en ?? ""); setEditEvNameFr(ev.name_fr ?? ""); setEditEvDate(ev.date?.slice(0,16) ?? ""); setEditEvLocation(ev.location); setEditEvLocationEn(ev.location_en ?? ""); setEditEvLocationFr(ev.location_fr ?? ""); setEditEvDesc(ev.description ?? ""); setEditEvDescEn(ev.description_en ?? ""); setEditEvDescFr(ev.description_fr ?? ""); setEditEvCategory(ev.category ?? ""); setEditEvResult(null); }}
+                          onClick={e => { e.stopPropagation(); setEditingEventId(editingEventId === ev.id ? null : ev.id); setEditEvName(ev.name); setEditEvNameEn(ev.name_en ?? ""); setEditEvNameFr(ev.name_fr ?? ""); setEditEvDate(ev.date?.slice(0,10) ?? ""); setEditEvLocation(ev.location); setEditEvLocationEn(ev.location_en ?? ""); setEditEvLocationFr(ev.location_fr ?? ""); setEditEvDesc(ev.description ?? ""); setEditEvDescEn(ev.description_en ?? ""); setEditEvDescFr(ev.description_fr ?? ""); setEditEvCategory(ev.category ?? ""); setEditEvResult(null); }}
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: `1px solid ${editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-gray2)"}`, color: editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-navy)", background: editingEventId === ev.id ? "var(--ig-light)" : "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
@@ -2067,8 +2067,8 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                               </select>
                             </div>
                             <div>
-                              <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Datum &amp; Zeit <span style={{ color: "var(--ig-gold)" }}>*</span></label>
-                              <input type="datetime-local" value={editEvDate} onChange={e => setEditEvDate(e.target.value)}
+                              <label className="block text-xs mb-1" style={{ color: "var(--ig-gray3)" }}>Datum <span style={{ color: "var(--ig-gold)" }}>*</span></label>
+                              <input type="date" value={editEvDate} onChange={e => setEditEvDate(e.target.value)}
                                 className={inputClass} style={inputStyle}
                                 onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                                 onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
