@@ -617,6 +617,7 @@ export default function AdminPage() {
   const [csvSending, setCsvSending] = useState(false);
   const [csvSendResult, setCsvSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const [allEventCards, setAllEventCards] = useState<EventCard[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
@@ -747,13 +748,22 @@ export default function AdminPage() {
   const authFetch = (url: string, init?: RequestInit) =>
     fetch(url, { ...init, headers: { ...authHeaders(), ...(init?.headers ?? {}) } });
   const downloadExport = async (url: string, filename: string) => {
+    setExportError(null);
     const res = await authFetch(url);
-    if (!res.ok) return;
+    if (!res.ok) {
+      const text = await res.text();
+      let msg = text;
+      try { msg = JSON.parse(text).error || text; } catch { /* plain text error body */ }
+      setExportError(msg || `Fehler (${res.status})`);
+      return;
+    }
     const blob = await res.blob();
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = filename;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
     URL.revokeObjectURL(a.href);
   };
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -3027,6 +3037,9 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                     <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>{count} Personen</span>
                   </button>
                 ))}
+                {exportError && (
+                  <p className="text-xs text-red-500 pt-1">{exportError}</p>
+                )}
               </div>
             </Card>
 

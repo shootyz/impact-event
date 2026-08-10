@@ -41,6 +41,16 @@ type CsvPreview = {
   missingColumns: string[];
 };
 
+type SortKey = "anrede" | "first_name" | "last_name" | "email" | "sprache";
+type SortConfig = { key: SortKey; dir: "asc" | "desc" };
+
+const IconSortUp = ({ className = "w-3 h-3" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+);
+const IconSortDown = ({ className = "w-3 h-3" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+);
+
 export default function ZielgruppenDashboard({
   zielgruppen, members, eventId, adminPassword,
   onMembersChange, onZielgruppeChange,
@@ -72,6 +82,11 @@ export default function ZielgruppenDashboard({
   const [searchQuery, setSearchQuery] = useState<Record<string, string>>({});
   const [showUnsub, setShowUnsub] = useState<Record<string, boolean>>({});
   const csvRef = useRef<HTMLInputElement>(null);
+  const [sortConfig, setSortConfig] = useState<Record<string, SortConfig>>({});
+  const [selected, setSelected] = useState<Record<string, Set<string>>>({});
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState<{ zgId: string; ids: string[]; label: string } | null>(null);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [dragOverZg, setDragOverZg] = useState<string | null>(null);
   const [hsLists, setHsLists] = useState<{ id: string; name: string }[]>([]);
   const [hsLoading, setHsLoading] = useState(false);
   const [hsZgId, setHsZgId] = useState<string | null>(null);
@@ -82,12 +97,58 @@ export default function ZielgruppenDashboard({
   const groupMembers = (zgId: string) => {
     const q = (searchQuery[zgId] ?? "").toLowerCase().trim();
     const includeUnsub = showUnsub[zgId] ?? false;
-    return members
+    const list = members
       .filter(m => m.zielgruppe_id === zgId && (includeUnsub || !m.unsubscribed))
       .filter(m => !q || [m.first_name, m.last_name, m.email, m.anrede ?? ""].join(" ").toLowerCase().includes(q));
+    const sort = sortConfig[zgId];
+    if (!sort) return list;
+    const sorted = [...list].sort((a, b) => {
+      const av = (a[sort.key] ?? "").toString().toLowerCase();
+      const bv = (b[sort.key] ?? "").toString().toLowerCase();
+      const cmp = av.localeCompare(bv);
+      return sort.dir === "asc" ? cmp : -cmp;
+    });
+    return sorted;
   };
 
   const unsubCount = (zgId: string) => members.filter(m => m.zielgruppe_id === zgId && m.unsubscribed).length;
+
+  function toggleSort(zgId: string, key: SortKey) {
+    setSortConfig(prev => {
+      const current = prev[zgId];
+      const dir: "asc" | "desc" = current?.key === key && current.dir === "asc" ? "desc" : "asc";
+      return { ...prev, [zgId]: { key, dir } };
+    });
+  }
+
+  function toggleSelectOne(zgId: string, id: string) {
+    setSelected(prev => {
+      const set = new Set(prev[zgId] ?? []);
+      if (set.has(id)) set.delete(id); else set.add(id);
+      return { ...prev, [zgId]: set };
+    });
+  }
+
+  function toggleSelectAll(zgId: string, ids: string[]) {
+    setSelected(prev => {
+      const set = prev[zgId] ?? new Set<string>();
+      const allSelected = ids.length > 0 && ids.every(id => set.has(id));
+      return { ...prev, [zgId]: allSelected ? new Set() : new Set(ids) };
+    });
+  }
+
+  async function runBulkDelete() {
+    if (!bulkDeleteConfirm) return;
+    setBulkDeleting(true);
+    await Promise.all(bulkDeleteConfirm.ids.map(id =>
+      fetch("/api/members", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, adminPassword }) })
+    ));
+    const deletedIds = new Set(bulkDeleteConfirm.ids);
+    onMembersChange(members.filter(m => !deletedIds.has(m.id)));
+    setSelected(prev => ({ ...prev, [bulkDeleteConfirm.zgId]: new Set() }));
+    setBulkDeleting(false);
+    setBulkDeleteConfirm(null);
+  }
 
   async function saveEdit() {
     if (!editing) return;
@@ -108,6 +169,14 @@ export default function ZielgruppenDashboard({
   async function deleteMember(id: string) {
     await fetch("/api/members", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, adminPassword }) });
     onMembersChange(members.filter(m => m.id !== id));
+    setSelected(prev => {
+      const next: Record<string, Set<string>> = {};
+      for (const [zgId, set] of Object.entries(prev)) {
+        if (set.has(id)) { const copy = new Set(set); copy.delete(id); next[zgId] = copy; }
+        else next[zgId] = set;
+      }
+      return next;
+    });
   }
 
   async function addMember(zgId: string) {
@@ -138,19 +207,23 @@ export default function ZielgruppenDashboard({
 
   async function prepareCsvImport(zgId: string, file: File) {
     setCsvResult(null);
-    const text = await file.text();
+    // Strip a UTF-8 BOM (common in Excel exports) — otherwise it sticks to the
+    // first header cell (e.g. "Anrede") and silently fails to match.
+    const text = (await file.text()).replace(/^﻿/, "");
     const lines = text.trim().split(/\r?\n/);
     const delim = lines[0].includes(";") ? ";" : ",";
     const splitLine = (l: string) => l.split(delim).map(c => c.trim().replace(/^"|"$/g, ""));
     const headers = splitLine(lines[0]).map(h => h.toLowerCase());
-    const iFirst = headers.findIndex(h => h === "first_name" || h === "vorname");
-    const iLast = headers.findIndex(h => h === "last_name" || h === "name");
-    const iEmail = headers.findIndex(h => h === "email" || h === "e-mail");
+    // Canonical rule: Anrede, Name, Vorname, E-Mail, Sprache — "Name" ist der
+    // Nachname. Ältere Synonyme (first_name/last_name/email) bleiben kompatibel.
+    const iFirst = headers.findIndex(h => h === "vorname" || h === "first_name");
+    const iLast = headers.findIndex(h => h === "name" || h === "nachname" || h === "last_name");
+    const iEmail = headers.findIndex(h => h === "e-mail" || h === "email");
     const iAnrede = headers.findIndex(h => h === "anrede");
     const iSprache = headers.findIndex(h => h === "sprache");
     const missingColumns = [
       iFirst < 0 ? "Vorname" : null,
-      iLast < 0 ? "Nachname" : null,
+      iLast < 0 ? "Name" : null,
       iEmail < 0 ? "E-Mail" : null,
     ].filter((x): x is string => x !== null);
 
@@ -167,10 +240,10 @@ export default function ZielgruppenDashboard({
     }).filter(r => r.email);
 
     const detectedColumns = [
-      iFirst >= 0 && "Vorname",
-      iLast >= 0 && "Nachname",
-      iEmail >= 0 && "E-Mail",
       iAnrede >= 0 && "Anrede",
+      iLast >= 0 && "Name",
+      iFirst >= 0 && "Vorname",
+      iEmail >= 0 && "E-Mail",
       iSprache >= 0 && "Sprache",
     ].filter((x): x is string => Boolean(x));
 
@@ -277,6 +350,26 @@ export default function ZielgruppenDashboard({
           </div>
         </div>
       )}
+      {/* Bulk member delete confirm dialog */}
+      {bulkDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+            <div className="h-0.5" style={{ background: "#dc2626" }} />
+            <div className="px-6 pt-6 pb-4">
+              <p className="font-bold text-sm mb-1" style={{ color: "var(--ig-navy)" }}>Mitglieder löschen</p>
+              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{bulkDeleteConfirm.label} Mitglieder ({bulkDeleteConfirm.ids.length}) wirklich entfernen?</p>
+            </div>
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={() => setBulkDeleteConfirm(null)}
+                className={`${btnSecondary} flex-1 py-2`}
+                style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)" }}>Abbrechen</button>
+              <button disabled={bulkDeleting} onClick={runBulkDelete}
+                className={`${btnPrimary} flex-1 py-2 disabled:opacity-50`}
+                style={{ background: "#dc2626", color: "white" }}>{bulkDeleting ? "Löscht…" : "Löschen"}</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Zielgruppe delete confirm dialog */}
       {zgDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
@@ -308,7 +401,7 @@ export default function ZielgruppenDashboard({
 
               {csvPreview.missingColumns.length > 0 ? (
                 <p className="text-xs" style={{ color: "#dc2626" }}>
-                  {`Pflichtspalten fehlen: ${csvPreview.missingColumns.join(", ")}. Erwartet werden Spalten für Vorname, Nachname und E-Mail (z.B. „first_name“/„vorname“, „last_name“/„name“, „email“).`}
+                  {`Pflichtspalten fehlen: ${csvPreview.missingColumns.join(", ")}. Erwartete Spalten: Anrede, Name, Vorname, E-Mail, Sprache (Anrede und Sprache optional).`}
                 </p>
               ) : (
                 <>
@@ -421,7 +514,25 @@ export default function ZielgruppenDashboard({
 
             {/* Member table */}
             {isOpen && (
-              <div>
+              <div
+                className="relative"
+                onDragOver={e => { e.preventDefault(); setDragOverZg(zg.id); }}
+                onDragLeave={e => { e.preventDefault(); setDragOverZg(prev => prev === zg.id ? null : prev); }}
+                onDrop={e => {
+                  e.preventDefault();
+                  setDragOverZg(prev => prev === zg.id ? null : prev);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) prepareCsvImport(zg.id, file);
+                }}
+              >
+                {dragOverZg === zg.id && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none rounded-b-2xl"
+                    style={{ background: "rgba(30,50,99,0.06)", border: "2px dashed var(--ig-gold)" }}>
+                    <p className="text-sm font-semibold px-4 py-2 rounded-xl" style={{ background: "white", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gold)" }}>
+                      CSV hier ablegen zum Importieren
+                    </p>
+                  </div>
+                )}
                 {/* Search bar */}
                 <div className="px-4 py-2.5 flex items-center gap-2" style={{ borderBottom: "1px solid var(--ig-gray2)", background: "var(--ig-light)" }}>
                   <div className="relative flex-1">
@@ -457,6 +568,31 @@ export default function ZielgruppenDashboard({
                   )}
                 </div>
 
+                {/* Selection toolbar */}
+                {(selected[zg.id]?.size ?? 0) > 0 && (
+                  <div className="px-4 py-2 flex items-center gap-3" style={{ borderBottom: "1px solid var(--ig-gray2)", background: "#fff8ec" }}>
+                    <span className="text-xs font-semibold" style={{ color: "var(--ig-navy)" }}>{selected[zg.id]!.size} ausgewählt</span>
+                    <button
+                      onClick={() => {
+                        const ids = Array.from(selected[zg.id] ?? []);
+                        const allInList = list.length > 0 && ids.length === list.length;
+                        setBulkDeleteConfirm({ zgId: zg.id, ids, label: allInList ? "Alle ausgewählten" : `${ids.length}` });
+                      }}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:opacity-80"
+                      style={{ background: "#dc2626", color: "white" }}
+                    >
+                      Löschen
+                    </button>
+                    <button
+                      onClick={() => setSelected(prev => ({ ...prev, [zg.id]: new Set() }))}
+                      className="text-xs transition hover:opacity-70"
+                      style={{ color: "var(--ig-gray3)" }}
+                    >
+                      Auswahl aufheben
+                    </button>
+                  </div>
+                )}
+
                 {list.length > 0 ? (
                   <>
                   <p className="sm:hidden text-xs px-4 pt-2" style={{ color: "var(--ig-gray3)" }}>→ Nach rechts wischen für weitere Spalten</p>
@@ -464,11 +600,27 @@ export default function ZielgruppenDashboard({
                   <table className="w-full text-xs" style={{ borderCollapse: "collapse", minWidth: 560 }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid var(--ig-gray2)", background: "var(--ig-light)" }}>
-                        <th className="text-left px-4 py-2 font-semibold" style={{ color: "var(--ig-gray3)" }}>Anrede</th>
-                        <th className="text-left px-4 py-2 font-semibold" style={{ color: "var(--ig-gray3)" }}>Vorname</th>
-                        <th className="text-left px-4 py-2 font-semibold" style={{ color: "var(--ig-gray3)" }}>Nachname</th>
-                        <th className="text-left px-4 py-2 font-semibold" style={{ color: "var(--ig-gray3)" }}>E-Mail</th>
-                        <th className="text-left px-4 py-2 font-semibold" style={{ color: "var(--ig-gray3)" }}>Sprache</th>
+                        <th className="px-4 py-2 w-8">
+                          <input type="checkbox" aria-label="Alle auswählen"
+                            checked={list.length > 0 && list.every(m => selected[zg.id]?.has(m.id))}
+                            onChange={() => toggleSelectAll(zg.id, list.map(m => m.id))}
+                            style={{ accentColor: "var(--ig-navy)" }} />
+                        </th>
+                        {([
+                          { key: "anrede" as SortKey, label: "Anrede" },
+                          { key: "first_name" as SortKey, label: "Vorname" },
+                          { key: "last_name" as SortKey, label: "Nachname" },
+                          { key: "email" as SortKey, label: "E-Mail" },
+                          { key: "sprache" as SortKey, label: "Sprache" },
+                        ]).map(col => (
+                          <th key={col.key} className="text-left px-4 py-2 font-semibold cursor-pointer select-none" style={{ color: "var(--ig-gray3)" }}
+                            onClick={() => toggleSort(zg.id, col.key)}>
+                            <span className="inline-flex items-center gap-1">
+                              {col.label}
+                              {sortConfig[zg.id]?.key === col.key && (sortConfig[zg.id]?.dir === "asc" ? <IconSortUp /> : <IconSortDown />)}
+                            </span>
+                          </th>
+                        ))}
                         <th className="text-left px-4 py-2 font-semibold" style={{ color: "var(--ig-gray3)" }}>Code</th>
                         <th className="px-4 py-2" />
                       </tr>
@@ -476,6 +628,12 @@ export default function ZielgruppenDashboard({
                     <tbody>
                       {list.map(m => (
                         <tr key={m.id} style={{ borderBottom: "1px solid var(--ig-gray2)" }}>
+                          <td className="px-4 py-2.5">
+                            <input type="checkbox" aria-label={`${m.first_name} ${m.last_name} auswählen`}
+                              checked={selected[zg.id]?.has(m.id) ?? false}
+                              onChange={() => toggleSelectOne(zg.id, m.id)}
+                              style={{ accentColor: "var(--ig-navy)" }} />
+                          </td>
                           {editing?.id === m.id ? (
                             <>
                               <td className="px-3 py-2">
@@ -602,7 +760,7 @@ export default function ZielgruppenDashboard({
                       </button>
                       {csvResult?.zgId === zg.id && (
                         <span className="text-xs" style={{ color: csvResult.inserted < 0 ? "#dc2626" : "#16a34a" }}>
-                          {csvResult.inserted < 0 ? "Spalten fehlen (first_name, last_name, email)" : `✓ ${csvResult.inserted} importiert`}
+                          {csvResult.inserted < 0 ? "Spalten fehlen (Name, Vorname, E-Mail)" : `✓ ${csvResult.inserted} importiert`}
                         </span>
                       )}
                       <span style={{ color: "var(--ig-gray2)" }}>|</span>
