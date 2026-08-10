@@ -71,7 +71,7 @@ const s = StyleSheet.create({
     letterSpacing: 1.5,
     textTransform: "uppercase",
     marginTop: 14,
-    marginBottom: 5,
+    marginBottom: 12,
   },
   bodyLine: {
     fontSize: 9.5,
