@@ -1,17 +1,20 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getLang } from "@/lib/i18n";
 import RegistrationForm, { type EventPayload } from "./RegistrationForm";
 
 // Fetch the event server-side so its name/date/location are in the initial HTML
 // (faster first paint, especially on mobile). Mirrors the shape of /api/event and
 // only ever exposes registration_password as a boolean — never the plaintext code.
-async function fetchEvent(eventId: string, lang?: string): Promise<EventPayload | null> {
+async function fetchEvent(eventId: string, rawLang: string | undefined): Promise<EventPayload | null> {
   const base = supabaseAdmin()
     .from("events")
     .select("id, name, name_en, date, location, location_en, description, description_en, registration_password, registration_type, max_capacity, form_config");
   const { data, error } = await (eventId ? base.eq("id", eventId).eq("active", true) : base.eq("active", true)).single();
   if (error || !data) return null;
+  // getLang defaults to "en" unless the param is explicitly "de"/"fr" — matches the client
+  const lang = getLang({ get: (k: string) => (k === "lang" ? rawLang ?? null : null) });
   const isEn = lang === "en";
   return {
     id: data.id,
