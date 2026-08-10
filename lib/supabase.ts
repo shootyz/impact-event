@@ -14,9 +14,15 @@ export type Registration = {
 export type Event = {
   id: string
   name: string
+  name_en?: string | null
+  name_fr?: string | null
   date: string
   location: string
+  location_en?: string | null
+  location_fr?: string | null
   description: string | null
+  description_en?: string | null
+  description_fr?: string | null
   active: boolean
 }
 

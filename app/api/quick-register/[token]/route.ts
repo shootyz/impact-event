@@ -22,7 +22,7 @@ export async function GET(
 
   const inviteResult = await db
     .from('invite_codes')
-    .select('id, used, members(first_name, last_name, email)')
+    .select('id, used, members(first_name, last_name, email, sprache)')
     .eq('code', token.toUpperCase().trim())
     .single()
 
@@ -44,7 +44,7 @@ export async function GET(
 
   const memberRaw = invite.members
   const member = (Array.isArray(memberRaw) ? memberRaw[0] : memberRaw) as {
-    first_name: string; last_name: string; email: string
+    first_name: string; last_name: string; email: string; sprache: string | null
   } | null
 
   if (!member) return NextResponse.redirect(`${appUrl}/${langSuffix}`)
@@ -86,7 +86,13 @@ export async function GET(
     return NextResponse.redirect(`${appUrl}/${langSuffix}`)
   }
 
-  const emailLang = lang === 'de' ? 'de' : lang === 'fr' ? 'fr' : 'en'
+  // The member's own sprache is the authoritative signal — it's what put them in this
+  // campaign's target group in the first place. The URL's ?lang= is only a fallback for
+  // members with no sprache set (e.g. manually added without one).
+  const memberSprache = member.sprache?.toLowerCase()
+  const emailLang = memberSprache === 'de' || memberSprache === 'fr' || memberSprache === 'en'
+    ? memberSprache
+    : lang === 'de' ? 'de' : lang === 'fr' ? 'fr' : 'en'
   after(async () => {
     await db.from('invite_codes').update({ used: true }).eq('id', invite.id)
     try {

@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 import { generateQRCodeDataURL } from './qr'
 import type { Registration, Event } from './supabase'
+import { resolveLangField } from './i18n'
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY)
 
@@ -41,6 +42,8 @@ export async function sendConfirmationEmail(
   const qrDataUrl = await generateQRCodeDataURL(registration.qr_token, appUrl)
   const base64 = qrDataUrl.split(',')[1]
 
+  const eventName = resolveLangField(lang, event.name, event.name_en, event.name_fr)
+  const eventLocation = resolveLangField(lang, event.location, event.location_en, event.location_fr)
   const eventDate = new Date(event.date).toLocaleDateString(s.dateLocale, {
     weekday: 'long',
     year: 'numeric',
@@ -51,7 +54,7 @@ export async function sendConfirmationEmail(
   await getResend().emails.send({
     from: process.env.RESEND_FROM_EMAIL!,
     to: registration.email,
-    subject: s.subject(event.name),
+    subject: s.subject(eventName),
     html: `
 <!DOCTYPE html>
 <html lang="${lang}">
@@ -70,9 +73,9 @@ export async function sendConfirmationEmail(
               <tr>
                 <td style="padding:28px 28px 24px;">
                   <img src="${appUrl}/logo.png" alt="Impact Gstaad" height="33" style="display:block;margin-bottom:20px;" />
-                  <p style="color:#1E3263;font-size:18px;font-weight:700;margin:0 0 6px;line-height:1.3;">${event.name}</p>
+                  <p style="color:#1E3263;font-size:18px;font-weight:700;margin:0 0 6px;line-height:1.3;">${eventName}</p>
                   <p style="color:#1E3263;font-size:13px;margin:0 0 3px;">${eventDate}</p>
-                  <p style="color:#1E3263;font-size:13px;margin:0;">${event.location}</p>
+                  <p style="color:#1E3263;font-size:13px;margin:0;">${eventLocation}</p>
                 </td>
               </tr>
 
