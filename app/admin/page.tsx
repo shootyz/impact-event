@@ -1028,7 +1028,7 @@ export default function AdminPage() {
     setSendQRStatus(null);
     const res = await fetch("/api/resend-ticket", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: reg.email, adminPassword: savedPassword.current }),
+      body: JSON.stringify({ email: reg.email, adminPassword: savedPassword.current, eventId: selectedEventId }),
     });
     const data = await res.json();
     setSendingQR(null);
@@ -1077,7 +1077,7 @@ export default function AdminPage() {
     const toSend = sorted.slice(0, csvResult.imported);
     let sent = 0, failed = 0;
     for (const r of toSend) {
-      const resp = await fetch("/api/resend-ticket", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: r.email, adminPassword: savedPassword.current }) });
+      const resp = await fetch("/api/resend-ticket", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: r.email, adminPassword: savedPassword.current, eventId: selectedEventId }) });
       if (resp.ok) sent++; else failed++;
     }
     setCsvSending(false);

@@ -10,11 +10,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
   }
 
-  const { email } = body
+  const { email, eventId } = body
   if (!email?.trim()) return NextResponse.json({ error: 'E-Mail fehlt.' }, { status: 400 })
 
   const db = supabaseAdmin()
-  const { data: event } = await db.from('events').select('*').eq('active', true).single()
+  const eventQuery = db.from('events').select('*')
+  const { data: event } = await (eventId ? eventQuery.eq('id', eventId) : eventQuery.eq('active', true)).single()
   if (!event) return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
 
   const { data: registration } = await db
