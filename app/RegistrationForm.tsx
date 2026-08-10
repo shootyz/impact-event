@@ -40,6 +40,7 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
   const [gateError, setGateError] = useState("");
   const [gateLoading, setGateLoading] = useState(false);
   const [inviteCodeId] = useState<string | null>(null);
+  const [inviteCode, setInviteCode] = useState("");
   const [vorname, setVorname] = useState("");
   const [nachname, setNachname] = useState("");
   const [email, setEmail] = useState("");
@@ -92,6 +93,10 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
     if (!vorname.trim() || !nachname.trim()) { setError(t.errorName); return; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(email)) { setError(t.errorEmail); return; }
+    if (event?.registration_type === "invite" && !inviteCodeId && !inviteCode.trim()) {
+      setError(t.errorInviteCodeRequired);
+      return;
+    }
     setLoading(true);
     const res = await fetch("/api/register", {
       method: "POST",
@@ -100,6 +105,7 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
         name: `${vorname.trim()} ${nachname.trim()}`,
         email,
         invite_code_id: inviteCodeId,
+        invite_code: inviteCode.trim(),
         lang,
         ...(eventId ? { event_id: eventId } : {}),
       }),
@@ -285,6 +291,26 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
                 </div>
               )}
               <form onSubmit={event?.registration_type === "form" ? handleFormSubmit : handleSubmit} className="space-y-4" noValidate>
+                {event?.registration_type === "invite" && !inviteCodeId && (
+                  <div>
+                    <label htmlFor="inviteCode" className="block text-xs font-semibold tracking-[0.12em] uppercase mb-2" style={{ color: "var(--ig-navy)" }}>
+                      {t.inviteCodeLabel} <span style={{ color: "var(--ig-gold)" }}>*</span>
+                    </label>
+                    <input
+                      id="inviteCode"
+                      type="text"
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value)}
+                      placeholder={t.inviteCodePlaceholder}
+                      className="w-full px-4 py-3 rounded-xl text-sm outline-none tracking-widest uppercase"
+                      style={inputStyle}
+                      onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                      onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"}
+                    />
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { id: "vorname", label: t.firstName, value: vorname, set: setVorname, placeholder: t.firstNamePlaceholder, locked: nameLocked, autoComplete: "given-name" },

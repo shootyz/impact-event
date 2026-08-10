@@ -2,22 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
 import { rateLimit } from '@/lib/rate-limit'
+import { T, type Lang } from '@/lib/i18n'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const body = await req.json()
+  const lang: Lang = body.lang === 'de' || body.lang === 'fr' ? body.lang : 'en'
+  const t = T[lang]
+
   if (!rateLimit(ip, { max: 10, windowMs: 60_000 })) {
-    return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warte eine Minute.' }, { status: 429 })
+    return NextResponse.json({ error: t.errorTooManyRequests }, { status: 429 })
   }
 
-  const { name, email, invite_code_id, event_id, lang } = await req.json()
+  const { name, email, invite_code_id, invite_code, event_id } = body
 
   if (!name?.trim() || !email?.trim()) {
-    return NextResponse.json({ error: 'Name und E-Mail sind erforderlich.' }, { status: 400 })
+    return NextResponse.json({ error: `${t.errorName} ${t.errorEmail}` }, { status: 400 })
   }
 
   const db = supabaseAdmin()
+  let resolvedInviteCodeId: string | null = invite_code_id ?? null
 
-  // Verify the event is invite-type and that the invite_code_id actually belongs
+  // Verify the event is invite-type and that the invite code actually belongs
   // to this event — prevents registering without a valid code or cross-event code reuse
   if (event_id) {
     const { data: event } = await db
@@ -27,14 +33,24 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (event?.registration_type === 'invite') {
-      if (!invite_code_id) {
-        return NextResponse.json({ error: 'Einladungscode erforderlich.' }, { status: 400 })
+      // A manually-typed code (no personalized link) resolves by its code string
+      if (!resolvedInviteCodeId && invite_code?.trim()) {
+        const { data: byCode } = await db
+          .from('invite_codes')
+          .select('id')
+          .eq('code', invite_code.trim().toUpperCase())
+          .single()
+        resolvedInviteCodeId = byCode?.id ?? null
+      }
+
+      if (!resolvedInviteCodeId) {
+        return NextResponse.json({ error: t.errorInviteCodeRequired }, { status: 400 })
       }
       // Confirm code belongs to this event and is unused
       const { data: code } = await db
         .from('invite_codes')
         .select('id, used, members(event_id)')
-        .eq('id', invite_code_id)
+        .eq('id', resolvedInviteCodeId)
         .single()
 
       const memberEventId = code
@@ -42,7 +58,7 @@ export async function POST(req: NextRequest) {
         : null
 
       if (!code || code.used || memberEventId !== event_id) {
-        return NextResponse.json({ error: 'Ungültiger oder bereits verwendeter Einladungscode.' }, { status: 400 })
+        return NextResponse.json({ error: t.errorInviteCodeInvalid }, { status: 400 })
       }
     }
   }
@@ -51,18 +67,18 @@ export async function POST(req: NextRequest) {
     p_event_id: event_id ?? null,
     p_name: name.trim(),
     p_email: email.toLowerCase().trim(),
-    p_invite_code_id: invite_code_id ?? null,
+    p_invite_code_id: resolvedInviteCodeId,
   })
 
   if (rpcError) {
     console.error(rpcError)
-    return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
+    return NextResponse.json({ error: t.errorRegistrationFailed }, { status: 500 })
   }
 
   const result = data as { ok?: boolean; error?: string; token?: string; id?: string; event_id?: string }
-  if (result.error === 'event_not_found') return NextResponse.json({ error: 'Kein aktiver Event gefunden.' }, { status: 404 })
-  if (result.error === 'duplicate') return NextResponse.json({ error: 'Diese E-Mail-Adresse ist bereits angemeldet.', token: result.token }, { status: 409 })
-  if (!result.ok) return NextResponse.json({ error: 'Registrierung fehlgeschlagen.' }, { status: 500 })
+  if (result.error === 'event_not_found') return NextResponse.json({ error: t.errorEventNotFound }, { status: 404 })
+  if (result.error === 'duplicate') return NextResponse.json({ error: t.errorDuplicateEmail, token: result.token }, { status: 409 })
+  if (!result.ok) return NextResponse.json({ error: t.errorRegistrationFailed }, { status: 500 })
 
   try {
     const { data: event } = await db.from('events').select('*').eq('id', result.event_id!).single()
