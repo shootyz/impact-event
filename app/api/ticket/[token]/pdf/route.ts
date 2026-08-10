@@ -37,6 +37,40 @@ export async function GET(
     return NextResponse.json({ error: "Event nicht gefunden." }, { status: 404 });
   }
 
+  // Reuse the "Zeitplan" (program) block already authored in this event's campaign
+  // builder for this language, instead of maintaining a separate copy just for the
+  // PDF. Prefer the most recently sent campaign in this language; fall back to the
+  // most recently saved draft if none was sent yet.
+  const { data: eventCampaigns } = await db
+    .from("campaigns")
+    .select("blocks_json, sent_at, created_at")
+    .eq("event_id", reg.event_id);
+
+  type ProgramSlot = { id: string; time: string; title: string; sub_items: { id: string; title: string; speaker: string }[]; note: string; is_break?: boolean };
+  let programTitle: string | undefined;
+  let programSlots: ProgramSlot[] | undefined;
+
+  const candidates = (eventCampaigns ?? [])
+    .map(c => {
+      let parsed: { lang?: string; blocks?: { type: string; title?: string; slots?: ProgramSlot[] }[] } | null = null;
+      try { parsed = typeof c.blocks_json === "string" ? JSON.parse(c.blocks_json) : c.blocks_json; } catch { /* ignore malformed */ }
+      return { ...c, parsed };
+    })
+    .filter(c => c.parsed && !Array.isArray(c.parsed) && c.parsed.lang === lang)
+    .sort((a, b) => {
+      if (a.sent_at && !b.sent_at) return -1;
+      if (!a.sent_at && b.sent_at) return 1;
+      const aTime = new Date(a.sent_at ?? a.created_at).getTime();
+      const bTime = new Date(b.sent_at ?? b.created_at).getTime();
+      return bTime - aTime;
+    });
+
+  const programBlock = candidates[0]?.parsed?.blocks?.find(b => b.type === "program");
+  if (programBlock) {
+    programTitle = programBlock.title;
+    programSlots = programBlock.slots ?? [];
+  }
+
   const ticketUrl = `${req.nextUrl.origin}/ticket/${token}`;
   const qrDataUrl = await QRCode.toDataURL(ticketUrl, {
     width: 400,
@@ -60,7 +94,9 @@ export async function GET(
       date: event.date,
       location: resolveLangField(lang, event.location, event.location_en, event.location_fr),
       category: event.category,
-      program: event.program,
+      programTitle,
+      programSlots,
+      program: !programSlots ? event.program : null,
     },
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

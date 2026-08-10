@@ -103,6 +103,15 @@ const s = StyleSheet.create({
   emptyLine: { marginBottom: 5 },
   placeholder: { fontSize: 10, color: C.navy, lineHeight: 1.7, fontStyle: "italic" },
 
+  // Structured "Zeitplan" program block (reused from the campaign builder)
+  slot: { marginBottom: 12, paddingLeft: 10, borderLeft: `2pt solid ${C.gold}` },
+  slotBreak: { marginVertical: 8, alignItems: "center" },
+  slotBreakText: { fontSize: 8.5, color: C.gray3, fontFamily: "Helvetica" },
+  subItem: { marginTop: 4 },
+  subItemTitle: { fontSize: 9.5, fontFamily: "Helvetica-Bold", color: C.black },
+  subItemSpeaker: { fontSize: 9, color: C.navy, marginTop: 1 },
+  slotNote: { fontSize: 9, color: C.navy, marginTop: 4, fontStyle: "italic" },
+
   // Footer
   pageFooter: {
     position: "absolute",
@@ -166,6 +175,45 @@ function ProgramContent({ description }: { description: string }) {
   );
 }
 
+type ProgramSlot = {
+  id: string;
+  time: string;
+  title: string;
+  sub_items: { id: string; title: string; speaker: string }[];
+  note: string;
+  is_break?: boolean;
+};
+
+function ProgramSlotsContent({ title, slots }: { title?: string; slots: ProgramSlot[] }) {
+  return (
+    <>
+      {title ? <Text style={s.sectionHeading}>{title}</Text> : null}
+      {slots.map(slot => {
+        if (slot.is_break) {
+          const label = [slot.title, slot.time].filter(Boolean).join(" · ");
+          return label ? (
+            <View key={slot.id} style={s.slotBreak}><Text style={s.slotBreakText}>{label}</Text></View>
+          ) : null;
+        }
+        const subItems = slot.sub_items.filter(si => si.title || si.speaker);
+        return (
+          <View key={slot.id} style={s.slot}>
+            {slot.time ? <Text style={s.timeCode}>{slot.time}</Text> : null}
+            {slot.title ? <Text style={s.bodyLine}>{slot.title}</Text> : null}
+            {subItems.map(si => (
+              <View key={si.id} style={s.subItem}>
+                {si.title ? <Text style={s.subItemTitle}>{si.title}</Text> : null}
+                {si.speaker ? <Text style={s.subItemSpeaker}>{si.speaker}</Text> : null}
+              </View>
+            ))}
+            {slot.note ? <Text style={s.slotNote}>{slot.note}</Text> : null}
+          </View>
+        );
+      })}
+    </>
+  );
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 type Props = {
   guestName: string;
@@ -179,6 +227,8 @@ type Props = {
     location: string;
     category?: string | null;
     program?: string | null;
+    programTitle?: string;
+    programSlots?: ProgramSlot[];
   };
 };
 
@@ -235,7 +285,9 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event, lang = 
 
         {/* ── PROGRAM ── */}
         <View style={s.program}>
-          {event.program ? (
+          {event.programSlots ? (
+            <ProgramSlotsContent title={event.programTitle} slots={event.programSlots} />
+          ) : event.program ? (
             <ProgramContent description={event.program} />
           ) : (
             <Text style={s.placeholder}>{t.placeholder}</Text>
