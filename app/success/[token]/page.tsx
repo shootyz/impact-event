@@ -31,7 +31,7 @@ function SuccessPageInner() {
 
   useEffect(() => {
     if (!token) return;
-    fetch(`/api/ticket/${token}`)
+    fetch(`/api/ticket/${token}?lang=${lang}`)
       .then(r => r.json())
       .then(d => {
         if (d.error) { setStatus("notFound"); return; }
@@ -39,7 +39,7 @@ function SuccessPageInner() {
         setStatus("ready");
       })
       .catch(() => setStatus("notFound"));
-  }, [token]);
+  }, [token, lang]);
 
   useEffect(() => {
     document.title = "Anmeldung bestätigt – Impact Gstaad";

@@ -24,7 +24,7 @@ function TicketContent() {
     if (!token) return;
     const ticketUrl = `${window.location.origin}/ticket/${token}`;
     QRCode.toDataURL(ticketUrl, { width: 340, margin: 2, color: { dark: "#1E3263", light: "#FFFFFF" } }).then(setQrUrl);
-    fetch(`/api/ticket/${token}`)
+    fetch(`/api/ticket/${token}?lang=${lang}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) { setStatus("notFound"); return; }
@@ -32,7 +32,7 @@ function TicketContent() {
         setStatus("ready");
       })
       .catch(() => setStatus("notFound"));
-  }, [token]);
+  }, [token, lang]);
 
   useEffect(() => {
     document.title = info?.event?.name ? `Ticket: ${info.event.name} – Impact Gstaad` : "Ticket – Impact Gstaad";

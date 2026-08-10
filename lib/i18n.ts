@@ -6,6 +6,14 @@ export function getLang(searchParams: URLSearchParams | { get: (k: string) => st
   return "en";
 }
 
+// Events store German as the base field plus optional per-language override
+// columns (e.g. name/name_en/name_fr) — NULL falls back to the base value.
+export function resolveLangField(lang: Lang, base: string, en?: string | null, fr?: string | null): string {
+  if (lang === "en" && en) return en;
+  if (lang === "fr" && fr) return fr;
+  return base;
+}
+
 export const T = {
   en: {
     eventRegistration: "Event Registration",

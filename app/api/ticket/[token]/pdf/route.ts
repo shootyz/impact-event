@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { createElement } from "react";
 import QRCode from "qrcode";
 import { supabaseAdmin } from "@/lib/supabase";
+import { resolveLangField } from "@/lib/i18n";
 import { TicketPDF } from "@/app/components/TicketPDF";
 import fs from "fs";
 import path from "path";
@@ -28,7 +29,7 @@ export async function GET(
 
   const { data: event } = await db
     .from("events")
-    .select("name, date, location, description, program")
+    .select("name, name_en, name_fr, date, location, location_en, location_fr, category, program")
     .eq("id", reg.event_id)
     .single();
 
@@ -54,7 +55,13 @@ export async function GET(
     qrDataUrl,
     logoUrl: logoDataUrl,
     lang,
-    event: { name: event.name, date: event.date, location: event.location, description: event.description, program: event.program },
+    event: {
+      name: resolveLangField(lang, event.name, event.name_en, event.name_fr),
+      date: event.date,
+      location: resolveLangField(lang, event.location, event.location_en, event.location_fr),
+      category: event.category,
+      program: event.program,
+    },
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdf = await renderToBuffer(element as any);

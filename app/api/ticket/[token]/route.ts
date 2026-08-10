@@ -1,22 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getLang, resolveLangField } from '@/lib/i18n'
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
+  const lang = getLang(req.nextUrl.searchParams)
   const { data } = await supabaseAdmin()
     .from('registrations')
-    .select('name, email, events(name, date, location)')
+    .select('name, email, events(name, name_en, name_fr, date, location, location_en, location_fr)')
     .eq('qr_token', token)
     .single()
 
   if (!data) return NextResponse.json({ error: 'Nicht gefunden.' }, { status: 404 })
 
+  const event = Array.isArray(data.events) ? data.events[0] : data.events
+  if (!event) return NextResponse.json({ error: 'Nicht gefunden.' }, { status: 404 })
+
   return NextResponse.json({
     name: data.name,
     email: data.email,
-    event: data.events,
+    event: {
+      name: resolveLangField(lang, event.name, event.name_en, event.name_fr),
+      date: event.date,
+      location: resolveLangField(lang, event.location, event.location_en, event.location_fr),
+    },
   })
 }

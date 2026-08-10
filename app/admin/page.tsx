@@ -179,7 +179,7 @@ type Registration = {
   checked_in: boolean; checked_in_at: string | null; created_at: string;
 };
 type Event = { id: string; name: string; date: string; location: string; };
-type EventCard = { id: string; name: string; name_en?: string | null; date: string; location: string; location_en?: string | null; description: string | null; description_en?: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; registration_type: "invite" | "form"; max_capacity: number | null; form_config?: FormConfig | null; scanner_pin?: string | null; };
+type EventCard = { id: string; name: string; name_en?: string | null; name_fr?: string | null; date: string; location: string; location_en?: string | null; location_fr?: string | null; description: string | null; description_en?: string | null; description_fr?: string | null; active: boolean; total: number; checked_in: number; registration_password: string | null; slug: string | null; category: string | null; created_at: string; registration_type: "invite" | "form"; max_capacity: number | null; form_config?: FormConfig | null; scanner_pin?: string | null; };
 type FormRegistration = { id: string; first_name: string; last_name: string; email: string; company: string | null; message: string | null; extra_fields?: Record<string, string> | null; status: "pending" | "confirmed" | "rejected" | "waitlisted"; created_at: string; checked_in?: boolean; checked_in_at?: string | null; qr_token?: string | null; };
 type FormField = { id: string; type: "text" | "textarea" | "select" | "checkbox" | "radio"; label: string; required: boolean; visible: boolean; options?: string[] };
 type FormConfig = { intro: string; fields: FormField[] };
@@ -701,11 +701,14 @@ export default function AdminPage() {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [editEvName, setEditEvName] = useState("");
   const [editEvNameEn, setEditEvNameEn] = useState("");
+  const [editEvNameFr, setEditEvNameFr] = useState("");
   const [editEvDate, setEditEvDate] = useState("");
   const [editEvLocation, setEditEvLocation] = useState("");
   const [editEvLocationEn, setEditEvLocationEn] = useState("");
+  const [editEvLocationFr, setEditEvLocationFr] = useState("");
   const [editEvDesc, setEditEvDesc] = useState("");
   const [editEvDescEn, setEditEvDescEn] = useState("");
+  const [editEvDescFr, setEditEvDescFr] = useState("");
   const [editEvCategory, setEditEvCategory] = useState("");
   const [editEvSaving, setEditEvSaving] = useState(false);
   const [editEvResult, setEditEvResult] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -1960,7 +1963,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                       <div className="px-4 pb-3 pt-2.5 flex items-center gap-1.5 border-t" style={{ borderColor: "var(--ig-gray2)" }}>
                         {/* Edit */}
                         <button title="Bearbeiten" aria-label="Event bearbeiten"
-                          onClick={e => { e.stopPropagation(); setEditingEventId(editingEventId === ev.id ? null : ev.id); setEditEvName(ev.name); setEditEvNameEn(ev.name_en ?? ""); setEditEvDate(ev.date?.slice(0,16) ?? ""); setEditEvLocation(ev.location); setEditEvLocationEn(ev.location_en ?? ""); setEditEvDesc(ev.description ?? ""); setEditEvDescEn(ev.description_en ?? ""); setEditEvCategory(ev.category ?? ""); setEditEvResult(null); }}
+                          onClick={e => { e.stopPropagation(); setEditingEventId(editingEventId === ev.id ? null : ev.id); setEditEvName(ev.name); setEditEvNameEn(ev.name_en ?? ""); setEditEvNameFr(ev.name_fr ?? ""); setEditEvDate(ev.date?.slice(0,16) ?? ""); setEditEvLocation(ev.location); setEditEvLocationEn(ev.location_en ?? ""); setEditEvLocationFr(ev.location_fr ?? ""); setEditEvDesc(ev.description ?? ""); setEditEvDescEn(ev.description_en ?? ""); setEditEvDescFr(ev.description_fr ?? ""); setEditEvCategory(ev.category ?? ""); setEditEvResult(null); }}
                           className="p-2 rounded-lg transition flex items-center justify-center"
                           style={{ border: `1px solid ${editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-gray2)"}`, color: editingEventId === ev.id ? "var(--ig-navy)" : "var(--ig-navy)", background: editingEventId === ev.id ? "var(--ig-light)" : "white" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
@@ -2079,6 +2082,21 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                               onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
                               onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
                           </div>
+                          <div className="pt-2 mt-1 border-t space-y-2" style={{ borderColor: "var(--ig-gray2)" }}>
+                            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--ig-gray3)" }}>Französisch (optional — für die FR-Anmeldeseite)</p>
+                            <input type="text" value={editEvNameFr} onChange={e => setEditEvNameFr(e.target.value)}
+                              placeholder="Nom de l'événement (FR)" className={inputClass} style={inputStyle}
+                              onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                              onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                            <input type="text" value={editEvLocationFr} onChange={e => setEditEvLocationFr(e.target.value)}
+                              placeholder="Lieu (FR)" className={inputClass} style={inputStyle}
+                              onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                              onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                            <input type="text" value={editEvDescFr} onChange={e => setEditEvDescFr(e.target.value)}
+                              placeholder="Description (FR)" className={inputClass} style={inputStyle}
+                              onFocus={e => e.currentTarget.style.borderColor = "var(--ig-navy)"}
+                              onBlur={e => e.currentTarget.style.borderColor = "var(--ig-gray2)"} />
+                          </div>
                           {editEvResult && <p className={`text-xs ${editEvResult.ok ? "text-green-600" : "text-red-500"}`}>{editEvResult.msg}</p>}
                           <div className="flex items-center justify-between gap-2 pt-1">
                             <button onClick={() => { setEditingEventId(null); setEditEvResult(null); }}
@@ -2091,11 +2109,11 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                               setEditEvSaving(true); setEditEvResult(null);
                               const res = await fetch(`/api/admin/events/${ev.id}`, {
                                 method: "PATCH", headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ adminPassword: savedPassword.current, name: editEvName, name_en: editEvNameEn || null, date: editEvDate, location: editEvLocation, location_en: editEvLocationEn || null, description: editEvDesc, description_en: editEvDescEn || null, category: editEvCategory || null }),
+                                body: JSON.stringify({ adminPassword: savedPassword.current, name: editEvName, name_en: editEvNameEn || null, name_fr: editEvNameFr || null, date: editEvDate, location: editEvLocation, location_en: editEvLocationEn || null, location_fr: editEvLocationFr || null, description: editEvDesc, description_en: editEvDescEn || null, description_fr: editEvDescFr || null, category: editEvCategory || null }),
                               });
                               setEditEvSaving(false);
                               if (!res.ok) { setEditEvResult({ ok: false, msg: "Fehler beim Speichern." }); return; }
-                              setAllEventCards(prev => prev.map(e => e.id === ev.id ? { ...e, name: editEvName, name_en: editEvNameEn || null, date: editEvDate, location: editEvLocation, location_en: editEvLocationEn || null, description: editEvDesc, description_en: editEvDescEn || null, category: editEvCategory || null } : e));
+                              setAllEventCards(prev => prev.map(e => e.id === ev.id ? { ...e, name: editEvName, name_en: editEvNameEn || null, name_fr: editEvNameFr || null, date: editEvDate, location: editEvLocation, location_en: editEvLocationEn || null, location_fr: editEvLocationFr || null, description: editEvDesc, description_en: editEvDescEn || null, description_fr: editEvDescFr || null, category: editEvCategory || null } : e));
                               setEditingEventId(null);
                             }}>
                               {editEvSaving ? "Speichert…" : "Speichern"}

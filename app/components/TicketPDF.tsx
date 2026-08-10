@@ -13,7 +13,7 @@ const C = {
   black: "#26292F",
   light: "#F8F9FF",
   gray2: "#D0DDEA",
-  gray3: "#A7C4DE",
+  gray3: "#5C7A94",
   white: "#FFFFFF",
 };
 
@@ -55,7 +55,7 @@ const s = StyleSheet.create({
   tokenText: { fontSize: 7, color: C.gray3, fontFamily: "Courier", marginTop: 4, textAlign: "center" },
 
   scanHint: { backgroundColor: C.light, paddingHorizontal: 36, paddingVertical: 8 },
-  scanHintText: { fontSize: 8, color: C.gray3 },
+  scanHintText: { fontSize: 8, color: C.navy },
 
   // ── PERFORATION ─────────────────────────────────────────────────────────────
   perforation: { borderTop: `1.5pt dashed ${C.gray2}` },
@@ -101,7 +101,7 @@ const s = StyleSheet.create({
     color: C.navy,
   },
   emptyLine: { marginBottom: 5 },
-  placeholder: { fontSize: 10, color: C.gray3, lineHeight: 1.7, fontStyle: "italic" },
+  placeholder: { fontSize: 10, color: C.navy, lineHeight: 1.7, fontStyle: "italic" },
 
   // Footer
   pageFooter: {
@@ -112,7 +112,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  footerText: { fontSize: 8, color: C.gray2 },
+  footerText: { fontSize: 8, color: C.navy },
 });
 
 // ── Simple text parser ────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ type Props = {
     name: string;
     date: string;
     location: string;
-    description?: string | null;
+    category?: string | null;
     program?: string | null;
   };
 };
@@ -191,11 +191,6 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event, lang = 
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 
-  // Split "Category: Title" into a gold eyebrow + navy title, matching the email header.
-  const sepIdx = event.name.indexOf(": ");
-  const eventCategory = sepIdx > 0 ? event.name.slice(0, sepIdx) : null;
-  const eventTitle = sepIdx > 0 ? event.name.slice(sepIdx + 2) : event.name;
-
   return (
     <Document title={`Ticket — ${guestName}`} author="Impact Gstaad">
       <Page size="A4" style={s.page}>
@@ -205,11 +200,8 @@ export function TicketPDF({ guestName, token, qrDataUrl, logoUrl, event, lang = 
           <View style={s.header}>
             <Image src={logoUrl} style={s.logo} />
             <View style={s.eventNameBlock}>
-              {eventCategory ? <Text style={s.eventEyebrow}>{eventCategory}</Text> : null}
-              <Text style={s.eventName}>{eventTitle}</Text>
-              {event.description ? (
-                <Text style={{ fontSize: 9, color: C.gray3, textAlign: "right", marginTop: 3 }}>{event.description}</Text>
-              ) : null}
+              {event.category ? <Text style={s.eventEyebrow}>{event.category}</Text> : null}
+              <Text style={s.eventName}>{event.name}</Text>
             </View>
           </View>
 

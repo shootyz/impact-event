@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { supabaseAdmin } from "@/lib/supabase";
-import { getLang } from "@/lib/i18n";
+import { getLang, resolveLangField } from "@/lib/i18n";
 import RegistrationForm, { type EventPayload } from "./RegistrationForm";
 
 // Fetch the event server-side so its name/date/location are in the initial HTML
@@ -10,18 +10,17 @@ import RegistrationForm, { type EventPayload } from "./RegistrationForm";
 async function fetchEvent(eventId: string, rawLang: string | undefined): Promise<EventPayload | null> {
   const base = supabaseAdmin()
     .from("events")
-    .select("id, name, name_en, date, location, location_en, description, description_en, registration_password, registration_type, max_capacity, form_config");
+    .select("id, name, name_en, name_fr, date, location, location_en, location_fr, description, description_en, description_fr, registration_password, registration_type, max_capacity, form_config");
   const { data, error } = await (eventId ? base.eq("id", eventId).eq("active", true) : base.eq("active", true)).single();
   if (error || !data) return null;
   // getLang defaults to "en" unless the param is explicitly "de"/"fr" — matches the client
   const lang = getLang({ get: (k: string) => (k === "lang" ? rawLang ?? null : null) });
-  const isEn = lang === "en";
   return {
     id: data.id,
-    name: (isEn && data.name_en) || data.name,
+    name: resolveLangField(lang, data.name, data.name_en, data.name_fr),
     date: data.date,
-    location: (isEn && data.location_en) || data.location,
-    description: (isEn && data.description_en) || data.description,
+    location: resolveLangField(lang, data.location, data.location_en, data.location_fr),
+    description: resolveLangField(lang, data.description, data.description_en, data.description_fr),
     registration_type: (data.registration_type as "invite" | "form") ?? "invite",
     max_capacity: data.max_capacity ?? null,
     form_config: data.form_config ?? null,
