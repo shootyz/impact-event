@@ -11,14 +11,17 @@ export async function PATCH(
   const auth = checkAdminAuth(req, body)
   if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
-  const { active, name, date, location, description, slug, category, registration_type, max_capacity, form_config, scanner_pin } = body
+  const { active, name, name_en, date, location, location_en, description, description_en, slug, category, registration_type, max_capacity, form_config, scanner_pin } = body
 
   const updates: Record<string, unknown> = {}
   if (active !== undefined) updates.active = active
   if (name !== undefined) updates.name = name.trim()
+  if (name_en !== undefined) updates.name_en = name_en?.trim() || null
   if (date !== undefined) updates.date = date
   if (location !== undefined) updates.location = location.trim()
+  if (location_en !== undefined) updates.location_en = location_en?.trim() || null
   if (description !== undefined) updates.description = description?.trim() || null
+  if (description_en !== undefined) updates.description_en = description_en?.trim() || null
   if (slug !== undefined) updates.slug = slug?.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || null
   if (category !== undefined) updates.category = category?.trim() || null
   if (registration_type !== undefined) updates.registration_type = registration_type

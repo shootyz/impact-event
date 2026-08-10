@@ -56,7 +56,9 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
     // Server already supplied the event — no client fetch needed.
     if (initialEvent) return;
     // Fallback: original client-side fetch (unchanged behaviour).
-    const url = eventId ? `/api/event?id=${encodeURIComponent(eventId)}` : "/api/event";
+    const url = eventId
+      ? `/api/event?id=${encodeURIComponent(eventId)}&lang=${lang}`
+      : `/api/event?lang=${lang}`;
     fetch(url)
       .then((r) => r.json())
       .then((data) => {
@@ -66,7 +68,7 @@ export default function RegistrationForm({ initialEvent }: { initialEvent: Event
         }
         setEventLoading(false);
       });
-  }, [eventId, initialEvent]);
+  }, [eventId, initialEvent, lang]);
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const db = supabaseAdmin()
   const { data: events } = await db
     .from('events')
-    .select('id, name, date, location, description, active, registration_password, slug, category, created_at, registration_type, max_capacity, form_config, scanner_pin')
+    .select('id, name, name_en, date, location, location_en, description, description_en, active, registration_password, slug, category, created_at, registration_type, max_capacity, form_config, scanner_pin')
     .order('date', { ascending: false })
 
   if (!events?.length) return NextResponse.json([])
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   const auth = checkAdminAuth(req, body)
   if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
-  const { name, date, location, description, registration_password, category, registration_type, max_capacity } = body
+  const { name, name_en, date, location, location_en, description, description_en, registration_password, category, registration_type, max_capacity } = body
 
   if (!name?.trim() || !date || !location?.trim()) {
     return NextResponse.json({ error: 'Name, Datum und Ort sind erforderlich.' }, { status: 400 })
@@ -48,9 +48,12 @@ export async function POST(req: NextRequest) {
     .from('events')
     .insert({
       name: name.trim(),
+      name_en: name_en?.trim() || null,
       date,
       location: location.trim(),
+      location_en: location_en?.trim() || null,
       description: description?.trim() || null,
+      description_en: description_en?.trim() || null,
       registration_password: registration_password?.trim() || null,
       active: true,
       category: category?.trim() || null,
