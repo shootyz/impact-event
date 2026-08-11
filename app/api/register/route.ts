@@ -41,6 +41,10 @@ export async function POST(req: NextRequest) {
           .eq('code', invite_code.trim().toUpperCase())
           .single()
         resolvedInviteCodeId = byCode?.id ?? null
+        // A code was typed but doesn't exist — that's "invalid", not "missing"
+        if (!resolvedInviteCodeId) {
+          return NextResponse.json({ error: t.errorInviteCodeInvalid }, { status: 400 })
+        }
       }
 
       if (!resolvedInviteCodeId) {
