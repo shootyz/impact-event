@@ -64,11 +64,13 @@ export async function POST(req: NextRequest) {
   let duplicates = 0;
 
   for (const c of contacts) {
+    // members has no `company` column — HubSpot's company property is fetched
+    // (see lib/hubspot.ts) but isn't persisted; every insert here silently
+    // failed with PGRST204 until this was caught via the added error logging.
     const { data: insertedMember, error } = await db.from("members").insert({
       email: c.email,
       first_name: c.first_name,
       last_name: c.last_name,
-      company: c.company,
     }).select("id").single();
 
     let memberId: string | null = insertedMember?.id ?? null;
