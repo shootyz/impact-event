@@ -141,10 +141,10 @@ export default function ZielgruppenDashboard({
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState<{ zgId: string; ids: string[]; label: string } | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [dragOverZg, setDragOverZg] = useState<string | null>(null);
-  const [hsLists, setHsLists] = useState<{ id: string; name: string }[]>([]);
+  const [hsLists, setHsLists] = useState<{ id: string; name: string; objectType: "contacts" | "companies" }[]>([]);
   const [hsLoading, setHsLoading] = useState(false);
   const [hsZgId, setHsZgId] = useState<string | null>(null);
-  const [hsSelectedList, setHsSelectedList] = useState("");
+  const [hsSelectedLists, setHsSelectedLists] = useState<Set<string>>(new Set());
   const [hsImporting, setHsImporting] = useState(false);
   const [hsResult, setHsResult] = useState<{ zgId: string; imported: number; duplicates: number } | null>(null);
 
@@ -397,7 +397,7 @@ export default function ZielgruppenDashboard({
   }
 
   async function openHubSpot(zgId: string) {
-    setHsZgId(zgId); setHsSelectedList(""); setHsResult(null);
+    setHsZgId(zgId); setHsSelectedLists(new Set()); setHsResult(null);
     if (hsLists.length > 0) return;
     setHsLoading(true);
     const res = await fetch("/api/admin/hubspot?action=lists", { headers: { "Authorization": `Bearer ${adminPassword}` } });
@@ -406,12 +406,24 @@ export default function ZielgruppenDashboard({
     setHsLoading(false);
   }
 
+  function toggleHsList(key: string) {
+    setHsSelectedLists(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
+
   async function importFromHubSpot(zgId: string) {
-    if (!hsSelectedList) return;
+    if (hsSelectedLists.size === 0) return;
     setHsImporting(true);
+    const lists = [...hsSelectedLists].map(key => {
+      const [objectType, id] = key.split(":");
+      return { id, objectType };
+    });
     const res = await fetch("/api/admin/hubspot", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminPassword, listId: hsSelectedList, zielgruppe_id: zgId }),
+      body: JSON.stringify({ adminPassword, lists, zielgruppe_id: zgId }),
     });
     const d = await res.json();
     setHsImporting(false);
@@ -969,19 +981,40 @@ export default function ZielgruppenDashboard({
                       )}
                     </div>
                     {hsZgId === zg.id && (
-                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <div className="flex items-start gap-2 mt-2 flex-wrap">
                         {hsLoading ? (
                           <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>Lädt Listen…</span>
                         ) : (
                           <>
-                            <select value={hsSelectedList} onChange={e => setHsSelectedList(e.target.value)}
-                              className={inputCls} style={{ ...inputStyle, maxWidth: 260 }}>
-                              <option value="">Liste auswählen…</option>
-                              {hsLists.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                            </select>
-                            <button disabled={!hsSelectedList || hsImporting} onClick={() => importFromHubSpot(zg.id)}
+                            <div className="rounded-lg p-2 overflow-y-auto" style={{ maxWidth: 300, maxHeight: 220, border: "1.5px solid var(--ig-gray2)" }}>
+                              {hsLists.length === 0 ? (
+                                <span className="text-xs" style={{ color: "var(--ig-gray3)" }}>Keine Listen gefunden.</span>
+                              ) : (
+                                (["contacts", "companies"] as const).map(ot => {
+                                  const group = hsLists.filter(l => l.objectType === ot);
+                                  if (!group.length) return null;
+                                  return (
+                                    <div key={ot} className="mb-2 last:mb-0">
+                                      <p className="text-[10px] font-semibold uppercase tracking-wide mb-1" style={{ color: "var(--ig-gray3)" }}>
+                                        {ot === "contacts" ? "Kontakt-Listen" : "Firmen-Segmente"}
+                                      </p>
+                                      {group.map(l => {
+                                        const key = `${l.objectType}:${l.id}`;
+                                        return (
+                                          <label key={key} className="flex items-center gap-1.5 text-xs py-0.5 cursor-pointer">
+                                            <input type="checkbox" checked={hsSelectedLists.has(key)} onChange={() => toggleHsList(key)} />
+                                            {l.name}
+                                          </label>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                            <button disabled={hsSelectedLists.size === 0 || hsImporting} onClick={() => importFromHubSpot(zg.id)}
                               className={btnPrimary} style={{ background: "var(--ig-navy)", color: "white" }}>
-                              {hsImporting ? "Importiert…" : "Importieren"}
+                              {hsImporting ? "Importiert…" : hsSelectedLists.size ? `Importieren (${hsSelectedLists.size})` : "Importieren"}
                             </button>
                           </>
                         )}
