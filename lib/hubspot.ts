@@ -7,6 +7,12 @@ function headers() {
   };
 }
 
+async function logIfFailed(label: string, res: Response) {
+  if (res.ok) return;
+  const body = await res.text().catch(() => "<unreadable>");
+  console.error(`[hubspot] ${label} failed: ${res.status} ${res.statusText} — ${body.slice(0, 500)}`);
+}
+
 export async function upsertContact(contact: {
   email: string;
   first_name: string;
@@ -38,6 +44,7 @@ export async function getLists(): Promise<{ id: string; name: string; size: numb
   for (let page = 0; page < 20; page++) {
     const url = `${HUBSPOT_BASE}/contacts/v1/lists?count=250${offset ? `&offset=${offset}` : ""}`;
     const res = await fetch(url, { headers: headers() });
+    await logIfFailed(`getLists ${url}`, res);
     if (!res.ok) break;
     const data = await res.json();
     for (const l of (data.lists ?? []) as { listId: number; name: string; metaData?: { size?: number } }[]) {
@@ -46,6 +53,7 @@ export async function getLists(): Promise<{ id: string; name: string; size: numb
     if (!data["has-more"]) break;
     offset = data.offset;
   }
+  console.error(`[hubspot] getLists: found ${out.length} contact list(s)`);
   return out;
 }
 
@@ -57,9 +65,12 @@ export async function getContactsFromList(listId: string): Promise<{
   for (let page = 0; page < 50; page++) {
     const url = `${HUBSPOT_BASE}/contacts/v1/lists/${listId}/contacts/all?count=500&property=email&property=firstname&property=lastname&property=company${vidOffset ? `&vidOffset=${vidOffset}` : ""}`;
     const res = await fetch(url, { headers: headers() });
+    await logIfFailed(`getContactsFromList /contacts/v1/lists/${listId}/contacts/all`, res);
     if (!res.ok) break;
     const data = await res.json();
     const contacts = (data.contacts ?? []) as { properties: Record<string, { value: string }> }[];
+    const skippedNoEmail = contacts.filter((c) => !c.properties?.email?.value);
+    console.error(`[hubspot] getContactsFromList(${listId}): page returned ${contacts.length} contact(s), ${skippedNoEmail.length} without email`);
     for (const c of contacts) {
       const email = c.properties?.email?.value ?? "";
       if (!email) continue;
@@ -80,12 +91,6 @@ export async function getContactsFromList(listId: string): Promise<{
 // The legacy v1 Lists API above is contact-object-only — company lists live in
 // the newer v3 Lists API and need a company→contact hop via the Associations API.
 const COMPANY_OBJECT_TYPE_ID = "0-2";
-
-async function logIfFailed(label: string, res: Response) {
-  if (res.ok) return;
-  const body = await res.text().catch(() => "<unreadable>");
-  console.error(`[hubspot] ${label} failed: ${res.status} ${res.statusText} — ${body.slice(0, 500)}`);
-}
 
 export async function getCompanyLists(): Promise<{ id: string; name: string; size: number }[]> {
   const res = await fetch(`${HUBSPOT_BASE}/crm/v3/lists/search`, {
@@ -157,7 +162,12 @@ async function batchReadContacts(contactIds: string[]): Promise<{
     await logIfFailed("batchReadContacts /crm/v3/objects/contacts/batch/read", res);
     if (!res.ok) continue;
     const data = await res.json();
-    const results = (data.results ?? []) as { properties: Record<string, string | null> }[];
+    const results = (data.results ?? []) as { id: string; properties: Record<string, string | null> }[];
+    const skippedNoEmail = results.filter((c) => !c.properties?.email);
+    console.error(`[hubspot] batchReadContacts: requested ${chunk.length}, got ${results.length} result(s), ${skippedNoEmail.length} without email`);
+    if (skippedNoEmail.length > 0) {
+      console.error(`[hubspot] contacts without email (id -> properties): ${skippedNoEmail.slice(0, 5).map((c) => `${c.id}=${JSON.stringify(c.properties)}`).join(" | ")}`);
+    }
     for (const c of results) {
       const email = c.properties?.email ?? "";
       if (!email) continue;
