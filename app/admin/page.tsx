@@ -3256,7 +3256,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                   zielgruppeId={builderZielgruppeId}
                   onZielgruppeChange={setBuilderZielgruppeId}
                   zielgruppen={zielgruppen}
-                  events={selectedEvent ? [{ id: selectedEvent.id, name: selectedEvent.name, date: selectedEvent.date }] : []}
+                  events={selectedEvent ? [{ id: selectedEvent.id, name: selectedEvent.name, name_en: selectedEvent.name_en, name_fr: selectedEvent.name_fr, date: selectedEvent.date }] : []}
                   onSaveDraft={async (subject, bodyHtml, eventUrl, blocks, zielgruppeId, autoId, isAutoSave, lang, title) => {
                     const blocksJson = { lang: lang ?? "en", title: title || "", blocks };
                     const existingId = autoId ?? editingCampaign?.id;

@@ -6,6 +6,15 @@ import { upsertContact } from '@/lib/hubspot'
 import { Resend } from 'resend'
 import { randomUUID } from 'crypto'
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   if (!rateLimit(ip, { max: 10, windowMs: 60_000 })) {
@@ -64,7 +73,7 @@ export async function POST(req: NextRequest) {
       // Notify admin
       const extraRows = extra_fields
         ? Object.entries(extra_fields as Record<string, string>)
-            .map(([k, v]) => `<tr><td style="padding:4px 8px;color:#666">${k}</td><td style="padding:4px 8px">${v}</td></tr>`)
+            .map(([k, v]) => `<tr><td style="padding:4px 8px;color:#666">${escapeHtml(k)}</td><td style="padding:4px 8px">${escapeHtml(v)}</td></tr>`)
             .join('')
         : ''
       await new Resend(process.env.RESEND_API_KEY).emails.send({
@@ -72,8 +81,8 @@ export async function POST(req: NextRequest) {
         to: process.env.ADMIN_NOTIFICATION_EMAIL ?? 'info@impactgstaad.ch',
         subject: `Neue Anmeldung: ${fullName} → ${event?.name ?? 'Event'}`,
         html: `<h3>Neue Formular-Anmeldung</h3><table>
-          <tr><td style="padding:4px 8px;color:#666">Name</td><td style="padding:4px 8px">${fullName}</td></tr>
-          <tr><td style="padding:4px 8px;color:#666">E-Mail</td><td style="padding:4px 8px">${email}</td></tr>
+          <tr><td style="padding:4px 8px;color:#666">Name</td><td style="padding:4px 8px">${escapeHtml(fullName)}</td></tr>
+          <tr><td style="padding:4px 8px;color:#666">E-Mail</td><td style="padding:4px 8px">${escapeHtml(email)}</td></tr>
           ${extraRows}</table>`,
       })
     } catch (e) {

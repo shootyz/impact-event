@@ -19,6 +19,9 @@ export async function POST(req: NextRequest) {
   if (!name?.trim() || !email?.trim()) {
     return NextResponse.json({ error: `${t.errorName} ${t.errorEmail}` }, { status: 400 })
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    return NextResponse.json({ error: t.errorEmail }, { status: 400 })
+  }
 
   const db = supabaseAdmin()
   let resolvedInviteCodeId: string | null = invite_code_id ?? null

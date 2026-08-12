@@ -125,6 +125,9 @@ export default function ZielgruppenDashboard({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renamingName, setRenamingName] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
+  const [removeConfirm, setRemoveConfirm] = useState<{ id: string; name: string; zgId: string } | null>(null);
+  const [bulkRemoveConfirm, setBulkRemoveConfirm] = useState<{ zgId: string; ids: string[]; label: string } | null>(null);
+  const [removing, setRemoving] = useState(false);
   const [zgDeleteConfirm, setZgDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
   const [csvZgId, setCsvZgId] = useState<string | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
@@ -228,6 +231,39 @@ export default function ZielgruppenDashboard({
       }
       return next;
     });
+  }
+
+  async function removeFromZielgruppe(id: string) {
+    setRemoving(true);
+    await fetch(`/api/members/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ zielgruppe_id: null, adminPassword }),
+    });
+    onMembersChange(members.map(m => m.id === id ? { ...m, zielgruppe_id: null } : m));
+    setSelected(prev => {
+      const next: Record<string, Set<string>> = {};
+      for (const [zgId, set] of Object.entries(prev)) {
+        if (set.has(id)) { const copy = new Set(set); copy.delete(id); next[zgId] = copy; }
+        else next[zgId] = set;
+      }
+      return next;
+    });
+    setRemoving(false);
+    setRemoveConfirm(null);
+  }
+
+  async function runBulkRemoveFromZielgruppe() {
+    if (!bulkRemoveConfirm) return;
+    setRemoving(true);
+    await Promise.all(bulkRemoveConfirm.ids.map(id =>
+      fetch(`/api/members/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ zielgruppe_id: null, adminPassword }) })
+    ));
+    const removedIds = new Set(bulkRemoveConfirm.ids);
+    onMembersChange(members.map(m => removedIds.has(m.id) ? { ...m, zielgruppe_id: null } : m));
+    setSelected(prev => ({ ...prev, [bulkRemoveConfirm.zgId]: new Set() }));
+    setRemoving(false);
+    setBulkRemoveConfirm(null);
   }
 
   async function addMember(zgId: string) {
@@ -422,7 +458,7 @@ export default function ZielgruppenDashboard({
             <div className="h-0.5" style={{ background: "#dc2626" }} />
             <div className="px-6 pt-6 pb-4">
               <p className="font-bold text-sm mb-1" style={{ color: "var(--ig-navy)" }}>Mitglied löschen</p>
-              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{deleteConfirm.name} wirklich entfernen?</p>
+              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{deleteConfirm.name} wirklich löschen? Die Person wird dabei aus <strong>allen</strong> Events und Zielgruppen entfernt, inklusive der gesamten Mailing-Historie — nicht nur aus dieser Zielgruppe.</p>
             </div>
             <div className="px-6 pb-5 flex gap-3">
               <button onClick={() => setDeleteConfirm(null)}
@@ -442,7 +478,7 @@ export default function ZielgruppenDashboard({
             <div className="h-0.5" style={{ background: "#dc2626" }} />
             <div className="px-6 pt-6 pb-4">
               <p className="font-bold text-sm mb-1" style={{ color: "var(--ig-navy)" }}>Mitglieder löschen</p>
-              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{bulkDeleteConfirm.label} Mitglieder ({bulkDeleteConfirm.ids.length}) wirklich entfernen?</p>
+              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{bulkDeleteConfirm.label} Mitglieder ({bulkDeleteConfirm.ids.length}) wirklich löschen? Sie werden dabei aus <strong>allen</strong> Events und Zielgruppen entfernt, inklusive der gesamten Mailing-Historie.</p>
             </div>
             <div className="px-6 pb-5 flex gap-3">
               <button onClick={() => setBulkDeleteConfirm(null)}
@@ -451,6 +487,46 @@ export default function ZielgruppenDashboard({
               <button disabled={bulkDeleting} onClick={runBulkDelete}
                 className={`${btnPrimary} flex-1 py-2 disabled:opacity-50`}
                 style={{ background: "#dc2626", color: "white" }}>{bulkDeleting ? "Löscht…" : "Löschen"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Remove-from-Zielgruppe confirm dialog (non-destructive) */}
+      {removeConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+            <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+            <div className="px-6 pt-6 pb-4">
+              <p className="font-bold text-sm mb-1" style={{ color: "var(--ig-navy)" }}>Aus Zielgruppe entfernen</p>
+              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{removeConfirm.name} aus dieser Zielgruppe entfernen? Die Person bleibt als Kontakt erhalten (inkl. Registrierungen und Mailing-Historie) und ist danach keiner Zielgruppe mehr zugeordnet.</p>
+            </div>
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={() => setRemoveConfirm(null)}
+                className={`${btnSecondary} flex-1 py-2`}
+                style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)" }}>Abbrechen</button>
+              <button disabled={removing} onClick={() => removeFromZielgruppe(removeConfirm.id)}
+                className={`${btnPrimary} flex-1 py-2 disabled:opacity-50`}
+                style={{ background: "var(--ig-navy)", color: "white" }}>{removing ? "Entfernt…" : "Entfernen"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Bulk remove-from-Zielgruppe confirm dialog (non-destructive) */}
+      {bulkRemoveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(30,50,99,0.35)" }}>
+          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-xl" style={{ background: "white" }}>
+            <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+            <div className="px-6 pt-6 pb-4">
+              <p className="font-bold text-sm mb-1" style={{ color: "var(--ig-navy)" }}>Aus Zielgruppe entfernen</p>
+              <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>{bulkRemoveConfirm.label} Mitglieder ({bulkRemoveConfirm.ids.length}) aus dieser Zielgruppe entfernen? Sie bleiben als Kontakte erhalten (inkl. Registrierungen und Mailing-Historie) und sind danach keiner Zielgruppe mehr zugeordnet.</p>
+            </div>
+            <div className="px-6 pb-5 flex gap-3">
+              <button onClick={() => setBulkRemoveConfirm(null)}
+                className={`${btnSecondary} flex-1 py-2`}
+                style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)" }}>Abbrechen</button>
+              <button disabled={removing} onClick={runBulkRemoveFromZielgruppe}
+                className={`${btnPrimary} flex-1 py-2 disabled:opacity-50`}
+                style={{ background: "var(--ig-navy)", color: "white" }}>{removing ? "Entfernt…" : "Entfernen"}</button>
             </div>
           </div>
         </div>
@@ -661,12 +737,25 @@ export default function ZielgruppenDashboard({
                       onClick={() => {
                         const ids = Array.from(selected[zg.id] ?? []);
                         const allInList = list.length > 0 && ids.length === list.length;
+                        setBulkRemoveConfirm({ zgId: zg.id, ids, label: allInList ? "Alle ausgewählten" : `${ids.length}` });
+                      }}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:opacity-80"
+                      style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}
+                      title="Bleiben als Kontakte erhalten, verlieren nur die Zuordnung zu dieser Zielgruppe"
+                    >
+                      Aus Zielgruppe entfernen
+                    </button>
+                    <button
+                      onClick={() => {
+                        const ids = Array.from(selected[zg.id] ?? []);
+                        const allInList = list.length > 0 && ids.length === list.length;
                         setBulkDeleteConfirm({ zgId: zg.id, ids, label: allInList ? "Alle ausgewählten" : `${ids.length}` });
                       }}
                       className="text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:opacity-80"
                       style={{ background: "#dc2626", color: "white" }}
+                      title="Löscht die Person komplett — aus allen Events und Zielgruppen"
                     >
-                      Löschen
+                      Überall löschen
                     </button>
                     <button
                       onClick={() => setSelected(prev => ({ ...prev, [zg.id]: new Set() }))}
@@ -770,8 +859,15 @@ export default function ZielgruppenDashboard({
                                   <button onClick={() => setEditing({ id: m.id, first_name: m.first_name, last_name: m.last_name, email: m.email, anrede: m.anrede || "", sprache: m.sprache || "de" })}
                                     aria-label="Mitglied bearbeiten"
                                     className={`${btnSecondary} hover:border-[var(--ig-navy)] hover:text-[var(--ig-navy)]`} style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}><IconPencilSmall className="w-3 h-3" /></button>
+                                  <button onClick={() => setRemoveConfirm({ id: m.id, name: `${m.first_name} ${m.last_name}`, zgId: zg.id })}
+                                    aria-label="Aus Zielgruppe entfernen"
+                                    title="Aus dieser Zielgruppe entfernen (Kontakt bleibt erhalten)"
+                                    className={`${btnSecondary} hover:border-[var(--ig-gold)] hover:text-[var(--ig-gold)]`} style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H6a2 2 0 00-2 2v10a2 2 0 002 2h3m5-4l4-4m0 0l-4-4m4 4H9" /></svg>
+                                  </button>
                                   <button onClick={() => setDeleteConfirm({ id: m.id, name: `${m.first_name} ${m.last_name}` })}
-                                    aria-label="Mitglied löschen"
+                                    aria-label="Mitglied überall löschen"
+                                    title="Person überall löschen (alle Events, alle Zielgruppen)"
                                     className={`${btnSecondary} hover:bg-red-50`} style={{ background: "var(--ig-light)", color: "#dc2626", border: "1.5px solid var(--ig-gray2)" }}>
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                   </button>

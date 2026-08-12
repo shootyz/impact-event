@@ -122,8 +122,12 @@ function LeadPreview({ block, onChange }: { block: LeadBlock & { label?: string 
   );
 }
 
-function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block: EventDetailsBlock & { label?: string }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang }) {
+function EventDetailsPreview({ block, onChange, subject, lang = "en", linkedEvent }: { block: EventDetailsBlock & { label?: string }; onChange: (b: typeof block) => void; subject?: string; lang?: Lang; linkedEvent?: { name: string; name_en?: string | null; name_fr?: string | null } }) {
   const tl = T[lang];
+  const liveTitle = linkedEvent
+    ? (lang === "fr" ? linkedEvent.name_fr : lang === "en" ? linkedEvent.name_en : null) || linkedEvent.name
+    : null;
+  const titleOutOfSync = !!liveTitle && liveTitle !== block.event_title;
   const [editingDateTime, setEditingDateTime] = useState(false);
   const [rawDate, setRawDate] = useState(block.date);
   const [rawTime, setRawTime] = useState(block.time);
@@ -166,8 +170,20 @@ function EventDetailsPreview({ block, onChange, subject, lang = "en" }: { block:
 
   return (
     <div>
-      <Editable value={block.event_title} onChange={v => onChange({ ...block, event_title: v })}
-        placeholder="Event-Titel" style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, marginBottom: 18, display: "block" }} />
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: titleOutOfSync ? 4 : 18, flexWrap: "wrap" }}>
+        <Editable value={block.event_title} onChange={v => onChange({ ...block, event_title: v })}
+          placeholder="Event-Titel" style={{ color: D.navy, fontSize: 19, fontWeight: 700, lineHeight: 1.75, display: "block" }} />
+        {titleOutOfSync && (
+          <button type="button" onClick={() => onChange({ ...block, event_title: liveTitle! })}
+            title={`Weicht vom aktuellen Event-Namen ab: "${liveTitle}"`}
+            style={{ fontSize: 11, color: D.gold, background: "none", border: "none", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }}>
+            ↻ Aus Event übernehmen
+          </button>
+        )}
+      </div>
+      {titleOutOfSync && (
+        <p style={{ fontSize: 11, color: D.gray, marginTop: -14, marginBottom: 14 }}>Aktueller Event-Name: „{liveTitle}&quot;</p>
+      )}
       <div style={{ background: "#F8F9FF", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "18px 22px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
         {editingDateTime ? (
           <div
@@ -392,12 +408,14 @@ export default function PreviewPanel({
   onBlocks,
   lang = "en",
   eventUrl,
+  linkedEvent,
 }: {
   blocks: CampaignBlock[];
   subject: string;
   onBlocks: (blocks: CampaignBlock[]) => void;
   lang?: Lang;
   eventUrl?: string;
+  linkedEvent?: { name: string; name_en?: string | null; name_fr?: string | null };
 }) {
   const t = T[lang];
   const hasRegisterBlock = blocks.some(b => b.type === "register_button");
@@ -449,7 +467,7 @@ export default function PreviewPanel({
                 <LeadPreview block={block} onChange={b => updateBlock(i, b)} />
               )}
               {block.type === "event_details" && (
-                <EventDetailsPreview block={block} onChange={b => updateBlock(i, b)} subject={subject} lang={lang} />
+                <EventDetailsPreview block={block} onChange={b => updateBlock(i, b)} subject={subject} lang={lang} linkedEvent={linkedEvent} />
               )}
               {block.type === "program" && (
                 <ProgramPreview block={block} onChange={b => updateBlock(i, b)} />

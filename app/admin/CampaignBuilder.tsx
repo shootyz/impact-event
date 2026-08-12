@@ -847,7 +847,7 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
 // ── Main CampaignBuilder ──────────────────────────────────────────────────────
 
 export type ZielgruppeOption = { id: string; name: string };
-export type EventOption = { id: string; name: string; date: string };
+export type EventOption = { id: string; name: string; name_en?: string | null; name_fr?: string | null; date: string };
 
 export default function CampaignBuilder({
   onSaveDraft,
@@ -1042,7 +1042,7 @@ export default function CampaignBuilder({
         <div className="px-5 pt-5 pb-3 border-b" style={{ borderColor: "#e5e7eb", flexShrink: 0 }}>
           <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#1E3263" }}>Vorschau</p>
         </div>
-        <PreviewPanel blocks={blocks} subject={subject} onBlocks={setBlocks} lang={lang} eventUrl={eventUrl} />
+        <PreviewPanel blocks={blocks} subject={subject} onBlocks={setBlocks} lang={lang} eventUrl={eventUrl} linkedEvent={events?.[0]} />
       </div>
 
       {/* Right: editor */}
