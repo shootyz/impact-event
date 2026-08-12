@@ -46,12 +46,12 @@ export async function POST(req: NextRequest) {
   // Accepts either the legacy single `listId` (contacts-object list, back-compat)
   // or `lists: [{id, objectType}]` so an admin can import several lists/segments
   // — including company-based segments — into one Zielgruppe in one go.
-  const { listId, lists, zielgruppe_id } = body as {
-    listId?: string; lists?: ListRef[]; zielgruppe_id?: string;
+  const { listId, lists, zielgruppe_id, event_id } = body as {
+    listId?: string; lists?: ListRef[]; zielgruppe_id?: string; event_id?: string;
   };
   const refs: ListRef[] = lists?.length ? lists : listId ? [{ id: listId, objectType: "contacts" }] : [];
-  if (!refs.length || !zielgruppe_id) {
-    return NextResponse.json({ error: "lists and zielgruppe_id required" }, { status: 400 });
+  if (!refs.length || !zielgruppe_id || !event_id) {
+    return NextResponse.json({ error: "lists, zielgruppe_id and event_id required" }, { status: 400 });
   }
 
   const contactsPerList = await Promise.all(refs.map(contactsForList));
@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
       email: c.email,
       first_name: c.first_name,
       last_name: c.last_name,
+      event_id,
     }).select("id").single();
 
     let memberId: string | null = insertedMember?.id ?? null;
@@ -80,9 +81,10 @@ export async function POST(req: NextRequest) {
         continue;
       }
       duplicates++;
-      // Contact already exists (e.g. from an earlier import) — still add them to
-      // this Zielgruppe, since a member can now belong to several at once.
-      const { data: existing } = await db.from("members").select("id").eq("email", c.email).limit(1);
+      // Contact already exists for this event (e.g. from an earlier import) —
+      // still add them to this Zielgruppe, since a member can now belong to
+      // several at once.
+      const { data: existing } = await db.from("members").select("id").eq("email", c.email).eq("event_id", event_id).limit(1);
       memberId = existing?.[0]?.id ?? null;
     } else {
       imported++;

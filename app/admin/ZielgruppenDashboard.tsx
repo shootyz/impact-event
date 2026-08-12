@@ -438,14 +438,14 @@ export default function ZielgruppenDashboard({
     });
     const res = await fetch("/api/admin/hubspot", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminPassword, lists, zielgruppe_id: zgId }),
+      body: JSON.stringify({ adminPassword, lists, zielgruppe_id: zgId, event_id: eventId }),
     });
     const d = await res.json();
     setHsImporting(false);
     if (res.ok) {
       setHsResult({ zgId, imported: d.imported, duplicates: d.duplicates });
       // Reload members
-      const mr = await fetch("/api/members", { headers: { "Authorization": `Bearer ${adminPassword}` } });
+      const mr = await fetch(`/api/members?eventId=${eventId}`, { headers: { "Authorization": `Bearer ${adminPassword}` } });
       const md = await mr.json();
       if (Array.isArray(md)) onMembersChange(md);
       setHsZgId(null);
