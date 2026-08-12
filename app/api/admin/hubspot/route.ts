@@ -73,7 +73,10 @@ export async function POST(req: NextRequest) {
 
     let memberId: string | null = insertedMember?.id ?? null;
     if (error) {
-      if (error.code !== "23505") continue;
+      if (error.code !== "23505") {
+        console.error(`[hubspot import] insert failed for ${c.email}: ${error.code} ${error.message}`);
+        continue;
+      }
       duplicates++;
       // Contact already exists (e.g. from an earlier import) — still add them to
       // this Zielgruppe, since a member can now belong to several at once.
@@ -84,9 +87,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (memberId) {
-      await db.from("member_zielgruppen").upsert({ member_id: memberId, zielgruppe_id }, { onConflict: "member_id,zielgruppe_id", ignoreDuplicates: true });
+      const { error: zgError } = await db.from("member_zielgruppen").upsert({ member_id: memberId, zielgruppe_id }, { onConflict: "member_id,zielgruppe_id", ignoreDuplicates: true });
+      if (zgError) console.error(`[hubspot import] member_zielgruppen upsert failed for ${c.email}: ${zgError.code} ${zgError.message}`);
     }
   }
 
+  console.error(`[hubspot import] done: ${imported} imported, ${duplicates} duplicates, ${contacts.length} total`);
   return NextResponse.json({ imported, duplicates, total: contacts.length });
 }
