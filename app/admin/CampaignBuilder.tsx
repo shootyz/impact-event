@@ -310,7 +310,7 @@ function EventDetailsEditor({ block, onChange, subject, lang = "en" }: { block: 
   );
 }
 
-function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b: ProgramBlock) => void }) {
+export function ProgramEditor({ block, onChange }: { block: ProgramBlock; onChange: (b: ProgramBlock) => void }) {
   const [titleFocus, setTitleFocus] = useState(false);
   const updateSlot = (id: string, patch: Partial<ProgramSlot>) =>
     onChange({ ...block, slots: block.slots.map(s => s.id === id ? { ...s, ...patch } : s) });

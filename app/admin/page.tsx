@@ -10,15 +10,15 @@ const CampaignBuilder = dynamic(() => import("./CampaignBuilder"), { ssr: false 
 const PreviewPanel = dynamic(() => import("./PreviewPanel"), { ssr: false });
 const ZielgruppenDashboard = dynamic(() => import("./ZielgruppenDashboard"), { ssr: false });
 const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard"), { ssr: false });
+const ProgramEditor = dynamic(() => import("./CampaignBuilder").then(m => ({ default: m.ProgramEditor })), { ssr: false });
 import { supabase } from "@/lib/supabase";
-import type { CampaignBlock } from "./campaign-renderer";
+import type { CampaignBlock, ProgramBlock } from "./campaign-renderer";
 import type { Lang } from "./i18n";
 
 type GlobalMember = {
   id: string; first_name: string; last_name: string; email: string;
   anrede?: string | null; sprache?: string | null; unsubscribed: boolean; created_at: string;
-  zielgruppe_id: string | null;
-  zielgruppen?: { name: string; events?: { name: string } | null } | null;
+  zielgruppen: { name: string; events?: { name: string } | null }[];
 };
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
@@ -173,6 +173,78 @@ function ConfirmDialog({ title, message, danger, onConfirm, onCancel }: {
   );
 }
 
+// ─── Ticket-PDF program text ────────────────────────────────────────────────────
+// Directly editable per event/language — replaces the old "mark a campaign as the
+// ticket source" toggle, since a sent campaign can never be edited again.
+function TicketProgramModal({ eventId, adminPassword, onClose }: {
+  eventId: string; adminPassword: string; onClose: () => void;
+}) {
+  const [lang, setLang] = useState<"de" | "en" | "fr">("de");
+  const [block, setBlock] = useState<ProgramBlock>({ type: "program", title: "", slots: [] });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async (l: "de" | "en" | "fr") => {
+    setLoading(true);
+    const res = await fetch(`/api/admin/events/${eventId}/ticket-program?lang=${l}`, { headers: { Authorization: `Bearer ${adminPassword}` } });
+    const d = await res.json().catch(() => null);
+    setBlock({ type: "program", title: d?.title ?? "", slots: d?.slots ?? [] });
+    setLoading(false);
+  }, [eventId, adminPassword]);
+
+  useEffect(() => { load(lang); }, [lang, load]);
+
+  const save = async () => {
+    setSaving(true);
+    await fetch(`/api/admin/events/${eventId}/ticket-program`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminPassword}` },
+      body: JSON.stringify({ lang, title: block.title, slots: block.slots }),
+    });
+    setSaving(false);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8" style={{ background: "rgba(30,50,99,0.35)" }}>
+      <div className="w-full max-w-2xl max-h-full overflow-y-auto rounded-2xl shadow-xl" style={{ background: "white" }}>
+        <div className="h-0.5 sticky top-0" style={{ background: "var(--ig-gold)" }} />
+        <div className="px-6 pt-5 pb-2 flex items-center justify-between sticky top-0.5 z-10" style={{ background: "white" }}>
+          <div>
+            <p className="font-bold text-base" style={{ color: "var(--ig-navy)" }}>Text auf PDF-Ticket</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--ig-gray3)" }}>Wird automatisch aus dem aktuellen Programm-Block übernommen und kann hier angepasst werden.</p>
+          </div>
+          <button onClick={onClose} aria-label="Schliessen" className="p-2 rounded-lg transition hover:opacity-70" style={{ color: "var(--ig-gray3)" }}>
+            <IconX className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="px-6 flex gap-1.5 pb-3">
+          {(["de", "en", "fr"] as const).map(l => (
+            <button key={l} onClick={() => setLang(l)}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition active:scale-95"
+              style={lang === l
+                ? { background: "var(--ig-navy)", color: "white" }
+                : { background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <div className="px-6 pb-6">
+          {loading ? (
+            <div className="py-10 text-center text-xs" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
+          ) : (
+            <ProgramEditor block={block} onChange={setBlock} />
+          )}
+        </div>
+        <div className="px-6 pb-6 flex justify-end gap-2 sticky bottom-0 pt-3" style={{ background: "white" }}>
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium transition" style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "white" }}>Abbrechen</button>
+          <BtnPrimary disabled={saving || loading} onClick={save}>{saving ? "Speichert…" : "Speichern"}</BtnPrimary>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type Registration = {
   id: string; name: string; email: string; qr_token: string;
@@ -197,7 +269,7 @@ type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: s
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
 // ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
-type CampaignType = { id: string; subject: string; body_html: string; blocks_json?: { title?: string } | unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; lang_group_id?: string | null; is_pdf_source?: boolean; };
+type CampaignType = { id: string; subject: string; body_html: string; blocks_json?: { title?: string } | unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; lang_group_id?: string | null; };
 const TEST_EMAILS = [
   "nik.thomi@impactgstaad.ch",
   "andreas.wandfluh@impactgstaad.ch",
@@ -206,7 +278,7 @@ const TEST_EMAILS = [
   "simon.neuhaus@impactgstaad.ch",
 ];
 
-function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, duplicateBlockedReason, onTicketSourceChange, zielgruppeName, adminPassword }: {
+function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, duplicateBlockedReason, zielgruppeName, adminPassword }: {
   c: CampaignType;
   onSend: (id: string, sent: number) => void;
   onDelete: (id: string) => void;
@@ -214,13 +286,11 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
   onEdit?: () => void;
   onDuplicate?: () => Promise<void>;
   duplicateBlockedReason?: string;
-  onTicketSourceChange?: (id: string, isSource: boolean) => void;
   zielgruppeName?: string;
   adminPassword?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
-  const [markingSource, setMarkingSource] = useState(false);
   const [idCopied, setIdCopied] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -263,16 +333,6 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
     ? `Geplant für ${new Date(c.scheduled_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
     : new Date(c.created_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
-  const toggleTicketSource = async () => {
-    setMarkingSource(true);
-    const res = await fetch(`/api/campaigns/${c.id}/mark-ticket-source`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminPassword, unset: c.is_pdf_source }),
-    });
-    setMarkingSource(false);
-    if (res.ok && onTicketSourceChange) onTicketSourceChange(c.id, !c.is_pdf_source);
-  };
-
   return (
     <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
       <div className="p-5">
@@ -286,11 +346,6 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
                 if (!lang) return null;
                 return <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)", flexShrink: 0 }}>{lang.toUpperCase()}</span>;
               })()}
-              {c.is_pdf_source && (
-                <span className="text-xs font-semibold px-1.5 py-0.5 rounded flex items-center gap-1" style={{ background: "rgba(210,141,40,0.12)", color: "var(--ig-gold)", border: "1px solid rgba(210,141,40,0.25)", flexShrink: 0 }} title="Der Zeitplan dieser Kampagne wird auf dem Ticket-PDF angezeigt">
-                  📋 Ticket-Quelle
-                </span>
-              )}
               {!c.sent_at && (zielgruppeName
                 ? <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(210,141,40,0.1)", color: "var(--ig-gold)", border: "1px solid rgba(210,141,40,0.2)", flexShrink: 0 }}>{zielgruppeName}</span>
                 : <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)", flexShrink: 0 }}>Alle Mitglieder</span>
@@ -531,18 +586,6 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
                 {duplicating ? "Wird dupliziert…" : "Duplizieren"}
               </button>
             )}
-            {onTicketSourceChange && (
-              <button
-                disabled={markingSource}
-                onClick={toggleTicketSource}
-                title={c.is_pdf_source ? "Diese Kampagne liefert aktuell den Zeitplan fürs Ticket-PDF — klicken zum Entfernen" : "Den Zeitplan dieser Kampagne als Quelle fürs Ticket-PDF festlegen (unabhängig vom Sendestatus)"}
-                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all active:scale-95 disabled:opacity-50"
-                style={c.is_pdf_source
-                  ? { background: "var(--ig-gold)", color: "#fff", border: "1.5px solid var(--ig-gold)" }
-                  : { background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
-                {markingSource ? "…" : c.is_pdf_source ? "📋 Ticket-Quelle entfernen" : "📋 Als Ticket-Programm festlegen"}
-              </button>
-            )}
             <button onClick={() => setConfirmDelete(true)} aria-label="Kampagne löschen" className="h-11 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-all active:scale-95" style={{ color: "var(--ig-gray3)" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#dc2626"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--ig-gray3)"}>
@@ -699,6 +742,7 @@ export default function AdminPage() {
   const [maxCapInput, setMaxCapInput] = useState("");
   const [regTypeSaving, setRegTypeSaving] = useState(false);
   const [regTypeStatus, setRegTypeStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [ticketProgramOpen, setTicketProgramOpen] = useState(false);
   const [formConfig, setFormConfig] = useState<FormConfig>(DEFAULT_FORM_CONFIG);
   const [formConfigSaving, setFormConfigSaving] = useState(false);
   const [formConfigStatus, setFormConfigStatus] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -754,7 +798,7 @@ export default function AdminPage() {
   const [editRegSaving, setEditRegSaving] = useState(false);
 
   // Mailing state
-  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribed: boolean; created_at: string; zielgruppe_id: string | null; anrede?: string | null; sprache?: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
+  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribe_token: string; unsubscribed: boolean; created_at: string; zielgruppe_ids: string[]; anrede?: string | null; sprache?: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
   type Zielgruppe = { id: string; name: string; created_at: string };
   type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; lang_group_id?: string | null; };
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
@@ -1501,18 +1545,23 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                 .catch(() => setGlobalLoading(false));
             }
 
+            // A member can belong to several Zielgruppen (and thus appear under several
+            // events' groups) — these helpers flatten that to display/filter strings.
+            const zgNames = (m: GlobalMember) => m.zielgruppen.map(z => z.name);
+            const eventNames = (m: GlobalMember) => Array.from(new Set(m.zielgruppen.map(z => z.events?.name).filter((n): n is string => !!n)));
+
             // Unique filter options derived from data
-            const eventOptions = Array.from(new Set(globalMembers.map(m => m.zielgruppen?.events?.name ?? "").filter(Boolean))).sort();
-            const zgOptions = Array.from(new Set(globalMembers.map(m => m.zielgruppen?.name ?? "").filter(Boolean))).sort();
+            const eventOptions = Array.from(new Set(globalMembers.flatMap(eventNames))).sort();
+            const zgOptions = Array.from(new Set(globalMembers.flatMap(zgNames))).sort();
 
             const q = globalSearch.toLowerCase().trim();
             const filtered = globalMembers
               .filter(m => {
                 if (globalShowUnsub ? !m.unsubscribed : m.unsubscribed) return false;
-                if (globalFilterEvent && (m.zielgruppen?.events?.name ?? "") !== globalFilterEvent) return false;
-                if (globalFilterZg && (m.zielgruppen?.name ?? "") !== globalFilterZg) return false;
+                if (globalFilterEvent && !eventNames(m).includes(globalFilterEvent)) return false;
+                if (globalFilterZg && !zgNames(m).includes(globalFilterZg)) return false;
                 if (!q) return true;
-                return [m.first_name, m.last_name, m.email, m.zielgruppen?.name ?? "", m.zielgruppen?.events?.name ?? ""]
+                return [m.first_name, m.last_name, m.email, ...zgNames(m), ...eventNames(m)]
                   .join(" ").toLowerCase().includes(q);
               })
               .sort((a, b) => {
@@ -1521,8 +1570,8 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                 if (col === "first_name") { va = a.first_name; vb = b.first_name; }
                 else if (col === "last_name") { va = a.last_name; vb = b.last_name; }
                 else if (col === "email") { va = a.email; vb = b.email; }
-                else if (col === "zg") { va = a.zielgruppen?.name ?? ""; vb = b.zielgruppen?.name ?? ""; }
-                else if (col === "event") { va = a.zielgruppen?.events?.name ?? ""; vb = b.zielgruppen?.events?.name ?? ""; }
+                else if (col === "zg") { va = zgNames(a).join(", "); vb = zgNames(b).join(", "); }
+                else if (col === "event") { va = eventNames(a).join(", "); vb = eventNames(b).join(", "); }
                 else if (col === "sprache") { va = a.sprache ?? ""; vb = b.sprache ?? ""; }
                 else { return dir === "asc" ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime() : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(); }
                 return dir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
@@ -1542,7 +1591,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
               const rows = filtered.map(m => [
                 m.first_name, m.last_name, m.email,
                 m.anrede ?? "", m.sprache ?? "",
-                m.zielgruppen?.name ?? "", m.zielgruppen?.events?.name ?? "",
+                zgNames(m).join(", "), eventNames(m).join(", "),
                 m.unsubscribed ? "ja" : "nein",
                 new Date(m.created_at).toLocaleDateString("de-CH"),
               ]);
@@ -1659,8 +1708,8 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                               <td className="px-3 py-2" style={{ color: "var(--ig-navy)" }}>{m.first_name}</td>
                               <td className="px-3 py-2" style={{ color: "var(--ig-navy)" }}>{m.last_name}</td>
                               <td className="px-3 py-2" style={{ color: "var(--ig-gray3)" }}>{m.email}</td>
-                              <td className="px-3 py-2" style={{ color: "var(--ig-gray3)" }}>{m.zielgruppen?.name ?? "–"}</td>
-                              <td className="px-3 py-2" style={{ color: "var(--ig-gray3)" }}>{m.zielgruppen?.events?.name ?? "–"}</td>
+                              <td className="px-3 py-2" style={{ color: "var(--ig-gray3)" }}>{zgNames(m).join(", ") || "–"}</td>
+                              <td className="px-3 py-2" style={{ color: "var(--ig-gray3)" }}>{eventNames(m).join(", ") || "–"}</td>
                               <td className="px-3 py-2 uppercase" style={{ color: "var(--ig-gray3)" }}>{m.sprache ?? "–"}</td>
                               <td className="px-3 py-2">
                                 {m.unsubscribed
@@ -3176,6 +3225,23 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
               </div>
             </Card>
 
+            {/* Kampagnen-Einstellungen */}
+            <Card>
+              <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
+              <CardHeader title="Kampagnen-Einstellungen" subtitle="Zeitplan-Text fürs Ticket-PDF" />
+              <div className="p-5 space-y-3">
+                <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
+                  Der hier hinterlegte Zeitplan wird auf dem Ticket-PDF angezeigt — unabhängig davon, ob die zugehörige Kampagne bereits gesendet wurde.
+                </p>
+                <div className="flex justify-end">
+                  <BtnPrimary disabled={!selectedEventId} onClick={() => setTicketProgramOpen(true)}>Text auf PDF-Ticket</BtnPrimary>
+                </div>
+              </div>
+            </Card>
+            {ticketProgramOpen && selectedEventId && (
+              <TicketProgramModal eventId={selectedEventId} adminPassword={savedPassword.current} onClose={() => setTicketProgramOpen(false)} />
+            )}
+
             {/* CSV Import */}
             <Card>
               <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
@@ -3416,20 +3482,6 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                       onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                       onSchedule={(id, scheduled_at) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x))}
                       onEdit={c.blocks_json ? () => { setEditingCampaign(c); setBuilderZielgruppeId(c.zielgruppe_id ?? null); setMailingTab("compose"); } : undefined}
-                      onTicketSourceChange={(id, isSource) => {
-                        const target = campaigns.find(x => x.id === id);
-                        const bj = target?.blocks_json as { lang?: string } | null;
-                        const lang = (bj && !Array.isArray(bj) ? bj.lang : null) ?? "en";
-                        setCampaigns(prev => prev.map(x => {
-                          if (x.id === id) return { ...x, is_pdf_source: isSource };
-                          if (isSource && x.event_id === target?.event_id) {
-                            const xbj = x.blocks_json as { lang?: string } | null;
-                            const xlang = (xbj && !Array.isArray(xbj) ? xbj.lang : null) ?? "en";
-                            if (xlang === lang) return { ...x, is_pdf_source: false };
-                          }
-                          return x;
-                        }));
-                      }}
                     />
                   ))}
                 </div>
@@ -3463,15 +3515,6 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                     onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
                     onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                     onSchedule={(id, scheduled_at) => { setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x)); }}
-                    onTicketSourceChange={(id, isSource) => {
-                      const target = campaigns.find(x => x.id === id);
-                      const lang = target ? campaignLang(target) : "de";
-                      setCampaigns(prev => prev.map(x => {
-                        if (x.id === id) return { ...x, is_pdf_source: isSource };
-                        if (isSource && x.event_id === target?.event_id && campaignLang(x) === lang) return { ...x, is_pdf_source: false };
-                        return x;
-                      }));
-                    }}
                     onDuplicate={async () => {
                       if (findDuplicateBlockedReason(c)) return;
                       const res = await fetch("/api/campaigns", {
