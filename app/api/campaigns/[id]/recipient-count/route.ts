@@ -24,7 +24,11 @@ export async function GET(req: NextRequest, props: any) {
 
   let query = db.from('members').select('sprache').eq('unsubscribed', false)
   if (campaign.event_id) query = query.eq('event_id', campaign.event_id)
-  if (campaign.zielgruppe_id) query = query.eq('zielgruppe_id', campaign.zielgruppe_id)
+  if (campaign.zielgruppe_id) {
+    const { data: memberLinks } = await db.from('member_zielgruppen').select('member_id').eq('zielgruppe_id', campaign.zielgruppe_id)
+    const memberIds = (memberLinks ?? []).map(l => l.member_id)
+    query = query.in('id', memberIds.length ? memberIds : ['00000000-0000-0000-0000-000000000000'])
+  }
   const { data: members, error: membersError } = await query
   if (membersError) return NextResponse.json({ error: membersError.message }, { status: 500 })
 

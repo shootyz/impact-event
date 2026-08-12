@@ -170,7 +170,7 @@ export function buildCampaignHtmlForTest({ appUrl, email, subject, bodyHtml, eve
 }) {
   return buildCampaignHtml({
     appUrl,
-    member: { id: 'test', first_name: firstNameFromEmail(email), last_name: '', email, unsubscribe_token: 'test', unsubscribed: false, created_at: '', zielgruppe_id: null, anrede: 'Herr' },
+    member: { id: 'test', first_name: firstNameFromEmail(email), last_name: '', email, unsubscribe_token: 'test', unsubscribed: false, created_at: '', zielgruppe_ids: [], anrede: 'Herr' },
     subject,
     headerImageUrl: null,
     bodyHtml,
@@ -283,7 +283,13 @@ export async function sendCampaign({
 
   let query = db.from('members').select('*').eq('unsubscribed', false)
   if (eventId) query = query.eq('event_id', eventId)
-  if (zielgruppeId) query = query.eq('zielgruppe_id', zielgruppeId)
+  if (zielgruppeId) {
+    // A member can belong to several Zielgruppen — resolve membership via the
+    // junction table rather than a single equality check.
+    const { data: memberLinks } = await db.from('member_zielgruppen').select('member_id').eq('zielgruppe_id', zielgruppeId)
+    const memberIds = (memberLinks ?? []).map(l => l.member_id)
+    query = query.in('id', memberIds.length ? memberIds : ['00000000-0000-0000-0000-000000000000'])
+  }
   const { data: allMembers, error } = await query
 
   if (error || !allMembers) throw new Error('Failed to load members')

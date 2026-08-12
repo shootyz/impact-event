@@ -127,6 +127,7 @@ export default function ZielgruppenDashboard({
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
   const [removeConfirm, setRemoveConfirm] = useState<{ id: string; name: string; zgId: string } | null>(null);
   const [bulkRemoveConfirm, setBulkRemoveConfirm] = useState<{ zgId: string; ids: string[]; label: string } | null>(null);
+  const [addToZgFor, setAddToZgFor] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
   const [zgDeleteConfirm, setZgDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
   const [csvZgId, setCsvZgId] = useState<string | null>(null);
@@ -152,7 +153,7 @@ export default function ZielgruppenDashboard({
     const q = (searchQuery[zgId] ?? "").toLowerCase().trim();
     const includeUnsub = showUnsub[zgId] ?? false;
     const list = members
-      .filter(m => m.zielgruppe_id === zgId && (includeUnsub || !m.unsubscribed))
+      .filter(m => m.zielgruppe_ids.includes(zgId) && (includeUnsub || !m.unsubscribed))
       .filter(m => !q || [m.first_name, m.last_name, m.email, m.anrede ?? ""].join(" ").toLowerCase().includes(q));
     const sort = sortConfig[zgId];
     if (!sort) return list;
@@ -165,7 +166,7 @@ export default function ZielgruppenDashboard({
     return sorted;
   };
 
-  const unsubCount = (zgId: string) => members.filter(m => m.zielgruppe_id === zgId && m.unsubscribed).length;
+  const unsubCount = (zgId: string) => members.filter(m => m.zielgruppe_ids.includes(zgId) && m.unsubscribed).length;
 
   function toggleSort(zgId: string, key: SortKey) {
     setSortConfig(prev => {
@@ -233,19 +234,20 @@ export default function ZielgruppenDashboard({
     });
   }
 
-  async function removeFromZielgruppe(id: string) {
+  async function removeFromZielgruppe(id: string, zgId: string) {
     setRemoving(true);
+    const nextIds = (members.find(m => m.id === id)?.zielgruppe_ids ?? []).filter(z => z !== zgId);
     await fetch(`/api/members/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ zielgruppe_id: null, adminPassword }),
+      body: JSON.stringify({ zielgruppe_ids: nextIds, adminPassword }),
     });
-    onMembersChange(members.map(m => m.id === id ? { ...m, zielgruppe_id: null } : m));
+    onMembersChange(members.map(m => m.id === id ? { ...m, zielgruppe_ids: nextIds } : m));
     setSelected(prev => {
       const next: Record<string, Set<string>> = {};
-      for (const [zgId, set] of Object.entries(prev)) {
-        if (set.has(id)) { const copy = new Set(set); copy.delete(id); next[zgId] = copy; }
-        else next[zgId] = set;
+      for (const [otherZgId, set] of Object.entries(prev)) {
+        if (otherZgId === zgId && set.has(id)) { const copy = new Set(set); copy.delete(id); next[otherZgId] = copy; }
+        else next[otherZgId] = set;
       }
       return next;
     });
@@ -253,14 +255,27 @@ export default function ZielgruppenDashboard({
     setRemoveConfirm(null);
   }
 
+  async function addToZielgruppe(member: Member, zgId: string) {
+    const nextIds = [...member.zielgruppe_ids, zgId];
+    setAddToZgFor(null);
+    const res = await fetch(`/api/members/${member.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ zielgruppe_ids: nextIds, adminPassword }),
+    });
+    if (res.ok) onMembersChange(members.map(m => m.id === member.id ? { ...m, zielgruppe_ids: nextIds } : m));
+  }
+
   async function runBulkRemoveFromZielgruppe() {
     if (!bulkRemoveConfirm) return;
     setRemoving(true);
-    await Promise.all(bulkRemoveConfirm.ids.map(id =>
-      fetch(`/api/members/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ zielgruppe_id: null, adminPassword }) })
+    const { zgId, ids } = bulkRemoveConfirm;
+    const nextIdsByMember = new Map(ids.map(id => [id, (members.find(m => m.id === id)?.zielgruppe_ids ?? []).filter(z => z !== zgId)]));
+    await Promise.all(ids.map(id =>
+      fetch(`/api/members/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ zielgruppe_ids: nextIdsByMember.get(id), adminPassword }) })
     ));
-    const removedIds = new Set(bulkRemoveConfirm.ids);
-    onMembersChange(members.map(m => removedIds.has(m.id) ? { ...m, zielgruppe_id: null } : m));
+    const removedIds = new Set(ids);
+    onMembersChange(members.map(m => removedIds.has(m.id) ? { ...m, zielgruppe_ids: nextIdsByMember.get(m.id) ?? [] } : m));
     setSelected(prev => ({ ...prev, [bulkRemoveConfirm.zgId]: new Set() }));
     setRemoving(false);
     setBulkRemoveConfirm(null);
@@ -457,7 +472,7 @@ export default function ZielgruppenDashboard({
   async function deleteZG(id: string) {
     await fetch(`/api/zielgruppen/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword }) });
     onZielgruppeChange(zielgruppen.filter(z => z.id !== id));
-    onMembersChange(members.map(m => m.zielgruppe_id === id ? { ...m, zielgruppe_id: null } : m));
+    onMembersChange(members.map(m => m.zielgruppe_ids.includes(id) ? { ...m, zielgruppe_ids: m.zielgruppe_ids.filter(z => z !== id) } : m));
     if (expanded === id) setExpanded(null);
   }
 
@@ -516,7 +531,7 @@ export default function ZielgruppenDashboard({
               <button onClick={() => setRemoveConfirm(null)}
                 className={`${btnSecondary} flex-1 py-2`}
                 style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)" }}>Abbrechen</button>
-              <button disabled={removing} onClick={() => removeFromZielgruppe(removeConfirm.id)}
+              <button disabled={removing} onClick={() => removeFromZielgruppe(removeConfirm.id, removeConfirm.zgId)}
                 className={`${btnPrimary} flex-1 py-2 disabled:opacity-50`}
                 style={{ background: "var(--ig-navy)", color: "white" }}>{removing ? "Entfernt…" : "Entfernen"}</button>
             </div>
@@ -871,6 +886,23 @@ export default function ZielgruppenDashboard({
                                   <button onClick={() => setEditing({ id: m.id, first_name: m.first_name, last_name: m.last_name, email: m.email, anrede: m.anrede || "", sprache: m.sprache || "de" })}
                                     aria-label="Mitglied bearbeiten"
                                     className={`${btnSecondary} hover:border-[var(--ig-navy)] hover:text-[var(--ig-navy)]`} style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}><IconPencilSmall className="w-3 h-3" /></button>
+                                  {zielgruppen.filter(z => !m.zielgruppe_ids.includes(z.id)).length > 0 && (
+                                    <div className="relative">
+                                      <button onClick={() => setAddToZgFor(addToZgFor === m.id ? null : m.id)}
+                                        aria-label="Zu weiterer Zielgruppe hinzufügen"
+                                        title="Zu einer weiteren Zielgruppe hinzufügen (Kontakt bleibt auch hier)"
+                                        className={`${btnSecondary} hover:border-[var(--ig-navy)] hover:text-[var(--ig-navy)]`} style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                      </button>
+                                      {addToZgFor === m.id && (
+                                        <select autoFocus value="" onChange={e => { if (e.target.value) addToZielgruppe(m, e.target.value); }} onBlur={() => setAddToZgFor(null)}
+                                          className={inputCls} style={{ ...inputStyle, position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 10, width: 200 }}>
+                                          <option value="">Zielgruppe wählen…</option>
+                                          {zielgruppen.filter(z => !m.zielgruppe_ids.includes(z.id)).map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                                        </select>
+                                      )}
+                                    </div>
+                                  )}
                                   <button onClick={() => setRemoveConfirm({ id: m.id, name: `${m.first_name} ${m.last_name}`, zgId: zg.id })}
                                     aria-label="Aus Zielgruppe entfernen"
                                     title="Aus dieser Zielgruppe entfernen (Kontakt bleibt erhalten)"

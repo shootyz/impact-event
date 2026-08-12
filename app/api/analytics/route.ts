@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     { data: registrations },
     { data: campaignEvents },
   ] = await Promise.all([
-    db.from('members').select('id, sprache, anrede, zielgruppe_id, unsubscribed').eq('event_id', eventId),
+    db.from('members').select('id, sprache, anrede, unsubscribed, member_zielgruppen(zielgruppe_id)').eq('event_id', eventId),
     db.from('zielgruppen').select('id, name').eq('event_id', eventId),
     db.from('campaigns').select('id, subject, blocks_json, sent_at, recipient_count, zielgruppe_id').eq('event_id', eventId).not('sent_at', 'is', null).order('sent_at', { ascending: false }),
     db.from('invite_codes').select('member_id, used').in('member_id', memberIds.length > 0 ? memberIds : ['']),
@@ -31,12 +31,19 @@ export async function GET(req: NextRequest) {
 
   const activeMembers = (members ?? []).filter((m: { unsubscribed: boolean }) => !m.unsubscribed)
 
-  // Members by Zielgruppe
+  // Members by Zielgruppe — a member can belong to several, so they can count
+  // toward more than one bucket here (bucket counts won't sum to member total)
   const zgMap = Object.fromEntries((zielgruppen ?? []).map((z: { id: string; name: string }) => [z.id, z.name]))
   const byZielgruppe: Record<string, number> = {}
-  for (const m of activeMembers as { zielgruppe_id: string | null }[]) {
-    const key = m.zielgruppe_id ? (zgMap[m.zielgruppe_id] ?? 'Unbekannt') : 'Ohne Zielgruppe'
-    byZielgruppe[key] = (byZielgruppe[key] ?? 0) + 1
+  for (const m of activeMembers as { member_zielgruppen: { zielgruppe_id: string }[] }[]) {
+    if (!m.member_zielgruppen.length) {
+      byZielgruppe['Ohne Zielgruppe'] = (byZielgruppe['Ohne Zielgruppe'] ?? 0) + 1
+      continue
+    }
+    for (const { zielgruppe_id } of m.member_zielgruppen) {
+      const key = zgMap[zielgruppe_id] ?? 'Unbekannt'
+      byZielgruppe[key] = (byZielgruppe[key] ?? 0) + 1
+    }
   }
 
   // Members by Sprache

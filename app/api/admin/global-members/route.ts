@@ -8,11 +8,23 @@ export async function GET(req: NextRequest) {
   const db = supabaseAdmin();
   const { data, error } = await db
     .from("members")
-    .select("id, first_name, last_name, email, anrede, sprache, unsubscribed, created_at, zielgruppe_id, zielgruppen(name, events(name))")
+    .select("id, first_name, last_name, email, anrede, sprache, unsubscribed, created_at, member_zielgruppen(zielgruppen(name, events(name)))")
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ members: data ?? [] });
+  // PostgREST's inferred shape for these nested embeds isn't reliable to type exactly
+  // (single-vs-array varies by how it detects the relationship), so this flattens
+  // defensively rather than assuming one shape.
+  const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : v ? [v] : []);
+  const members = (data ?? []).map((m) => {
+    const { member_zielgruppen, ...rest } = m as Record<string, unknown>;
+    const zielgruppen = asArray(member_zielgruppen)
+      .flatMap((l) => asArray((l as { zielgruppen?: unknown })?.zielgruppen))
+      .filter((z): z is { name: string; events?: { name: string } | { name: string }[] | null } => !!z && typeof z === "object" && "name" in z)
+      .map((z) => ({ name: z.name, events: asArray(z.events)[0] ?? null }));
+    return { ...rest, zielgruppen };
+  });
+  return NextResponse.json({ members });
 }
 
 export async function DELETE(req: NextRequest) {

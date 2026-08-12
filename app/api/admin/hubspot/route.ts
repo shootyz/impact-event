@@ -64,17 +64,27 @@ export async function POST(req: NextRequest) {
   let duplicates = 0;
 
   for (const c of contacts) {
-    const { error } = await db.from("members").insert({
+    const { data: insertedMember, error } = await db.from("members").insert({
       email: c.email,
       first_name: c.first_name,
       last_name: c.last_name,
       company: c.company,
-      zielgruppe_id,
-    });
+    }).select("id").single();
+
+    let memberId: string | null = insertedMember?.id ?? null;
     if (error) {
-      if (error.code === "23505") duplicates++;
+      if (error.code !== "23505") continue;
+      duplicates++;
+      // Contact already exists (e.g. from an earlier import) — still add them to
+      // this Zielgruppe, since a member can now belong to several at once.
+      const { data: existing } = await db.from("members").select("id").eq("email", c.email).limit(1);
+      memberId = existing?.[0]?.id ?? null;
     } else {
       imported++;
+    }
+
+    if (memberId) {
+      await db.from("member_zielgruppen").upsert({ member_id: memberId, zielgruppe_id }, { onConflict: "member_id,zielgruppe_id", ignoreDuplicates: true });
     }
   }
 

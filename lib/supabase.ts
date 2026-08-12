@@ -40,7 +40,7 @@ export type Member = {
   unsubscribe_token: string
   unsubscribed: boolean
   created_at: string
-  zielgruppe_id: string | null
+  zielgruppe_ids: string[]
   anrede?: string | null
   sprache?: string | null
   invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null

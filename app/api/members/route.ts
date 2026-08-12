@@ -17,12 +17,16 @@ export async function GET(req: NextRequest) {
   const db = supabaseAdmin()
   const { data, error } = await db
     .from('members')
-    .select('*, invite_codes(code, used)')
+    .select('*, invite_codes(code, used), member_zielgruppen(zielgruppe_id)')
     .eq('event_id', eventId)
     .order('last_name', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  const members = (data ?? []).map((m) => {
+    const { member_zielgruppen, ...rest } = m as typeof m & { member_zielgruppen: { zielgruppe_id: string }[] }
+    return { ...rest, zielgruppe_ids: member_zielgruppen.map((z: { zielgruppe_id: string }) => z.zielgruppe_id) }
+  })
+  return NextResponse.json(members)
 }
 
 export async function POST(req: NextRequest) {
@@ -41,7 +45,6 @@ export async function POST(req: NextRequest) {
     last_name: m.last_name.trim(),
     email: m.email.toLowerCase().trim(),
     event_id,
-    ...(zielgruppe_id ? { zielgruppe_id } : {}),
     anrede: m.anrede ?? "",
     sprache: m.sprache ?? null,
   }))
@@ -59,12 +62,20 @@ export async function POST(req: NextRequest) {
   // Explicitly update sprache + anrede (upsert may not override with null)
   const updateResults = await Promise.all(rows.map(m =>
     db.from('members')
-      .update({ sprache: m.sprache, anrede: m.anrede, ...(zielgruppe_id ? { zielgruppe_id } : {}) })
+      .update({ sprache: m.sprache, anrede: m.anrede })
       .eq('email', m.email)
       .eq('event_id', event_id)
   ))
   const updateErrors = updateResults.filter(r => r.error).map(r => r.error?.message)
   if (updateErrors.length > 0) console.error('[members POST] update errors:', updateErrors)
+
+  if (zielgruppe_id && data && data.length > 0) {
+    const junctionRows = data.map((m: { id: string }) => ({ member_id: m.id, zielgruppe_id }))
+    const { error: zgError } = await db
+      .from('member_zielgruppen')
+      .upsert(junctionRows, { onConflict: 'member_id,zielgruppe_id', ignoreDuplicates: true })
+    if (zgError) console.error('[members POST] member_zielgruppen upsert error:', zgError.message)
+  }
 
   // Generate invite codes for members that don't have one yet
   const { data: allMembers } = await db.from('members').select('id').eq('event_id', event_id)

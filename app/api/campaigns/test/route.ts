@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const first_name = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()
     const fakeMember: Member = {
       id: 'test', first_name, last_name: '', email,
-      unsubscribe_token: 'test', unsubscribed: false, created_at: '', zielgruppe_id: null,
+      unsubscribe_token: 'test', unsubscribed: false, created_at: '', zielgruppe_ids: [],
     }
     let html = await buildCampaignHtmlForMember({ campaign, member: fakeMember, appUrl, inviteCode: null })
     if (typeof note === 'string' && note.trim()) html = insertTestNoteBanner(html, note.trim())
