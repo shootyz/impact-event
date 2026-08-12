@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   const eventQuery = eventId
     ? db.from('events').select('*').eq('id', eventId).single()
-    : db.from('events').select('*').eq('active', true).single()
+    : db.from('events').select('*').eq('active', true).order('date', { ascending: false }).limit(1).single()
 
   const { data: event } = await eventQuery
 

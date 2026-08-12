@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest) {
       .update({ registration_password: registration_password || null })
       .eq('id', eventId)
   } else {
-    const { data: ev } = await db.from('events').select('id').eq('active', true).single()
+    const { data: ev } = await db.from('events').select('id').eq('active', true).order('date', { ascending: false }).limit(1).single()
     if (!ev) return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
     await db.from('events').update({ registration_password: registration_password || null }).eq('id', ev.id)
   }

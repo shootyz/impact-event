@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
   if (!event_id || !first_name || !last_name || !email) {
     return NextResponse.json({ error: 'Pflichtfelder fehlen.' }, { status: 400 })
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+    return NextResponse.json({ error: 'Bitte gib eine gültige E-Mail-Adresse ein.' }, { status: 400 })
+  }
 
   const db = supabaseAdmin()
 

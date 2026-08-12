@@ -11,10 +11,13 @@ export async function GET(req: NextRequest) {
   const base = supabaseAdmin()
     .from('events')
     .select('id, name, name_en, name_fr, date, location, location_en, location_fr, description, description_en, description_fr, registration_password, registration_type, max_capacity, form_config')
+  // With no id/slug given, fall back to the single most recent active event —
+  // .single() throws if more than one row is active=true, so this must stay
+  // deterministic even when two events are briefly active at once.
   const { data: event, error } = await (
     id ? base.eq('id', id).eq('active', true) :
     slug ? base.eq('slug', slug).eq('active', true) :
-    base.eq('active', true)
+    base.eq('active', true).order('date', { ascending: false }).limit(1)
   ).single()
 
   if (error || !event) {

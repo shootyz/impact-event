@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const base = supabaseAdmin()
     .from('events')
     .select('id, registration_password')
-  const { data: event } = await (eventId ? base.eq('id', eventId) : base.eq('active', true)).single()
+  const { data: event } = await (eventId ? base.eq('id', eventId) : base.eq('active', true).order('date', { ascending: false }).limit(1)).single()
 
   if (!event) {
     return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin()
   const eventQuery = db.from('events').select('*')
-  const { data: event } = await (eventId ? eventQuery.eq('id', eventId) : eventQuery.eq('active', true)).single()
+  const { data: event } = await (eventId ? eventQuery.eq('id', eventId) : eventQuery.eq('active', true).order('date', { ascending: false }).limit(1)).single()
   if (!event) return NextResponse.json({ error: 'Kein aktiver Event.' }, { status: 404 })
 
   const { data: registration } = await db
