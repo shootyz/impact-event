@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'crypto'
 import type { NextRequest } from 'next/server'
 import { rateLimit } from './rate-limit'
 
-function passwordsMatch(candidate: string, expected: string): boolean {
+export function passwordsMatch(candidate: string, expected: string): boolean {
   try {
     const a = Buffer.from(candidate, 'utf8')
     const b = Buffer.from(expected, 'utf8')

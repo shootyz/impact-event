@@ -11,8 +11,12 @@ import { supabaseAdmin } from '@/lib/supabase'
 // is earliest — landing on the stale one (root cause of several past bugs).
 export async function GET(req: NextRequest) {
   // Vercel Cron authenticates via CRON_SECRET header
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const authHeader = req.headers.get('authorization') ?? ''
-  const expected = `Bearer ${process.env.CRON_SECRET ?? ''}`
+  const expected = `Bearer ${cronSecret}`
   const { timingSafeEqual } = await import('crypto')
   const match = authHeader.length === expected.length &&
     timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))

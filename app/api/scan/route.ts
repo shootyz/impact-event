@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkAdminAuth } from '@/lib/auth'
+import { checkAdminAuth, passwordsMatch } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { timingSafeEqual } from 'crypto'
 
 async function checkEventPin(eventId: string, pin: string): Promise<boolean> {
   try {
     const db = supabaseAdmin()
     const { data } = await db.from('events').select('scanner_pin').eq('id', eventId).single()
-    if (!data?.scanner_pin) return true  // no PIN set = open access
-    const ba = Buffer.from(pin, 'utf8'), bb = Buffer.from(data.scanner_pin, 'utf8')
-    if (ba.length !== bb.length) { timingSafeEqual(bb, bb); return false }
-    return timingSafeEqual(ba, bb)
+    // Per-event PIN takes priority; fall back to the global SCANNER_PIN if the
+    // event has none configured. If neither exists, scanner access is disabled —
+    // it must NOT silently grant open access.
+    const expected = data?.scanner_pin || process.env.SCANNER_PIN
+    if (!expected) return false
+    return passwordsMatch(pin, expected)
   } catch { return false }
 }
 
