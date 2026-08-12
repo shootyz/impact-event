@@ -3314,7 +3314,10 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
 
             {/* ── Scheduled ── */}
             {mailingTab === "drafts" && (() => {
-              const allDrafts = campaigns.filter(c => !c.sent_at && !c.scheduled_at);
+              // Scheduled campaigns (scheduled_at set, not yet sent) belong here too —
+              // they used to be filtered out entirely, making them unreachable in the UI
+              // between "Planen" and the cron job actually sending them.
+              const allDrafts = campaigns.filter(c => !c.sent_at);
               const drafts = draftsLang === "all" ? allDrafts : allDrafts.filter(c => {
                 const bj = c.blocks_json as { lang?: string } | null;
                 return bj && !Array.isArray(bj) ? bj.lang === draftsLang : draftsLang === "en";
