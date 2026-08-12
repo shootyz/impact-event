@@ -1833,9 +1833,32 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
 
             const duplicateEvent = async (ev: EventCard) => {
               setDuplicatingId(ev.id);
+              // Duplicating is mostly used for recurring events — copying the exact same
+              // date would just create a second event on the same day, so default to
+              // "same day next year" instead of forcing a manual correction every time.
+              const nextYearDate = (() => {
+                const d = new Date(ev.date);
+                d.setFullYear(d.getFullYear() + 1);
+                return d.toISOString().slice(0, 10);
+              })();
               await fetch("/api/admin/events", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ adminPassword: savedPassword.current, name: `${ev.name} (Kopie)`, date: ev.date, location: ev.location, description: ev.description, registration_password: ev.registration_password, category: ev.category }),
+                body: JSON.stringify({
+                  adminPassword: savedPassword.current,
+                  name: `${ev.name} (Kopie)`,
+                  name_en: ev.name_en, name_fr: ev.name_fr,
+                  date: nextYearDate,
+                  location: ev.location,
+                  location_en: ev.location_en, location_fr: ev.location_fr,
+                  description: ev.description,
+                  description_en: ev.description_en, description_fr: ev.description_fr,
+                  registration_password: ev.registration_password,
+                  category: ev.category,
+                  registration_type: ev.registration_type,
+                  max_capacity: ev.max_capacity,
+                  form_config: ev.form_config,
+                  scanner_pin: ev.scanner_pin,
+                }),
               });
               setDuplicatingId(null);
               loadAllEvents();

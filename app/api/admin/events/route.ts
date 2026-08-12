@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   const auth = checkAdminAuth(req, body)
   if (auth !== 'ok') return NextResponse.json({ error: auth === 'rate_limited' ? 'Zu viele Anfragen.' : 'Nicht autorisiert.' }, { status: auth === 'rate_limited' ? 429 : 401 })
 
-  const { name, name_en, name_fr, date, location, location_en, location_fr, description, description_en, description_fr, registration_password, category, registration_type, max_capacity } = body
+  const { name, name_en, name_fr, date, location, location_en, location_fr, description, description_en, description_fr, registration_password, category, registration_type, max_capacity, form_config, scanner_pin } = body
 
   if (!name?.trim() || !date || !location?.trim()) {
     return NextResponse.json({ error: 'Name, Datum und Ort sind erforderlich.' }, { status: 400 })
@@ -62,6 +62,8 @@ export async function POST(req: NextRequest) {
       category: category?.trim() || null,
       registration_type: registration_type ?? 'invite',
       max_capacity: max_capacity ? Number(max_capacity) : null,
+      form_config: form_config ?? null,
+      scanner_pin: scanner_pin || null,
     })
     .select()
     .single()
