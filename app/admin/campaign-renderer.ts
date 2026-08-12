@@ -1,5 +1,6 @@
 // Server-safe renderer — no "use client", no React imports
 import { type Lang, DATE_LOCALE, T } from "./i18n";
+import { sanitizeRichText } from "@/lib/sanitizeHtml";
 
 // ── Block type definitions ────────────────────────────────────────────────────
 
@@ -111,15 +112,7 @@ export function richHtmlToEmail(html: string, color: string): string {
   if (!html || html === "<p></p>") return "";
   const trimmed = html.replace(/(<p[^>]*>(\s|<br[^>]*>)*<\/p>\s*)+$/gi, '');
   if (!trimmed.trim()) return "";
-  const sanitized = trimmed
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-    .replace(/<object[\s\S]*?<\/object>/gi, '')
-    .replace(/<embed[^>]*>/gi, '')
-    .replace(/<meta[^>]*>/gi, '')
-    .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/javascript\s*:/gi, '')
-    .replace(/data\s*:/gi, '')
+  const sanitized = sanitizeRichText(trimmed)
   return sanitized
     .replace(/<p( [^>]*)?>/g, (_, attrs) => `<p${attrs ?? ""} style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
     .replace(/<ul>/g, `<ul style="color:${color};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;list-style-type:disc;font-family:Arial,sans-serif;">`)

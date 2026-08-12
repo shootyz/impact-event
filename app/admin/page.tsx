@@ -606,7 +606,7 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
             <div style={{ border: "1.5px solid var(--ig-gray2)", borderRadius: 12, overflow: "hidden", marginTop: 8 }}>
               {previewLoading
                 ? <div className="p-8 text-center text-xs" style={{ color: "var(--ig-gray3)" }}>Wird geladen…</div>
-                : <iframe srcDoc={previewHtml ?? ""} style={{ width: "100%", height: 600, border: "none", display: "block" }} title={c.subject} />
+                : <iframe srcDoc={previewHtml ?? ""} sandbox="" style={{ width: "100%", height: 600, border: "none", display: "block" }} title={c.subject} />
               }
             </div>
           );
@@ -806,7 +806,21 @@ export default function AdminPage() {
   const rafRef = useRef<number>(0);
   const lastScanRef = useRef<string>("");
   const handleScanRef = useRef<(token: string) => void>(() => {});
-  const savedPassword = useRef("");
+  const savedPassword = useRef(""); // holds the session token (see /api/admin/login), not the raw password
+  const sessionExpiresAt = useRef<number | null>(null);
+  const autoLogoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearSession = useCallback(() => {
+    if (autoLogoutTimer.current) clearTimeout(autoLogoutTimer.current);
+    sessionStorage.removeItem("adminSession");
+    savedPassword.current = "";
+    sessionExpiresAt.current = null;
+    setAuthenticated(false);
+    setPassword("");
+  }, []);
+  const scheduleAutoLogout = useCallback((expiresAt: number) => {
+    if (autoLogoutTimer.current) clearTimeout(autoLogoutTimer.current);
+    autoLogoutTimer.current = setTimeout(clearSession, Math.max(expiresAt - Date.now(), 0));
+  }, [clearSession]);
   const authHeaders = () => ({ "Authorization": `Bearer ${savedPassword.current}` });
   const authFetch = (url: string, init?: RequestInit) =>
     fetch(url, { ...init, headers: { ...authHeaders(), ...(init?.headers ?? {}) } });
@@ -922,29 +936,46 @@ export default function AdminPage() {
   }, [eventSection, activeTab, selectedEventId, selectedEvent?.registration_type, loadRegistrations]);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem("adminPw");
-    if (!stored) return;
-    fetch("/api/registrations", { headers: { "Authorization": `Bearer ${stored}` } }).then(async (res) => {
-      if (res.status === 401) { sessionStorage.removeItem("adminPw"); return; }
+    const raw = sessionStorage.getItem("adminSession");
+    if (!raw) return;
+    let parsed: { token: string; expiresAt: number };
+    try { parsed = JSON.parse(raw); } catch { sessionStorage.removeItem("adminSession"); return; }
+    if (!parsed?.token || Date.now() >= parsed.expiresAt) { sessionStorage.removeItem("adminSession"); return; }
+    fetch("/api/registrations", { headers: { "Authorization": `Bearer ${parsed.token}` } }).then(async (res) => {
+      if (res.status === 401) { sessionStorage.removeItem("adminSession"); return; }
       if (!res.ok) return;
       const data = await res.json();
-      savedPassword.current = stored;
+      savedPassword.current = parsed.token;
+      sessionExpiresAt.current = parsed.expiresAt;
+      scheduleAutoLogout(parsed.expiresAt);
       setAuthenticated(true);
       setRegistrations(data.registrations || []);
       setEvent(data.event || null);
     }).catch(() => {});
-  }, []);
+  }, [scheduleAutoLogout]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
     setLoginLoading(true);
     try {
-      const res = await fetch("/api/registrations", { headers: { "Authorization": `Bearer ${password}` } });
-      if (res.status === 401) { setAuthError("Falsches Passwort."); return; }
+      // Exchange the raw password for a time-limited session token — the token,
+      // not the password, is what stays in sessionStorage / gets sent on every
+      // later request, so a leaked tab or XSS only yields a credential that
+      // expires (see lib/auth.ts's SESSION_TTL_MS) instead of the permanent secret.
+      const loginRes = await fetch("/api/admin/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (loginRes.status === 401) { setAuthError("Falsches Passwort."); return; }
+      if (!loginRes.ok) { setAuthError("Verbindung fehlgeschlagen. Bitte erneut versuchen."); return; }
+      const { token, expiresAt } = await loginRes.json();
+      const res = await fetch("/api/registrations", { headers: { "Authorization": `Bearer ${token}` } });
       if (!res.ok) { setAuthError("Verbindung fehlgeschlagen. Bitte erneut versuchen."); return; }
-      savedPassword.current = password;
-      sessionStorage.setItem("adminPw", password);
+      savedPassword.current = token;
+      sessionExpiresAt.current = expiresAt;
+      sessionStorage.setItem("adminSession", JSON.stringify({ token, expiresAt }));
+      scheduleAutoLogout(expiresAt);
       setAuthenticated(true);
       const data = await res.json();
       setRegistrations(data.registrations || []);
@@ -1416,7 +1447,7 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
               </button>
               {/* Logout */}
               <button
-                onClick={() => { sessionStorage.removeItem("adminPw"); savedPassword.current = ""; setAuthenticated(false); setPassword(""); }}
+                onClick={clearSession}
                 title="Abmelden"
                 aria-label="Abmelden"
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition"

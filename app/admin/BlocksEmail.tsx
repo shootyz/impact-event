@@ -5,6 +5,7 @@ import type { CampaignBlock, ProgramBlock, RegisterButtonBlock } from "./Campaig
 import { type Lang, T, DATE_LOCALE } from "./i18n";
 
 import { D } from "./email-design";
+import { sanitizeRichText } from "@/lib/sanitizeHtml";
 
 function SectionHead({ label }: { label: string }) {
   return (
@@ -25,19 +26,6 @@ function labelFor(type: CampaignBlock["type"]): string {
   return m[type] ?? type;
 }
 
-function sanitizeHtml(raw: string): string {
-  // Strip dangerous tags and event attributes before rendering
-  return raw
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-    .replace(/<object[\s\S]*?<\/object>/gi, '')
-    .replace(/<embed[^>]*>/gi, '')
-    .replace(/<meta[^>]*>/gi, '')
-    .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/javascript\s*:/gi, '')
-    .replace(/data\s*:/gi, '')
-}
-
 // Legacy speaker bios/books were stored as plain strings; wrap them so RichContent can style them
 function toHtml(s: string | null | undefined): string {
   if (!s?.trim()) return "";
@@ -50,7 +38,7 @@ function RichContent({ html }: { html: string }) {
   const trimmed = (html ?? "").replace(/(<p[^>]*>(\s|<br[^>]*>)*<\/p>\s*)+$/gi, '');
   if (!trimmed.trim() || trimmed === "<p></p>") return null;
   // Inject inline styles into the HTML tags
-  const styled = sanitizeHtml(trimmed)
+  const styled = sanitizeRichText(trimmed)
     .replace(/<p( [^>]*)?>/g, (_, attrs) => `<p${attrs ?? ""} style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;font-family:Arial,sans-serif;">`)
     .replace(/<ul>/g, `<ul style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;list-style-type:disc;font-family:Arial,sans-serif;">`)
     .replace(/<ol>/g, `<ol style="color:${D.black};font-size:15px;line-height:1.75;margin:0 0 14px;padding-left:20px;font-family:Arial,sans-serif;">`)

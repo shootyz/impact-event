@@ -1,4 +1,4 @@
-import { timingSafeEqual } from 'crypto'
+import { timingSafeEqual, createHmac } from 'crypto'
 import type { NextRequest } from 'next/server'
 import { rateLimit } from './rate-limit'
 
@@ -13,8 +13,38 @@ export function passwordsMatch(candidate: string, expected: string): boolean {
   }
 }
 
+// The admin login session was previously just the raw shared ADMIN_PASSWORD,
+// kept in the browser's sessionStorage forever with no expiry — so a leaked
+// tab (or an XSS reading sessionStorage) meant permanent full admin access
+// until someone thought to rotate the password. Login now mints a signed,
+// time-limited session token instead; the browser never needs to hold onto
+// the raw password after the initial login request.
+export const SESSION_TTL_MS = 8 * 60 * 60 * 1000 // 8 hours
+
+function sign(payload: string): string {
+  const key = process.env.ADMIN_PASSWORD ?? ''
+  return createHmac('sha256', key).update(payload).digest('base64url')
+}
+
+export function signSessionToken(expiresAt: number): string {
+  const payload = Buffer.from(JSON.stringify({ exp: expiresAt }), 'utf8').toString('base64url')
+  return `${payload}.${sign(payload)}`
+}
+
+function verifySessionToken(token: string): boolean {
+  const [payload, sig] = token.split('.')
+  if (!payload || !sig) return false
+  if (!passwordsMatch(sig, sign(payload))) return false
+  try {
+    const { exp } = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as { exp?: number }
+    return typeof exp === 'number' && Date.now() < exp
+  } catch {
+    return false
+  }
+}
+
 // Password accepted from:
-// 1. Authorization: Bearer <password> header  (preferred — not logged in URLs)
+// 1. Authorization: Bearer <password-or-session-token> header  (preferred — not logged in URLs)
 // 2. Request body: { adminPassword } or { password }
 // Query params are intentionally NOT accepted (URL logs in Vercel/CDN would expose the secret)
 export function checkAdminAuth(
@@ -34,6 +64,7 @@ export function checkAdminAuth(
     (body?.password as string | undefined) ||
     ''
 
+  if (candidate.includes('.') && verifySessionToken(candidate)) return 'ok'
   return passwordsMatch(candidate, expected) ? 'ok' : 'unauthorized'
 }
 
