@@ -4,6 +4,7 @@ import { createElement } from "react";
 import QRCode from "qrcode";
 import { supabaseAdmin } from "@/lib/supabase";
 import { resolveLangField } from "@/lib/i18n";
+import { isTicketTokenExpired } from "@/lib/ticketToken";
 import { TicketPDF } from "@/app/components/TicketPDF";
 import fs from "fs";
 import path from "path";
@@ -35,6 +36,9 @@ export async function GET(
 
   if (!event) {
     return NextResponse.json({ error: "Event nicht gefunden." }, { status: 404 });
+  }
+  if (isTicketTokenExpired(event.date)) {
+    return NextResponse.json({ error: "Dieser Ticket-Link ist abgelaufen." }, { status: 410 });
   }
 
   // Reuse the "Zeitplan" (program) block already authored in this event's campaign

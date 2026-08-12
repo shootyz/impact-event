@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { isTicketTokenExpired } from '@/lib/ticketToken'
 import { deflateSync } from 'zlib'
 
 // Pure-JS minimal PNG generator (no canvas/sharp needed)
@@ -73,6 +74,9 @@ export async function GET(
   if (!reg) return NextResponse.json({ error: 'Ticket nicht gefunden.' }, { status: 404 })
 
   const event = reg.events as { name: string; date: string; location: string }
+  if (isTicketTokenExpired(event.date)) {
+    return NextResponse.json({ error: 'Dieser Ticket-Link ist abgelaufen.' }, { status: 410 })
+  }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!
   const ticketUrl = `${appUrl}/ticket/${token}`
 

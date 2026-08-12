@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
+import { isTicketTokenExpired } from '@/lib/ticketToken'
 
 export async function POST(
   req: NextRequest,
@@ -33,6 +34,9 @@ export async function POST(
 
   if (!event) {
     return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+  }
+  if (isTicketTokenExpired(event.date)) {
+    return NextResponse.json({ error: 'Dieser Ticket-Link ist abgelaufen.' }, { status: 410 })
   }
 
   await sendConfirmationEmail(registration, event)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getLang, resolveLangField } from '@/lib/i18n'
+import { isTicketTokenExpired } from '@/lib/ticketToken'
 
 export async function GET(
   req: NextRequest,
@@ -18,6 +19,9 @@ export async function GET(
 
   const event = Array.isArray(data.events) ? data.events[0] : data.events
   if (!event) return NextResponse.json({ error: 'Nicht gefunden.' }, { status: 404 })
+  if (isTicketTokenExpired(event.date)) {
+    return NextResponse.json({ error: 'Dieser Ticket-Link ist abgelaufen.' }, { status: 410 })
+  }
 
   return NextResponse.json({
     name: data.name,
