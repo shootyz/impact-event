@@ -197,7 +197,7 @@ type ScanResult = { status: "success" | "already_checked_in" | "error"; name?: s
 type ImportResult = { imported: number; duplicates: string[]; errors: string[]; } | null;
 
 // ─── Campaign card (needs own state, can't use hooks inside .map) ──────────────
-type CampaignType = { id: string; subject: string; body_html: string; blocks_json?: { title?: string } | unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; lang_group_id?: string | null; };
+type CampaignType = { id: string; subject: string; body_html: string; blocks_json?: { title?: string } | unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; lang_group_id?: string | null; is_pdf_source?: boolean; };
 const TEST_EMAILS = [
   "nik.thomi@impactgstaad.ch",
   "andreas.wandfluh@impactgstaad.ch",
@@ -206,7 +206,7 @@ const TEST_EMAILS = [
   "simon.neuhaus@impactgstaad.ch",
 ];
 
-function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, duplicateBlockedReason, zielgruppeName, adminPassword }: {
+function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, duplicateBlockedReason, onTicketSourceChange, zielgruppeName, adminPassword }: {
   c: CampaignType;
   onSend: (id: string, sent: number) => void;
   onDelete: (id: string) => void;
@@ -214,11 +214,13 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
   onEdit?: () => void;
   onDuplicate?: () => Promise<void>;
   duplicateBlockedReason?: string;
+  onTicketSourceChange?: (id: string, isSource: boolean) => void;
   zielgruppeName?: string;
   adminPassword?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [markingSource, setMarkingSource] = useState(false);
   const [idCopied, setIdCopied] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -261,6 +263,16 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
     ? `Geplant für ${new Date(c.scheduled_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`
     : new Date(c.created_at).toLocaleString("de-CH", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
+  const toggleTicketSource = async () => {
+    setMarkingSource(true);
+    const res = await fetch(`/api/campaigns/${c.id}/mark-ticket-source`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminPassword, unset: c.is_pdf_source }),
+    });
+    setMarkingSource(false);
+    if (res.ok && onTicketSourceChange) onTicketSourceChange(c.id, !c.is_pdf_source);
+  };
+
   return (
     <div className="rounded-2xl border overflow-hidden" style={{ background: "white", borderColor: "var(--ig-gray2)" }}>
       <div className="p-5">
@@ -274,6 +286,11 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
                 if (!lang) return null;
                 return <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)", flexShrink: 0 }}>{lang.toUpperCase()}</span>;
               })()}
+              {c.is_pdf_source && (
+                <span className="text-xs font-semibold px-1.5 py-0.5 rounded flex items-center gap-1" style={{ background: "rgba(210,141,40,0.12)", color: "var(--ig-gold)", border: "1px solid rgba(210,141,40,0.25)", flexShrink: 0 }} title="Der Zeitplan dieser Kampagne wird auf dem Ticket-PDF angezeigt">
+                  📋 Ticket-Quelle
+                </span>
+              )}
               {!c.sent_at && (zielgruppeName
                 ? <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(210,141,40,0.1)", color: "var(--ig-gold)", border: "1px solid rgba(210,141,40,0.2)", flexShrink: 0 }}>{zielgruppeName}</span>
                 : <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)", flexShrink: 0 }}>Alle Mitglieder</span>
@@ -512,6 +529,18 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
                 className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all active:scale-95 disabled:opacity-50"
                 style={{ background: duplicating ? "var(--ig-navy)" : "var(--ig-light)", color: duplicating ? "#fff" : "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
                 {duplicating ? "Wird dupliziert…" : "Duplizieren"}
+              </button>
+            )}
+            {onTicketSourceChange && (
+              <button
+                disabled={markingSource}
+                onClick={toggleTicketSource}
+                title={c.is_pdf_source ? "Diese Kampagne liefert aktuell den Zeitplan fürs Ticket-PDF — klicken zum Entfernen" : "Den Zeitplan dieser Kampagne als Quelle fürs Ticket-PDF festlegen (unabhängig vom Sendestatus)"}
+                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all active:scale-95 disabled:opacity-50"
+                style={c.is_pdf_source
+                  ? { background: "var(--ig-gold)", color: "#fff", border: "1.5px solid var(--ig-gold)" }
+                  : { background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+                {markingSource ? "…" : c.is_pdf_source ? "📋 Ticket-Quelle entfernen" : "📋 Als Ticket-Programm festlegen"}
               </button>
             )}
             <button onClick={() => setConfirmDelete(true)} aria-label="Kampagne löschen" className="h-11 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-all active:scale-95" style={{ color: "var(--ig-gray3)" }}
@@ -3356,6 +3385,20 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                       onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                       onSchedule={(id, scheduled_at) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x))}
                       onEdit={c.blocks_json ? () => { setEditingCampaign(c); setBuilderZielgruppeId(c.zielgruppe_id ?? null); setMailingTab("compose"); } : undefined}
+                      onTicketSourceChange={(id, isSource) => {
+                        const target = campaigns.find(x => x.id === id);
+                        const bj = target?.blocks_json as { lang?: string } | null;
+                        const lang = (bj && !Array.isArray(bj) ? bj.lang : null) ?? "en";
+                        setCampaigns(prev => prev.map(x => {
+                          if (x.id === id) return { ...x, is_pdf_source: isSource };
+                          if (isSource && x.event_id === target?.event_id) {
+                            const xbj = x.blocks_json as { lang?: string } | null;
+                            const xlang = (xbj && !Array.isArray(xbj) ? xbj.lang : null) ?? "en";
+                            if (xlang === lang) return { ...x, is_pdf_source: false };
+                          }
+                          return x;
+                        }));
+                      }}
                     />
                   ))}
                 </div>
@@ -3389,6 +3432,15 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                     onSend={(id, sent) => setCampaigns(prev => prev.map(x => x.id === id ? { ...x, sent_at: new Date().toISOString(), recipient_count: sent } : x))}
                     onDelete={async (id) => { await fetch(`/api/campaigns/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminPassword: savedPassword.current }) }); setCampaigns(prev => prev.filter(x => x.id !== id)); }}
                     onSchedule={(id, scheduled_at) => { setCampaigns(prev => prev.map(x => x.id === id ? { ...x, scheduled_at } : x)); }}
+                    onTicketSourceChange={(id, isSource) => {
+                      const target = campaigns.find(x => x.id === id);
+                      const lang = target ? campaignLang(target) : "de";
+                      setCampaigns(prev => prev.map(x => {
+                        if (x.id === id) return { ...x, is_pdf_source: isSource };
+                        if (isSource && x.event_id === target?.event_id && campaignLang(x) === lang) return { ...x, is_pdf_source: false };
+                        return x;
+                      }));
+                    }}
                     onDuplicate={async () => {
                       if (findDuplicateBlockedReason(c)) return;
                       const res = await fetch("/api/campaigns", {
