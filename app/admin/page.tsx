@@ -223,7 +223,7 @@ function TicketProgramModal({ eventId, adminPassword, onClose }: {
             <IconX className="w-4 h-4" />
           </button>
         </div>
-        <div className="px-6 flex items-center justify-between gap-1.5 pb-3">
+        <div className="px-6 flex items-center justify-between gap-1.5 pb-3 flex-wrap">
           <div className="flex gap-1.5">
             {(["de", "en", "fr"] as const).map(l => (
               <button key={l} onClick={() => setLang(l)}
@@ -237,12 +237,13 @@ function TicketProgramModal({ eventId, adminPassword, onClose }: {
           </div>
           <button onClick={() => load(lang, true)} disabled={refreshing || loading}
             title="Ersetzt den Text hier durch den Programm-Block der zuletzt erstellten Kampagne (unabhängig vom Sendestatus) — noch nicht gespeichert, bis du auf Speichern klickst"
-            className="text-xs font-medium px-3 py-1.5 rounded-lg transition active:scale-95 disabled:opacity-50"
-            style={{ color: "var(--ig-navy)" }}
-            onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.textDecoration = "underline"}
-            onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.textDecoration = "none"}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition active:scale-95 disabled:opacity-50"
+            style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
           >
-            {refreshing ? "Wird geladen…" : "↻ Text der neuesten Kampagne übernehmen"}
+            <IconRefresh className="w-3.5 h-3.5 flex-shrink-0" />
+            {refreshing ? "Wird geladen…" : "Text der neuesten Kampagne übernehmen"}
           </button>
         </div>
         <div className="px-6 pb-6">
