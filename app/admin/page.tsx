@@ -2610,14 +2610,18 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                 setHsCheckinResult(res.ok ? { pushed: d.pushed, total: d.total } : { error: d.error ?? "Fehler" });
               }}
               title="Eingecheckte Gäste als Kontakte in HubSpot anlegen/aktualisieren und im Event-Segment markieren"
-              className="text-xs font-medium px-3 py-1.5 rounded-lg transition-all active:scale-95 disabled:opacity-50"
-              style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
-              {hsCheckinPushing ? "Wird gesendet…" : `📤 ${checkedInCount} Eingecheckte an HubSpot senden`}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition disabled:opacity-50"
+              style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-black)", background: "white" }}
+              onMouseEnter={e => { if (hsCheckinPushing) return; (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
+            >
+              <IconUpload className="w-4 h-4 flex-shrink-0" style={{ color: "var(--ig-navy)" }} />
+              {hsCheckinPushing ? "Wird gesendet…" : `${checkedInCount} Eingecheckte an HubSpot senden`}
             </button>
             {hsCheckinResult && (
               "error" in hsCheckinResult
-                ? <p className="text-xs" style={{ color: "#dc2626" }}>{hsCheckinResult.error}</p>
-                : <p className="text-xs" style={{ color: "#16a34a" }}>✓ {hsCheckinResult.pushed} von {hsCheckinResult.total} an HubSpot gesendet</p>
+                ? <p className="text-xs font-medium" style={{ color: "#dc2626" }}>{hsCheckinResult.error}</p>
+                : <p className="text-xs font-medium flex items-center gap-1" style={{ color: "var(--ig-gold)" }}><IconCheck className="w-3.5 h-3.5" />{hsCheckinResult.pushed} von {hsCheckinResult.total} an HubSpot gesendet</p>
             )}
           </div>
         )}
