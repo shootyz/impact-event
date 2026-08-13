@@ -38,5 +38,30 @@ export async function PATCH(req: NextRequest, props: any) {
   const { error } = await db.from('events').update({ ticket_program: updated }).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ ok: true, lang, title, slots })
+  // This is the single source of truth for the schedule now — push it into
+  // every still-editable (unsent) campaign draft in this language, so an
+  // admin doesn't have to separately update each one's own Zeitplan block.
+  // Sent campaigns are untouched (already delivered, can't be edited).
+  const { data: drafts } = await db
+    .from('campaigns')
+    .select('id, blocks_json')
+    .eq('event_id', id)
+    .is('sent_at', null)
+
+  const syncedIds: string[] = []
+  for (const draft of drafts ?? []) {
+    let parsed: { lang?: string; blocks?: { type: string; title?: string; slots?: unknown }[] } | null = null
+    try { parsed = typeof draft.blocks_json === 'string' ? JSON.parse(draft.blocks_json) : draft.blocks_json } catch { continue }
+    if (!parsed || Array.isArray(parsed) || parsed.lang !== lang || !parsed.blocks) continue
+
+    const programBlock = parsed.blocks.find((b) => b.type === 'program')
+    if (!programBlock) continue // don't inject a new block into a draft that never had one
+
+    programBlock.title = title
+    programBlock.slots = slots
+    const { error: draftError } = await db.from('campaigns').update({ blocks_json: parsed }).eq('id', draft.id)
+    if (!draftError) syncedIds.push(draft.id)
+  }
+
+  return NextResponse.json({ ok: true, lang, title, slots, syncedDrafts: syncedIds.length })
 }

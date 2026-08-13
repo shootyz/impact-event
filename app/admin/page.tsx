@@ -183,6 +183,7 @@ function TicketProgramModal({ eventId, adminPassword, onClose }: {
   const [block, setBlock] = useState<ProgramBlock>({ type: "program", title: "", slots: [] });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveResult, setSaveResult] = useState<{ syncedDrafts: number } | null>(null);
 
   const load = useCallback(async (l: "de" | "en" | "fr") => {
     setLoading(true);
@@ -192,17 +193,19 @@ function TicketProgramModal({ eventId, adminPassword, onClose }: {
     setLoading(false);
   }, [eventId, adminPassword]);
 
-  useEffect(() => { load(lang); }, [lang, load]);
+  useEffect(() => { load(lang); setSaveResult(null); }, [lang, load]);
 
   const save = async () => {
     setSaving(true);
-    await fetch(`/api/admin/events/${eventId}/ticket-program`, {
+    setSaveResult(null);
+    const res = await fetch(`/api/admin/events/${eventId}/ticket-program`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminPassword}` },
       body: JSON.stringify({ lang, title: block.title, slots: block.slots }),
     });
+    const d = await res.json().catch(() => null);
     setSaving(false);
-    onClose();
+    setSaveResult({ syncedDrafts: d?.syncedDrafts ?? 0 });
   };
 
   return (
@@ -236,9 +239,14 @@ function TicketProgramModal({ eventId, adminPassword, onClose }: {
             <ProgramEditor block={block} onChange={setBlock} />
           )}
         </div>
-        <div className="px-6 pb-6 flex justify-end gap-2 sticky bottom-0 pt-3" style={{ background: "white" }}>
-          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium transition" style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "white" }}>Abbrechen</button>
-          <BtnPrimary disabled={saving || loading} onClick={save}>{saving ? "Speichert…" : "Speichern"}</BtnPrimary>
+        <div className="px-6 pb-6 flex items-center justify-between gap-2 sticky bottom-0 pt-3" style={{ background: "white" }}>
+          {saveResult
+            ? <p className="text-xs font-medium" style={{ color: "var(--ig-gold)" }}>✓ Gespeichert{saveResult.syncedDrafts > 0 ? ` — in ${saveResult.syncedDrafts} Entwurf/Entwürfen übernommen` : ""}</p>
+            : <span />}
+          <div className="flex gap-2">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium transition" style={{ border: "1.5px solid var(--ig-gray2)", color: "var(--ig-black)", background: "white" }}>{saveResult ? "Schliessen" : "Abbrechen"}</button>
+            <BtnPrimary disabled={saving || loading} onClick={save}>{saving ? "Speichert…" : "Speichern"}</BtnPrimary>
+          </div>
         </div>
       </div>
     </div>
@@ -742,7 +750,7 @@ export default function AdminPage() {
   const [maxCapInput, setMaxCapInput] = useState("");
   const [regTypeSaving, setRegTypeSaving] = useState(false);
   const [regTypeStatus, setRegTypeStatus] = useState<{ ok: boolean; msg: string } | null>(null);
-  const [ticketProgramOpen, setTicketProgramOpen] = useState(false);
+  const [ticketProgramEventId, setTicketProgramEventId] = useState<string | null>(null);
   const [formConfig, setFormConfig] = useState<FormConfig>(DEFAULT_FORM_CONFIG);
   const [formConfigSaving, setFormConfigSaving] = useState(false);
   const [formConfigStatus, setFormConfigStatus] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -2300,6 +2308,16 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                             )}
                           </div>
 
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setTicketProgramEventId(ev.id); }}
+                            className="w-full text-center px-3 py-2.5 rounded-lg border text-sm font-medium transition"
+                            style={{ borderColor: "var(--ig-gray2)", color: "var(--ig-navy)", background: "white" }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-navy)"; (e.currentTarget as HTMLElement).style.background = "var(--ig-light)"; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ig-gray2)"; (e.currentTarget as HTMLElement).style.background = "white"; }}
+                          >
+                            Text auf PDF-Ticket
+                          </button>
+
                           {editEvResult && <p className={`text-xs ${editEvResult.ok ? "text-green-600" : "text-red-500"}`}>{editEvResult.msg}</p>}
                           <div className="flex items-center justify-between gap-2 pt-1">
                             <button onClick={() => { setEditingEventId(null); setEditEvResult(null); }}
@@ -2332,6 +2350,10 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
           })()}
           </>}
         </div>
+      )}
+
+      {ticketProgramEventId && (
+        <TicketProgramModal eventId={ticketProgramEventId} adminPassword={savedPassword.current} onClose={() => setTicketProgramEventId(null)} />
       )}
 
       {/* ── Event section picker (Mailing | Event-Management) ── */}
@@ -3260,23 +3282,6 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                 </div>
               </div>
             </Card>
-
-            {/* Kampagnen-Einstellungen */}
-            <Card>
-              <div className="h-0.5" style={{ background: "var(--ig-gold)" }} />
-              <CardHeader title="Kampagnen-Einstellungen" subtitle="Zeitplan-Text fürs Ticket-PDF" />
-              <div className="p-5 space-y-3">
-                <p className="text-xs" style={{ color: "var(--ig-gray3)" }}>
-                  Der hier hinterlegte Zeitplan wird auf dem Ticket-PDF angezeigt — unabhängig davon, ob die zugehörige Kampagne bereits gesendet wurde.
-                </p>
-                <div className="flex justify-end">
-                  <BtnPrimary disabled={!selectedEventId} onClick={() => setTicketProgramOpen(true)}>Text auf PDF-Ticket</BtnPrimary>
-                </div>
-              </div>
-            </Card>
-            {ticketProgramOpen && selectedEventId && (
-              <TicketProgramModal eventId={selectedEventId} adminPassword={savedPassword.current} onClose={() => setTicketProgramOpen(false)} />
-            )}
 
             {/* CSV Import */}
             <Card>
