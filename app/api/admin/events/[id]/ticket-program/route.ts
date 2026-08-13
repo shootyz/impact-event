@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { resolveTicketProgram, type Lang, type TicketProgram } from '@/lib/ticketProgram'
+import { resolveTicketProgram, getLatestCampaignProgram, type Lang, type TicketProgram } from '@/lib/ticketProgram'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function GET(req: NextRequest, props: any) {
@@ -11,9 +11,10 @@ export async function GET(req: NextRequest, props: any) {
 
   const langParam = req.nextUrl.searchParams.get('lang')
   const lang: Lang = langParam === 'en' || langParam === 'fr' ? langParam : 'de'
+  const latest = req.nextUrl.searchParams.get('latest') === '1'
 
   const db = supabaseAdmin()
-  const program = await resolveTicketProgram(db, id, lang)
+  const program = latest ? await getLatestCampaignProgram(db, id, lang) : await resolveTicketProgram(db, id, lang)
   return NextResponse.json({ lang, title: program?.title ?? '', slots: program?.slots ?? [] })
 }
 

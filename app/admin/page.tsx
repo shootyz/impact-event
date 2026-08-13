@@ -184,16 +184,18 @@ function TicketProgramModal({ eventId, adminPassword, onClose }: {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<{ syncedDrafts: number } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async (l: "de" | "en" | "fr") => {
-    setLoading(true);
-    const res = await fetch(`/api/admin/events/${eventId}/ticket-program?lang=${l}`, { headers: { Authorization: `Bearer ${adminPassword}` } });
+  const load = useCallback(async (l: "de" | "en" | "fr", latest?: boolean) => {
+    (latest ? setRefreshing : setLoading)(true);
+    const res = await fetch(`/api/admin/events/${eventId}/ticket-program?lang=${l}${latest ? "&latest=1" : ""}`, { headers: { Authorization: `Bearer ${adminPassword}` } });
     const d = await res.json().catch(() => null);
     setBlock({ type: "program", title: d?.title ?? "", slots: d?.slots ?? [] });
-    setLoading(false);
+    (latest ? setRefreshing : setLoading)(false);
+    setSaveResult(null);
   }, [eventId, adminPassword]);
 
-  useEffect(() => { load(lang); setSaveResult(null); }, [lang, load]);
+  useEffect(() => { load(lang); }, [lang, load]);
 
   const save = async () => {
     setSaving(true);
@@ -221,16 +223,27 @@ function TicketProgramModal({ eventId, adminPassword, onClose }: {
             <IconX className="w-4 h-4" />
           </button>
         </div>
-        <div className="px-6 flex gap-1.5 pb-3">
-          {(["de", "en", "fr"] as const).map(l => (
-            <button key={l} onClick={() => setLang(l)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition active:scale-95"
-              style={lang === l
-                ? { background: "var(--ig-navy)", color: "white" }
-                : { background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
-              {l.toUpperCase()}
-            </button>
-          ))}
+        <div className="px-6 flex items-center justify-between gap-1.5 pb-3">
+          <div className="flex gap-1.5">
+            {(["de", "en", "fr"] as const).map(l => (
+              <button key={l} onClick={() => setLang(l)}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg transition active:scale-95"
+                style={lang === l
+                  ? { background: "var(--ig-navy)", color: "white" }
+                  : { background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => load(lang, true)} disabled={refreshing || loading}
+            title="Ersetzt den Text hier durch den Programm-Block der zuletzt erstellten Kampagne (unabhängig vom Sendestatus) — noch nicht gespeichert, bis du auf Speichern klickst"
+            className="text-xs font-medium px-3 py-1.5 rounded-lg transition active:scale-95 disabled:opacity-50"
+            style={{ color: "var(--ig-navy)" }}
+            onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.textDecoration = "underline"}
+            onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.textDecoration = "none"}
+          >
+            {refreshing ? "Wird geladen…" : "↻ Text der neuesten Kampagne übernehmen"}
+          </button>
         </div>
         <div className="px-6 pb-6">
           {loading ? (
