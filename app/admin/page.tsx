@@ -838,6 +838,8 @@ export default function AdminPage() {
 
   const [guestSearch, setGuestSearch] = useState("");
   const [guestFilter, setGuestFilter] = useState<"all" | "checkedin" | "pending">("all");
+  const [hsCheckinPushing, setHsCheckinPushing] = useState(false);
+  const [hsCheckinResult, setHsCheckinResult] = useState<{ pushed: number; total: number } | { error: string } | null>(null);
   const [guestSort, setGuestSort] = useState<"name" | "checkin">("name");
   const [showScannerModal, setShowScannerModal] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -2587,6 +2589,36 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {eventSection === "management" && activeTab === "list" && selectedEvent?.registration_type !== "form" && checkedInCount > 0 && (
+          <div className="flex flex-col items-center gap-2 mb-5">
+            <button
+              disabled={hsCheckinPushing}
+              onClick={async () => {
+                if (!selectedEventId) return;
+                setHsCheckinPushing(true);
+                setHsCheckinResult(null);
+                const res = await fetch(`/api/admin/events/${selectedEventId}/hubspot-checkin`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ adminPassword: savedPassword.current }),
+                });
+                const d = await res.json();
+                setHsCheckinPushing(false);
+                setHsCheckinResult(res.ok ? { pushed: d.pushed, total: d.total } : { error: d.error ?? "Fehler" });
+              }}
+              title="Eingecheckte Gäste als Kontakte in HubSpot anlegen/aktualisieren und im Event-Segment markieren"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+              style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}>
+              {hsCheckinPushing ? "Wird gesendet…" : `📤 ${checkedInCount} Eingecheckte an HubSpot senden`}
+            </button>
+            {hsCheckinResult && (
+              "error" in hsCheckinResult
+                ? <p className="text-xs" style={{ color: "#dc2626" }}>{hsCheckinResult.error}</p>
+                : <p className="text-xs" style={{ color: "#16a34a" }}>✓ {hsCheckinResult.pushed} von {hsCheckinResult.total} an HubSpot gesendet</p>
+            )}
           </div>
         )}
 

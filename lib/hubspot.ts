@@ -194,3 +194,105 @@ export async function getContactsFromCompanyList(listId: string): Promise<{
   console.error(`[hubspot] getContactsFromCompanyList(${listId}): ${companyIds.length} companies -> ${contactIdSet.size} unique contact id(s)`);
   return batchReadContacts([...contactIdSet]);
 }
+
+// Pushing checked-in guests to HubSpot: rather than a static list (which the
+// Lists API can't add members to for DYNAMIC/filter-based lists — HubSpot's
+// docs say to edit the record instead), Impact Gstaad tracks event attendance
+// via a multi-checkbox contact property, "Impact Gstaad Events" — each event
+// is one checkbox option, and an existing HubSpot "segment" filters on
+// "is one of" against this property. So attendance = adding this event's
+// option value to the contact's (multi-value, semicolon-joined) property.
+const EVENT_PROPERTY = "impact_gstaad_events";
+
+function eventOptionValue(eventName: string, eventDate: string): string {
+  const d = new Date(eventDate);
+  const namePart = eventName.split(/\s[–-]\s/)[0].trim();
+  const slug = namePart
+    .toLowerCase()
+    .normalize("NFKD").replace(new RegExp("[\\u0300-\\u036f]", "g"), "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return `${slug}_${String(d.getDate()).padStart(2, "0")}_${String(d.getMonth() + 1).padStart(2, "0")}_${d.getFullYear()}`;
+}
+
+function eventOptionLabel(eventName: string, eventDate: string): string {
+  const d = new Date(eventDate);
+  const namePart = eventName.split(/\s[–-]\s/)[0].trim();
+  return `${namePart}, ${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
+}
+
+// Creates the checkbox option for this event if it doesn't exist yet (matched
+// by its deterministic slug, so repeat calls for the same event are no-ops).
+export async function ensureEventOption(eventName: string, eventDate: string): Promise<string> {
+  const value = eventOptionValue(eventName, eventDate);
+  const label = eventOptionLabel(eventName, eventDate);
+
+  const getRes = await fetch(`${HUBSPOT_BASE}/crm/v3/properties/contacts/${EVENT_PROPERTY}`, { headers: headers() });
+  await logIfFailed(`ensureEventOption GET /crm/v3/properties/contacts/${EVENT_PROPERTY}`, getRes);
+  if (!getRes.ok) return value;
+  const prop = await getRes.json();
+  const options = (prop.options ?? []) as { label: string; value: string; displayOrder: number; hidden: boolean }[];
+  if (options.some((o) => o.value === value)) return value;
+
+  const patchRes = await fetch(`${HUBSPOT_BASE}/crm/v3/properties/contacts/${EVENT_PROPERTY}`, {
+    method: "PATCH",
+    headers: headers(),
+    body: JSON.stringify({ options: [...options, { label, value, displayOrder: -1, hidden: false }] }),
+  });
+  await logIfFailed(`ensureEventOption PATCH /crm/v3/properties/contacts/${EVENT_PROPERTY}`, patchRes);
+  return value;
+}
+
+// Adds `optionValue` to each contact's Impact Gstaad Events checkbox property,
+// preserving whatever values they already have (checkbox properties are a
+// single semicolon-joined string in the API, not a JSON array) — creates the
+// contact if they don't exist yet in HubSpot.
+export async function addContactsToEventProperty(
+  contacts: { email: string; first_name: string; last_name: string }[],
+  optionValue: string
+): Promise<{ pushed: number }> {
+  let pushed = 0;
+  for (let i = 0; i < contacts.length; i += 100) {
+    const chunk = contacts.slice(i, i + 100);
+
+    const readRes = await fetch(`${HUBSPOT_BASE}/crm/v3/objects/contacts/batch/read`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({
+        idProperty: "email",
+        properties: ["email", EVENT_PROPERTY],
+        inputs: chunk.map((c) => ({ id: c.email })),
+      }),
+    });
+    await logIfFailed("addContactsToEventProperty batch/read", readRes);
+    const existingByEmail = new Map<string, string>();
+    if (readRes.ok) {
+      const data = await readRes.json();
+      for (const r of (data.results ?? []) as { properties: Record<string, string | null> }[]) {
+        const email = r.properties?.email;
+        if (email) existingByEmail.set(email.toLowerCase(), r.properties?.[EVENT_PROPERTY] ?? "");
+      }
+    }
+
+    const inputs = chunk.map((c) => {
+      const existing = (existingByEmail.get(c.email.toLowerCase()) ?? "")
+        .split(";").map((s) => s.trim()).filter(Boolean);
+      if (!existing.includes(optionValue)) existing.push(optionValue);
+      return {
+        idProperty: "email",
+        id: c.email,
+        properties: { email: c.email, firstname: c.first_name, lastname: c.last_name, [EVENT_PROPERTY]: existing.join(";") },
+      };
+    });
+
+    const upsertRes = await fetch(`${HUBSPOT_BASE}/crm/v3/objects/contacts/batch/upsert`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ inputs }),
+    });
+    await logIfFailed("addContactsToEventProperty batch/upsert", upsertRes);
+    if (upsertRes.ok) pushed += chunk.length;
+  }
+  console.error(`[hubspot] addContactsToEventProperty: pushed ${pushed}/${contacts.length} for option ${optionValue}`);
+  return { pushed };
+}
