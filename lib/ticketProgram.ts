@@ -5,12 +5,12 @@ export type { ProgramSlot }
 export type TicketProgram = { title?: string; slots: ProgramSlot[] }
 export type Lang = 'de' | 'en' | 'fr'
 
-// The ticket PDF's schedule used to be pulled from whichever campaign an admin
-// flagged (or, failing that, the most recently sent/drafted one) — because a
-// sent campaign can never be edited again, that was the only way to fix a
-// schedule mistake after sending. events.ticket_program is now the direct,
-// always-editable source; this only falls back to the campaign-derived
-// lookup for events that haven't used the new editor yet.
+// The ticket PDF's schedule used to be pulled from whichever campaign was
+// most recently sent/drafted — because a sent campaign can never be edited
+// again, that was the only way to fix a schedule mistake after sending.
+// events.ticket_program is now the direct, always-editable source; this only
+// falls back to the campaign-derived lookup for events that haven't used the
+// new editor yet.
 export async function resolveTicketProgram(
   db: SupabaseClient,
   eventId: string,
@@ -22,7 +22,7 @@ export async function resolveTicketProgram(
 
   const { data: eventCampaigns } = await db
     .from('campaigns')
-    .select('blocks_json, sent_at, created_at, is_pdf_source')
+    .select('blocks_json, sent_at, created_at')
     .eq('event_id', eventId)
 
   const candidates = (eventCampaigns ?? [])
@@ -33,8 +33,6 @@ export async function resolveTicketProgram(
     })
     .filter((c) => c.parsed && !Array.isArray(c.parsed) && c.parsed.lang === lang)
     .sort((a, b) => {
-      if (a.is_pdf_source && !b.is_pdf_source) return -1
-      if (!a.is_pdf_source && b.is_pdf_source) return 1
       if (a.sent_at && !b.sent_at) return -1
       if (!a.sent_at && b.sent_at) return 1
       const aTime = new Date(a.sent_at ?? a.created_at).getTime()
