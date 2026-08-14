@@ -93,12 +93,12 @@ function buildCampaignHtml({
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FF;padding:40px 16px 60px;min-height:100%;">
     ${viewInBrowserUrl ? `<tr><td align="center" style="padding:0 0 12px;"><a href="${viewInBrowserUrl}" style="color:#888;font-size:11px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;text-decoration:underline;">Im Browser ansehen</a></td></tr>` : ''}
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:24px;border:1px solid #D0DDEA;">
+      <table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;background:#ffffff;border-radius:24px;border:1px solid #D0DDEA;">
 
         ${headerImageUrl ? `
         <tr><td style="padding:0;line-height:0;">
-          <img src="${headerImageUrl}" alt="${subject}" width="600"
-            style="display:block;width:100%;max-width:600px;border:0;" />
+          <img src="${headerImageUrl}" alt="${subject}" width="640"
+            style="display:block;width:100%;max-width:640px;border:0;" />
         </td></tr>` : ''}
 
         <!-- Logo + greeting -->
