@@ -57,10 +57,11 @@ export async function GET(
   const passTypeId = process.env.APPLE_PASS_TYPE_IDENTIFIER
   const teamId = process.env.APPLE_TEAM_IDENTIFIER
   const certB64 = process.env.APPLE_PASS_CERT_B64
+  const keyB64 = process.env.APPLE_PASS_KEY_B64
   const certPass = process.env.APPLE_PASS_CERT_PASSWORD
   const wwdrB64 = process.env.APPLE_WWDR_CERT_B64
 
-  if (!passTypeId || !teamId || !certB64 || !certPass || !wwdrB64) {
+  if (!passTypeId || !teamId || !certB64 || !keyB64 || !certPass || !wwdrB64) {
     return NextResponse.json({ error: 'Apple Wallet not configured.' }, { status: 503 })
   }
 
@@ -104,12 +105,6 @@ export async function GET(
         { key: 'holder', label: 'NAME', value: reg.name },
       ],
     },
-    barcode: {
-      message: ticketUrl,
-      format: 'PKBarcodeFormatQR',
-      messageEncoding: 'iso-8859-1',
-      altText: token.substring(0, 8) + '…',
-    },
     barcodes: [
       {
         message: ticketUrl,
@@ -128,26 +123,26 @@ export async function GET(
     const logo = createPNG(160, 50, 26, 26, 26)
     const logo2x = createPNG(320, 100, 26, 26, 26)
 
+    // passkit-generator needs PEM cert + PEM key as SEPARATE values (not the
+    // raw .p12 buffer used for both, which silently fails signing) — see
+    // scripts/p12-to-pem.js for how these two env vars get generated.
     const signerCert = Buffer.from(certB64, 'base64')
+    const signerKey = Buffer.from(keyB64, 'base64')
     const wwdr = Buffer.from(wwdrB64, 'base64')
 
-    const passArgs = {
-      model: {
-        'pass.json': Buffer.from(JSON.stringify(passJson)),
-        'icon.png': icon,
-        'icon@2x.png': icon2x,
-        'logo.png': logo,
-        'logo@2x.png': logo2x,
-      },
-      certificates: {
-        wwdr,
-        signerCert,
-        signerKey: signerCert,
-        signerKeyPassphrase: certPass,
-      },
+    const buffers = {
+      'pass.json': Buffer.from(JSON.stringify(passJson)),
+      'icon.png': icon,
+      'icon@2x.png': icon2x,
+      'logo.png': logo,
+      'logo@2x.png': logo2x,
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pass = await PKPass.from(passArgs as any, {})
+    const certificates = { wwdr, signerCert, signerKey, signerKeyPassphrase: certPass }
+
+    // new PKPass(...), not PKPass.from(...) — .from() expects an existing
+    // PKPass instance or a { model: <disk path> } Template, not in-memory
+    // buffers, which is what we need in a serverless function.
+    const pass = new PKPass(buffers, certificates)
 
     const buf = pass.getAsBuffer()
 

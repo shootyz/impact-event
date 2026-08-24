@@ -21,6 +21,14 @@ function TicketContent() {
   const [status, setStatus] = useState<"loading" | "ready" | "notFound">("loading");
   const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [whatsAppNumber, setWhatsAppNumber] = useState("");
+  const [isApplePlatform, setIsApplePlatform] = useState(false);
+
+  useEffect(() => {
+    // Apple Wallet passes are only useful on Apple's own platforms — hide the
+    // button elsewhere rather than let people download a file their device
+    // can't do anything with.
+    setIsApplePlatform(/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent));
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -216,6 +224,21 @@ function TicketContent() {
             </svg>
             {t.savePdf}
           </a>
+
+          {isApplePlatform && (
+            <a
+              href={`/api/wallet/${token}`}
+              className="no-print mt-3 w-full py-3.5 rounded-xl font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition"
+              style={{ background: "#000000", color: "white", border: "1px solid #000000", textDecoration: "none" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#1a1a1a"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#000000"; }}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.05 12.04c-.03-2.6 2.13-3.85 2.23-3.91-1.22-1.78-3.11-2.02-3.79-2.05-1.62-.16-3.16.95-3.98.95-.82 0-2.09-.93-3.44-.9-1.77.03-3.4 1.03-4.31 2.6-1.84 3.19-.47 7.9 1.32 10.48.88 1.27 1.92 2.68 3.29 2.63 1.32-.05 1.82-.85 3.42-.85 1.6 0 2.05.85 3.44.82 1.42-.02 2.32-1.28 3.19-2.56 1.01-1.47 1.42-2.9 1.44-2.97-.03-.01-2.76-1.06-2.81-4.24zM14.63 4.31c.73-.88 1.22-2.11 1.09-3.34-1.05.04-2.32.7-3.07 1.58-.68.78-1.27 2.03-1.11 3.23 1.17.09 2.36-.6 3.09-1.47z"/>
+              </svg>
+              {lang === "de" ? "Zu Apple Wallet hinzufügen" : lang === "fr" ? "Ajouter à Apple Wallet" : "Add to Apple Wallet"}
+            </a>
+          )}
 
           {/* Send via WhatsApp */}
           {!showWhatsApp ? (
