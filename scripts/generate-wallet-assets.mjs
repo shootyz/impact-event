@@ -23,11 +23,14 @@ async function makeIcon(px) {
 }
 
 async function makeLogo(heightPx) {
-  const widthPx = Math.round(heightPx * 3.2); // logo is ~3:1, this leaves a small margin
+  // No left padding — Apple places logo.png flush against the same left
+  // margin the field text below it uses, so any left padding baked into the
+  // image itself makes the logo look indented relative to that text.
+  const widthPx = Math.round(heightPx * 3.1);
   const pad = Math.round(heightPx * 0.1);
   return sharp(LOGO_PATH)
-    .resize(widthPx - pad * 2, heightPx - pad * 2, { fit: "contain", background: TRANSPARENT })
-    .extend({ top: pad, bottom: pad, left: pad, right: pad, background: TRANSPARENT })
+    .resize(widthPx - pad, heightPx - pad * 2, { fit: "contain", position: "left", background: TRANSPARENT })
+    .extend({ top: pad, bottom: pad, left: 0, right: pad, background: TRANSPARENT })
     .png()
     .toBuffer();
 }

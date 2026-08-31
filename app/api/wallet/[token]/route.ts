@@ -41,7 +41,7 @@ export async function GET(
   // for the full "Freitag, 9. Oktober 2026", and the full form doesn't
   // reappear elsewhere on the pass (shown in full on the ticket page/PDF).
   const eventDateShort = new Date(event.date).toLocaleDateString('de-CH', {
-    day: 'numeric', month: 'short',
+    day: 'numeric', month: 'short', year: '2-digit',
   })
 
   const passJson = {
