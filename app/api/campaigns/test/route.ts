@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/auth'
 import { buildCampaignHtmlForMember } from '@/lib/campaign-email'
+import { sendTransactionalEmail } from '@/lib/brevo'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { Member } from '@/lib/supabase'
-
-const getResend = () => {
-  const { Resend } = require('resend')
-  return new Resend(process.env.RESEND_API_KEY)
-}
 
 function escHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -39,8 +35,6 @@ export async function POST(req: NextRequest) {
   if (!campaign) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!
-  const resend = getResend()
-  const from = process.env.RESEND_FROM_EMAIL || 'events@impactgstaad.ch'
 
   const errors: string[] = []
   for (const email of recipients) {
@@ -54,7 +48,7 @@ export async function POST(req: NextRequest) {
     let html = await buildCampaignHtmlForMember({ campaign, member: fakeMember, appUrl, inviteCode: null })
     if (typeof note === 'string' && note.trim()) html = insertTestNoteBanner(html, note.trim())
     try {
-      await resend.emails.send({ from, to: email, subject: `[TEST] ${campaign.subject}`, html })
+      await sendTransactionalEmail({ to: email, subject: `[TEST] ${campaign.subject}`, html, tags: [`c:${campaign_id}`, 'test'] })
     } catch {
       errors.push(email)
     }

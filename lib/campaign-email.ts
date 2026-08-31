@@ -1,4 +1,4 @@
-import { Resend } from 'resend'
+import { sendTransactionalEmail } from './brevo'
 import { supabaseAdmin } from './supabase'
 import type { Member } from './supabase'
 import React from 'react'
@@ -16,17 +16,6 @@ function plainTextToHtml(text: string): string {
     .split(/\n\s*\n/)
     .map(p => `<p style="color:#1E3263;font-size:15px;line-height:1.7;margin:0 0 20px;font-family:Arial,sans-serif;">${p.trim().replace(/\n/g, '<br/>')}</p>`)
     .join('')
-}
-
-const getResend = () => new Resend(process.env.RESEND_API_KEY)
-
-function wrapLinksForTracking(html: string, appUrl: string, campaignId: string, memberId: string): string {
-  // Wrap all <a href="..."> that are not unsubscribe/track links
-  return html.replace(/(<a\s[^>]*href=")([^"]+)(")/gi, (match, pre, url, post) => {
-    if (url.includes('/api/unsubscribe') || url.includes('/api/track/') || url.startsWith('mailto:')) return match
-    const tracked = `${appUrl}/api/track/click?cid=${encodeURIComponent(campaignId)}&mid=${encodeURIComponent(memberId)}&url=${encodeURIComponent(url)}`
-    return `${pre}${tracked}${post}`
-  })
 }
 
 function buildCampaignHtml({
@@ -132,13 +121,9 @@ function buildCampaignHtml({
       </table>
     </td></tr>
   </table>
-  ${campaignId && member.id !== 'test' ? `<img src="${appUrl}/api/track/open?cid=${encodeURIComponent(campaignId)}&mid=${encodeURIComponent(member.id)}" width="1" height="1" style="display:block;width:1px;height:1px;border:0;" alt="" />` : ''}
 </body>
 </html>`
 
-  if (campaignId && member.id !== 'test') {
-    return wrapLinksForTracking(rawHtml, appUrl, campaignId, member.id)
-  }
   return rawHtml
 }
 
@@ -314,7 +299,6 @@ export async function sendCampaign({
     }
   }
 
-  const resend = getResend()
   let sent = 0
 
   for (const member of members as Member[]) {
@@ -348,11 +332,13 @@ export async function sendCampaign({
     })
 
     try {
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL!,
+      // tags let the Brevo webhook correlate delivery/open/click/bounce events
+      // back to this campaign+member without a separate message-id lookup table.
+      await sendTransactionalEmail({
         to: member.email,
         subject,
         html,
+        tags: [`c:${campaignId}`, `m:${member.id}`],
       })
       sent++
     } catch (e) {
