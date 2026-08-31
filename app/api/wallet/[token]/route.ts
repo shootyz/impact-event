@@ -37,8 +37,11 @@ export async function GET(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!
   const ticketUrl = `${appUrl}/ticket/${token}`
 
-  const eventDate = new Date(event.date).toLocaleDateString('de-CH', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  // Short form for the header row (next to the logo) — there isn't room there
+  // for the full "Freitag, 9. Oktober 2026", and the full form doesn't
+  // reappear elsewhere on the pass (shown in full on the ticket page/PDF).
+  const eventDateShort = new Date(event.date).toLocaleDateString('de-CH', {
+    day: 'numeric', month: 'short',
   })
 
   const passJson = {
@@ -56,13 +59,17 @@ export async function GET(
     backgroundColor: 'rgb(255, 255, 255)',
     labelColor: 'rgb(92, 122, 148)',
     eventTicket: {
+      // Date moves up next to the logo (headerFields) instead of sitting in
+      // secondaryFields — otherwise that whole top row is just the logo with
+      // nothing beside it, and location gets its own full-width row instead
+      // of being squeezed next to date.
+      headerFields: [{ key: 'date', label: 'DATE', value: eventDateShort }],
       primaryFields: [{ key: 'event', label: 'EVENT', value: event.name }],
       secondaryFields: [
-        { key: 'date', label: 'DATE', value: eventDate },
         { key: 'location', label: 'LOCATION', value: event.location },
       ],
       auxiliaryFields: [
-        { key: 'holder', label: 'NAME', value: reg.name },
+        { key: 'holder', label: 'TICKET FOR', value: reg.name },
       ],
     },
     barcodes: [
