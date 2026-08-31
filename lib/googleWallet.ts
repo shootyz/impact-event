@@ -44,10 +44,19 @@ export function buildGoogleWalletSaveUrl(params: {
 }): string | null {
   const creds = getCredentials()
   const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID
-  if (!creds || !issuerId) return null
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!creds || !issuerId || !appUrl) return null
 
   const classId = `${issuerId}.event_${params.eventId}`
   const objectId = `${issuerId}.reg_${params.registrationId}`
+
+  // We only ever have a date, never a real start time — dateTime.start would
+  // make Google's template render a "00:00" time row next to it, implying a
+  // midnight start that isn't real. Showing the date as a plain text module
+  // instead avoids that, same honest treatment as the Apple pass's date field.
+  const eventDateLong = new Date(params.eventDateIso).toLocaleDateString('de-CH', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
 
   const eventTicketClass = {
     id: classId,
@@ -60,7 +69,15 @@ export function buildGoogleWalletSaveUrl(params: {
       name: { defaultValue: { language: 'de', value: params.eventLocation } },
       address: { defaultValue: { language: 'de', value: params.eventLocation } },
     },
-    dateTime: { start: params.eventDateIso },
+    // Same square icon used for the Apple pass's icon.png, just hosted as a
+    // static file since Google fetches logos by URL rather than embedding them.
+    logo: {
+      sourceUri: { uri: `${appUrl}/wallet-icon.png` },
+      contentDescription: { defaultValue: { language: 'de', value: 'Impact Gstaad Logo' } },
+    },
+    textModulesData: [
+      { id: 'date', header: 'DATUM', body: eventDateLong },
+    ],
     hexBackgroundColor: '#F8F9FF',
   }
 
@@ -69,6 +86,9 @@ export function buildGoogleWalletSaveUrl(params: {
     classId,
     state: 'ACTIVE',
     ticketHolderName: params.holderName,
+    textModulesData: [
+      { id: 'holder', header: 'TICKET FÜR', body: params.holderName },
+    ],
     barcode: { type: 'QR_CODE', value: params.qrValue },
   }
 

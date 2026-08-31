@@ -35,10 +35,19 @@ async function makeLogo(heightPx) {
     .toBuffer();
 }
 
-const [icon1x, icon2x, icon3x, logo1x, logo2x, logo3x] = await Promise.all([
+const [icon1x, icon2x, icon3x, logo1x, logo2x, logo3x, googleLogo] = await Promise.all([
   makeIcon(29), makeIcon(58), makeIcon(87),
   makeLogo(50), makeLogo(100), makeLogo(150),
+  // Google Wallet's logo field is fetched from a public URL rather than
+  // embedded in the pass, and wants a square image (it's shown as a small
+  // square/circle thumbnail, not a wide strip) — same square-icon treatment
+  // as Apple's icon.png, just written out as a static file instead of a
+  // base64 constant, and larger since Google has no fixed @1x/@2x/@3x sizes.
+  makeIcon(660),
 ]);
+
+writeFileSync("public/wallet-icon.png", googleLogo);
+console.log("Wrote public/wallet-icon.png");
 
 const b64 = (buf) => buf.toString("base64");
 
