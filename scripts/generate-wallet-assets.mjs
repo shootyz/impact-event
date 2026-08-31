@@ -1,7 +1,9 @@
 // One-off generator: bakes public/logo.png into the exact icon/logo PNG sizes
-// Apple Wallet expects, composited onto a white background (the logo's text
-// is navy, invisible directly on the pass's navy backgroundColor), and writes
-// the results as base64 constants into lib/wallet-assets.ts.
+// Apple Wallet expects, and writes the results as base64 constants into
+// lib/wallet-assets.ts. Kept as true transparent PNGs (not composited onto a
+// white tile) — the pass's backgroundColor is white, so transparency already
+// gives the same result, without baking in an assumption about the pass's
+// background color that would break if it's ever changed again.
 //
 // Re-run this only if public/logo.png changes:
 //   node scripts/generate-wallet-assets.mjs
@@ -9,24 +11,23 @@ import sharp from "sharp";
 import { writeFileSync } from "fs";
 
 const LOGO_PATH = "public/logo.png";
+const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 
 async function makeIcon(px) {
-  // Fit the wide wordmark inside a square white tile with a little padding.
   const pad = Math.round(px * 0.12);
-  const inner = px - pad * 2;
-  const mark = await sharp(LOGO_PATH).resize(inner, inner, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } }).toBuffer();
-  return sharp({ create: { width: px, height: px, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } } })
-    .composite([{ input: mark, gravity: "center" }])
+  return sharp(LOGO_PATH)
+    .resize(px - pad * 2, px - pad * 2, { fit: "contain", background: TRANSPARENT })
+    .extend({ top: pad, bottom: pad, left: pad, right: pad, background: TRANSPARENT })
     .png()
     .toBuffer();
 }
 
 async function makeLogo(heightPx) {
   const widthPx = Math.round(heightPx * 3.2); // logo is ~3:1, this leaves a small margin
-  const pad = Math.round(heightPx * 0.16);
-  const mark = await sharp(LOGO_PATH).resize(widthPx - pad * 2, heightPx - pad * 2, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } }).toBuffer();
-  return sharp({ create: { width: widthPx, height: heightPx, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } } })
-    .composite([{ input: mark, gravity: "center" }])
+  const pad = Math.round(heightPx * 0.1);
+  return sharp(LOGO_PATH)
+    .resize(widthPx - pad * 2, heightPx - pad * 2, { fit: "contain", background: TRANSPARENT })
+    .extend({ top: pad, bottom: pad, left: pad, right: pad, background: TRANSPARENT })
     .png()
     .toBuffer();
 }

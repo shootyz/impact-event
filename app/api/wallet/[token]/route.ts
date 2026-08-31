@@ -48,10 +48,13 @@ export async function GET(
     teamIdentifier: teamId,
     organizationName: 'Impact Gstaad',
     description: event.name,
-    // Impact Gstaad brand colors (see app/globals.css --ig-navy / --ig-gold)
-    foregroundColor: 'rgb(255, 255, 255)',
-    backgroundColor: 'rgb(30, 50, 99)',
-    labelColor: 'rgb(210, 141, 40)',
+    // White card, navy text, gray labels — matches the emailed ticket's own
+    // look (see app/globals.css --ig-navy / --ig-gray3) rather than a dark
+    // navy card, which read as cramped and disconnected from the rest of
+    // the ticket experience.
+    foregroundColor: 'rgb(30, 50, 99)',
+    backgroundColor: 'rgb(255, 255, 255)',
+    labelColor: 'rgb(92, 122, 148)',
     eventTicket: {
       primaryFields: [{ key: 'event', label: 'EVENT', value: event.name }],
       secondaryFields: [
