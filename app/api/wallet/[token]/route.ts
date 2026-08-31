@@ -1,51 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { isTicketTokenExpired } from '@/lib/ticketToken'
-import { deflateSync } from 'zlib'
-
-// Pure-JS minimal PNG generator (no canvas/sharp needed)
-function createPNG(width: number, height: number, r: number, g: number, b: number): Buffer {
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
-
-  const ihdr = Buffer.alloc(13)
-  ihdr.writeUInt32BE(width, 0)
-  ihdr.writeUInt32BE(height, 4)
-  ihdr[8] = 8; ihdr[9] = 2
-
-  const rowSize = width * 3 + 1
-  const raw = Buffer.alloc(height * rowSize)
-  for (let y = 0; y < height; y++) {
-    raw[y * rowSize] = 0
-    for (let x = 0; x < width; x++) {
-      raw[y * rowSize + 1 + x * 3] = r
-      raw[y * rowSize + 2 + x * 3] = g
-      raw[y * rowSize + 3 + x * 3] = b
-    }
-  }
-  const compressed = deflateSync(raw)
-
-  const crc = (buf: Buffer): number => {
-    const t = new Uint32Array(256)
-    for (let i = 0; i < 256; i++) {
-      let c = i
-      for (let j = 0; j < 8; j++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1
-      t[i] = c
-    }
-    let crcVal = 0xFFFFFFFF
-    for (let i = 0; i < buf.length; i++) crcVal = t[(crcVal ^ buf[i]) & 0xFF] ^ (crcVal >>> 8)
-    return (crcVal ^ 0xFFFFFFFF) >>> 0
-  }
-
-  const chunk = (type: string, data: Buffer): Buffer => {
-    const tb = Buffer.from(type)
-    const len = Buffer.alloc(4); len.writeUInt32BE(data.length)
-    const ci = Buffer.concat([tb, data])
-    const cv = Buffer.alloc(4); cv.writeUInt32BE(crc(ci))
-    return Buffer.concat([len, tb, data, cv])
-  }
-
-  return Buffer.concat([sig, chunk('IHDR', ihdr), chunk('IDAT', compressed), chunk('IEND', Buffer.alloc(0))])
-}
+import { WALLET_IMAGES } from '@/lib/wallet-assets'
 
 export async function GET(
   _req: NextRequest,
@@ -119,13 +75,15 @@ export async function GET(
   try {
     const { PKPass } = await import('passkit-generator')
 
-    // Gold, not navy — has to contrast against the navy backgroundColor above,
-    // or the icon/logo are invisible on the finished pass (this was the case
-    // before, since both used the exact same rgb(26,26,26)).
-    const icon = createPNG(87, 87, 210, 141, 40)
-    const icon2x = createPNG(174, 174, 210, 141, 40)
-    const logo = createPNG(160, 50, 210, 141, 40)
-    const logo2x = createPNG(320, 100, 210, 141, 40)
+    // Real logo, pre-baked onto a white tile (see scripts/generate-wallet-assets.mjs) —
+    // the logo's navy text would be invisible directly on the pass's navy
+    // backgroundColor otherwise, same failure mode as the flat placeholder before it.
+    const icon = Buffer.from(WALLET_IMAGES.icon1x, 'base64')
+    const icon2x = Buffer.from(WALLET_IMAGES.icon2x, 'base64')
+    const icon3x = Buffer.from(WALLET_IMAGES.icon3x, 'base64')
+    const logo = Buffer.from(WALLET_IMAGES.logo1x, 'base64')
+    const logo2x = Buffer.from(WALLET_IMAGES.logo2x, 'base64')
+    const logo3x = Buffer.from(WALLET_IMAGES.logo3x, 'base64')
 
     // passkit-generator needs PEM cert + PEM key as SEPARATE values (not the
     // raw .p12 buffer used for both, which silently fails signing) — see
@@ -138,8 +96,10 @@ export async function GET(
       'pass.json': Buffer.from(JSON.stringify(passJson)),
       'icon.png': icon,
       'icon@2x.png': icon2x,
+      'icon@3x.png': icon3x,
       'logo.png': logo,
       'logo@2x.png': logo2x,
+      'logo@3x.png': logo3x,
     }
     const certificates = { wwdr, signerCert, signerKey, signerKeyPassphrase: certPass }
 
