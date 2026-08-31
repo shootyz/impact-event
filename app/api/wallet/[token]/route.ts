@@ -92,9 +92,10 @@ export async function GET(
     teamIdentifier: teamId,
     organizationName: 'Impact Gstaad',
     description: event.name,
+    // Impact Gstaad brand colors (see app/globals.css --ig-navy / --ig-gold)
     foregroundColor: 'rgb(255, 255, 255)',
-    backgroundColor: 'rgb(26, 26, 26)',
-    labelColor: 'rgb(180, 180, 180)',
+    backgroundColor: 'rgb(30, 50, 99)',
+    labelColor: 'rgb(210, 141, 40)',
     eventTicket: {
       primaryFields: [{ key: 'event', label: 'EVENT', value: event.name }],
       secondaryFields: [
@@ -118,10 +119,13 @@ export async function GET(
   try {
     const { PKPass } = await import('passkit-generator')
 
-    const icon = createPNG(87, 87, 26, 26, 26)
-    const icon2x = createPNG(174, 174, 26, 26, 26)
-    const logo = createPNG(160, 50, 26, 26, 26)
-    const logo2x = createPNG(320, 100, 26, 26, 26)
+    // Gold, not navy — has to contrast against the navy backgroundColor above,
+    // or the icon/logo are invisible on the finished pass (this was the case
+    // before, since both used the exact same rgb(26,26,26)).
+    const icon = createPNG(87, 87, 210, 141, 40)
+    const icon2x = createPNG(174, 174, 210, 141, 40)
+    const logo = createPNG(160, 50, 210, 141, 40)
+    const logo2x = createPNG(320, 100, 210, 141, 40)
 
     // passkit-generator needs PEM cert + PEM key as SEPARATE values (not the
     // raw .p12 buffer used for both, which silently fails signing) — see
