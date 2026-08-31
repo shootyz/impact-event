@@ -56,7 +56,7 @@ export async function GET(
     // navy card, which read as cramped and disconnected from the rest of
     // the ticket experience.
     foregroundColor: 'rgb(30, 50, 99)',
-    backgroundColor: 'rgb(255, 255, 255)',
+    backgroundColor: 'rgb(248, 249, 255)', // --ig-light
     labelColor: 'rgb(92, 122, 148)',
     eventTicket: {
       // Date moves up next to the logo (headerFields) instead of sitting in
