@@ -864,6 +864,9 @@ export default function ZielgruppenDashboard({
                               <td className="px-4 py-2.5 font-medium" style={{ color: m.unsubscribed ? "var(--ig-gray3)" : "var(--ig-navy)" }}>
                                 {m.first_name}
                                 {m.unsubscribed && <span className="ml-1.5 px-1.5 py-0.5 rounded text-xs font-semibold" style={{ background: "#fff5f5", color: "#dc2626", border: "1px solid #fecaca" }}>abgemeldet</span>}
+                                {m.email_status === "bounced" && <span className="ml-1.5 px-1.5 py-0.5 rounded text-xs font-semibold" style={{ background: "#fff5f5", color: "#dc2626", border: "1px solid #fecaca" }}>bounced</span>}
+                                {m.email_status === "complained" && <span className="ml-1.5 px-1.5 py-0.5 rounded text-xs font-semibold" style={{ background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>beschwerde</span>}
+                                {m.email_status === "failed" && <span className="ml-1.5 px-1.5 py-0.5 rounded text-xs font-semibold" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}>fehlgeschlagen</span>}
                               </td>
                               <td className="px-4 py-2.5 font-medium" style={{ color: m.unsubscribed ? "var(--ig-gray3)" : "var(--ig-navy)" }}>{m.last_name}</td>
                               <td className="px-4 py-2.5 max-w-[160px]" style={{ color: "var(--ig-gray3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.email}</td>

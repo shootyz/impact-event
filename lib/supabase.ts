@@ -43,6 +43,8 @@ export type Member = {
   zielgruppe_ids: string[]
   anrede?: string | null
   sprache?: string | null
+  email_status?: 'ok' | 'bounced' | 'complained' | 'failed'
+  email_status_at?: string | null
   invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null
 }
 

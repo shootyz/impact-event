@@ -9,11 +9,30 @@ export async function GET(req: NextRequest, props: any) {
 
   const { id } = await props.params
   const db = supabaseAdmin()
-  const { data, error } = await db
-    .from('campaign_recipients')
-    .select('email, first_name, last_name')
-    .eq('campaign_id', id)
-    .order('last_name', { ascending: true })
+  const [{ data, error }, { data: events }] = await Promise.all([
+    db.from('campaign_recipients').select('email, first_name, last_name').eq('campaign_id', id).order('last_name', { ascending: true }),
+    db.from('campaign_events').select('type, email').eq('campaign_id', id),
+  ])
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  const typesByEmail = new Map<string, Set<string>>()
+  for (const e of events ?? []) {
+    if (!e.email) continue
+    if (!typesByEmail.has(e.email)) typesByEmail.set(e.email, new Set())
+    typesByEmail.get(e.email)!.add(e.type)
+  }
+
+  const enriched = (data ?? []).map(r => {
+    const types = typesByEmail.get(r.email) ?? new Set<string>()
+    return {
+      ...r,
+      delivered: types.has('delivered'),
+      opened: types.has('open'),
+      clicked: types.has('click'),
+      bounced: types.has('bounced'),
+      complained: types.has('complained'),
+      failed: types.has('failed'),
+    }
+  })
+  return NextResponse.json(enriched)
 }

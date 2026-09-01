@@ -18,6 +18,7 @@ import type { Lang } from "./i18n";
 type GlobalMember = {
   id: string; first_name: string; last_name: string; email: string;
   anrede?: string | null; sprache?: string | null; unsubscribed: boolean; created_at: string;
+  email_status?: 'ok' | 'bounced' | 'complained' | 'failed';
   zielgruppen: { name: string; events?: { name: string } | null }[];
 };
 
@@ -332,10 +333,14 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
   const testBtnRef = useRef<HTMLButtonElement>(null);
   const [testPanelPos, setTestPanelPos] = useState({ top: 0, right: 0 });
   const [showRecipients, setShowRecipients] = useState(false);
-  const [recipients, setRecipients] = useState<{ email: string; first_name: string; last_name: string }[] | null>(null);
+  const [recipients, setRecipients] = useState<{ email: string; first_name: string; last_name: string; delivered: boolean; opened: boolean; clicked: boolean; bounced: boolean; complained: boolean; failed: boolean }[] | null>(null);
   const recipientsBtnRef = useRef<HTMLButtonElement>(null);
   const [recipientsPos, setRecipientsPos] = useState({ top: 0, left: 0 });
   const [draftRecipientCount, setDraftRecipientCount] = useState<number | null>(null);
+  const [stats, setStats] = useState<{ delivered: number; opened: number; clicked: number; bounced: number; complained: number; failed: number; topLinks: { link: string; count: number }[] } | null>(null);
+  const [showTopLinks, setShowTopLinks] = useState(false);
+  const [reportSending, setReportSending] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
 
   useEffect(() => {
     if (c.sent_at || !adminPassword) return;
@@ -343,6 +348,15 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
     fetch(`/api/campaigns/${c.id}/recipient-count`, { headers: { Authorization: `Bearer ${adminPassword}` } })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (!cancelled && d) setDraftRecipientCount(d.count); });
+    return () => { cancelled = true; };
+  }, [c.id, c.sent_at, adminPassword]);
+
+  useEffect(() => {
+    if (!c.sent_at || !adminPassword) return;
+    let cancelled = false;
+    fetch(`/api/campaigns/${c.id}/stats`, { headers: { Authorization: `Bearer ${adminPassword}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (!cancelled && d) setStats(d); });
     return () => { cancelled = true; };
   }, [c.id, c.sent_at, adminPassword]);
 
@@ -401,8 +415,8 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
                       setRecipientsPos({ top: r.bottom + 6, left: r.left });
                     }
                     setShowRecipients(true);
-                    if (!recipients) {
-                      const res = await fetch(`/api/campaigns/${c.id}/recipients`);
+                    if (!recipients && adminPassword) {
+                      const res = await fetch(`/api/campaigns/${c.id}/recipients`, { headers: { Authorization: `Bearer ${adminPassword}` } });
                       const d = await res.json();
                       setRecipients(Array.isArray(d) ? d : []);
                     }
@@ -421,7 +435,11 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
                     {recipients && recipients.length > 0 && (
                       <button className="text-xs px-2 py-1 rounded-lg font-medium" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1.5px solid var(--ig-gray2)" }}
                         onClick={() => {
-                          const csv = ["Vorname,Nachname,E-Mail", ...recipients.map(r => `${r.first_name},${r.last_name},${r.email}`)].join("\n");
+                          const yn = (b: boolean) => b ? "Ja" : "Nein";
+                          const csv = [
+                            "Vorname,Nachname,E-Mail,Zugestellt,Geöffnet,Geklickt,Bounced,Beschwerde,Fehlgeschlagen",
+                            ...recipients.map(r => `${r.first_name},${r.last_name},${r.email},${yn(r.delivered)},${yn(r.opened)},${yn(r.clicked)},${yn(r.bounced)},${yn(r.complained)},${yn(r.failed)}`),
+                          ].join("\n");
                           const a = document.createElement("a");
                           a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
                           a.download = `empfaenger-${c.subject.slice(0, 30).replace(/[^a-z0-9]/gi, "-")}.csv`;
@@ -445,6 +463,43 @@ function CampaignCard({ c, onSend, onDelete, onSchedule, onEdit, onDuplicate, du
                   </div>
                 </div>
               </>
+            )}
+            {/* Tracking stats */}
+            {c.sent_at && stats && (
+              <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}>{stats.delivered} zugestellt</span>
+                <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}>{stats.opened} geöffnet</span>
+                <button onClick={() => setShowTopLinks(v => !v)} disabled={stats.topLinks.length === 0}
+                  className="text-xs px-1.5 py-0.5 rounded"
+                  style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)", cursor: stats.topLinks.length ? "pointer" : "default", textDecoration: stats.topLinks.length ? "underline" : "none" }}>
+                  {stats.clicked} geklickt
+                </button>
+                {stats.bounced > 0 && <span className="text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: "#fff5f5", color: "#dc2626", border: "1px solid #fecaca" }}>{stats.bounced} bounced</span>}
+                {stats.complained > 0 && <span className="text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>{stats.complained} beschwert</span>}
+                {stats.failed > 0 && <span className="text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}>{stats.failed} fehlgeschlagen</span>}
+                {adminPassword && (
+                  <button
+                    disabled={reportSending}
+                    onClick={async () => {
+                      setReportSending(true);
+                      const res = await fetch(`/api/campaigns/${c.id}/report`, { method: "POST", headers: { Authorization: `Bearer ${adminPassword}` } });
+                      setReportSending(false);
+                      if (res.ok) { setReportSent(true); setTimeout(() => setReportSent(false), 3000); }
+                    }}
+                    className="text-xs px-1.5 py-0.5 rounded font-medium transition hover:opacity-70"
+                    style={{ background: "var(--ig-light)", color: "var(--ig-navy)", border: "1px solid var(--ig-gray2)" }}>
+                    {reportSending ? "Sendet…" : reportSent ? "Gesendet ✓" : "Bericht senden"}
+                  </button>
+                )}
+                {showTopLinks && stats.topLinks.length > 0 && (
+                  <div className="w-full mt-1 rounded-lg border p-2" style={{ borderColor: "var(--ig-gray2)", background: "var(--ig-light)" }}>
+                    <p className="text-xs font-semibold mb-1" style={{ color: "var(--ig-navy)" }}>Top-Links</p>
+                    {stats.topLinks.map(l => (
+                      <p key={l.link} className="text-xs truncate" style={{ color: "var(--ig-gray3)" }}>{l.count}× — {l.link}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
           <div className="flex items-end gap-2 flex-wrap">
@@ -820,7 +875,7 @@ export default function AdminPage() {
   const [editRegSaving, setEditRegSaving] = useState(false);
 
   // Mailing state
-  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribe_token: string; unsubscribed: boolean; created_at: string; zielgruppe_ids: string[]; anrede?: string | null; sprache?: string | null; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
+  type Member = { id: string; first_name: string; last_name: string; email: string; unsubscribe_token: string; unsubscribed: boolean; created_at: string; zielgruppe_ids: string[]; anrede?: string | null; sprache?: string | null; email_status?: 'ok' | 'bounced' | 'complained' | 'failed'; invite_codes?: { code: string; used: boolean }[] | { code: string; used: boolean } | null; };
   type Zielgruppe = { id: string; name: string; created_at: string };
   type Campaign = { id: string; subject: string; body_html: string; blocks_json?: unknown; header_image_url: string | null; event_url: string | null; sent_at: string | null; scheduled_at: string | null; recipient_count: number | null; created_at: string; zielgruppe_id?: string | null; event_id?: string | null; lang_group_id?: string | null; };
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
@@ -1736,9 +1791,14 @@ setScannerPinLoading(prev => ({ ...prev, [eventId]: true }));
                               <td className="px-3 py-2" style={{ color: "var(--ig-gray3)" }}>{eventNames(m).join(", ") || "–"}</td>
                               <td className="px-3 py-2 uppercase" style={{ color: "var(--ig-gray3)" }}>{m.sprache ?? "–"}</td>
                               <td className="px-3 py-2">
-                                {m.unsubscribed
-                                  ? <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#FEE2E2", color: "#B91C1C" }}>Abgemeldet</span>
-                                  : <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#15803D" }}>Aktiv</span>}
+                                <div className="flex flex-wrap gap-1">
+                                  {m.unsubscribed
+                                    ? <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#FEE2E2", color: "#B91C1C" }}>Abgemeldet</span>
+                                    : <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: "#DCFCE7", color: "#15803D" }}>Aktiv</span>}
+                                  {m.email_status === "bounced" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "#fff5f5", color: "#dc2626", border: "1px solid #fecaca" }}>Bounced</span>}
+                                  {m.email_status === "complained" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>Beschwerde</span>}
+                                  {m.email_status === "failed" && <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--ig-light)", color: "var(--ig-gray3)", border: "1px solid var(--ig-gray2)" }}>Fehlgeschlagen</span>}
+                                </div>
                               </td>
                               <td className="px-3 py-2 text-right">
                                 <button onClick={() => {

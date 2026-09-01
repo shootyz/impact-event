@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const db = supabaseAdmin();
   const { data, error } = await db
     .from("members")
-    .select("id, first_name, last_name, email, anrede, sprache, unsubscribed, created_at, member_zielgruppen(zielgruppen(name, events(name)))")
+    .select("id, first_name, last_name, email, anrede, sprache, unsubscribed, email_status, created_at, member_zielgruppen(zielgruppen(name, events(name)))")
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
