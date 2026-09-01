@@ -16,6 +16,11 @@ const EVENT_TYPE_MAP: Record<string, 'delivered' | 'open' | 'click' | 'bounced' 
   delivered: 'delivered',
   opened: 'open',
   unique_opened: 'open',
+  // Apple's Mail Privacy Protection (default-on for iCloud/Apple Mail) pre-fetches
+  // images through Apple's own proxy, which Brevo reports under these separate
+  // event names rather than opened/unique_opened.
+  proxy_open: 'open',
+  unique_proxy_open: 'open',
   clicked: 'click',
   hard_bounce: 'bounced',
   spam: 'complained',
@@ -46,7 +51,12 @@ export async function POST(req: NextRequest) {
   }
 
   const type = EVENT_TYPE_MAP[payload.event]
-  if (!type) return NextResponse.json({ ok: true }) // sent/deferred/soft_bounce — transient, not tracked
+  if (!type) {
+    if (!['sent', 'request', 'deferred', 'soft_bounce'].includes(payload.event)) {
+      console.log('Brevo webhook: unmapped event type', payload.event)
+    }
+    return NextResponse.json({ ok: true })
+  }
 
   // tags are set at send time as [`c:<campaignId>`, `m:<memberId>`] (see
   // lib/campaign-email.ts) — untagged sends (e.g. ticket confirmations from
