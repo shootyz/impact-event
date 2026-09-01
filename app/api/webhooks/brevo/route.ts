@@ -21,7 +21,7 @@ const EVENT_TYPE_MAP: Record<string, 'delivered' | 'open' | 'click' | 'bounced' 
   // event names rather than opened/unique_opened.
   proxy_open: 'open',
   unique_proxy_open: 'open',
-  clicked: 'click',
+  click: 'click',
   hard_bounce: 'bounced',
   spam: 'complained',
   blocked: 'failed',
