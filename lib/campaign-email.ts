@@ -266,7 +266,9 @@ export async function sendCampaign({
 
   const db = supabaseAdmin()
 
-  let query = db.from('members').select('*').eq('unsubscribed', false)
+  // Skip members whose address is known-bad (bounced/complained/failed) — retrying
+  // them repeatedly is what damages sending-domain reputation the most.
+  let query = db.from('members').select('*').eq('unsubscribed', false).eq('email_status', 'ok')
   if (eventId) query = query.eq('event_id', eventId)
   if (zielgruppeId) {
     // A member can belong to several Zielgruppen — resolve membership via the
@@ -339,6 +341,7 @@ export async function sendCampaign({
         subject,
         html,
         tags: [`c:${campaignId}`, `m:${member.id}`],
+        unsubscribeUrl: `${appUrl}/api/unsubscribe?token=${member.unsubscribe_token}&lang=${campaignLang}`,
       })
       sent++
     } catch (e) {
