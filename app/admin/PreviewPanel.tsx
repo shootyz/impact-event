@@ -24,6 +24,10 @@ function Editable({ value, onChange, placeholder, style, className, multiline = 
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const focused = useRef(false);
+  // Some callers (e.g. CTA pills) pass an intentional background color via
+  // `style.background` — the hover/focus highlight must restore that instead
+  // of clearing it to "", and shouldn't overlay its own highlight on top of it.
+  const restBackground = style?.background != null ? String(style.background) : "";
 
   useEffect(() => {
     if (ref.current && !focused.current) {
@@ -57,10 +61,10 @@ function Editable({ value, onChange, placeholder, style, className, multiline = 
         transition: "background 0.15s",
         ...style,
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(210,141,40,0.08)"; }}
-      onMouseLeave={e => { if (!focused.current) (e.currentTarget as HTMLElement).style.background = ""; }}
-      onFocusCapture={e => { (e.currentTarget as HTMLElement).style.background = "rgba(210,141,40,0.12)"; }}
-      onBlurCapture={e => { (e.currentTarget as HTMLElement).style.background = ""; }}
+      onMouseEnter={e => { if (!restBackground) (e.currentTarget as HTMLElement).style.background = "rgba(210,141,40,0.08)"; }}
+      onMouseLeave={e => { if (!focused.current) (e.currentTarget as HTMLElement).style.background = restBackground; }}
+      onFocusCapture={e => { if (!restBackground) (e.currentTarget as HTMLElement).style.background = "rgba(210,141,40,0.12)"; }}
+      onBlurCapture={e => { (e.currentTarget as HTMLElement).style.background = restBackground; }}
     />
   );
 }
@@ -74,7 +78,7 @@ function RichPreview({ value, onChange, placeholder }: { value: string; onChange
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
   });
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) editor.commands.setContent(value || "");
+    if (editor && !editor.isFocused && value !== editor.getHTML()) editor.commands.setContent(value || "");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
   if (!editor) return null;

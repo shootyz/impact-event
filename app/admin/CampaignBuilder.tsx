@@ -18,6 +18,13 @@ function uid() {
   return Math.random().toString(36).slice(2, 9);
 }
 
+function normalizeLinkHref(input: string): string {
+  const trimmed = input.trim();
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return trimmed; // already has a scheme (http:, mailto:, tel:, …)
+  if (trimmed.includes("@")) return `mailto:${trimmed}`;
+  return trimmed;
+}
+
 function getBlockLabel(type: CampaignBlock["type"], lang: Lang): string {
   return BLOCK_LABEL_TRANSLATIONS[lang][type] ?? type;
 }
@@ -77,9 +84,11 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
     },
   });
 
-  // Sync external value changes (e.g. switching between blocks)
+  // Sync external value changes (e.g. switching between blocks) — but only
+  // while unfocused: a state update racing with the user's own keystrokes
+  // (e.g. holding Backspace) would otherwise reset the cursor to the end.
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
+    if (editor && !editor.isFocused && value !== editor.getHTML()) {
       editor.commands.setContent(value || "");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,8 +145,7 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     if (!linkUrlInput.trim()) return;
-                    const href = linkUrlInput.includes("@") && !linkUrlInput.startsWith("http") ? `mailto:${linkUrlInput}` : linkUrlInput;
-                    editor.chain().focus().setLink({ href }).run();
+                    editor.chain().focus().setLink({ href: normalizeLinkHref(linkUrlInput) }).run();
                     setLinkDialogOpen(false);
                   }
                 }}
@@ -152,8 +160,7 @@ function RichTextEditor({ value, onChange, minHeight = 120 }: {
                 style={{ border: "1.5px solid #d1d5db", color: "#1E3263", background: "white" }}>Abbrechen</button>
               <button onClick={() => {
                 if (!linkUrlInput.trim()) return;
-                const href = linkUrlInput.includes("@") && !linkUrlInput.startsWith("http") ? `mailto:${linkUrlInput}` : linkUrlInput;
-                editor.chain().focus().setLink({ href }).run();
+                editor.chain().focus().setLink({ href: normalizeLinkHref(linkUrlInput) }).run();
                 setLinkDialogOpen(false);
               }}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
