@@ -6,7 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import type {
   CampaignBlock, IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramBlock,
-  FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, RegisterButtonBlock,
+  FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, NewsBlock, DeadlineBlock, RegisterButtonBlock,
 } from "./CampaignBuilder";
 import { type Lang, T, DATE_LOCALE } from "./i18n";
 
@@ -383,6 +383,22 @@ function InfoPreview({ block, onChange }: { block: InfoBlock & { label?: string 
   );
 }
 
+function NewsPreview({ block, onChange }: { block: NewsBlock & { label?: string }; onChange: (b: typeof block) => void }) {
+  return (
+    <div style={{ background: "#F8F9FF", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "20px 24px" }}>
+      <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
+        placeholder="TITEL EINGEBEN…"
+        style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.5, display: "block", marginBottom: 10 }} />
+      <RichPreview value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Text eingeben…" />
+      {block.cta_url && block.cta_label && (
+        <div style={{ marginTop: 16, display: "inline-block", background: D.gold, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>
+          {block.cta_label}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DeadlinePreview({ block, lang = "en" }: { block: DeadlineBlock & { label?: string }; lang?: Lang }) {
   const formatted = block.date
     ? new Date(block.date + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang], { day: "numeric", month: "long", year: "numeric" })
@@ -445,7 +461,7 @@ export default function PreviewPanel({
         <div style={{ padding: "0 32px 32px" }}>
           {blocks.map((block, i) => (
             <div key={i} style={{ marginTop: 24 }}>
-              {block.type !== "intro" && block.type !== "lead" && block.type !== "text" && block.type !== "info" && block.type !== "divider" && block.type !== "register_button" && block.type !== "deadline" && (
+              {block.type !== "intro" && block.type !== "lead" && block.type !== "text" && block.type !== "info" && block.type !== "news" && block.type !== "divider" && block.type !== "register_button" && block.type !== "deadline" && (
                 block.type === "program" ? (
                   <Editable
                     value={(block as ProgramBlock).title || block.label || labelFor(block.type)}
@@ -490,6 +506,9 @@ export default function PreviewPanel({
               )}
               {block.type === "info" && (
                 <InfoPreview block={block} onChange={b => updateBlock(i, b)} />
+              )}
+              {block.type === "news" && (
+                <NewsPreview block={block} onChange={b => updateBlock(i, b)} />
               )}
               {block.type === "deadline" && (
                 <DeadlinePreview block={block} lang={lang} />

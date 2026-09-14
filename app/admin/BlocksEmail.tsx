@@ -229,6 +229,24 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
       );
     }
 
+    case "news": {
+      const body = block.content && block.content !== "<p></p>" ? block.content : null;
+      if (!body && !block.title) return null;
+      return (
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "0 0 20px" }}>
+          <tbody><tr><td style={{ background: "#F8F9FF", padding: "20px 24px", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0" }}>
+            {block.title && <p style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.5, margin: "0 0 10px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
+            {body && <RichContent html={body} />}
+            {block.cta_url && block.cta_label && (
+              <table cellPadding={0} cellSpacing={0} style={{ marginTop: 16 }}><tbody><tr><td>
+                <a href={block.cta_url} style={{ display: "inline-block", background: D.gold, color: "#fff", textDecoration: "none", padding: "10px 20px", borderRadius: 10, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.cta_label}</a>
+              </td></tr></tbody></table>
+            )}
+          </td></tr></tbody>
+        </table>
+      );
+    }
+
     case "deadline": {
       const formatted = block.date
         ? new Date(block.date + "T12:00:00").toLocaleDateString(DATE_LOCALE[lang], { day: "numeric", month: "long", year: "numeric" })

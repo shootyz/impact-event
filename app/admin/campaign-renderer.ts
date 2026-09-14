@@ -66,6 +66,7 @@ export type SpeakerBlock = {
 
 export type TextBlock = { type: "text"; title?: string; content: string };
 export type InfoBlock = { type: "info"; title: string; content: string };
+export type NewsBlock = { type: "news"; title: string; content: string; cta_label?: string; cta_url?: string };
 export type DeadlineBlock = { type: "deadline"; date: string };
 export type DividerBlock = { type: "divider" };
 export type RegisterButtonBlock = { type: "register_button"; url: string; deadline?: string };
@@ -80,6 +81,7 @@ export type CampaignBlock = (
   | SpeakerBlock
   | TextBlock
   | InfoBlock
+  | NewsBlock
   | DeadlineBlock
   | DividerBlock
   | RegisterButtonBlock
@@ -255,6 +257,22 @@ ${block.title?.trim() ? `<p style="color:${D.gray};font-size:13px;margin:0;font-
 <tr><td style="padding:20px 24px;background:#f5f5f5;border-radius:6px;">
 ${block.title ? `<p style="color:${D.gray};font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 12px;font-family:Arial,sans-serif;">${esc(block.title)}</p>` : ""}
 ${body}
+</td></tr></table>`;
+    }
+
+    case "news": {
+      const body = richHtmlToEmail(block.content, D.black);
+      if (!body && !block.title) return "";
+      const ctaHtml = (block.cta_url && block.cta_label)
+        ? `<table cellpadding="0" cellspacing="0" style="margin-top:16px;"><tr><td>
+<a href="${esc(block.cta_url)}" style="display:inline-block;background:${D.gold};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:10px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">${esc(block.cta_label)}</a>
+</td></tr></table>`
+        : "";
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+<tr><td style="background:#F8F9FF;padding:20px 24px;border-left:2px solid ${D.gold};border-radius:0 14px 14px 0;">
+${block.title ? `<p style="color:${D.navy};font-size:17px;font-weight:700;line-height:1.5;margin:0 0 10px;font-family:Arial,sans-serif;">${esc(block.title)}</p>` : ""}
+${body}
+${ctaHtml}
 </td></tr></table>`;
     }
 

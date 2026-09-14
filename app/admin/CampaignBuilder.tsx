@@ -6,9 +6,9 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import PreviewPanel from "./PreviewPanel";
 import { type Lang, LANGUAGES, CATEGORIES, DATE_LOCALE, T, BLOCK_LABEL_TRANSLATIONS } from "./i18n";
-export type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CampaignBlock } from "./campaign-renderer";
+export type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, NewsBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CampaignBlock } from "./campaign-renderer";
 export { renderBlocksToHtml, richHtmlToEmail } from "./campaign-renderer";
-import type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CampaignBlock } from "./campaign-renderer";
+import type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, NewsBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CampaignBlock } from "./campaign-renderer";
 import { richHtmlToEmail, renderBlocksToHtml } from "./campaign-renderer";
 
 
@@ -632,6 +632,44 @@ function SpeakerEditor({ block: rawBlock, onChange, adminPassword }: { block: Sp
   );
 }
 
+function NewsEditor({ block, onChange }: { block: NewsBlock; onChange: (b: NewsBlock) => void }) {
+  const [focus, setFocus] = useState<"title" | "cta_label" | "cta_url" | null>(null);
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className={labelCls} style={labelSty}>Titel</label>
+        <input className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition"
+          style={{ ...inputSty, borderColor: focus === "title" ? "#1E3263" : "#d1d5db" }}
+          value={block.title} onChange={e => onChange({ ...block, title: e.target.value })}
+          placeholder="Neuigkeit / Ankündigung"
+          onFocus={() => setFocus("title")} onBlur={() => setFocus(null)} />
+      </div>
+      <div>
+        <label className={labelCls} style={labelSty}>Inhalt</label>
+        <RichTextEditor value={block.content} onChange={v => onChange({ ...block, content: v })} minHeight={100} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelCls} style={labelSty}>CTA-Text <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
+          <input className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition"
+            style={{ ...inputSty, borderColor: focus === "cta_label" ? "#1E3263" : "#d1d5db" }}
+            value={block.cta_label ?? ""} onChange={e => onChange({ ...block, cta_label: e.target.value })}
+            placeholder="Mehr erfahren"
+            onFocus={() => setFocus("cta_label")} onBlur={() => setFocus(null)} />
+        </div>
+        <div>
+          <label className={labelCls} style={labelSty}>CTA-Link <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
+          <input className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition"
+            style={{ ...inputSty, borderColor: focus === "cta_url" ? "#1E3263" : "#d1d5db" }}
+            value={block.cta_url ?? ""} onChange={e => onChange({ ...block, cta_url: e.target.value })}
+            placeholder="https://..."
+            onFocus={() => setFocus("cta_url")} onBlur={() => setFocus(null)} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InfoEditor({ block, onChange }: { block: InfoBlock; onChange: (b: InfoBlock) => void }) {
   const [focus, setFocus] = useState(false);
   return (
@@ -796,6 +834,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           {block.type === "moderation" && <ModerationEditor block={block} onChange={onChange as (b: ModerationBlock) => void} />}
           {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} adminPassword={adminPassword} />}
           {block.type === "info" && <InfoEditor block={block} onChange={onChange as (b: InfoBlock) => void} />}
+          {block.type === "news" && <NewsEditor block={block} onChange={onChange as (b: NewsBlock) => void} />}
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
           {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
@@ -829,6 +868,7 @@ const ADDABLE_BLOCK_TYPES: { type: CampaignBlock["type"]; icon: string }[] = [
   { type: "speaker", icon: "🎤" },
   { type: "text", icon: "📝" },
   { type: "info", icon: "ℹ️" },
+  { type: "news", icon: "📰" },
   { type: "deadline", icon: "⏰" },
   { type: "register_button", icon: "🔗" },
   { type: "divider", icon: "—" },
@@ -845,6 +885,7 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
     case "speaker": return { type, speakers: [{ id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] };
     case "text": return { type, title: "", content: "" };
     case "info": return { type, title: "", content: "" };
+    case "news": return { type, title: "", content: "", cta_label: "", cta_url: "" };
     case "deadline": return { type, date: "" };
     case "divider": return { type: "divider" };
     case "register_button": return { type: "register_button", url: "https://impactgstaad.vercel.app" };
