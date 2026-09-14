@@ -66,7 +66,7 @@ export type SpeakerBlock = {
 
 export type TextBlock = { type: "text"; title?: string; content: string };
 export type InfoBlock = { type: "info"; title: string; content: string };
-export type NewsBlock = { type: "news"; title: string; content: string; cta_label?: string; cta_url?: string };
+export type NewsBlock = { type: "news"; title: string; content: string; image_url?: string; cta_label?: string; cta_url?: string };
 export type DeadlineBlock = { type: "deadline"; date: string };
 export type DividerBlock = { type: "divider" };
 export type RegisterButtonBlock = { type: "register_button"; url: string; deadline?: string };
@@ -268,8 +268,12 @@ ${body}
 <a href="${esc(block.cta_url)}" style="display:inline-block;background:${D.gold};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:10px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">${esc(block.cta_label)}</a>
 </td></tr></table>`
         : "";
+      const imageHtml = block.image_url
+        ? `<tr><td style="padding:0;line-height:0;"><img src="${esc(block.image_url)}" alt="${esc(block.title)}" width="600" style="display:block;width:100%;max-width:100%;height:auto;border-radius:14px 14px 0 0;" /></td></tr>`
+        : "";
       return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
-<tr><td style="background:#F8F9FF;padding:20px 24px;border-left:2px solid ${D.gold};border-radius:0 14px 14px 0;">
+${imageHtml}
+<tr><td style="background:#F8F9FF;padding:20px 24px;border-left:2px solid ${D.gold};border-radius:${block.image_url ? "0 0 14px 14px" : "0 14px 14px 0"};">
 ${block.title ? `<p style="color:${D.navy};font-size:17px;font-weight:700;line-height:1.5;margin:0 0 10px;font-family:Arial,sans-serif;">${esc(block.title)}</p>` : ""}
 ${body}
 ${ctaHtml}

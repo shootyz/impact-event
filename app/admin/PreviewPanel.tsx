@@ -385,7 +385,12 @@ function InfoPreview({ block, onChange }: { block: InfoBlock & { label?: string 
 
 function NewsPreview({ block, onChange }: { block: NewsBlock & { label?: string }; onChange: (b: typeof block) => void }) {
   return (
-    <div style={{ background: "#F8F9FF", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "20px 24px" }}>
+    <div>
+      {block.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={block.image_url} alt={block.title} style={{ display: "block", width: "100%", height: "auto", borderRadius: "14px 14px 0 0" }} />
+      )}
+      <div style={{ background: "#F8F9FF", borderLeft: `2px solid ${D.gold}`, borderRadius: block.image_url ? "0 0 14px 14px" : "0 14px 14px 0", padding: "20px 24px" }}>
       <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
         placeholder="TITEL EINGEBEN…"
         style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.5, display: "block", marginBottom: 10 }} />
@@ -395,6 +400,7 @@ function NewsPreview({ block, onChange }: { block: NewsBlock & { label?: string 
           {block.cta_label}
         </div>
       )}
+      </div>
     </div>
   );
 }

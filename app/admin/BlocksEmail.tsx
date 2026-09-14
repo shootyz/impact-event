@@ -234,15 +234,22 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
       if (!body && !block.title) return null;
       return (
         <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "0 0 20px" }}>
-          <tbody><tr><td style={{ background: "#F8F9FF", padding: "20px 24px", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0" }}>
-            {block.title && <p style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.5, margin: "0 0 10px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
-            {body && <RichContent html={body} />}
-            {block.cta_url && block.cta_label && (
-              <table cellPadding={0} cellSpacing={0} style={{ marginTop: 16 }}><tbody><tr><td>
-                <a href={block.cta_url} style={{ display: "inline-block", background: D.gold, color: "#fff", textDecoration: "none", padding: "10px 20px", borderRadius: 10, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.cta_label}</a>
-              </td></tr></tbody></table>
+          <tbody>
+            {block.image_url && (
+              <tr><td style={{ padding: 0, lineHeight: 0 }}>
+                <img src={block.image_url} alt={block.title} width={600} style={{ display: "block", width: "100%", maxWidth: "100%", height: "auto", borderRadius: "14px 14px 0 0" }} />
+              </td></tr>
             )}
-          </td></tr></tbody>
+            <tr><td style={{ background: "#F8F9FF", padding: "20px 24px", borderLeft: `2px solid ${D.gold}`, borderRadius: block.image_url ? "0 0 14px 14px" : "0 14px 14px 0" }}>
+              {block.title && <p style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.5, margin: "0 0 10px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
+              {body && <RichContent html={body} />}
+              {block.cta_url && block.cta_label && (
+                <table cellPadding={0} cellSpacing={0} style={{ marginTop: 16 }}><tbody><tr><td>
+                  <a href={block.cta_url} style={{ display: "inline-block", background: D.gold, color: "#fff", textDecoration: "none", padding: "10px 20px", borderRadius: 10, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.cta_label}</a>
+                </td></tr></tbody></table>
+              )}
+            </td></tr>
+          </tbody>
         </table>
       );
     }

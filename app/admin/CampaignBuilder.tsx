@@ -632,10 +632,56 @@ function SpeakerEditor({ block: rawBlock, onChange, adminPassword }: { block: Sp
   );
 }
 
-function NewsEditor({ block, onChange }: { block: NewsBlock; onChange: (b: NewsBlock) => void }) {
+function NewsEditor({ block, onChange, adminPassword }: { block: NewsBlock; onChange: (b: NewsBlock) => void; adminPassword?: string }) {
   const [focus, setFocus] = useState<"title" | "cta_label" | "cta_url" | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [showImageUrl, setShowImageUrl] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   return (
     <div className="space-y-3">
+      <div>
+        <label className={labelCls} style={labelSty}>Bild <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
+        <div className="flex gap-2 items-center flex-wrap">
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async e => {
+            const file = e.target.files?.[0]; if (!file) return;
+            setUploadError(null);
+            await uploadImageFile(file, url => onChange({ ...block, image_url: url }), setUploading, adminPassword, setUploadError);
+            if (fileRef.current) fileRef.current.value = "";
+          }} />
+          <button type="button" onClick={() => fileRef.current?.click()}
+            className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#1E3263" }}
+            disabled={uploading}>
+            {uploading ? "Hochladen…" : (block.image_url?.startsWith("http")) ? "Bild ersetzen" : "Bild hochladen"}
+          </button>
+          <button type="button" onClick={() => setShowImageUrl(v => !v)}
+            className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#d1d5db", color: "#6b7280" }}>
+            Von URL
+          </button>
+          {block.image_url?.startsWith("http") && (
+            <button type="button" onClick={() => onChange({ ...block, image_url: "" })}
+              className="text-xs px-3 py-1.5 rounded-lg border font-medium transition" style={{ borderColor: "#fecaca", color: "#dc2626" }}>
+              Bild entfernen
+            </button>
+          )}
+        </div>
+        {uploadError && <p className="text-xs mt-1.5" style={{ color: "#dc2626" }}>{uploadError}</p>}
+        {showImageUrl && (
+          <div className="flex gap-2 mt-2">
+            <input className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition" style={inputSty}
+              value={imageUrlInput} onChange={e => setImageUrlInput(e.target.value)} placeholder="https://…/bild.jpg" />
+            <button className="text-xs px-3 py-1.5 rounded-lg font-medium shrink-0" style={{ background: "var(--ig-navy)", color: "white" }}
+              onClick={() => { if (imageUrlInput.trim()) { onChange({ ...block, image_url: imageUrlInput.trim() }); setImageUrlInput(""); setShowImageUrl(false); } }}>
+              Übernehmen
+            </button>
+          </div>
+        )}
+        {block.image_url?.startsWith("http") && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={block.image_url} alt="" className="mt-2 rounded-lg" style={{ maxWidth: "100%", maxHeight: 140, display: "block" }} />
+        )}
+      </div>
       <div>
         <label className={labelCls} style={labelSty}>Titel</label>
         <input className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition"
@@ -834,7 +880,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           {block.type === "moderation" && <ModerationEditor block={block} onChange={onChange as (b: ModerationBlock) => void} />}
           {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} adminPassword={adminPassword} />}
           {block.type === "info" && <InfoEditor block={block} onChange={onChange as (b: InfoBlock) => void} />}
-          {block.type === "news" && <NewsEditor block={block} onChange={onChange as (b: NewsBlock) => void} />}
+          {block.type === "news" && <NewsEditor block={block} onChange={onChange as (b: NewsBlock) => void} adminPassword={adminPassword} />}
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
           {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}
@@ -885,7 +931,7 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
     case "speaker": return { type, speakers: [{ id: Math.random().toString(36).slice(2), photo_url: "", name: "", title: "", bio: "", book: "" }] };
     case "text": return { type, title: "", content: "" };
     case "info": return { type, title: "", content: "" };
-    case "news": return { type, title: "", content: "", cta_label: "", cta_url: "" };
+    case "news": return { type, title: "", content: "", image_url: "", cta_label: "", cta_url: "" };
     case "deadline": return { type, date: "" };
     case "divider": return { type: "divider" };
     case "register_button": return { type: "register_button", url: "https://impactgstaad.vercel.app" };
