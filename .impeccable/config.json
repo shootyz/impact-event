@@ -1,0 +1,32 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "arial",
+        "createdAt": "2026-09-14T09:48:44.094Z",
+        "reason": "Email-safe HTML requires Arial/Helvetica fallback fonts for client compatibility (Outlook/Gmail/Apple Mail don't render custom web fonts in email) — this is the correct, required practice for transactional/marketing email, not a web-app typography choice. Pre-existing convention throughout this file, not introduced by this change."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "app/admin/campaign-renderer.ts"
+        ],
+        "createdAt": "2026-09-14T09:48:52.249Z",
+        "reason": "Left gold accent border (border-left:2px solid gold) is this app's established campaign-email design language, already used for event_details/finalists/lead/program blocks before this change. User explicitly praised this exact look (the (Ver-)Erben campaign) and asked the new news block to match it."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "app/admin/BlocksEmail.tsx"
+        ],
+        "createdAt": "2026-09-14T09:48:52.264Z",
+        "reason": "Same accent-border pattern as campaign-renderer.ts (React mirror of the same email templates) — established design language the user confirmed liking; see reason on campaign-renderer.ts ignore."
+      }
+    ]
+  }
+}
