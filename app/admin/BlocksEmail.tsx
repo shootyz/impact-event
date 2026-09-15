@@ -232,22 +232,42 @@ function BlockRenderer({ block, lang, campaignId, appUrl, registerUrl }: {
     case "news": {
       const body = block.content && block.content !== "<p></p>" ? block.content : null;
       if (!body && !block.title) return null;
+      const titleEl = block.title && <p style={{ color: D.navy, fontSize: 18, fontWeight: 700, lineHeight: 1.4, margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>;
+      const ctaEl = block.cta_url && block.cta_label && (
+        <table cellPadding={0} cellSpacing={0} style={{ marginTop: 14 }}><tbody><tr><td>
+          <a href={block.cta_url} style={{ display: "inline-block", background: D.gold, color: "#fff", textDecoration: "none", padding: "10px 20px", borderRadius: 10, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.cta_label}</a>
+        </td></tr></tbody></table>
+      );
+
+      if (block.image_url) {
+        // Illustrated news item: plain image-left/text-right teaser, no
+        // accent box — the box treatment is reserved for text-only items.
+        return (
+          <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "0 0 24px" }}>
+            <tbody><tr>
+              <td width="44%" style={{ verticalAlign: "top", paddingRight: 20 }}>
+                <img src={block.image_url} alt={block.title} width={260} style={{ display: "block", width: "100%", height: 150, objectFit: "cover", borderRadius: 12 }} />
+              </td>
+              <td style={{ verticalAlign: "top" }}>
+                {block.label && <p style={{ color: D.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.label}</p>}
+                {titleEl}
+                {body && <RichContent html={body} />}
+                {ctaEl}
+              </td>
+            </tr></tbody>
+          </table>
+        );
+      }
+
+      // Text-only news item (e.g. a cancellation/update notice): accent box.
       return (
         <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "0 0 20px" }}>
           <tbody>
-            {block.image_url && (
-              <tr><td style={{ padding: 0, lineHeight: 0 }}>
-                <img src={block.image_url} alt={block.title} width={600} style={{ display: "block", width: "100%", maxWidth: "100%", height: "auto", borderRadius: "14px 14px 0 0" }} />
-              </td></tr>
-            )}
-            <tr><td style={{ background: "#F8F9FF", padding: "20px 24px", borderLeft: `2px solid ${D.gold}`, borderRadius: block.image_url ? "0 0 14px 14px" : "0 14px 14px 0" }}>
-              {block.title && <p style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.5, margin: "0 0 10px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.title}</p>}
+            <tr><td style={{ background: "#F8F9FF", padding: "20px 24px", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0" }}>
+              {block.label && <p style={{ color: D.gray, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 8px", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.label}</p>}
+              {titleEl}
               {body && <RichContent html={body} />}
-              {block.cta_url && block.cta_label && (
-                <table cellPadding={0} cellSpacing={0} style={{ marginTop: 16 }}><tbody><tr><td>
-                  <a href={block.cta_url} style={{ display: "inline-block", background: D.gold, color: "#fff", textDecoration: "none", padding: "10px 20px", borderRadius: 10, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>{block.cta_label}</a>
-                </td></tr></tbody></table>
-              )}
+              {ctaEl}
             </td></tr>
           </tbody>
         </table>

@@ -264,17 +264,37 @@ ${body}
       const body = richHtmlToEmail(block.content, D.black);
       if (!body && !block.title) return "";
       const ctaHtml = (block.cta_url && block.cta_label)
-        ? `<table cellpadding="0" cellspacing="0" style="margin-top:16px;"><tr><td>
+        ? `<table cellpadding="0" cellspacing="0" style="margin-top:14px;"><tr><td>
 <a href="${esc(block.cta_url)}" style="display:inline-block;background:${D.gold};color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:10px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:Arial,sans-serif;">${esc(block.cta_label)}</a>
 </td></tr></table>`
         : "";
-      const imageHtml = block.image_url
-        ? `<tr><td style="padding:0;line-height:0;"><img src="${esc(block.image_url)}" alt="${esc(block.title)}" width="600" style="display:block;width:100%;max-width:100%;height:auto;border-radius:14px 14px 0 0;" /></td></tr>`
+      const titleHtml = block.title
+        ? `<p style="color:${D.navy};font-size:18px;font-weight:700;line-height:1.4;margin:0 0 8px;font-family:Arial,sans-serif;">${esc(block.title)}</p>`
         : "";
+
+      if (block.image_url) {
+        // Illustrated news item: plain image-left/text-right teaser, no
+        // accent box — the box treatment is reserved for text-only items.
+        return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+<tr>
+<td width="44%" style="vertical-align:top;padding-right:20px;">
+<img src="${esc(block.image_url)}" alt="${esc(block.title)}" width="260" style="display:block;width:100%;height:150px;object-fit:cover;border-radius:12px;" />
+</td>
+<td style="vertical-align:top;">
+${block.label ? `<p style="color:${D.gold};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">${esc(block.label)}</p>` : ""}
+${titleHtml}
+${body}
+${ctaHtml}
+</td>
+</tr>
+</table>`;
+      }
+
+      // Text-only news item (e.g. a cancellation/update notice): accent box.
       return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
-${imageHtml}
-<tr><td style="background:#F8F9FF;padding:20px 24px;border-left:2px solid ${D.gold};border-radius:${block.image_url ? "0 0 14px 14px" : "0 14px 14px 0"};">
-${block.title ? `<p style="color:${D.navy};font-size:17px;font-weight:700;line-height:1.5;margin:0 0 10px;font-family:Arial,sans-serif;">${esc(block.title)}</p>` : ""}
+<tr><td style="background:#F8F9FF;padding:20px 24px;border-left:2px solid ${D.gold};border-radius:0 14px 14px 0;">
+${block.label ? `<p style="color:${D.gray};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">${esc(block.label)}</p>` : ""}
+${titleHtml}
 ${body}
 ${ctaHtml}
 </td></tr></table>`;

@@ -632,8 +632,8 @@ function SpeakerEditor({ block: rawBlock, onChange, adminPassword }: { block: Sp
   );
 }
 
-function NewsEditor({ block, onChange, adminPassword }: { block: NewsBlock; onChange: (b: NewsBlock) => void; adminPassword?: string }) {
-  const [focus, setFocus] = useState<"title" | "cta_label" | "cta_url" | null>(null);
+function NewsEditor({ block, onChange, adminPassword }: { block: NewsBlock & { label?: string }; onChange: (b: NewsBlock & { label?: string }) => void; adminPassword?: string }) {
+  const [focus, setFocus] = useState<"label" | "title" | "cta_label" | "cta_url" | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
@@ -681,6 +681,14 @@ function NewsEditor({ block, onChange, adminPassword }: { block: NewsBlock; onCh
           // eslint-disable-next-line @next/next/no-img-element
           <img src={block.image_url} alt="" className="mt-2 rounded-lg" style={{ maxWidth: "100%", maxHeight: 140, display: "block" }} />
         )}
+      </div>
+      <div>
+        <label className={labelCls} style={labelSty}>Kategorie <span style={{ color: "#9ca3af", fontWeight: 400 }}>(optional)</span></label>
+        <input className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition"
+          style={{ ...inputSty, borderColor: focus === "label" ? "#1E3263" : "#d1d5db" }}
+          value={block.label ?? ""} onChange={e => onChange({ ...block, label: e.target.value })}
+          placeholder="Impact Circle, Rückblick, Next Generation…"
+          onFocus={() => setFocus("label")} onBlur={() => setFocus(null)} />
       </div>
       <div>
         <label className={labelCls} style={labelSty}>Titel</label>
@@ -880,7 +888,7 @@ function BlockCard({ block, index, total, onChange, onRemove, onMove, onDragStar
           {block.type === "moderation" && <ModerationEditor block={block} onChange={onChange as (b: ModerationBlock) => void} />}
           {block.type === "speaker" && <SpeakerEditor block={block} onChange={onChange as (b: SpeakerBlock) => void} adminPassword={adminPassword} />}
           {block.type === "info" && <InfoEditor block={block} onChange={onChange as (b: InfoBlock) => void} />}
-          {block.type === "news" && <NewsEditor block={block} onChange={onChange as (b: NewsBlock) => void} adminPassword={adminPassword} />}
+          {block.type === "news" && <NewsEditor block={block} onChange={onChange as (b: NewsBlock & { label?: string }) => void} adminPassword={adminPassword} />}
           {block.type === "text" && <TextEditor block={block} onChange={onChange as (b: TextBlock) => void} />}
           {block.type === "deadline" && <DeadlineEditor block={block} onChange={onChange as (b: DeadlineBlock) => void} />}
           {block.type === "divider" && <p className="text-sm" style={{ color: "#9ca3af" }}>Horizontale Trennlinie</p>}

@@ -384,23 +384,41 @@ function InfoPreview({ block, onChange }: { block: InfoBlock & { label?: string 
 }
 
 function NewsPreview({ block, onChange }: { block: NewsBlock & { label?: string }; onChange: (b: typeof block) => void }) {
-  return (
-    <div>
-      {block.image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={block.image_url} alt={block.title} style={{ display: "block", width: "100%", height: "auto", borderRadius: "14px 14px 0 0" }} />
-      )}
-      <div style={{ background: "#F8F9FF", borderLeft: `2px solid ${D.gold}`, borderRadius: block.image_url ? "0 0 14px 14px" : "0 14px 14px 0", padding: "20px 24px" }}>
+  const labelColor = block.image_url ? D.gold : D.gray;
+  const textContent = (
+    <>
+      <Editable value={block.label ?? ""} onChange={v => onChange({ ...block, label: v })}
+        placeholder="KATEGORIE (OPTIONAL)"
+        style={{ color: labelColor, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", display: "block", marginBottom: 8 }} />
       <Editable value={block.title} onChange={v => onChange({ ...block, title: v })}
         placeholder="TITEL EINGEBEN…"
-        style={{ color: D.navy, fontSize: 17, fontWeight: 700, lineHeight: 1.5, display: "block", marginBottom: 10 }} />
+        style={{ color: D.navy, fontSize: 18, fontWeight: 700, lineHeight: 1.4, display: "block", marginBottom: 8 }} />
       <RichPreview value={block.content} onChange={v => onChange({ ...block, content: v })} placeholder="Text eingeben…" />
       {block.cta_url && block.cta_label && (
-        <div style={{ marginTop: 16, display: "inline-block", background: D.gold, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>
+        <div style={{ marginTop: 14, display: "inline-block", background: D.gold, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>
           {block.cta_label}
         </div>
       )}
+    </>
+  );
+
+  if (block.image_url) {
+    // Illustrated news item: image-left/text-right teaser, no accent box.
+    return (
+      <div style={{ display: "flex", gap: 20 }}>
+        <div style={{ flex: "0 0 44%" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={block.image_url} alt={block.title} style={{ display: "block", width: "100%", height: 150, objectFit: "cover", borderRadius: 12 }} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>{textContent}</div>
       </div>
+    );
+  }
+
+  // Text-only news item: accent box.
+  return (
+    <div style={{ background: "#F8F9FF", borderLeft: `2px solid ${D.gold}`, borderRadius: "0 14px 14px 0", padding: "20px 24px" }}>
+      {textContent}
     </div>
   );
 }
