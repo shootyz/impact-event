@@ -68,26 +68,44 @@ export async function POST(req: NextRequest) {
     anrede: m.anrede ?? "",
     sprache: m.sprache ?? null,
   }))
+  const emails = rows.map(r => r.email)
 
-  const { data, error } = await db
-    .from('members')
-    .upsert(rows, { onConflict: 'email,event_id', ignoreDuplicates: false })
-    .select()
+  // members.email is globally unique (constraint members_email_key) — one row
+  // per person across the whole app, not per event. Look up who already
+  // exists first and insert only the genuinely new ones; existing members
+  // keep their original event_id (never overwritten here) but still get
+  // their name/sprache/anrede refreshed and get linked to this Zielgruppe.
+  const { data: existingRows, error: existingError } = await db.from('members').select('id, email').in('email', emails)
+  if (existingError) {
+    console.error('[members POST] lookup error:', existingError.message)
+    return NextResponse.json({ error: existingError.message }, { status: 500 })
+  }
+  const existingByEmail = new Map((existingRows ?? []).map(m => [m.email, m.id]))
 
-  if (error) {
-    console.error('[members POST] upsert error:', error.message)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  const newRows = rows.filter(r => !existingByEmail.has(r.email))
+  if (newRows.length) {
+    const { error: insertError } = await db.from('members').insert(newRows)
+    if (insertError) {
+      console.error('[members POST] insert error:', insertError.message)
+      return NextResponse.json({ error: insertError.message }, { status: 500 })
+    }
   }
 
-  // Explicitly update sprache + anrede (upsert may not override with null)
+  // Refresh name/sprache/anrede for everyone in this batch, including members
+  // that already existed (their details may have changed since last import).
   const updateResults = await Promise.all(rows.map(m =>
     db.from('members')
-      .update({ sprache: m.sprache, anrede: m.anrede })
+      .update({ first_name: m.first_name, last_name: m.last_name, sprache: m.sprache, anrede: m.anrede })
       .eq('email', m.email)
-      .eq('event_id', event_id)
   ))
   const updateErrors = updateResults.filter(r => r.error).map(r => r.error?.message)
   if (updateErrors.length > 0) console.error('[members POST] update errors:', updateErrors)
+
+  const { data, error: selectError } = await db.from('members').select('id').in('email', emails)
+  if (selectError) {
+    console.error('[members POST] select error:', selectError.message)
+    return NextResponse.json({ error: selectError.message }, { status: 500 })
+  }
 
   if (zielgruppe_id && data && data.length > 0) {
     const junctionRows = data.map((m: { id: string }) => ({ member_id: m.id, zielgruppe_id }))
