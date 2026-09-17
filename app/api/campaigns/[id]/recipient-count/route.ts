@@ -23,11 +23,15 @@ export async function GET(req: NextRequest, props: any) {
   const lang = ((bj && !Array.isArray(bj) ? bj.lang : null) ?? 'en').toLowerCase()
 
   let query = db.from('members').select('sprache').eq('unsubscribed', false)
-  if (campaign.event_id) query = query.eq('event_id', campaign.event_id)
   if (campaign.zielgruppe_id) {
+    // Zielgruppe membership is authoritative here, not the member's own
+    // event_id (see lib/campaign-email.ts's sendCampaign for why) — a member
+    // linked to this Zielgruppe from a different event must still count.
     const { data: memberLinks } = await db.from('member_zielgruppen').select('member_id').eq('zielgruppe_id', campaign.zielgruppe_id)
     const memberIds = (memberLinks ?? []).map(l => l.member_id)
     query = query.in('id', memberIds.length ? memberIds : ['00000000-0000-0000-0000-000000000000'])
+  } else if (campaign.event_id) {
+    query = query.eq('event_id', campaign.event_id)
   }
   const { data: members, error: membersError } = await query
   if (membersError) return NextResponse.json({ error: membersError.message }, { status: 500 })

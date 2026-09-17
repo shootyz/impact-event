@@ -11,7 +11,22 @@ export async function GET(req: NextRequest) {
 
   const db = supabaseAdmin()
 
-  const memberIds = (await db.from('members').select('id').eq('event_id', eventId)).data?.map((m: { id: string }) => m.id) ?? []
+  // A member can be linked (via member_zielgruppen) to a Zielgruppe of this
+  // event while their own event_id points elsewhere (members.email is
+  // globally unique — one row per person, not per event). Include those here
+  // too, so "Members by Zielgruppe" isn't silently undercounted.
+  const { data: zgRowsForEvent } = await db.from('zielgruppen').select('id').eq('event_id', eventId)
+  const zgIdsForEvent = (zgRowsForEvent ?? []).map(z => z.id)
+  let crossEventMemberIds: string[] = []
+  if (zgIdsForEvent.length) {
+    const { data: linkRows } = await db.from('member_zielgruppen').select('member_id').in('zielgruppe_id', zgIdsForEvent)
+    crossEventMemberIds = [...new Set((linkRows ?? []).map(l => l.member_id))]
+  }
+  const membersFilter = crossEventMemberIds.length
+    ? `event_id.eq.${eventId},id.in.(${crossEventMemberIds.join(',')})`
+    : `event_id.eq.${eventId}`
+
+  const memberIds = (await db.from('members').select('id').or(membersFilter)).data?.map((m: { id: string }) => m.id) ?? []
 
   const [
     { data: members },
@@ -21,7 +36,7 @@ export async function GET(req: NextRequest) {
     { data: registrations },
     { data: campaignEvents },
   ] = await Promise.all([
-    db.from('members').select('id, sprache, anrede, unsubscribed, member_zielgruppen(zielgruppe_id)').eq('event_id', eventId),
+    db.from('members').select('id, sprache, anrede, unsubscribed, member_zielgruppen(zielgruppe_id)').or(membersFilter),
     db.from('zielgruppen').select('id, name').eq('event_id', eventId),
     db.from('campaigns').select('id, subject, blocks_json, sent_at, recipient_count, zielgruppe_id').eq('event_id', eventId).not('sent_at', 'is', null).order('sent_at', { ascending: false }),
     db.from('invite_codes').select('member_id, used').in('member_id', memberIds.length > 0 ? memberIds : ['']),

@@ -269,13 +269,18 @@ export async function sendCampaign({
   // Skip members whose address is known-bad (bounced/complained/failed) — retrying
   // them repeatedly is what damages sending-domain reputation the most.
   let query = db.from('members').select('*').eq('unsubscribed', false).eq('email_status', 'ok')
-  if (eventId) query = query.eq('event_id', eventId)
   if (zielgruppeId) {
-    // A member can belong to several Zielgruppen — resolve membership via the
-    // junction table rather than a single equality check.
+    // A Zielgruppe can include members whose own event_id differs from this
+    // campaign's event (members.email is globally unique — one row per
+    // person, possibly first added under a different event, then linked here
+    // via member_zielgruppen). Membership in the Zielgruppe is what counts,
+    // not which event they originally came in under — do NOT additionally
+    // filter by event_id here, or those members silently never get sent to.
     const { data: memberLinks } = await db.from('member_zielgruppen').select('member_id').eq('zielgruppe_id', zielgruppeId)
     const memberIds = (memberLinks ?? []).map(l => l.member_id)
     query = query.in('id', memberIds.length ? memberIds : ['00000000-0000-0000-0000-000000000000'])
+  } else if (eventId) {
+    query = query.eq('event_id', eventId)
   }
   const { data: allMembers, error } = await query
 
