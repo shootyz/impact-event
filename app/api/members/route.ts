@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { normalizeAnrede } from '@/lib/anrede'
 
 function makeCode(): string {
   // 8-char alphanumeric — ~2.8 trillion combinations, collision-safe for any realistic scale
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
     last_name: m.last_name.trim(),
     email: m.email.toLowerCase().trim(),
     event_id,
-    anrede: m.anrede ?? "",
+    anrede: normalizeAnrede(m.anrede ?? ""),
     sprache: m.sprache ?? null,
   }))
   const emails = rows.map(r => r.email)

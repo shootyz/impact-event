@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import type { Zielgruppe, Member } from "@/lib/supabase";
+import { normalizeAnrede } from "@/lib/anrede";
 
 const ANREDE_OPTIONS = ["", "Herr", "Frau", "Divers"];
 const SPRACHE_OPTIONS = [
@@ -350,7 +351,7 @@ export default function ZielgruppenDashboard({
         first_name: cols[iFirst] ?? "",
         last_name: cols[iLast] ?? "",
         email: cols[iEmail] ?? "",
-        anrede: iAnrede >= 0 ? (cols[iAnrede] ?? "") : "",
+        anrede: iAnrede >= 0 ? normalizeAnrede(cols[iAnrede] ?? "") : "",
         sprache: normalizeSprache(spracheRaw),
       };
     }).filter(r => r.email);

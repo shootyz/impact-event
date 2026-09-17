@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { normalizeAnrede } from '@/lib/anrede'
 
 function makeCode(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(8)))
@@ -20,6 +21,7 @@ export async function PATCH(req: NextRequest, props: any) {
   const allowed = ['first_name', 'last_name', 'email', 'anrede', 'sprache']
   const patch: Record<string, unknown> = {}
   for (const key of allowed) if (key in body) patch[key] = body[key]
+  if (typeof patch.anrede === 'string') patch.anrede = normalizeAnrede(patch.anrede)
 
   if (Object.keys(patch).length > 0) {
     const { error } = await db.from('members').update(patch).eq('id', id)
