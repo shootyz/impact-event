@@ -15,11 +15,31 @@ export async function GET(req: NextRequest) {
   if (!eventId) return NextResponse.json({ error: 'eventId required' }, { status: 400 })
 
   const db = supabaseAdmin()
-  const { data, error } = await db
+
+  // A member's own event_id only records which event they were first added
+  // under — but Zielgruppen belong to an event too, and a member can be
+  // linked (via member_zielgruppen) to a Zielgruppe of a DIFFERENT event than
+  // their own (e.g. imported from HubSpot into a new event's Zielgruppe while
+  // already existing as a member elsewhere — members.email is globally
+  // unique, one row per person). Without this, such a member never shows up
+  // in that Zielgruppe's admin view, even though the link exists.
+  const { data: zgRows } = await db.from('zielgruppen').select('id').eq('event_id', eventId)
+  const zgIds = (zgRows ?? []).map(z => z.id)
+  let crossEventMemberIds: string[] = []
+  if (zgIds.length) {
+    const { data: linkRows } = await db.from('member_zielgruppen').select('member_id').in('zielgruppe_id', zgIds)
+    crossEventMemberIds = [...new Set((linkRows ?? []).map(l => l.member_id))]
+  }
+
+  let query = db
     .from('members')
     .select('*, invite_codes(code, used), member_zielgruppen(zielgruppe_id)')
-    .eq('event_id', eventId)
     .order('last_name', { ascending: true })
+  query = crossEventMemberIds.length
+    ? query.or(`event_id.eq.${eventId},id.in.(${crossEventMemberIds.join(',')})`)
+    : query.eq('event_id', eventId)
+
+  const { data, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const members = (data ?? []).map((m) => {
