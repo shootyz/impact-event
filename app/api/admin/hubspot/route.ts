@@ -56,45 +56,50 @@ export async function POST(req: NextRequest) {
 
   const contactsPerList = await Promise.all(refs.map(contactsForList));
   const byEmail = new Map<string, HubspotContact>();
-  for (const c of contactsPerList.flat()) byEmail.set(c.email.toLowerCase(), c);
+  // Normalized the same way as every other write path (members/route.ts,
+  // the register RPCs) — HubSpot's own casing is inconsistent, and comparing
+  // un-normalized emails against the normalized values already in `members`
+  // is what let existing members silently fail to match below.
+  for (const c of contactsPerList.flat()) byEmail.set(c.email.toLowerCase().trim(), c);
   const contacts = [...byEmail.values()];
 
   const db = supabaseAdmin();
-  let imported = 0;
-  let duplicates = 0;
+  const rows = contacts.map(c => ({
+    email: c.email.toLowerCase().trim(),
+    first_name: c.first_name,
+    last_name: c.last_name,
+    event_id,
+  }));
 
-  for (const c of contacts) {
-    // members has no `company` column — HubSpot's company property is fetched
-    // (see lib/hubspot.ts) but isn't persisted; every insert here silently
-    // failed with PGRST204 until this was caught via the added error logging.
-    const { data: insertedMember, error } = await db.from("members").insert({
-      email: c.email,
-      first_name: c.first_name,
-      last_name: c.last_name,
-      event_id,
-    }).select("id").single();
+  // members has no `company` column — HubSpot's company property is fetched
+  // (see lib/hubspot.ts) but isn't persisted.
+  //
+  // Upsert (same pattern as the manual/CSV import in members/route.ts)
+  // instead of insert-then-catch-23505-then-select: a member already
+  // imported for this event is found reliably by the upsert's own conflict
+  // handling, rather than a follow-up lookup that can miss them and leave
+  // them unlinked from the new Zielgruppe entirely.
+  const { data: existingRows } = await db.from("members").select("email").eq("event_id", event_id).in("email", rows.map(r => r.email));
+  const existingEmails = new Set(existingRows?.map(r => r.email) ?? []);
 
-    let memberId: string | null = insertedMember?.id ?? null;
-    if (error) {
-      if (error.code !== "23505") {
-        console.error(`[hubspot import] insert failed for ${c.email}: ${error.code} ${error.message}`);
-        continue;
-      }
-      duplicates++;
-      // Contact already exists for this event (e.g. from an earlier import) —
-      // still add them to this Zielgruppe, since a member can now belong to
-      // several at once.
-      const { data: existing } = await db.from("members").select("id").eq("email", c.email).eq("event_id", event_id).limit(1);
-      memberId = existing?.[0]?.id ?? null;
-    } else {
-      imported++;
-    }
+  const { data: upserted, error } = await db
+    .from("members")
+    .upsert(rows, { onConflict: "email,event_id", ignoreDuplicates: false })
+    .select("id, email");
 
-    if (memberId) {
-      const { error: zgError } = await db.from("member_zielgruppen").upsert({ member_id: memberId, zielgruppe_id }, { onConflict: "member_id,zielgruppe_id", ignoreDuplicates: true });
-      if (zgError) console.error(`[hubspot import] member_zielgruppen upsert failed for ${c.email}: ${zgError.code} ${zgError.message}`);
-    }
+  if (error) {
+    console.error(`[hubspot import] upsert failed: ${error.code} ${error.message}`);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  const links = (upserted ?? []).map(m => ({ member_id: m.id, zielgruppe_id }));
+  if (links.length) {
+    const { error: zgError } = await db.from("member_zielgruppen").upsert(links, { onConflict: "member_id,zielgruppe_id", ignoreDuplicates: true });
+    if (zgError) console.error(`[hubspot import] member_zielgruppen upsert failed: ${zgError.code} ${zgError.message}`);
+  }
+
+  const imported = (upserted ?? []).filter(m => !existingEmails.has(m.email)).length;
+  const duplicates = (upserted ?? []).length - imported;
 
   console.error(`[hubspot import] done: ${imported} imported, ${duplicates} duplicates, ${contacts.length} total`);
   return NextResponse.json({ imported, duplicates, total: contacts.length });
