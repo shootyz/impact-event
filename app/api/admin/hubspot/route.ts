@@ -74,32 +74,44 @@ export async function POST(req: NextRequest) {
   // members has no `company` column — HubSpot's company property is fetched
   // (see lib/hubspot.ts) but isn't persisted.
   //
-  // Upsert (same pattern as the manual/CSV import in members/route.ts)
-  // instead of insert-then-catch-23505-then-select: a member already
-  // imported for this event is found reliably by the upsert's own conflict
-  // handling, rather than a follow-up lookup that can miss them and leave
-  // them unlinked from the new Zielgruppe entirely.
-  const { data: existingRows } = await db.from("members").select("email").eq("event_id", event_id).in("email", rows.map(r => r.email));
-  const existingEmails = new Set(existingRows?.map(r => r.email) ?? []);
+  // members.email is globally unique across the whole app (constraint
+  // members_email_key) — a person is ONE row regardless of which event they
+  // originally came in under, not one row per event. So: look up who already
+  // exists by email first, insert only the genuinely new ones (their
+  // event_id gets set to the current event), then link everyone — new and
+  // pre-existing — to this Zielgruppe. Pre-existing members keep whatever
+  // event_id they already had; we never overwrite it here.
+  const emails = rows.map(r => r.email);
+  const { data: existingRows, error: existingError } = await db.from("members").select("id, email").in("email", emails);
+  if (existingError) {
+    console.error(`[hubspot import] lookup failed: ${existingError.code} ${existingError.message}`);
+    return NextResponse.json({ error: existingError.message }, { status: 500 });
+  }
+  const existingByEmail = new Map((existingRows ?? []).map(m => [m.email, m.id]));
 
-  const { data: upserted, error } = await db
-    .from("members")
-    .upsert(rows, { onConflict: "email,event_id", ignoreDuplicates: false })
-    .select("id, email");
-
-  if (error) {
-    console.error(`[hubspot import] upsert failed: ${error.code} ${error.message}`);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const newRows = rows.filter(r => !existingByEmail.has(r.email));
+  if (newRows.length) {
+    const { error: insertError } = await db.from("members").insert(newRows);
+    if (insertError) {
+      console.error(`[hubspot import] insert failed: ${insertError.code} ${insertError.message}`);
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
   }
 
-  const links = (upserted ?? []).map(m => ({ member_id: m.id, zielgruppe_id }));
+  const { data: allMembers, error: selectError } = await db.from("members").select("id").in("email", emails);
+  if (selectError) {
+    console.error(`[hubspot import] select failed: ${selectError.code} ${selectError.message}`);
+    return NextResponse.json({ error: selectError.message }, { status: 500 });
+  }
+
+  const links = (allMembers ?? []).map(m => ({ member_id: m.id, zielgruppe_id }));
   if (links.length) {
     const { error: zgError } = await db.from("member_zielgruppen").upsert(links, { onConflict: "member_id,zielgruppe_id", ignoreDuplicates: true });
     if (zgError) console.error(`[hubspot import] member_zielgruppen upsert failed: ${zgError.code} ${zgError.message}`);
   }
 
-  const imported = (upserted ?? []).filter(m => !existingEmails.has(m.email)).length;
-  const duplicates = (upserted ?? []).length - imported;
+  const imported = newRows.length;
+  const duplicates = existingByEmail.size;
 
   console.error(`[hubspot import] done: ${imported} imported, ${duplicates} duplicates, ${contacts.length} total`);
   return NextResponse.json({ imported, duplicates, total: contacts.length });
