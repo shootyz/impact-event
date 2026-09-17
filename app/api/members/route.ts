@@ -73,9 +73,10 @@ export async function POST(req: NextRequest) {
 
   // members.email is globally unique (constraint members_email_key) — one row
   // per person across the whole app, not per event. Look up who already
-  // exists first and insert only the genuinely new ones; existing members
-  // keep their original event_id (never overwritten here) but still get
-  // their name/sprache/anrede refreshed and get linked to this Zielgruppe.
+  // exists first and insert only the genuinely new ones. Existing members are
+  // left completely untouched (same as the HubSpot import path) — a re-import
+  // must never clobber a manual edit made since the member was first added;
+  // it only needs to (re-)link them to this Zielgruppe below.
   const { data: existingRows, error: existingError } = await db.from('members').select('id, email').in('email', emails)
   if (existingError) {
     console.error('[members POST] lookup error:', existingError.message)
@@ -91,16 +92,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
   }
-
-  // Refresh name/sprache/anrede for everyone in this batch, including members
-  // that already existed (their details may have changed since last import).
-  const updateResults = await Promise.all(rows.map(m =>
-    db.from('members')
-      .update({ first_name: m.first_name, last_name: m.last_name, sprache: m.sprache, anrede: m.anrede })
-      .eq('email', m.email)
-  ))
-  const updateErrors = updateResults.filter(r => r.error).map(r => r.error?.message)
-  if (updateErrors.length > 0) console.error('[members POST] update errors:', updateErrors)
 
   const { data, error: selectError } = await db.from('members').select('id').in('email', emails)
   if (selectError) {
