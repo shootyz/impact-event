@@ -3,6 +3,7 @@ import { checkAdminAuth } from '@/lib/auth'
 import { buildCampaignHtmlForTest } from '@/lib/campaign-email'
 import { renderBlocksToHtml } from '@/app/admin/campaign-renderer'
 import type { CampaignBlock } from '@/app/admin/campaign-renderer'
+import { APP_URL } from '@/lib/app-url'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   const { subject, body_html, event_url, blocks_json } = body
   if (!body_html && !blocks_json) return NextResponse.json({ error: 'body_html required' }, { status: 400 })
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!
+  const appUrl = APP_URL
 
   let bodyHtml = body_html || ''
   if (blocks_json) {

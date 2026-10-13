@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendCampaign } from '@/lib/campaign-email'
+import { APP_URL } from '@/lib/app-url'
 
 export async function GET(req: NextRequest) {
   const _a = checkAdminAuth(req); if (_a !== 'ok') return NextResponse.json({ error: _a === 'rate_limited' ? 'Zu viele Anfragen.' : 'Unauthorized' }, { status: _a === 'rate_limited' ? 429 : 401 })
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
   if (error || !campaign) return NextResponse.json({ error: error?.message }, { status: 500 })
 
   if (send_now) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL!
+    const appUrl = APP_URL
     try {
       const result = await sendCampaign({
         campaignId: campaign.id,

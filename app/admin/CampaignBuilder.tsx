@@ -10,6 +10,7 @@ export type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, Program
 export { renderBlocksToHtml, richHtmlToEmail } from "./campaign-renderer";
 import type { IntroBlock, LeadBlock, EventDetailsBlock, ModerationBlock, ProgramSlot, ProgramBlock, Finalist, FinalistsBlock, Speaker, SpeakerBlock, TextBlock, InfoBlock, NewsBlock, DeadlineBlock, DividerBlock, RegisterButtonBlock, CampaignBlock } from "./campaign-renderer";
 import { richHtmlToEmail, renderBlocksToHtml } from "./campaign-renderer";
+import { APP_URL } from "@/lib/app-url";
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -942,7 +943,7 @@ function defaultBlock(type: CampaignBlock["type"]): CampaignBlock {
     case "news": return { type, title: "", content: "", image_url: "", cta_label: "", cta_url: "" };
     case "deadline": return { type, date: "" };
     case "divider": return { type: "divider" };
-    case "register_button": return { type: "register_button", url: "https://impactgstaad.vercel.app" };
+    case "register_button": return { type: "register_button", url: APP_URL };
   }
 }
 
@@ -987,8 +988,8 @@ export default function CampaignBuilder({
   const [subject, setSubject] = useState(initialSubject ?? "");
   const [eventUrl, setEventUrl] = useState(() => {
     if (initialEventUrl) return initialEventUrl;
-    if (events && events.length > 0) return `https://impactgstaad.vercel.app?event=${events[0].id}`;
-    return "https://impactgstaad.vercel.app";
+    if (events && events.length > 0) return `${APP_URL}?event=${events[0].id}`;
+    return APP_URL;
   });
   const setZielgruppeId = onZielgruppeChange;
   const normalizeBlocks = (bs: CampaignBlock[]): CampaignBlock[] => bs.map(b => {

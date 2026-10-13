@@ -1,4 +1,5 @@
 import { createSign } from 'crypto'
+import { APP_URL } from './app-url'
 
 // Google Wallet's "Add to Google Wallet" flow needs no server-to-server API
 // call to pre-create anything — the ticket class + object are embedded
@@ -44,7 +45,7 @@ export function buildGoogleWalletSaveUrl(params: {
 }): string | null {
   const creds = getCredentials()
   const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const appUrl = APP_URL
   if (!creds || !issuerId || !appUrl) return null
 
   const classId = `${issuerId}.event_${params.eventId}`

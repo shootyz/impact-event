@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rate-limit'
+import { APP_URL } from '@/lib/app-url'
 
 // Proxies Nominatim server-side — the browser can't call nominatim.openstreetmap.org
 // directly anymore because it stopped sending Access-Control-Allow-Origin (CORS block).
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
   if (!q) return NextResponse.json({ error: 'q required' }, { status: 400 })
 
   const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`, {
-    headers: { 'Accept-Language': 'de', 'User-Agent': 'ImpactGstaad/1.0 (https://impactgstaad.vercel.app)' },
+    headers: { 'Accept-Language': 'de', 'User-Agent': `ImpactGstaad/1.0 (${APP_URL})` },
   })
   const data = await res.json()
   const [first] = data ?? []

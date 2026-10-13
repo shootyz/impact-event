@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendCampaign } from '@/lib/campaign-email'
+import { APP_URL } from '@/lib/app-url'
 
 export async function GET(req: NextRequest) {
   // Vercel Cron authenticates via CRON_SECRET header
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!campaigns || campaigns.length === 0) return NextResponse.json({ sent: 0 })
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!
+  const appUrl = APP_URL
   let totalSent = 0
 
   for (const campaign of campaigns) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendCampaign } from '@/lib/campaign-email'
+import { APP_URL } from '@/lib/app-url'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function GET(req: NextRequest, props: any) {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest, props: any) {
   if (error || !campaign) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
   if (campaign.sent_at) return NextResponse.json({ error: 'Already sent' }, { status: 409 })
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!
+  const appUrl = APP_URL
   try {
     const result = await sendCampaign({
       campaignId: campaign.id,

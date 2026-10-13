@@ -3,6 +3,7 @@ import { rateLimit } from '@/lib/rate-limit'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendConfirmationEmail } from '@/lib/email'
 import { randomUUID } from 'crypto'
+import { APP_URL } from '@/lib/app-url'
 
 export async function GET(
   req: NextRequest,
@@ -10,11 +11,11 @@ export async function GET(
 ) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   if (!rateLimit(ip, { max: 10, windowMs: 60_000 })) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL!}/?error=rate_limited`)
+    return NextResponse.redirect(`${APP_URL}/?error=rate_limited`)
   }
 
   const { token } = await params
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!
+  const appUrl = APP_URL
   const lang = req.nextUrl.searchParams.get('lang') ?? ''
   const eventId = req.nextUrl.searchParams.get('event') ?? ''
   const langSuffix = lang && lang !== 'en' ? `?lang=${lang}` : ''

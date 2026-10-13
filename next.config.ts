@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { APP_URL } from "./lib/app-url";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -33,7 +34,7 @@ const nextConfig: NextConfig = {
         // Explicitly deny cross-origin access to all API routes
         source: "/api/(.*)",
         headers: [
-          { key: "Access-Control-Allow-Origin", value: "https://impactgstaad.vercel.app" },
+          { key: "Access-Control-Allow-Origin", value: APP_URL },
           { key: "Access-Control-Allow-Methods", value: "GET, POST, PATCH, DELETE, OPTIONS" },
           { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
         ],

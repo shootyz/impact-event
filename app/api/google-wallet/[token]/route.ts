@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { isTicketTokenExpired } from '@/lib/ticketToken'
 import { buildGoogleWalletSaveUrl, isGoogleWalletConfigured } from '@/lib/googleWallet'
+import { APP_URL } from '@/lib/app-url'
 
 export async function GET(
   _req: NextRequest,
@@ -27,7 +28,7 @@ export async function GET(
     return NextResponse.json({ error: 'Dieser Ticket-Link ist abgelaufen.' }, { status: 410 })
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!
+  const appUrl = APP_URL
   const ticketUrl = `${appUrl}/ticket/${token}`
 
   const saveUrl = buildGoogleWalletSaveUrl({

@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { generateQRCodeDataURL } from './qr'
 import type { Registration, Event } from './supabase'
 import { resolveLangField } from './i18n'
+import { APP_URL } from './app-url'
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY)
 
@@ -37,7 +38,7 @@ export async function sendConfirmationEmail(
   event: Event,
   lang: 'en' | 'de' | 'fr' = 'en'
 ) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!
+  const appUrl = APP_URL
   const s = STRINGS[lang] ?? STRINGS.en
   const qrDataUrl = await generateQRCodeDataURL(registration.qr_token, appUrl)
   const base64 = qrDataUrl.split(',')[1]

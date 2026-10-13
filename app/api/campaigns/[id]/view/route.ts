@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { buildCampaignHtmlForMember } from '@/lib/campaign-email'
+import { APP_URL } from '@/lib/app-url'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function GET(req: NextRequest, props: any) {
@@ -9,7 +10,7 @@ export async function GET(req: NextRequest, props: any) {
   if (!token) return new NextResponse('Missing token', { status: 400 })
 
   const db = supabaseAdmin()
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
+  const appUrl = APP_URL
 
   const [{ data: campaign }, { data: member }] = await Promise.all([
     db.from('campaigns').select('*').eq('id', id).single(),

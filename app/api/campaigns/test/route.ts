@@ -4,6 +4,7 @@ import { buildCampaignHtmlForMember } from '@/lib/campaign-email'
 import { sendTransactionalEmail } from '@/lib/brevo'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { Member } from '@/lib/supabase'
+import { APP_URL } from '@/lib/app-url'
 
 function escHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
   const { data: campaign } = await db.from('campaigns').select('*').eq('id', campaign_id).single()
   if (!campaign) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!
+  const appUrl = APP_URL
 
   const errors: string[] = []
   for (const email of recipients) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkAdminAuth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
+import { APP_URL } from '@/lib/app-url'
 
 // One-time demo seed — protected by admin password
 export async function POST(req: NextRequest) {
@@ -144,7 +145,7 @@ export async function POST(req: NextRequest) {
       sent_at: sentAt1,
       recipient_count: deMembers.length,
       zielgruppe_id: null,
-      event_url: `https://impactgstaad.vercel.app?event=${eventId}`,
+      event_url: `${APP_URL}?event=${eventId}`,
     },
     {
       event_id: eventId,
@@ -154,7 +155,7 @@ export async function POST(req: NextRequest) {
       sent_at: sentAt2,
       recipient_count: enMembers.length,
       zielgruppe_id: null,
-      event_url: `https://impactgstaad.vercel.app?event=${eventId}`,
+      event_url: `${APP_URL}?event=${eventId}`,
     },
     {
       event_id: eventId,
@@ -164,7 +165,7 @@ export async function POST(req: NextRequest) {
       sent_at: null,
       recipient_count: null,
       zielgruppe_id: zgVip.id,
-      event_url: `https://impactgstaad.vercel.app?event=${eventId}`,
+      event_url: `${APP_URL}?event=${eventId}`,
     },
   ]).select()
 
